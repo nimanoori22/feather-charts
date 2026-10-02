@@ -12,6 +12,7 @@ use crate::{
         iprice_data_source::{FirstValue, PriceScaleDataSource},
         plot_data::{PlotRowLike, PlotRowValueIndex},
         plot_list::{MismatchDirection, PlotList},
+        price_range_impl::PriceRangeImpl,
         range_impl::RangeImpl,
         series_data::{CustomPlotRow, SeriesPlotRow},
         series_options::{
@@ -95,6 +96,21 @@ fn common(options: &SeriesOptionsMap) -> &SeriesOptionsCommon {
         SeriesOptionsMap::Line(options) => &options.common,
         SeriesOptionsMap::Histogram(options) => &options.common,
         SeriesOptionsMap::Custom(options) => &options.common,
+    }
+}
+
+/// The built-in source uses close values for single-value series and the
+/// low/high envelope for OHLC series. Custom-series autoscaling is a separate
+/// typed path because its values come from the custom row builder.
+fn autoscale_plots(series_type: SeriesType) -> Option<&'static [PlotRowValueIndex]> {
+    match series_type {
+        SeriesType::Line | SeriesType::Area | SeriesType::Baseline | SeriesType::Histogram => {
+            Some(&[PlotRowValueIndex::Close])
+        }
+        SeriesType::Bar | SeriesType::Candlestick => {
+            Some(&[PlotRowValueIndex::Low, PlotRowValueIndex::High])
+        }
+        SeriesType::Custom => None,
     }
 }
 
@@ -204,6 +220,36 @@ where
             time_point: PlotRowLike::index(row),
         })
     }
+    /// Returns the built-in price range for an integer logical interval.
+    ///
+    /// A nonempty series with no rows in an otherwise valid interval returns
+    /// `Some` with no price range. PriceScale relies on that distinction from
+    /// an invalid request or an empty series, both of which return `None`.
+    pub fn autoscale_info(
+        &self,
+        start: TimePointIndex,
+        end: TimePointIndex,
+    ) -> Option<AutoscaleInfoImpl> {
+        if !start.is_integer() || !end.is_integer() || self.data.is_empty() {
+            return None;
+        }
+
+        let plots = autoscale_plots(self.series_type)?;
+        let mut range = self
+            .data
+            .min_max_on_range_cached(start, end, plots)
+            .map(|values| PriceRangeImpl::new(values.min, values.max));
+
+        if let SeriesOptionsMap::Histogram(options) = &self.options {
+            let baseline = PriceRangeImpl::new(options.style.base, options.style.base);
+            range = Some(match range {
+                Some(values) => values.merge(Some(&baseline)),
+                None => baseline,
+            });
+        }
+
+        Some(AutoscaleInfoImpl::new(range, None))
+    }
     pub fn formatter(&self) -> &dyn PriceValueFormatter {
         &self.formatter
     }
@@ -304,10 +350,10 @@ where
     }
     fn autoscale_info(
         &self,
-        _start: TimePointIndex,
-        _end: TimePointIndex,
+        start: TimePointIndex,
+        end: TimePointIndex,
     ) -> Option<AutoscaleInfoImpl> {
-        None
+        self.series.autoscale_info(start, end)
     }
     fn update_all_views(&mut self) {}
 }
@@ -442,42 +488,46 @@ mod tests {
         model::{
             data_layer::{CustomSeriesChanges, SeriesId},
             plot_data::PlotRow,
-            series_data::LinePlotRow,
+            series_data::{BarPlotRow, LinePlotRow},
             series_options::{
-                LastPriceAnimationMode, LineStyleOptions, PriceAxisLastValueMode, PriceLineSource,
-                SeriesOptions, SeriesOptionsCommon,
+                BarStyleOptions, HistogramStyleOptions, LastPriceAnimationMode, LineStyleOptions,
+                PriceAxisLastValueMode, PriceLineSource, SeriesOptions, SeriesOptionsCommon,
             },
         },
         renderers::draw_line::{LineStyle, LineType, LineWidth},
     };
 
+    fn common_options() -> SeriesOptionsCommon {
+        SeriesOptionsCommon {
+            last_value_visible: true,
+            title: String::new(),
+            price_scale_id: None,
+            series_last_value_mode: Some(PriceAxisLastValueMode::LastValueAccordingToScale),
+            visible: true,
+            hit_test_tolerance: 3.,
+            price_line_visible: true,
+            price_line_source: PriceLineSource::LastBar,
+            price_line_width: LineWidth::One,
+            price_line_color: String::new(),
+            price_line_style: LineStyle::Solid,
+            price_format: PriceFormat::BuiltIn(PriceFormatBuiltIn {
+                kind: PriceFormatBuiltInType::Price,
+                precision: 2,
+                min_move: 0.01,
+                base: Some(100.),
+            }),
+            base_line_visible: true,
+            base_line_color: String::new(),
+            base_line_width: LineWidth::One,
+            base_line_style: LineStyle::Solid,
+            autoscale_info_provider: None,
+            conflation_threshold_factor: None,
+        }
+    }
+
     fn line_options() -> SeriesOptionsMap {
         SeriesOptionsMap::Line(SeriesOptions {
-            common: SeriesOptionsCommon {
-                last_value_visible: true,
-                title: String::new(),
-                price_scale_id: None,
-                series_last_value_mode: Some(PriceAxisLastValueMode::LastValueAccordingToScale),
-                visible: true,
-                hit_test_tolerance: 3.,
-                price_line_visible: true,
-                price_line_source: PriceLineSource::LastBar,
-                price_line_width: LineWidth::One,
-                price_line_color: String::new(),
-                price_line_style: LineStyle::Solid,
-                price_format: PriceFormat::BuiltIn(PriceFormatBuiltIn {
-                    kind: PriceFormatBuiltInType::Price,
-                    precision: 2,
-                    min_move: 0.01,
-                    base: Some(100.),
-                }),
-                base_line_visible: true,
-                base_line_color: String::new(),
-                base_line_width: LineWidth::One,
-                base_line_style: LineStyle::Solid,
-                autoscale_info_provider: None,
-                conflation_threshold_factor: None,
-            },
+            common: common_options(),
             style: LineStyleOptions {
                 color: "#000".into(),
                 line_style: LineStyle::Solid,
@@ -496,13 +546,53 @@ mod tests {
         })
     }
 
+    fn bar_options() -> SeriesOptionsMap {
+        SeriesOptionsMap::Bar(SeriesOptions {
+            common: common_options(),
+            style: BarStyleOptions {
+                up_color: String::new(),
+                down_color: String::new(),
+                open_visible: true,
+                thin_bars: true,
+            },
+        })
+    }
+
+    fn histogram_options(base: f64) -> SeriesOptionsMap {
+        SeriesOptionsMap::Histogram(SeriesOptions {
+            common: common_options(),
+            style: HistogramStyleOptions {
+                color: String::new(),
+                base,
+            },
+        })
+    }
+
     fn row(index: f64, close: f64) -> SeriesPlotRow<(), (), (), ()> {
+        row_with_values(index, [close; 4])
+    }
+
+    fn row_with_values(index: f64, values: [f64; 4]) -> SeriesPlotRow<(), (), (), ()> {
         SeriesPlotRow::Line(LinePlotRow {
             base: PlotRow {
                 index: index.into(),
                 time: (),
                 original_time: (),
-                value: [close; 4],
+                value: values,
+                custom_values: None,
+                original_data_count: None,
+            },
+            color: None,
+        })
+    }
+
+    fn bar_row(index: f64, values: [f64; 4]) -> SeriesPlotRow<(), (), (), ()> {
+        SeriesPlotRow::Bar(BarPlotRow {
+            base: PlotRow {
+                index: index.into(),
+                time: (),
+                original_time: (),
+                value: values,
                 custom_values: None,
                 original_data_count: None,
             },
@@ -536,6 +626,95 @@ mod tests {
         assert_eq!(source.first_value().unwrap().value, 5.);
         assert_eq!(source.base(), 100.);
         assert_eq!(series.pane_data_generation(), 2);
+    }
+
+    #[test]
+    fn autoscale_uses_close_for_line_and_distinguishes_empty_intervals() {
+        let mut series = Series::new(SeriesId::new(1), SeriesType::Line, line_options()).unwrap();
+        series.set_data(vec![row_with_values(2., [2., 100., -50., 10.])], None);
+
+        assert_eq!(
+            series
+                .autoscale_info(2.0.into(), 2.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(10., 10.))
+        );
+        assert!(series.autoscale_info(2.5.into(), 3.0.into()).is_none());
+        assert_eq!(
+            series
+                .autoscale_info(4.0.into(), 5.0.into())
+                .unwrap()
+                .price_range(),
+            None
+        );
+
+        let empty =
+            Series::<(), (), ()>::new(SeriesId::new(2), SeriesType::Line, line_options()).unwrap();
+        assert!(empty.autoscale_info(0.0.into(), 1.0.into()).is_none());
+    }
+
+    #[test]
+    fn autoscale_uses_low_and_high_for_bar_rows_and_skips_nan() {
+        assert_eq!(
+            autoscale_plots(SeriesType::Bar),
+            autoscale_plots(SeriesType::Candlestick)
+        );
+        let mut series = Series::new(SeriesId::new(1), SeriesType::Bar, bar_options()).unwrap();
+        series.set_data(
+            vec![
+                bar_row(0., [5., 100., -3., 10.]),
+                bar_row(1., [5., f64::NAN, f64::NAN, 20.]),
+            ],
+            None,
+        );
+
+        assert_eq!(
+            series
+                .autoscale_info(0.0.into(), 1.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(-3., 100.))
+        );
+    }
+
+    #[test]
+    fn histogram_autoscale_always_includes_its_baseline() {
+        let mut series = Series::new(
+            SeriesId::new(1),
+            SeriesType::Histogram,
+            histogram_options(0.),
+        )
+        .unwrap();
+        series.set_data(vec![row(0., 10.)], None);
+        assert_eq!(
+            series
+                .autoscale_info(0.0.into(), 0.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(0., 10.))
+        );
+        assert_eq!(
+            series
+                .autoscale_info(5.0.into(), 6.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(0., 0.))
+        );
+    }
+
+    #[test]
+    fn price_scale_source_forwards_series_autoscale_info() {
+        let mut series = Series::new(SeriesId::new(1), SeriesType::Line, line_options()).unwrap();
+        series.set_data(vec![row(0., 5.)], None);
+        let source = series.price_scale_source(None);
+        assert_eq!(
+            source
+                .autoscale_info(0.0.into(), 0.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(5., 5.))
+        );
     }
 
     #[test]
