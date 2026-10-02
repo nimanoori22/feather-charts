@@ -46,6 +46,27 @@ pub enum CustomSeriesDataItem<Data, Item, Metadata = ()> {
     Whitespace(CustomSeriesWhitespaceData<Item, Metadata>),
 }
 
+impl<Data, Item, Metadata> TimedData for CustomSeriesDataItem<Data, Item, Metadata>
+where
+    Data: TimedData<Item = Item>,
+{
+    type Item = Item;
+
+    fn time(&self) -> &Self::Item {
+        match self {
+            Self::Data(data) => data.time(),
+            Self::Whitespace(data) => data.time(),
+        }
+    }
+
+    fn time_mut(&mut self) -> &mut Self::Item {
+        match self {
+            Self::Data(data) => data.time_mut(),
+            Self::Whitespace(data) => data.time_mut(),
+        }
+    }
+}
+
 /// One custom datum prepared with horizontal position and style information.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CustomBarItemData<Data> {
