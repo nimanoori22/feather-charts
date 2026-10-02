@@ -5,6 +5,7 @@ use crate::model::{
 /// Narrow, synchronous source contract required by `PriceScale`.
 pub trait PriceScaleDataSource {
     fn z_order(&self) -> i32;
+    fn set_z_order(&mut self, z_order: i32);
     fn visible(&self) -> bool;
     fn first_value(&self) -> Option<FirstValue>;
     /// Formats through the owning source without exposing a borrowed formatter.

@@ -23,7 +23,10 @@ use crate::{
         time_data::TimePointIndex,
     },
 };
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SeriesConstructionError {
@@ -124,7 +127,7 @@ pub struct Series<I, O, M = ()> {
     data: PlotList<SeriesPlotRow<I, O, (), M>>,
     formatter: SeriesValueFormatter,
     pane_data_generation: u64,
-    z_order: i32,
+    z_order: Cell<i32>,
     last_update_info: Option<SeriesUpdateInfo>,
 }
 
@@ -164,7 +167,7 @@ where
             data: PlotList::new(),
             formatter,
             pane_data_generation: 0,
-            z_order: 0,
+            z_order: Cell::new(0),
             last_update_info: None,
         })
     }
@@ -283,10 +286,10 @@ where
         common(&self.options).visible
     }
     pub const fn z_order(&self) -> i32 {
-        self.z_order
+        self.z_order.get()
     }
-    pub fn set_z_order(&mut self, z_order: i32) {
-        self.z_order = z_order;
+    pub fn set_z_order(&self, z_order: i32) {
+        self.z_order.set(z_order);
     }
     pub fn invalidate_pane_data(&mut self) {
         self.pane_data_generation = self.pane_data_generation.wrapping_add(1);
@@ -352,6 +355,9 @@ where
 {
     fn z_order(&self) -> i32 {
         self.series.z_order()
+    }
+    fn set_z_order(&mut self, z_order: i32) {
+        self.series.set_z_order(z_order);
     }
     fn visible(&self) -> bool {
         self.series.visible()
@@ -595,6 +601,9 @@ where
     fn z_order(&self) -> i32 {
         self.series.borrow().z_order()
     }
+    fn set_z_order(&mut self, z_order: i32) {
+        self.series.borrow_mut().set_z_order(z_order);
+    }
     fn visible(&self) -> bool {
         self.series.borrow().visible()
     }
@@ -672,6 +681,9 @@ mod tests {
     impl PriceScaleDataSource for OwnedSeriesPriceSource {
         fn z_order(&self) -> i32 {
             self.series.z_order()
+        }
+        fn set_z_order(&mut self, z_order: i32) {
+            self.series.set_z_order(z_order);
         }
         fn visible(&self) -> bool {
             self.series.visible()

@@ -1,5 +1,5 @@
-//! Grid options and the pane view owned by a chart pane.
-use crate::renderers::draw_line::LineStyle;
+//! Grid options and ownership of the Pane-local grid view.
+use crate::{renderers::draw_line::LineStyle, views::pane::grid_pane_view::GridPaneView};
 #[derive(Clone, Debug, PartialEq)]
 pub struct GridLineOptions {
     pub color: String,
@@ -28,37 +28,19 @@ pub enum UpdateType {
     Options,
 }
 #[derive(Clone, Debug)]
-pub struct GridPaneView {
-    pane_index: usize,
-    invalidated: bool,
-}
-impl GridPaneView {
-    pub const fn new(pane_index: usize) -> Self {
-        Self {
-            pane_index,
-            invalidated: true,
-        }
-    }
-    pub fn update(&mut self, _kind: UpdateType) {
-        self.invalidated = true
-    }
-    pub const fn pane_index(&self) -> usize {
-        self.pane_index
-    }
-    pub fn take_invalidation(&mut self) -> bool {
-        let value = self.invalidated;
-        self.invalidated = false;
-        value
-    }
-}
-#[derive(Clone, Debug)]
 pub struct Grid {
     pane_view: GridPaneView,
 }
+
+impl Default for Grid {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Grid {
-    pub const fn new(pane_index: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            pane_view: GridPaneView::new(pane_index),
+            pane_view: GridPaneView::new(),
         }
     }
     pub fn pane_view(&self) -> &GridPaneView {
@@ -73,11 +55,10 @@ mod tests {
     use super::*;
     #[test]
     fn owns_one_invalidatable_view() {
-        let mut grid = Grid::new(2);
-        assert!(grid.pane_view_mut().take_invalidation());
-        assert!(!grid.pane_view_mut().take_invalidation());
+        let mut grid = Grid::new();
+        assert!(grid.pane_view().is_invalidated());
         grid.pane_view_mut().update(UpdateType::Options);
-        assert!(grid.pane_view_mut().take_invalidation());
+        assert!(grid.pane_view().is_invalidated());
         assert_eq!(GridOptions::default().vert_lines.color, "#D6DCDE");
     }
 }
