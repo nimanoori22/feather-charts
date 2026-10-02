@@ -9,15 +9,19 @@ use crate::model::{
 
 /// Converts a public horizontal item into the behavior's internal form.
 pub trait HorzScaleItemConverter<Item, InternalItem> {
-    fn convert(&mut self, item: &Item) -> InternalItem;
+    type Error;
+
+    fn convert(&mut self, item: &Item) -> Result<InternalItem, Self::Error>;
 }
 
 impl<Item, InternalItem, F> HorzScaleItemConverter<Item, InternalItem> for F
 where
     F: FnMut(&Item) -> InternalItem,
 {
-    fn convert(&mut self, item: &Item) -> InternalItem {
-        self(item)
+    type Error = std::convert::Infallible;
+
+    fn convert(&mut self, item: &Item) -> Result<InternalItem, Self::Error> {
+        Ok(self(item))
     }
 }
 
@@ -37,15 +41,21 @@ pub trait HorzScaleBehavior {
     type InternalItem: Clone;
     type Key: Clone;
     type CacheKey: Clone;
-    type DataItem: TimedData<Item = Self::Item>;
     type Options;
     type Converter: HorzScaleItemConverter<Self::Item, Self::InternalItem>;
+    type Error;
 
     fn options(&self) -> &Self::Options;
     fn set_options(&mut self, options: Self::Options);
-    fn preprocess_data(&mut self, data: &mut [Self::DataItem]);
-    fn to_internal(&self, item: &Self::Item) -> Self::InternalItem;
-    fn create_converter_to_internal(&mut self, data: &[Self::DataItem]) -> Self::Converter;
+    fn preprocess_data<D: TimedData<Item = Self::Item>>(
+        &mut self,
+        data: &mut [D],
+    ) -> Result<(), Self::Error>;
+    fn to_internal(&self, item: &Self::Item) -> Result<Self::InternalItem, Self::Error>;
+    fn create_converter_to_internal<D: TimedData<Item = Self::Item>>(
+        &mut self,
+        data: &[D],
+    ) -> Result<Self::Converter, Self::Error>;
     fn key(&self, item: &Self::InternalItem) -> Self::Key;
     fn cache_key(&self, item: &Self::InternalItem) -> Self::CacheKey;
     fn update_formatter(&mut self, options: &LocalizationOptions<Self::Item>);
@@ -74,6 +84,7 @@ pub trait HorzScaleBehavior {
 #[cfg(test)]
 mod tests {
     use crate::model::{
+        data_consumer::TimedData,
         data_consumer::WhitespaceData,
         localization_options::LocalizationOptions,
         tick_marks::TickMark,
@@ -91,9 +102,9 @@ mod tests {
         type InternalItem = f64;
         type Key = f64;
         type CacheKey = f64;
-        type DataItem = WhitespaceData<f64>;
         type Options = ();
         type Converter = fn(&f64) -> f64;
+        type Error = std::convert::Infallible;
 
         fn options(&self) -> &Self::Options {
             &self.options
@@ -101,12 +112,20 @@ mod tests {
         fn set_options(&mut self, options: Self::Options) {
             self.options = options;
         }
-        fn preprocess_data(&mut self, _data: &mut [Self::DataItem]) {}
-        fn to_internal(&self, item: &Self::Item) -> Self::InternalItem {
-            *item
+        fn preprocess_data<D: TimedData<Item = Self::Item>>(
+            &mut self,
+            _data: &mut [D],
+        ) -> Result<(), Self::Error> {
+            Ok(())
         }
-        fn create_converter_to_internal(&mut self, _data: &[Self::DataItem]) -> Self::Converter {
-            |item| *item
+        fn to_internal(&self, item: &Self::Item) -> Result<Self::InternalItem, Self::Error> {
+            Ok(*item)
+        }
+        fn create_converter_to_internal<D: TimedData<Item = Self::Item>>(
+            &mut self,
+            _data: &[D],
+        ) -> Result<Self::Converter, Self::Error> {
+            Ok(|item| *item)
         }
         fn key(&self, item: &Self::InternalItem) -> Self::Key {
             *item
@@ -146,9 +165,10 @@ mod tests {
     #[test]
     fn behavior_contract_supports_conversion_formatting_and_weighting() {
         let mut behavior = NumberBehavior { options: () };
-        let mut converter = behavior.create_converter_to_internal(&[]);
-        assert_eq!(converter.convert(&2.5), 2.5);
-        assert_eq!(behavior.key(&behavior.to_internal(&2.5)), 2.5);
+        let empty: [WhitespaceData<f64>; 0] = [];
+        let mut converter = behavior.create_converter_to_internal(&empty).unwrap();
+        assert_eq!(converter.convert(&2.5), Ok(2.5));
+        assert_eq!(behavior.key(&behavior.to_internal(&2.5).unwrap()), 2.5);
 
         let options = LocalizationOptions::new("en-US", "dd MMM 'yy");
         let mark = TickMark {

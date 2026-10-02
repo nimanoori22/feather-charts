@@ -27,11 +27,46 @@ pub trait PlotRowLike {
     fn index(&self) -> TimePointIndex;
     fn values(&self) -> &PlotRowValue;
 }
+
+/// Common mutable access required by DataLayer when a time point is inserted
+/// or removed. Unlike [`PlotRowLike`], whitespace rows are supported and
+/// therefore expose their OHLC values as optional.
+pub trait MutablePlotRow {
+    type InternalTime;
+    type OriginalTime;
+
+    fn index(&self) -> TimePointIndex;
+    fn set_index(&mut self, index: TimePointIndex);
+    fn time(&self) -> &Self::InternalTime;
+    fn original_time(&self) -> &Self::OriginalTime;
+    fn values(&self) -> Option<&PlotRowValue>;
+}
 impl<I, O, C> PlotRowLike for PlotRow<I, O, C> {
     fn index(&self) -> TimePointIndex {
         self.index
     }
     fn values(&self) -> &PlotRowValue {
         &self.value
+    }
+}
+
+impl<I, O, C> MutablePlotRow for PlotRow<I, O, C> {
+    type InternalTime = I;
+    type OriginalTime = O;
+
+    fn index(&self) -> TimePointIndex {
+        self.index
+    }
+    fn set_index(&mut self, index: TimePointIndex) {
+        self.index = index;
+    }
+    fn time(&self) -> &I {
+        &self.time
+    }
+    fn original_time(&self) -> &O {
+        &self.original_time
+    }
+    fn values(&self) -> Option<&PlotRowValue> {
+        Some(&self.value)
     }
 }

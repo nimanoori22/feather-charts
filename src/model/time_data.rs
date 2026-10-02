@@ -39,6 +39,18 @@ impl TimePointIndex {
     pub const fn value(self) -> f64 {
         self.0
     }
+
+    pub fn is_integer(self) -> bool {
+        self.0.is_finite() && self.0.fract() == 0.0
+    }
+
+    pub fn as_usize(self) -> Option<usize> {
+        if self.is_integer() && self.0 >= 0.0 && self.0 <= usize::MAX as f64 {
+            Some(self.0 as usize)
+        } else {
+            None
+        }
+    }
 }
 
 impl From<f64> for TimePointIndex {

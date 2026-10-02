@@ -1,3 +1,6 @@
+use crate::model::{
+    data_source::PriceScaleHandle, idata_source::IDataSource, text_width_cache::TextMeasurer,
+};
 use crate::{
     formatters::iprice_formatter::PriceValueFormatter,
     model::{autoscale_info_impl::AutoscaleInfoImpl, time_data::TimePointIndex},
@@ -20,4 +23,14 @@ pub trait PriceScaleDataSource {
 pub struct FirstValue {
     pub value: f64,
     pub time_point: TimePointIndex,
+}
+
+pub trait IPriceDataSource<Target: TextMeasurer>:
+    IDataSource<Target> + PriceScaleDataSource
+{
+    fn price_line_color(&self, last_bar_color: &str) -> String;
+    fn model_id(&self) -> &str;
+    fn attached_price_scale(&self) -> Option<PriceScaleHandle> {
+        self.price_scale()
+    }
 }

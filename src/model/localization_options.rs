@@ -1,9 +1,10 @@
 //! Localized formatting callbacks supplied to horizontal-scale behaviors.
 
 use crate::model::price_formatter_fn::*;
+use std::rc::Rc;
 
 /// Custom formatting for a horizontal-scale item.
-pub type TimeFormatterFn<T> = Box<dyn Fn(&T) -> String>;
+pub type TimeFormatterFn<T> = Rc<dyn Fn(&T) -> String>;
 
 /// Locale-wide price and percentage formatting hooks.
 pub struct LocalizationOptionsBase {
@@ -40,11 +41,12 @@ impl<T> LocalizationOptions<T> {
 #[cfg(test)]
 mod tests {
     use super::LocalizationOptions;
+    use std::rc::Rc;
 
     #[test]
     fn retains_locale_and_optional_time_formatter() {
         let mut options = LocalizationOptions::new("en-US", "dd MMM 'yy");
-        options.time_formatter = Some(Box::new(|value: &u32| format!("T{value}")));
+        options.time_formatter = Some(Rc::new(|value: &u32| format!("T{value}")));
 
         assert_eq!(options.base.locale, "en-US");
         assert_eq!(options.date_format, "dd MMM 'yy");
