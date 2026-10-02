@@ -10,6 +10,35 @@ pub enum LineWidth {
     Four = 4,
 }
 
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum LineType {
+    #[default]
+    Simple,
+    WithSteps,
+    Curved,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+#[repr(u8)]
+pub enum LineStyle {
+    #[default]
+    Solid = 0,
+    Dotted = 1,
+    Dashed = 2,
+    LargeDashed = 3,
+    SparseDotted = 4,
+}
+
+pub fn dash_pattern(style: LineStyle, width: f32) -> Vec<f32> {
+    match style {
+        LineStyle::Solid => vec![],
+        LineStyle::Dotted => vec![width, width],
+        LineStyle::Dashed => vec![2.0 * width, 2.0 * width],
+        LineStyle::LargeDashed => vec![6.0 * width, 6.0 * width],
+        LineStyle::SparseDotted => vec![width, 4.0 * width],
+    }
+}
+
 impl LineWidth {
     pub const fn pixels(self) -> f32 {
         self as u8 as f32
