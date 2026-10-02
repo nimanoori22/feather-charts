@@ -2,6 +2,7 @@ pub mod autoscale_info_impl;
 pub mod bar;
 pub mod colors;
 pub mod coordinate;
+pub mod horz_scale_behavior_time;
 pub mod price_formatter_fn;
 pub mod range_impl;
 pub mod series_options;
