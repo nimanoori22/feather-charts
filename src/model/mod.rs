@@ -3,6 +3,7 @@ pub mod bar;
 pub mod colors;
 pub mod coordinate;
 pub mod data_consumer;
+pub mod data_layer;
 pub mod data_source;
 pub mod formatted_labels_cache;
 pub mod get_series_plot_row_creator;
