@@ -1,16 +1,15 @@
+use crate::model::{autoscale_info_impl::AutoscaleInfoImpl, time_data::TimePointIndex};
 use crate::model::{
     data_source::PriceScaleHandle, idata_source::IDataSource, text_width_cache::TextMeasurer,
-};
-use crate::{
-    formatters::iprice_formatter::PriceValueFormatter,
-    model::{autoscale_info_impl::AutoscaleInfoImpl, time_data::TimePointIndex},
 };
 /// Narrow, synchronous source contract required by `PriceScale`.
 pub trait PriceScaleDataSource {
     fn z_order(&self) -> i32;
     fn visible(&self) -> bool;
     fn first_value(&self) -> Option<FirstValue>;
-    fn formatter(&self) -> &dyn PriceValueFormatter;
+    /// Formats through the owning source without exposing a borrowed formatter.
+    /// This permits Pane-owned adapters to borrow a Series through `RefCell`.
+    fn format_price(&self, price: f64) -> String;
     fn base(&self) -> f64;
     fn autoscale_info(
         &self,

@@ -358,8 +358,8 @@ where
     fn first_value(&self) -> Option<FirstValue> {
         self.series.first_value(self.visible)
     }
-    fn formatter(&self) -> &dyn PriceValueFormatter {
-        self.series.formatter()
+    fn format_price(&self, price: f64) -> String {
+        self.series.format_price(price)
     }
     fn base(&self) -> f64 {
         self.series.base()
@@ -566,8 +566,8 @@ mod tests {
         fn first_value(&self) -> Option<FirstValue> {
             self.series.first_value(Some(&self.visible))
         }
-        fn formatter(&self) -> &dyn PriceValueFormatter {
-            self.series.formatter()
+        fn format_price(&self, price: f64) -> String {
+            self.series.format_price(price)
         }
         fn base(&self) -> f64 {
             self.series.base()

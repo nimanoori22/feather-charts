@@ -73,6 +73,13 @@ pub struct PriceScale {
 }
 impl PriceScale {
     pub fn new(id: impl Into<String>, options: PriceScaleOptions, layout: &LayoutOptions) -> Self {
+        Self::new_with_font_size(id, options, layout.font_size)
+    }
+    pub fn new_with_font_size(
+        id: impl Into<String>,
+        options: PriceScaleOptions,
+        layout_font_size: f64,
+    ) -> Self {
         Self {
             id: id.into(),
             options,
@@ -80,7 +87,7 @@ impl PriceScale {
             range: None,
             sources: vec![],
             log_formula: DEFAULT_LOG_FORMULA,
-            layout_font_size: layout.font_size,
+            layout_font_size,
         }
     }
     pub fn id(&self) -> &str {
@@ -237,7 +244,7 @@ impl PriceScale {
             }
             _ => {
                 if let Some(source) = self.sources.iter().min_by_key(|s| s.borrow().z_order()) {
-                    source.borrow().formatter().format(price)
+                    source.borrow().format_price(price)
                 } else {
                     PriceFormatter::default().format(price)
                 }
