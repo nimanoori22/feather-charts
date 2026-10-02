@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+csscolorparser = "0.8.3"
 iced = { version = "0.14.0", features = ["canvas"] }
