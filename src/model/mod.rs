@@ -25,6 +25,7 @@ pub mod price_formatter_fn;
 pub mod price_range_impl;
 pub mod price_scale;
 pub mod price_scale_conversions;
+pub mod price_scale_visible_range;
 pub mod price_tick_mark_builder;
 pub mod price_tick_span_calculator;
 pub mod range_impl;

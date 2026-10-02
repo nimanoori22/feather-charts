@@ -6,8 +6,9 @@ use crate::model::{
     iprice_data_source::{FirstValue, PriceScaleDataSource},
     layout_options::LayoutOptions,
     price_scale::{PriceScale, PriceScaleOptions, PriceSourceHandle},
+    price_scale_visible_range::PriceScaleVisibleRange,
     range_impl::RangeImpl,
-    series::Series,
+    series::{CustomSeriesHandle, CustomSeriesPriceScaleSource, Series},
     time_data::TimePointIndex,
 };
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
@@ -44,13 +45,12 @@ pub enum PaneError {
 }
 
 pub type SeriesHandle<I, O, M = ()> = Rc<RefCell<Series<I, O, M>>>;
-type VisibleRangeHandle = Rc<RefCell<Option<RangeImpl<TimePointIndex>>>>;
 
 /// Long-lived PriceScale adapter. It owns only a Series handle and a
 /// Pane-managed visible-range snapshot; neither object refers back to Pane.
 struct PaneSeriesPriceSource<I, O, M = ()> {
     series: SeriesHandle<I, O, M>,
-    visible: VisibleRangeHandle,
+    visible: PriceScaleVisibleRange,
 }
 
 impl<I, O, M> PriceScaleDataSource for PaneSeriesPriceSource<I, O, M>
@@ -66,7 +66,7 @@ where
         self.series.borrow().visible()
     }
     fn first_value(&self) -> Option<FirstValue> {
-        let visible = *self.visible.borrow();
+        let visible = self.visible.get();
         self.series.borrow().first_value(visible.as_ref())
     }
     fn format_price(&self, price: f64) -> String {
@@ -91,6 +91,12 @@ struct AttachedSeries<I, O, M = ()> {
     position: PriceScalePosition,
 }
 
+struct AttachedCustomSource {
+    id: SeriesId,
+    source: PriceSourceHandle,
+    position: PriceScalePosition,
+}
+
 /// Model-only Pane core. Rendering, primitives, subscriptions, and Iced stay
 /// outside this ownership boundary.
 pub struct Pane<I = (), O = (), M = ()> {
@@ -105,7 +111,8 @@ pub struct Pane<I = (), O = (), M = ()> {
     right_price_scale: PriceScale,
     overlay_price_scales: BTreeMap<String, PriceScale>,
     attached_series: Vec<AttachedSeries<I, O, M>>,
-    visible_range: VisibleRangeHandle,
+    attached_custom_sources: Vec<AttachedCustomSource>,
+    visible_range: PriceScaleVisibleRange,
     invalidation_generation: u64,
 }
 
@@ -136,7 +143,8 @@ where
             layout_font_size: layout.font_size,
             overlay_price_scales: BTreeMap::new(),
             attached_series: vec![],
-            visible_range: Rc::new(RefCell::new(None)),
+            attached_custom_sources: vec![],
+            visible_range: PriceScaleVisibleRange::default(),
             invalidation_generation: 0,
         }
     }
@@ -221,13 +229,20 @@ where
             .collect()
     }
 
+    pub fn attached_custom_series_ids(&self) -> Vec<SeriesId> {
+        self.attached_custom_sources
+            .iter()
+            .map(|attached| attached.id)
+            .collect()
+    }
+
     pub fn attach_series(
         &mut self,
         series: SeriesHandle<I, O, M>,
         position: PriceScalePosition,
     ) -> Result<Vec<PaneEffect>, PaneError> {
         let id = series.borrow().id();
-        if self.series_position(id).is_some() {
+        if self.contains_source(id) {
             return Err(PaneError::SeriesAlreadyAttached(id));
         }
         series
@@ -245,7 +260,39 @@ where
             position: position.clone(),
         });
         let mut effects = self.invalidate();
-        let visible = *self.visible_range.borrow();
+        let visible = self.visible_range.get();
+        effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
+        Ok(deduplicate_effects(effects))
+    }
+
+    pub fn attach_custom_series<D>(
+        &mut self,
+        series: CustomSeriesHandle<I, O, D, M>,
+        position: PriceScalePosition,
+    ) -> Result<Vec<PaneEffect>, PaneError>
+    where
+        D: 'static,
+    {
+        let id = series.borrow().id();
+        if self.contains_source(id) {
+            return Err(PaneError::SeriesAlreadyAttached(id));
+        }
+        series
+            .borrow_mut()
+            .set_z_order((self.attached_series.len() + self.attached_custom_sources.len()) as i32);
+        let source: PriceSourceHandle = Rc::new(RefCell::new(CustomSeriesPriceScaleSource::new(
+            series,
+            self.visible_range.clone(),
+        )));
+        self.price_scale_mut(&position)
+            .add_data_source(source.clone());
+        self.attached_custom_sources.push(AttachedCustomSource {
+            id,
+            source,
+            position: position.clone(),
+        });
+        let mut effects = self.invalidate();
+        let visible = self.visible_range.get();
         effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
         Ok(deduplicate_effects(effects))
     }
@@ -263,7 +310,25 @@ where
         }
         self.remove_empty_overlay(&position);
         let mut effects = self.invalidate();
-        let visible = *self.visible_range.borrow();
+        let visible = self.visible_range.get();
+        effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
+        Ok(deduplicate_effects(effects))
+    }
+
+    pub fn detach_custom_series(&mut self, id: SeriesId) -> Result<Vec<PaneEffect>, PaneError> {
+        let index = self
+            .attached_custom_sources
+            .iter()
+            .position(|attached| attached.id == id)
+            .ok_or(PaneError::UnknownSeries(id))?;
+        let attached = self.attached_custom_sources.remove(index);
+        let position = attached.position.clone();
+        if let Some(scale) = self.price_scale_mut_existing(&position) {
+            scale.remove_data_source(&attached.source);
+        }
+        self.remove_empty_overlay(&position);
+        let mut effects = self.invalidate();
+        let visible = self.visible_range.get();
         effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
         Ok(deduplicate_effects(effects))
     }
@@ -290,7 +355,35 @@ where
         self.remove_empty_overlay(&old_position);
         self.price_scale_mut(&position).add_data_source(source);
         let mut effects = self.invalidate();
-        let visible = *self.visible_range.borrow();
+        let visible = self.visible_range.get();
+        effects.extend(self.recalculate_price_scale(old_position, visible.as_ref()));
+        effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
+        Ok(deduplicate_effects(effects))
+    }
+
+    pub fn move_custom_series_to_scale(
+        &mut self,
+        id: SeriesId,
+        position: PriceScalePosition,
+    ) -> Result<Vec<PaneEffect>, PaneError> {
+        let index = self
+            .attached_custom_sources
+            .iter()
+            .position(|attached| attached.id == id)
+            .ok_or(PaneError::UnknownSeries(id))?;
+        let old_position = self.attached_custom_sources[index].position.clone();
+        if old_position == position {
+            return Ok(vec![]);
+        }
+        let source = self.attached_custom_sources[index].source.clone();
+        if let Some(scale) = self.price_scale_mut_existing(&old_position) {
+            scale.remove_data_source(&source);
+        }
+        self.attached_custom_sources[index].position = position.clone();
+        self.remove_empty_overlay(&old_position);
+        self.price_scale_mut(&position).add_data_source(source);
+        let mut effects = self.invalidate();
+        let visible = self.visible_range.get();
         effects.extend(self.recalculate_price_scale(old_position, visible.as_ref()));
         effects.extend(self.recalculate_price_scale(position, visible.as_ref()));
         Ok(deduplicate_effects(effects))
@@ -325,7 +418,11 @@ where
         let has_sources = self
             .attached_series
             .iter()
-            .any(|attached| attached.position == position);
+            .any(|attached| attached.position == position)
+            || self
+                .attached_custom_sources
+                .iter()
+                .any(|attached| attached.position == position);
         let scale = self
             .price_scale_mut_existing(&position)
             .expect("the checked price scale remains attached");
@@ -341,7 +438,7 @@ where
     }
 
     fn set_visible_range(&self, visible: Option<&RangeImpl<TimePointIndex>>) {
-        *self.visible_range.borrow_mut() = visible.copied();
+        self.visible_range.set(visible);
     }
 
     fn series_position(&self, id: SeriesId) -> Option<&PriceScalePosition> {
@@ -349,6 +446,14 @@ where
             .iter()
             .find(|attached| attached.series.borrow().id() == id)
             .map(|attached| &attached.position)
+    }
+
+    fn contains_source(&self, id: SeriesId) -> bool {
+        self.series_position(id).is_some()
+            || self
+                .attached_custom_sources
+                .iter()
+                .any(|attached| attached.id == id)
     }
 
     fn price_scale_mut_existing(
@@ -389,6 +494,10 @@ where
             .attached_series
             .iter()
             .any(|attached| attached.position == *position)
+            && !self
+                .attached_custom_sources
+                .iter()
+                .any(|attached| attached.position == *position)
         {
             self.overlay_price_scales.remove(id);
         }
@@ -419,12 +528,13 @@ mod tests {
             layout_options::{Background, ColorSpace, LayoutPanesOptions},
             plot_data::PlotRow,
             price_range_impl::PriceRange,
-            series_data::{HistogramPlotRow, LinePlotRow, SeriesPlotRow},
+            series::CustomSeries,
+            series_data::{CustomPlotRow, HistogramPlotRow, LinePlotRow, SeriesPlotRow},
             series_options::{
-                AutoscaleInfoProvider, HistogramStyleOptions, LastPriceAnimationMode,
-                LineStyleOptions, PriceAxisLastValueMode, PriceFormat, PriceFormatBuiltIn,
-                PriceFormatBuiltInType, PriceLineSource, SeriesOptions, SeriesOptionsCommon,
-                SeriesOptionsMap, SeriesType,
+                AutoscaleInfoProvider, CustomSeriesOptions, CustomStyleOptions,
+                HistogramStyleOptions, LastPriceAnimationMode, LineStyleOptions,
+                PriceAxisLastValueMode, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
+                PriceLineSource, SeriesOptions, SeriesOptionsCommon, SeriesOptionsMap, SeriesType,
             },
         },
         renderers::draw_line::{LineStyle, LineType, LineWidth},
@@ -508,6 +618,15 @@ mod tests {
         })
     }
 
+    fn custom_options() -> CustomSeriesOptions {
+        SeriesOptions {
+            common: common(),
+            style: CustomStyleOptions {
+                color: String::new(),
+            },
+        }
+    }
+
     fn line_handle(id: u64, close: f64) -> SeriesHandle<(), (), ()> {
         let mut series = Series::new(SeriesId::new(id), SeriesType::Line, line_options()).unwrap();
         series.set_data(
@@ -546,6 +665,26 @@ mod tests {
                 },
                 color: None,
             })],
+            None,
+        );
+        Rc::new(RefCell::new(series))
+    }
+
+    fn custom_handle(id: u64, values: [f64; 4]) -> CustomSeriesHandle<(), (), &'static str, ()> {
+        let mut series = CustomSeries::new(SeriesId::new(id), custom_options());
+        series.set_data(
+            vec![CustomPlotRow {
+                base: PlotRow {
+                    index: 0.0.into(),
+                    time: (),
+                    original_time: (),
+                    value: values,
+                    custom_values: None,
+                    original_data_count: None,
+                },
+                data: "typed payload",
+                color: None,
+            }],
             None,
         );
         Rc::new(RefCell::new(series))
@@ -660,6 +799,94 @@ mod tests {
             pane.left_price_scale().price_range(),
             Some(crate::model::price_range_impl::PriceRangeImpl::new(
                 -2.0, 8.0
+            ))
+        );
+    }
+
+    #[test]
+    fn custom_sources_attach_merge_move_and_clean_up_overlays() {
+        let mut pane = Pane::new(0, PaneOptions::default(), &layout());
+        let built_in = line_handle(1, 10.0);
+        let custom = custom_handle(2, [30.0, 50.0, -2.0, 30.0]);
+        pane.attach_series(built_in, PriceScalePosition::Left)
+            .unwrap();
+        pane.attach_custom_series(custom.clone(), PriceScalePosition::Left)
+            .unwrap();
+
+        let visible = RangeImpl::new(0.0.into(), 0.0.into());
+        pane.recalculate(Some(&visible));
+        assert_eq!(
+            pane.left_price_scale().price_range(),
+            Some(crate::model::price_range_impl::PriceRangeImpl::new(
+                -2.0, 50.0
+            ))
+        );
+        assert_eq!(pane.attached_custom_series_ids(), vec![SeriesId::new(2)]);
+        assert!(matches!(
+            pane.attach_custom_series(custom.clone(), PriceScalePosition::Right),
+            Err(PaneError::SeriesAlreadyAttached(_))
+        ));
+        assert!(matches!(
+            pane.attach_custom_series(
+                custom_handle(1, [1.0, 1.0, 1.0, 1.0]),
+                PriceScalePosition::Right,
+            ),
+            Err(PaneError::SeriesAlreadyAttached(_))
+        ));
+
+        pane.move_custom_series_to_scale(
+            SeriesId::new(2),
+            PriceScalePosition::Overlay("custom".into()),
+        )
+        .unwrap();
+        assert_eq!(
+            pane.price_scale_by_id("custom").unwrap().price_range(),
+            Some(crate::model::price_range_impl::PriceRangeImpl::new(
+                -2.0, 50.0
+            ))
+        );
+        pane.detach_custom_series(SeriesId::new(2)).unwrap();
+        assert!(pane.price_scale_by_id("custom").is_none());
+    }
+
+    #[test]
+    fn custom_provider_range_reaches_the_price_scale() {
+        let provider: AutoscaleInfoProvider = Box::new(|_| {
+            Some(AutoscaleInfo {
+                price_range: Some(PriceRange {
+                    min_value: -7.0,
+                    max_value: 9.0,
+                }),
+                margins: None,
+            })
+        });
+        let mut options = custom_options();
+        options.common.autoscale_info_provider = Some(provider);
+        let mut series = CustomSeries::<(), (), (), ()>::new(SeriesId::new(2), options);
+        series.set_data(
+            vec![CustomPlotRow {
+                base: PlotRow {
+                    index: 0.0.into(),
+                    time: (),
+                    original_time: (),
+                    value: [2.0, 5.0, 1.0, 2.0],
+                    custom_values: None,
+                    original_data_count: None,
+                },
+                data: (),
+                color: None,
+            }],
+            None,
+        );
+
+        let mut pane = Pane::new(0, PaneOptions::default(), &layout());
+        pane.attach_custom_series(Rc::new(RefCell::new(series)), PriceScalePosition::Right)
+            .unwrap();
+        pane.recalculate(Some(&RangeImpl::new(0.0.into(), 0.0.into())));
+        assert_eq!(
+            pane.right_price_scale().price_range(),
+            Some(crate::model::price_range_impl::PriceRangeImpl::new(
+                -7.0, 9.0
             ))
         );
     }

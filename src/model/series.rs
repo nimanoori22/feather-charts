@@ -13,11 +13,12 @@ use crate::{
         plot_data::{PlotRowLike, PlotRowValueIndex},
         plot_list::{MismatchDirection, PlotList},
         price_range_impl::PriceRangeImpl,
+        price_scale_visible_range::PriceScaleVisibleRange,
         range_impl::RangeImpl,
         series_data::{CustomPlotRow, SeriesPlotRow},
         series_options::{
-            PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType, SeriesOptionsCommon,
-            SeriesOptionsMap, SeriesType,
+            CustomSeriesOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
+            SeriesOptionsCommon, SeriesOptionsMap, SeriesType,
         },
         time_data::TimePointIndex,
     },
@@ -377,16 +378,25 @@ where
 /// Typed custom-series data retained by the Series rather than DataLayer.
 pub struct CustomSeries<I, O, D, M = ()> {
     id: SeriesId,
+    options: CustomSeriesOptions,
     data: Vec<CustomPlotRow<I, O, D, M>>,
+    formatter: SeriesValueFormatter,
     pane_data_generation: u64,
+    z_order: i32,
+    last_update_info: Option<SeriesUpdateInfo>,
 }
 
 impl<I, O, D, M> CustomSeries<I, O, D, M> {
-    pub fn new(id: SeriesId) -> Self {
+    pub fn new(id: SeriesId, options: CustomSeriesOptions) -> Self {
+        let formatter = formatter_for(&options.common.price_format);
         Self {
             id,
+            options,
             data: vec![],
+            formatter,
             pane_data_generation: 0,
+            z_order: 0,
+            last_update_info: None,
         }
     }
     pub fn rows(&self) -> &[CustomPlotRow<I, O, D, M>] {
@@ -395,8 +405,21 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     pub const fn id(&self) -> SeriesId {
         self.id
     }
-    pub fn set_data(&mut self, rows: Vec<CustomPlotRow<I, O, D, M>>) {
+    pub fn options(&self) -> &CustomSeriesOptions {
+        &self.options
+    }
+    pub fn replace_options(&mut self, options: CustomSeriesOptions) {
+        self.formatter = formatter_for(&options.common.price_format);
+        self.options = options;
+        self.invalidate_pane_data();
+    }
+    pub fn set_data(
+        &mut self,
+        rows: Vec<CustomPlotRow<I, O, D, M>>,
+        info: Option<SeriesUpdateInfo>,
+    ) {
         self.data = rows;
+        self.last_update_info = info;
         self.invalidate_pane_data();
     }
     pub fn apply_indices(&mut self, changes: &CustomSeriesChanges<I, O>) {
@@ -417,23 +440,27 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         }
         removed
     }
-    pub fn apply_update(&mut self, update: &CustomDataUpdateResponse<I, O, D, M>)
-    where
-        I: Clone,
-        O: Clone,
-        D: Clone,
-        M: Clone,
-    {
-        if update.is_full_replacement {
-            self.data = update.custom_rows.clone();
-        } else if let Some(index) = update.changed_index {
+    /// Consumes the typed DataLayer handoff so applying an update never
+    /// requires cloning the custom payload.
+    pub fn apply_update(&mut self, update: CustomDataUpdateResponse<I, O, D, M>) {
+        let CustomDataUpdateResponse {
+            custom_rows,
+            custom,
+            is_full_replacement,
+            changed_index,
+            ..
+        } = update;
+        if is_full_replacement {
+            self.data = custom_rows;
+        } else if let Some(index) = changed_index {
             self.data.retain(|row| row.base.index != index);
-            self.data.extend(update.custom_rows.iter().cloned());
+            self.data.extend(custom_rows);
             self.data
                 .sort_by(|left, right| left.base.index.partial_cmp(&right.base.index).unwrap());
         }
-        if let Some(changes) = update.custom.get(&self.id) {
+        if let Some(changes) = custom.get(&self.id) {
             self.apply_indices(changes);
+            self.last_update_info = changes.info;
         }
     }
     pub fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
@@ -450,9 +477,9 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
             time_point: row.base.index,
         })
     }
-    /// Computes the custom series' low/high envelope from its DataLayer-created
-    /// OHLC projection. The typed custom payload is intentionally untouched.
-    pub fn autoscale_info(
+    /// Computes the custom low/high envelope from its DataLayer-created OHLC
+    /// projection. The typed custom payload is intentionally untouched.
+    fn built_in_autoscale_info(
         &self,
         start: TimePointIndex,
         end: TimePointIndex,
@@ -482,6 +509,44 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
 
         Some(AutoscaleInfoImpl::new(range, None))
     }
+    pub fn autoscale_info(
+        &self,
+        start: TimePointIndex,
+        end: TimePointIndex,
+    ) -> Option<AutoscaleInfoImpl> {
+        if let Some(provider) = self.options.common.autoscale_info_provider.as_ref() {
+            let raw = provider(&|| {
+                self.built_in_autoscale_info(start, end)
+                    .map(|info| info.to_raw())
+            });
+            return AutoscaleInfoImpl::from_raw(raw);
+        }
+        self.built_in_autoscale_info(start, end)
+    }
+    pub fn formatter(&self) -> &dyn PriceValueFormatter {
+        &self.formatter
+    }
+    pub fn format_price(&self, value: f64) -> String {
+        self.formatter.format(value)
+    }
+    pub fn base(&self) -> f64 {
+        match &self.options.common.price_format {
+            PriceFormat::BuiltIn(format) => format.base.unwrap_or(1.0 / format.min_move),
+            PriceFormat::Custom(format) => format.base.unwrap_or(1.0 / format.min_move),
+        }
+    }
+    pub const fn visible(&self) -> bool {
+        self.options.common.visible
+    }
+    pub const fn z_order(&self) -> i32 {
+        self.z_order
+    }
+    pub fn set_z_order(&mut self, z_order: i32) {
+        self.z_order = z_order;
+    }
+    pub const fn last_update_info(&self) -> Option<SeriesUpdateInfo> {
+        self.last_update_info
+    }
     pub fn invalidate_pane_data(&mut self) {
         self.pane_data_generation = self.pane_data_generation.wrapping_add(1);
     }
@@ -506,6 +571,52 @@ impl<I, O, D, M> SeriesUpdateTarget<I, O, M> for CustomSeries<I, O, D, M> {
 /// handle to apply `CustomDataUpdateResponse<D>`, while the coordinator holds
 /// a lightweight target adapter for invalidation and index synchronization.
 pub type CustomSeriesHandle<I, O, D, M = ()> = Rc<RefCell<CustomSeries<I, O, D, M>>>;
+
+/// Long-lived custom source adapter. The type-erased PriceScale boundary owns
+/// this adapter, while the adapter itself retains the typed `D` handle.
+pub struct CustomSeriesPriceScaleSource<I, O, D, M = ()> {
+    series: CustomSeriesHandle<I, O, D, M>,
+    visible: PriceScaleVisibleRange,
+}
+
+impl<I, O, D, M> CustomSeriesPriceScaleSource<I, O, D, M> {
+    pub fn new(series: CustomSeriesHandle<I, O, D, M>, visible: PriceScaleVisibleRange) -> Self {
+        Self { series, visible }
+    }
+}
+
+impl<I, O, D, M> PriceScaleDataSource for CustomSeriesPriceScaleSource<I, O, D, M>
+where
+    I: Clone + 'static,
+    O: Clone + 'static,
+    D: 'static,
+    M: 'static,
+{
+    fn z_order(&self) -> i32 {
+        self.series.borrow().z_order()
+    }
+    fn visible(&self) -> bool {
+        self.series.borrow().visible()
+    }
+    fn first_value(&self) -> Option<FirstValue> {
+        let visible = self.visible.get();
+        self.series.borrow().first_value(visible.as_ref())
+    }
+    fn format_price(&self, price: f64) -> String {
+        self.series.borrow().format_price(price)
+    }
+    fn base(&self) -> f64 {
+        self.series.borrow().base()
+    }
+    fn autoscale_info(
+        &self,
+        start: TimePointIndex,
+        end: TimePointIndex,
+    ) -> Option<AutoscaleInfoImpl> {
+        self.series.borrow().autoscale_info(start, end)
+    }
+    fn update_all_views(&mut self) {}
+}
 
 pub struct CustomSeriesTarget<I, O, D, M = ()> {
     handle: CustomSeriesHandle<I, O, D, M>,
@@ -535,21 +646,23 @@ mod tests {
     use crate::{
         model::{
             autoscale_info_impl::AutoscaleInfo,
-            data_layer::{CustomSeriesChanges, SeriesId},
+            data_layer::{
+                CustomDataUpdateResponse, CustomSeriesChanges, SeriesId, TimeScaleChanges,
+            },
             layout_options::{Background, ColorSpace, LayoutOptions, LayoutPanesOptions},
             plot_data::PlotRow,
             price_range_impl::PriceRange,
             price_scale::{PriceScale, PriceScaleOptions, PriceSourceHandle},
             series_data::{BarPlotRow, HistogramPlotRow, LinePlotRow},
             series_options::{
-                AutoscaleInfoProvider, BarStyleOptions, HistogramStyleOptions,
+                AutoscaleInfoProvider, BarStyleOptions, CustomStyleOptions, HistogramStyleOptions,
                 LastPriceAnimationMode, LineStyleOptions, PriceAxisLastValueMode, PriceLineSource,
                 SeriesOptions, SeriesOptionsCommon,
             },
         },
         renderers::draw_line::{LineStyle, LineType, LineWidth},
     };
-    use std::{cell::RefCell, rc::Rc};
+    use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
     struct OwnedSeriesPriceSource {
         series: Series<(), (), ()>,
@@ -679,6 +792,15 @@ mod tests {
                 base,
             },
         })
+    }
+
+    fn custom_options() -> CustomSeriesOptions {
+        SeriesOptions {
+            common: common_options(),
+            style: CustomStyleOptions {
+                color: String::new(),
+            },
+        }
     }
 
     fn row(index: f64, close: f64) -> SeriesPlotRow<(), (), (), ()> {
@@ -1008,19 +1130,22 @@ mod tests {
 
     #[test]
     fn custom_series_keeps_typed_rows_and_returns_popped_rows() {
-        let mut custom = CustomSeries::<(), (), &str, ()>::new(SeriesId::new(7));
-        custom.set_data(vec![CustomPlotRow {
-            base: PlotRow {
-                index: 2.0.into(),
-                time: (),
-                original_time: (),
-                value: [3.; 4],
-                custom_values: None,
-                original_data_count: None,
-            },
-            data: "payload",
-            color: None,
-        }]);
+        let mut custom = CustomSeries::<(), (), &str, ()>::new(SeriesId::new(7), custom_options());
+        custom.set_data(
+            vec![CustomPlotRow {
+                base: PlotRow {
+                    index: 2.0.into(),
+                    time: (),
+                    original_time: (),
+                    value: [3.; 4],
+                    custom_values: None,
+                    original_data_count: None,
+                },
+                data: "payload",
+                color: None,
+            }],
+            None,
+        );
         let changes = CustomSeriesChanges::new(vec![4.0.into()], None);
         custom.apply_indices(&changes);
         let popped = custom.pop_indices(&[4.0.into()]);
@@ -1029,36 +1154,147 @@ mod tests {
     }
 
     #[test]
+    fn custom_options_refresh_formatter_visibility_and_pane_data() {
+        let mut custom = CustomSeries::<(), (), (), ()>::new(SeriesId::new(7), custom_options());
+        assert!(custom.visible());
+        assert_eq!(custom.base(), 100.);
+        assert_eq!(custom.format_price(1.2), "1.20");
+
+        let mut replacement = custom_options();
+        replacement.common.visible = false;
+        replacement.common.price_format = PriceFormat::BuiltIn(PriceFormatBuiltIn {
+            kind: PriceFormatBuiltInType::Percent,
+            precision: 2,
+            min_move: 0.01,
+            base: Some(100.),
+        });
+        custom.replace_options(replacement);
+        custom.set_z_order(4);
+
+        assert!(!custom.visible());
+        assert_eq!(custom.z_order(), 4);
+        assert_eq!(custom.format_price(1.2), "1.20%");
+        assert_eq!(custom.pane_data_generation(), 1);
+    }
+
+    #[test]
+    fn custom_series_uses_sparse_first_value_and_provider_result() {
+        let provider: AutoscaleInfoProvider = Box::new(|default| {
+            let mut info = default()?;
+            let range = info.price_range.as_mut()?;
+            range.min_value -= 2.;
+            range.max_value += 3.;
+            Some(info)
+        });
+        let mut options = custom_options();
+        options.common.autoscale_info_provider = Some(provider);
+        let mut custom = CustomSeries::<(), (), (), ()>::new(SeriesId::new(7), options);
+        custom.set_data(
+            vec![
+                CustomPlotRow {
+                    base: PlotRow {
+                        index: 1.0.into(),
+                        time: (),
+                        original_time: (),
+                        value: [10., 20., 5., 10.],
+                        custom_values: None,
+                        original_data_count: None,
+                    },
+                    data: (),
+                    color: None,
+                },
+                CustomPlotRow {
+                    base: PlotRow {
+                        index: 4.0.into(),
+                        time: (),
+                        original_time: (),
+                        value: [30., 40., 25., 30.],
+                        custom_values: None,
+                        original_data_count: None,
+                    },
+                    data: (),
+                    color: None,
+                },
+            ],
+            None,
+        );
+        let visible = RangeImpl::new(2.0.into(), 5.0.into());
+        assert_eq!(custom.first_value(Some(&visible)).unwrap().value, 30.);
+        assert_eq!(
+            custom
+                .autoscale_info(1.0.into(), 4.0.into())
+                .unwrap()
+                .price_range(),
+            Some(PriceRangeImpl::new(3., 43.))
+        );
+    }
+
+    #[test]
+    fn custom_update_moves_non_clone_payload_without_copying_it() {
+        struct NonClonePayload(&'static str);
+
+        let id = SeriesId::new(7);
+        let mut custom = CustomSeries::<(), (), NonClonePayload, ()>::new(id, custom_options());
+        custom.apply_update(CustomDataUpdateResponse {
+            custom_rows: vec![CustomPlotRow {
+                base: PlotRow {
+                    index: 2.0.into(),
+                    time: (),
+                    original_time: (),
+                    value: [3.; 4],
+                    custom_values: None,
+                    original_data_count: None,
+                },
+                data: NonClonePayload("moved"),
+                color: None,
+            }],
+            custom: BTreeMap::from([(id, CustomSeriesChanges::new(vec![2.0.into()], None))]),
+            time_scale: TimeScaleChanges {
+                points: None,
+                first_changed_point_index: None,
+                base_index: None,
+            },
+            is_full_replacement: true,
+            changed_index: None,
+        });
+        assert_eq!(custom.rows()[0].data.0, "moved");
+    }
+
+    #[test]
     fn custom_autoscale_uses_projected_low_high_without_touching_payloads() {
         struct NonClonePayload(&'static str);
 
-        let mut custom = CustomSeries::<(), (), NonClonePayload, ()>::new(SeriesId::new(7));
-        custom.set_data(vec![
-            CustomPlotRow {
-                base: PlotRow {
-                    index: 0.0.into(),
-                    time: (),
-                    original_time: (),
-                    value: [10., 20., 5., 10.],
-                    custom_values: None,
-                    original_data_count: None,
+        let mut custom =
+            CustomSeries::<(), (), NonClonePayload, ()>::new(SeriesId::new(7), custom_options());
+        custom.set_data(
+            vec![
+                CustomPlotRow {
+                    base: PlotRow {
+                        index: 0.0.into(),
+                        time: (),
+                        original_time: (),
+                        value: [10., 20., 5., 10.],
+                        custom_values: None,
+                        original_data_count: None,
+                    },
+                    data: NonClonePayload("first"),
+                    color: None,
                 },
-                data: NonClonePayload("first"),
-                color: None,
-            },
-            CustomPlotRow {
-                base: PlotRow {
-                    index: 1.0.into(),
-                    time: (),
-                    original_time: (),
-                    value: [15., f64::NAN, -3., 15.],
-                    custom_values: None,
-                    original_data_count: None,
+                CustomPlotRow {
+                    base: PlotRow {
+                        index: 1.0.into(),
+                        time: (),
+                        original_time: (),
+                        value: [15., f64::NAN, -3., 15.],
+                        custom_values: None,
+                        original_data_count: None,
+                    },
+                    data: NonClonePayload("second"),
+                    color: None,
                 },
-                data: NonClonePayload("second"),
-                color: None,
-            },
-        ]);
+            ],
+            None,
+        );
 
         assert_eq!(custom.rows()[0].data.0, "first");
         assert_eq!(
@@ -1077,7 +1313,8 @@ mod tests {
             None
         );
 
-        let empty = CustomSeries::<(), (), NonClonePayload, ()>::new(SeriesId::new(8));
+        let empty =
+            CustomSeries::<(), (), NonClonePayload, ()>::new(SeriesId::new(8), custom_options());
         assert!(empty.autoscale_info(0.0.into(), 1.0.into()).is_none());
     }
 }
