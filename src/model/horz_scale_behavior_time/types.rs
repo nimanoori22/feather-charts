@@ -16,6 +16,10 @@ impl UtcTimestamp {
     pub const fn seconds(self) -> f64 {
         self.0
     }
+
+    pub fn to_date_time(self) -> Option<crate::formatters::format_date::UtcDateTime> {
+        crate::formatters::format_date::UtcDateTime::from_unix_timestamp(self.0)
+    }
 }
 
 impl From<f64> for UtcTimestamp {
