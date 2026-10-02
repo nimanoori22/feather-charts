@@ -4,6 +4,7 @@ pub mod colors;
 pub mod coordinate;
 pub mod data_consumer;
 pub mod horz_scale_behavior_time;
+pub mod icustom_series;
 pub mod ihorz_scale_behavior;
 pub mod localization_options;
 pub mod price_formatter_fn;
