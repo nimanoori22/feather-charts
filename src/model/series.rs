@@ -21,7 +21,7 @@ use crate::{
         time_data::TimePointIndex,
     },
 };
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SeriesConstructionError {
@@ -109,6 +109,20 @@ pub struct Series<I, O, M = ()> {
     pane_data_generation: u64,
     z_order: i32,
     last_update_info: Option<SeriesUpdateInfo>,
+}
+
+/// Object-safe chart-owner boundary. DataLayer intentionally does not know
+/// this trait: it only produces stable `SeriesId`-keyed updates.
+pub trait SeriesUpdateTarget<I, O, M = ()> {
+    fn invalidate_pane_data(&mut self);
+    fn apply_built_in_rows(
+        &mut self,
+        _rows: Vec<SeriesPlotRow<I, O, (), M>>,
+        _info: Option<SeriesUpdateInfo>,
+    ) {
+    }
+    fn apply_custom_indices(&mut self, _changes: &CustomSeriesChanges<I, O>) {}
+    fn fulfilled_indices(&self) -> Vec<TimePointIndex>;
 }
 
 impl<I, O, M> Series<I, O, M>
@@ -222,6 +236,27 @@ where
     }
 }
 
+impl<I, O, M> SeriesUpdateTarget<I, O, M> for Series<I, O, M>
+where
+    I: Clone,
+    O: Clone,
+    M: Clone,
+{
+    fn invalidate_pane_data(&mut self) {
+        self.invalidate_pane_data();
+    }
+    fn apply_built_in_rows(
+        &mut self,
+        rows: Vec<SeriesPlotRow<I, O, (), M>>,
+        info: Option<SeriesUpdateInfo>,
+    ) {
+        self.set_data(rows, info);
+    }
+    fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
+        self.fulfilled_indices().to_vec()
+    }
+}
+
 /// A short-lived PriceScale view that makes the visible range explicit instead
 /// of coupling Series to an owning chart model.
 pub struct SeriesPriceScaleSource<'a, I, O, M> {
@@ -295,6 +330,9 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     pub fn rows(&self) -> &[CustomPlotRow<I, O, D, M>] {
         &self.data
     }
+    pub const fn id(&self) -> SeriesId {
+        self.id
+    }
     pub fn set_data(&mut self, rows: Vec<CustomPlotRow<I, O, D, M>>) {
         self.data = rows;
         self.invalidate_pane_data();
@@ -355,6 +393,45 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     }
     pub const fn pane_data_generation(&self) -> u64 {
         self.pane_data_generation
+    }
+}
+
+impl<I, O, D, M> SeriesUpdateTarget<I, O, M> for CustomSeries<I, O, D, M> {
+    fn invalidate_pane_data(&mut self) {
+        self.invalidate_pane_data();
+    }
+    fn apply_custom_indices(&mut self, changes: &CustomSeriesChanges<I, O>) {
+        self.apply_indices(changes);
+    }
+    fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
+        self.fulfilled_indices()
+    }
+}
+
+/// Shared only at the chart-owner boundary: the typed custom API keeps this
+/// handle to apply `CustomDataUpdateResponse<D>`, while the coordinator holds
+/// a lightweight target adapter for invalidation and index synchronization.
+pub type CustomSeriesHandle<I, O, D, M = ()> = Rc<RefCell<CustomSeries<I, O, D, M>>>;
+
+pub struct CustomSeriesTarget<I, O, D, M = ()> {
+    handle: CustomSeriesHandle<I, O, D, M>,
+}
+
+impl<I, O, D, M> CustomSeriesTarget<I, O, D, M> {
+    pub fn new(handle: CustomSeriesHandle<I, O, D, M>) -> Self {
+        Self { handle }
+    }
+}
+
+impl<I, O, D, M> SeriesUpdateTarget<I, O, M> for CustomSeriesTarget<I, O, D, M> {
+    fn invalidate_pane_data(&mut self) {
+        self.handle.borrow_mut().invalidate_pane_data();
+    }
+    fn apply_custom_indices(&mut self, changes: &CustomSeriesChanges<I, O>) {
+        self.handle.borrow_mut().apply_indices(changes);
+    }
+    fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
+        self.handle.borrow().fulfilled_indices()
     }
 }
 

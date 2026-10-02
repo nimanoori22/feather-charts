@@ -1,5 +1,6 @@
 pub mod autoscale_info_impl;
 pub mod bar;
+pub mod chart_data_coordinator;
 pub mod colors;
 pub mod coordinate;
 pub mod data_consumer;
