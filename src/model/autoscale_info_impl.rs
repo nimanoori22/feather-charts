@@ -1,10 +1,8 @@
 //! Autoscale values shared by series options and price-scale calculations.
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct PriceRange {
-    pub min_value: f64,
-    pub max_value: f64,
-}
+use crate::model::price_range_impl::PriceRangeImpl;
+
+pub use crate::model::price_range_impl::PriceRange;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct AutoScaleMargins {
@@ -20,18 +18,21 @@ pub struct AutoscaleInfo {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct AutoscaleInfoImpl {
-    price_range: Option<PriceRange>,
+    price_range: Option<PriceRangeImpl>,
     margins: Option<AutoScaleMargins>,
 }
 
 impl AutoscaleInfoImpl {
-    pub const fn new(price_range: Option<PriceRange>, margins: Option<AutoScaleMargins>) -> Self {
+    pub const fn new(
+        price_range: Option<PriceRangeImpl>,
+        margins: Option<AutoScaleMargins>,
+    ) -> Self {
         Self {
             price_range,
             margins,
         }
     }
-    pub const fn price_range(&self) -> Option<PriceRange> {
+    pub const fn price_range(&self) -> Option<PriceRangeImpl> {
         self.price_range
     }
     pub const fn margins(&self) -> Option<AutoScaleMargins> {
@@ -39,12 +40,12 @@ impl AutoscaleInfoImpl {
     }
     pub fn to_raw(&self) -> AutoscaleInfo {
         AutoscaleInfo {
-            price_range: self.price_range,
+            price_range: self.price_range.map(|range| range.to_raw()),
             margins: self.margins,
         }
     }
     pub fn from_raw(raw: Option<AutoscaleInfo>) -> Option<Self> {
-        raw.map(|raw| Self::new(raw.price_range, raw.margins))
+        raw.map(|raw| Self::new(PriceRangeImpl::from_raw(raw.price_range), raw.margins))
     }
 }
 
@@ -54,10 +55,7 @@ mod tests {
     #[test]
     fn raw_round_trip_preserves_optional_values() {
         let info = AutoscaleInfoImpl::new(
-            Some(PriceRange {
-                min_value: 1.0,
-                max_value: 2.0,
-            }),
+            Some(PriceRangeImpl::new(1.0, 2.0)),
             Some(AutoScaleMargins {
                 above: 3.0,
                 below: 4.0,
