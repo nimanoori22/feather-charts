@@ -66,7 +66,7 @@ pub struct CustomSeriesChanges<I, O> {
 }
 
 impl<I, O> CustomSeriesChanges<I, O> {
-    fn new(indices: Vec<TimePointIndex>, info: Option<SeriesUpdateInfo>) -> Self {
+    pub fn new(indices: Vec<TimePointIndex>, info: Option<SeriesUpdateInfo>) -> Self {
         Self {
             indices,
             info,
@@ -82,6 +82,8 @@ pub struct CustomDataUpdateResponse<I, O, D, M = ()> {
     /// Index updates for every affected custom Series, including the caller.
     pub custom: BTreeMap<SeriesId, CustomSeriesChanges<I, O>>,
     pub time_scale: TimeScaleChanges<I, O>,
+    pub is_full_replacement: bool,
+    pub changed_index: Option<TimePointIndex>,
 }
 
 /// The built-in-series response shape. Custom rows gain their own typed
@@ -369,6 +371,8 @@ where
             custom_rows,
             custom: response.custom,
             time_scale: response.time_scale,
+            is_full_replacement: true,
+            changed_index: None,
         })
     }
 
@@ -449,6 +453,8 @@ where
             custom_rows,
             custom: response.custom,
             time_scale: response.time_scale,
+            is_full_replacement: false,
+            changed_index: Some(self.points[point_index].index),
         })
     }
 

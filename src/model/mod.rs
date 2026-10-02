@@ -27,6 +27,7 @@ pub mod price_scale_conversions;
 pub mod price_tick_mark_builder;
 pub mod price_tick_span_calculator;
 pub mod range_impl;
+pub mod series;
 pub mod series_data;
 pub mod series_options;
 pub mod sort_sources;
