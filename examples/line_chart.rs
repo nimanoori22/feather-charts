@@ -1,6 +1,7 @@
 //! Run with `cargo run --example line_chart`; `--smoke` checks the demo headlessly.
 use feather_charts::{
     model::{
+        axis_snapshots::PriceAxisSide,
         chart_model::{ChartModel, ChartModelOptions},
         data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem},
         data_layer::{DataLayer, SeriesId},
@@ -12,6 +13,7 @@ use feather_charts::{
         layout_options::{Background, ColorSpace, LayoutOptions, LayoutPanesOptions},
         localization_options::LocalizationOptions,
         pane::{PaneOptions, PriceScalePosition},
+        price_scale::PriceScaleOptionsPatch,
         series::line_pane_view::LinePaneView,
         series_options::{
             LastPriceAnimationMode, LineStyleOptions, PriceFormat, PriceFormatBuiltIn,
@@ -25,8 +27,12 @@ use feather_charts::{
     renderers::{
         draw_line::{LineStyle, LineType, LineWidth},
         grid_renderer::PixelRatio,
+        price_axis_renderer::AxisBounds,
     },
-    ui::line_chart::{FrameLayout, PlotSnapshot, prepare_frame},
+    ui::{
+        line_chart::{FrameLayout, PlotSnapshot, prepare_frame},
+        price_axis::{AxisFontResolver, IcedPriceAxes, IcedPriceAxis, prepare_iced_price_axes},
+    },
     views::time_scale_animation::TimeScaleAnimationController,
 };
 use iced::{
@@ -40,6 +46,9 @@ use iced::{
 use std::time::{Duration, Instant};
 
 const ID: SeriesId = SeriesId::new(1);
+const LEFT_ID: SeriesId = SeriesId::new(2);
+// A fixed allocation demonstrates drawing, not a multi-pass layout solver.
+const AXIS_WIDTH: f32 = 120.;
 fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap {
     SeriesOptionsMap::Line(SeriesOptions {
         common: SeriesOptionsCommon {
@@ -85,9 +94,20 @@ fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap 
     })
 }
 fn bar(index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
+    let value = 100. + (index as f64 * 0.2).sin() * 8. + index as f64 * 0.04 + adjustment;
+    let value = if std::env::args().any(|arg| arg == "--large") {
+        value * 10000.
+    } else {
+        value
+    };
+    let value = if std::env::args().any(|arg| arg == "--negative") {
+        -value
+    } else {
+        value
+    };
     BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
         time: Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.)),
-        value: 100. + (index as f64 * 0.2).sin() * 8. + index as f64 * 0.04 + adjustment,
+        value,
         color: Some(
             if (index / 20).is_multiple_of(2) {
                 "#2196f3"
@@ -105,6 +125,11 @@ struct Demo {
     controller: TimeScaleAnimationController,
     view: LinePaneView,
     snapshot: PlotSnapshot,
+    axes: IcedPriceAxes,
+    fonts: AxisFontResolver,
+    left_enabled: bool,
+    left_registered: bool,
+    ticks: bool,
     size: Size,
     scale: f32,
     count: usize,
@@ -132,6 +157,8 @@ enum Message {
     Kind,
     Style,
     Markers,
+    LeftAxis,
+    Ticks,
 }
 impl Default for Demo {
     fn default() -> Self {
@@ -143,8 +170,15 @@ impl Default for Demo {
             ),
             ChartModelOptions {
                 layout: LayoutOptions {
-                    background: Background::Solid {
-                        color: "#101820".into(),
+                    background: if std::env::args().any(|arg| arg == "--gradient") {
+                        Background::VerticalGradient {
+                            top_color: "#101820".into(),
+                            bottom_color: "#36536a".into(),
+                        }
+                    } else {
+                        Background::Solid {
+                            color: "#101820".into(),
+                        }
                     },
                     text_color: "#eee".into(),
                     font_size: 12.,
@@ -158,7 +192,13 @@ impl Default for Demo {
                     color_space: ColorSpace::Srgb,
                     color_parsers: vec![],
                 },
-                pane: PaneOptions::default(),
+                pane: PaneOptions {
+                    left_price_scale: feather_charts::model::price_scale::PriceScaleOptions {
+                        visible: false,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
                 grid: GridOptions::default(),
                 add_default_pane: true,
             },
@@ -169,6 +209,11 @@ impl Default for Demo {
             controller: TimeScaleAnimationController::default(),
             view: LinePaneView::default(),
             snapshot: PlotSnapshot::default(),
+            axes: IcedPriceAxes::default(),
+            fonts: AxisFontResolver::default(),
+            left_enabled: false,
+            left_registered: false,
+            ticks: false,
             size: Size::ZERO,
             scale: 1.,
             count: 0,
@@ -179,6 +224,12 @@ impl Default for Demo {
             markers: false,
         };
         demo.load();
+        if std::env::args().any(|arg| arg == "--left-axis") {
+            let _ = demo.update(Message::LeftAxis);
+        }
+        if std::env::args().any(|arg| arg == "--ticks") {
+            let _ = demo.update(Message::Ticks);
+        }
         demo
     }
 }
@@ -207,6 +258,41 @@ impl Demo {
             .unwrap();
         self.model.apply_data_update(response).unwrap();
         self.model.fit_content();
+        self.sync_left();
+    }
+    fn sync_left(&mut self) {
+        if self.left_enabled && self.registered {
+            if !self.left_registered {
+                self.model
+                    .register_series(
+                        LEFT_ID,
+                        SeriesType::Line,
+                        options(self.kind, self.style, false),
+                        0,
+                        PriceScalePosition::Left,
+                    )
+                    .unwrap();
+                self.left_registered = true;
+            }
+            let data = (0..self.count)
+                .map(|index| {
+                    let mut item = bar(index, 0.);
+                    if let BuiltInSeriesDataItem::Line(LineDataItem::Data(row)) = &mut item {
+                        row.value = row.value * 100. - 12000.;
+                    }
+                    item
+                })
+                .collect();
+            let update = self
+                .layer
+                .set_series_data(LEFT_ID, SeriesType::Line, data)
+                .unwrap();
+            self.model.apply_data_update(update).unwrap();
+        } else if self.left_registered {
+            let response = self.layer.remove_series(LEFT_ID).unwrap();
+            self.model.remove_series(LEFT_ID, response).unwrap();
+            self.left_registered = false;
+        }
     }
     fn prepare(&mut self, now: Instant) {
         let layout = FrameLayout {
@@ -227,8 +313,27 @@ impl Demo {
             now,
         ) {
             Ok((snapshot, _retained_mask)) => {
+                let bounds = AxisBounds {
+                    width: f64::from(AXIS_WIDTH),
+                    height: f64::from(self.size.height),
+                };
+                match prepare_iced_price_axes(
+                    snapshot.axes.as_ref().unwrap(),
+                    bounds,
+                    bounds,
+                    layout.pixel_ratio,
+                    &self.fonts,
+                ) {
+                    Ok(axes) => {
+                        self.axes = axes;
+                        self.error = None;
+                    }
+                    Err(error) => {
+                        self.axes = IcedPriceAxes::default();
+                        self.error = Some(format!("{error:?}"));
+                    }
+                }
                 self.snapshot = snapshot;
-                self.error = None;
             }
             Err(error) => {
                 self.snapshot = PlotSnapshot {
@@ -236,6 +341,7 @@ impl Demo {
                     ..PlotSnapshot::default()
                 };
                 self.error = Some(format!("{error:?}"));
+                self.axes = IcedPriceAxes::default();
             }
         }
     }
@@ -265,6 +371,7 @@ impl Demo {
                     .unwrap();
                 self.model.apply_data_update(response).unwrap();
                 self.count += 1;
+                self.sync_left();
             }
             Message::Replace if self.registered && self.count > 0 => {
                 let response = self
@@ -283,6 +390,7 @@ impl Demo {
                 self.model.remove_series(ID, response).unwrap();
                 self.registered = false;
                 self.count = 0;
+                self.sync_left();
             }
             Message::Reload => self.load(),
             Message::Animate => self
@@ -307,6 +415,35 @@ impl Demo {
             Message::Markers => {
                 self.markers = !self.markers;
                 self.apply_style();
+            }
+            Message::LeftAxis => {
+                self.left_enabled = !self.left_enabled;
+                self.model
+                    .apply_price_axis_options(
+                        0,
+                        PriceAxisSide::Left,
+                        PriceScaleOptionsPatch {
+                            visible: Some(self.left_enabled),
+                            ..Default::default()
+                        },
+                    )
+                    .unwrap();
+                self.sync_left();
+            }
+            Message::Ticks => {
+                self.ticks = !self.ticks;
+                for side in [PriceAxisSide::Left, PriceAxisSide::Right] {
+                    self.model
+                        .apply_price_axis_options(
+                            0,
+                            side,
+                            PriceScaleOptionsPatch {
+                                ticks_visible: Some(self.ticks),
+                                ..Default::default()
+                            },
+                        )
+                        .unwrap();
+                }
             }
             _ => {}
         }
@@ -339,7 +476,9 @@ impl Demo {
             button(text(format!("{:?}", self.style))).on_press(Message::Style),
             button("Markers").on_press(Message::Markers),
             button("Animate").on_press(Message::Animate),
-            button("Stop").on_press(Message::Stop)
+            button("Stop").on_press(Message::Stop),
+            button("Left axis").on_press(Message::LeftAxis),
+            button("Ticks").on_press(Message::Ticks)
         ]
         .spacing(5);
         let plot = Canvas::new(Plot {
@@ -353,10 +492,26 @@ impl Demo {
                 controls,
                 styles,
                 text(self.error.clone().unwrap_or_else(|| format!(
-                    "{} bars · plot-only · resize the window",
-                    self.count
+                    "{} bars · axis requests L {:.0} / R {:.0} px · fixed slots {:.0} px",
+                    self.count,
+                    self.axes.left.required_width,
+                    self.axes.right.required_width,
+                    AXIS_WIDTH
                 ))),
-                plot
+                row![
+                    Canvas::new(PriceAxis {
+                        snapshot: &self.axes.left
+                    })
+                    .width(if self.left_enabled { AXIS_WIDTH } else { 0. })
+                    .height(iced::Fill),
+                    plot,
+                    Canvas::new(PriceAxis {
+                        snapshot: &self.axes.right
+                    })
+                    .width(AXIS_WIDTH)
+                    .height(iced::Fill)
+                ]
+                .height(iced::Fill)
             ]
             .spacing(8),
         )
@@ -367,6 +522,24 @@ impl Demo {
 struct Plot<'a> {
     snapshot: &'a PlotSnapshot,
     animate: bool,
+}
+struct PriceAxis<'a> {
+    snapshot: &'a IcedPriceAxis,
+}
+impl canvas::Program<Message> for PriceAxis<'_> {
+    type State = ();
+    fn draw(
+        &self,
+        _: &(),
+        renderer: &iced::Renderer,
+        _: &Theme,
+        bounds: iced::Rectangle,
+        _: iced::mouse::Cursor,
+    ) -> Vec<Geometry> {
+        let mut frame = Frame::new(renderer, bounds.size());
+        self.snapshot.draw(&mut frame);
+        vec![frame.into_geometry()]
+    }
 }
 impl canvas::Program<Message> for Plot<'_> {
     type State = Option<Instant>;
@@ -412,6 +585,15 @@ fn smoke() {
     let mut demo = Demo::default();
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
     assert!(!demo.snapshot.lines.is_empty());
+    assert!(demo.axes.right.required_width > 0.);
+    assert_eq!(demo.axes.right.size.height, demo.snapshot.size.height);
+    if !demo.left_enabled {
+        let _ = demo.update(Message::LeftAxis);
+    }
+    if !demo.ticks {
+        let _ = demo.update(Message::Ticks);
+    }
+    assert!(demo.axes.left.required_width > 0.);
     let _ = demo.update(Message::Older);
     let before = demo.model.time_scale().right_offset();
     let _ = demo.update(Message::Append);
@@ -441,7 +623,7 @@ fn main() -> iced::Result {
         return Ok(());
     }
     iced::application(Demo::default, Demo::update, Demo::view)
-        .title("Feather Charts — line rendering")
+        .title("Feather Charts — price axes")
         .theme(Theme::Dark)
         .subscription(Demo::subscription)
         .run()

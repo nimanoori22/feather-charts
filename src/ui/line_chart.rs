@@ -55,6 +55,7 @@ pub struct PlotSnapshot {
     pub axes: Option<AxisSnapshots>,
     pub size: Size,
     pub background: Color,
+    pub background_gradient: Option<(Color, Color)>,
     pub grid: Vec<CanvasStroke>,
     pub lines: Vec<CanvasStroke>,
     pub markers: Vec<CanvasMarker>,
@@ -65,13 +66,14 @@ impl Default for PlotSnapshot {
             axes: None,
             size: Size::ZERO,
             background: Color::WHITE,
+            background_gradient: None,
             grid: vec![],
             lines: vec![],
             markers: vec![],
         }
     }
 }
-fn color(value: &str) -> Result<Color, FrameError> {
+pub(crate) fn color(value: &str) -> Result<Color, FrameError> {
     let parsed = value
         .parse::<csscolorparser::Color>()
         .map_err(|_| FrameError::InvalidColor(value.into()))?;
@@ -219,6 +221,7 @@ impl PlotSnapshot {
             axes: None,
             size: layout.size,
             background: color(&layout.background)?,
+            background_gradient: None,
             grid: grid_strokes,
             lines,
             markers,
@@ -233,7 +236,20 @@ impl PlotSnapshot {
             return;
         }
         frame.with_clip(Rectangle::new(iced::Point::ORIGIN, size), |frame| {
-            frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
+            if let Some((top, bottom)) = self.background_gradient {
+                frame.fill_rectangle(
+                    iced::Point::ORIGIN,
+                    size,
+                    iced::widget::canvas::gradient::Linear::new(
+                        iced::Point::ORIGIN,
+                        iced::Point::new(0., self.size.height),
+                    )
+                    .add_stop(0., top)
+                    .add_stop(1., bottom),
+                );
+            } else {
+                frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
+            }
             for stroke in self.grid.iter().chain(&self.lines) {
                 let path = Path::new(|builder| {
                     for op in &stroke.path {
@@ -364,6 +380,13 @@ where
         .map(|data| data.draw_commands(ratio))
         .unwrap_or_default();
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    if let crate::model::layout_options::Background::VerticalGradient {
+        top_color,
+        bottom_color,
+    } = &axes.right.background
+    {
+        snapshot.background_gradient = Some((color(top_color)?, color(bottom_color)?));
+    }
     snapshot.axes = Some(axes);
     Ok((snapshot, mask))
 }

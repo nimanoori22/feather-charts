@@ -467,7 +467,11 @@ where
         series: SeriesId,
     ) -> DataLayerResult<BuiltInDataUpdate<B::InternalItem, B::Item, M>, B::Error> {
         if let Some(series_type) = self.series_types.get(&series).copied() {
-            return self.set_series_data(series, series_type, vec![]);
+            let response = self.set_series_data(series, series_type, vec![])?;
+            // Keep the removal response, but never include this detached series
+            // in subsequent responses when the shared time points change.
+            self.series_types.remove(&series);
+            return Ok(response);
         }
         if !self.custom_series.contains(&series) {
             return Ok(self.empty_response());
@@ -475,7 +479,9 @@ where
         let old_keys = self.keys();
         self.remove_series_memberships(series);
         self.cleanup_empty_points();
-        self.finish_mutation(old_keys, series, None)
+        let response = self.finish_mutation(old_keys, series, None)?;
+        self.custom_series.remove(&series);
+        Ok(response)
     }
 
     pub fn update_series_data(
@@ -1142,6 +1148,10 @@ mod tests {
         let removed = layer.remove_series(custom_id).unwrap();
         assert_eq!(removed.time_scale.points.as_ref().map(Vec::len), Some(1));
         assert_eq!(removed.series[&built_in_id].rows.len(), 1);
+        let later = layer
+            .update_series_data(built_in_id, line(4., 40.), false)
+            .unwrap();
+        assert!(!later.custom.contains_key(&custom_id));
     }
 
     #[test]
