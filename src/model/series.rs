@@ -323,6 +323,31 @@ where
     }
 }
 
+/// Shared built-in target updating the same Series used by Pane adapters.
+pub struct BuiltInSeriesTarget<I, O, M = ()> {
+    handle: Rc<RefCell<Series<I, O, M>>>,
+}
+impl<I, O, M> BuiltInSeriesTarget<I, O, M> {
+    pub fn new(handle: Rc<RefCell<Series<I, O, M>>>) -> Self {
+        Self { handle }
+    }
+}
+impl<I: Clone, O: Clone, M: Clone> SeriesUpdateTarget<I, O, M> for BuiltInSeriesTarget<I, O, M> {
+    fn invalidate_pane_data(&mut self) {
+        self.handle.borrow_mut().invalidate_pane_data();
+    }
+    fn apply_built_in_rows(
+        &mut self,
+        rows: Vec<SeriesPlotRow<I, O, (), M>>,
+        info: Option<SeriesUpdateInfo>,
+    ) {
+        self.handle.borrow_mut().set_data(rows, info);
+    }
+    fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
+        self.handle.borrow().fulfilled_indices().to_vec()
+    }
+}
+
 /// A short-lived PriceScale view that makes the visible range explicit instead
 /// of coupling Series to an owning chart model.
 pub struct SeriesPriceScaleSource<'a, I, O, M> {
@@ -1248,6 +1273,7 @@ mod tests {
         let id = SeriesId::new(7);
         let mut custom = CustomSeries::<(), (), NonClonePayload, ()>::new(id, custom_options());
         custom.apply_update(CustomDataUpdateResponse {
+            series: BTreeMap::new(),
             custom_rows: vec![CustomPlotRow {
                 base: PlotRow {
                     index: 2.0.into(),

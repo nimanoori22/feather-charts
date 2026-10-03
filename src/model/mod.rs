@@ -1,6 +1,7 @@
 pub mod autoscale_info_impl;
 pub mod bar;
 pub mod chart_data_coordinator;
+pub mod chart_model;
 pub mod colors;
 pub mod coordinate;
 pub mod data_consumer;
@@ -14,6 +15,7 @@ pub mod icustom_series;
 pub mod idata_source;
 pub mod ihorz_scale_behavior;
 pub mod internal_hit_test;
+pub mod invalidate_mask;
 pub mod ipane_primitive;
 pub mod iprice_data_source;
 pub mod layout_options;

@@ -77,6 +77,8 @@ impl<I, O> CustomSeriesChanges<I, O> {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct CustomDataUpdateResponse<I, O, D, M = ()> {
+    /// Built-in rows reindexed by a custom-series change to the shared time axis.
+    pub series: BTreeMap<SeriesId, SeriesChanges<I, O, (), M>>,
     /// Typed rows for the custom Series that initiated this operation.
     pub custom_rows: Vec<CustomPlotRow<I, O, D, M>>,
     /// Index updates for every affected custom Series, including the caller.
@@ -368,6 +370,7 @@ where
         let response = self.finish_mutation(old_keys, series, info)?;
         self.sync_custom_row_indexes(&mut custom_rows);
         Ok(CustomDataUpdateResponse {
+            series: response.series,
             custom_rows,
             custom: response.custom,
             time_scale: response.time_scale,
@@ -450,6 +453,7 @@ where
         };
         self.sync_custom_row_indexes(&mut custom_rows);
         Ok(CustomDataUpdateResponse {
+            series: response.series,
             custom_rows,
             custom: response.custom,
             time_scale: response.time_scale,
@@ -724,8 +728,10 @@ where
         let mut custom = BTreeMap::new();
         let affected: Vec<SeriesId> = if first_changed.is_some() {
             self.series_types.keys().copied().collect()
-        } else {
+        } else if self.series_types.contains_key(&updated) {
             vec![updated]
+        } else {
+            vec![]
         };
         for id in affected {
             series.insert(
@@ -808,11 +814,19 @@ where
             .collect()
     }
     fn base_index(&self) -> Option<TimePointIndex> {
-        self.last_time_by_series
-            .values()
-            .filter_map(|time| self.find_point(time))
-            .max()
-            .map(|index| TimePointIndex::new(index as f64))
+        // The base is the last value-bearing point, not trailing whitespace.
+        self.points
+            .iter()
+            .rev()
+            .find(|point| {
+                point
+                    .rows
+                    .values()
+                    .any(|row| matches!(row, SeriesDataRow::Value(_)))
+                    || point.custom_rows.values().any(|row| row.fulfilled)
+            })
+            .map(|point| point.index)
+            .or_else(|| (!self.last_time_by_series.is_empty()).then_some(TimePointIndex::default()))
     }
     fn refresh_last_fulfilled_time(&mut self, series: SeriesId) {
         let last = self

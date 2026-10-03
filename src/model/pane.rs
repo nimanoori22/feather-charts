@@ -185,6 +185,9 @@ where
     pub const fn index(&self) -> usize {
         self.index
     }
+    pub(crate) fn set_index(&mut self, index: usize) {
+        self.index = index;
+    }
     pub const fn width(&self) -> f64 {
         self.width
     }
@@ -562,13 +565,13 @@ where
         let Some(visible) = visible.as_ref() else {
             return vec![];
         };
-        let changed = self
+        let left_changed = self
             .left_price_scale
-            .recalculate_price_range_forced(visible)
-            || self
-                .right_price_scale
-                .recalculate_price_range_forced(visible);
-        self.update_after_price_interaction(changed)
+            .recalculate_price_range_forced(visible);
+        let right_changed = self
+            .right_price_scale
+            .recalculate_price_range_forced(visible);
+        self.update_after_price_interaction(left_changed || right_changed)
     }
 
     pub fn recalculate(&mut self, visible: Option<&RangeImpl<TimePointIndex>>) -> Vec<PaneEffect> {

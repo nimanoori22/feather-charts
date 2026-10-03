@@ -47,6 +47,12 @@ pub trait HorzScaleBehavior {
 
     fn options(&self) -> &Self::Options;
     fn set_options(&mut self, options: Self::Options);
+    /// Keeps behavior-specific formatting in sync with the owning time scale.
+    fn update_scale_options(
+        &mut self,
+        _options: &crate::model::time_scale_options::HorzScaleOptions,
+    ) {
+    }
     fn preprocess_data<D: TimedData<Item = Self::Item>>(
         &mut self,
         data: &mut [D],

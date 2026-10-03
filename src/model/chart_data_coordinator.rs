@@ -56,6 +56,30 @@ where
     pub fn target_count(&self) -> usize {
         self.targets.len()
     }
+    pub fn fulfilled_indices(&self) -> &BTreeSet<usize> {
+        &self.fulfilled_indices
+    }
+    pub fn refresh_fulfilled_indices<B>(&mut self, time_scale: &mut TimeScale<B>)
+    where
+        B: HorzScaleBehavior<Item = O, InternalItem = I>,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + std::hash::Hash,
+    {
+        let next = self
+            .targets
+            .values()
+            .flat_map(|target| target.fulfilled_indices())
+            .filter_map(TimePointIndex::as_usize)
+            .collect::<BTreeSet<_>>();
+        if next != self.fulfilled_indices {
+            self.fulfilled_indices = next;
+            self.fulfilled_indices_version = self.fulfilled_indices_version.wrapping_add(1);
+        }
+        time_scale.set_indices_with_data(
+            self.fulfilled_indices.clone(),
+            self.fulfilled_indices_version,
+        );
+    }
 
     pub fn apply<B>(
         &mut self,
@@ -69,6 +93,20 @@ where
         B::Key: PartialOrd,
         B::CacheKey: Clone + Eq + std::hash::Hash,
     {
+        self.apply_with_rows(time_scale, update, || {})
+    }
+
+    pub fn apply_with_rows<B>(
+        &mut self,
+        time_scale: &mut TimeScale<B>,
+        update: DataUpdateResponse<I, O, (), M>,
+        apply_custom_rows: impl FnOnce(),
+    ) -> Vec<ChartDataEffect>
+    where
+        B: HorzScaleBehavior<Item = O, InternalItem = I>,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + std::hash::Hash,
+    {
         // Must happen before TimeScale changes logical indexes.
         for id in update.series.keys().chain(update.custom.keys()) {
             if let Some(target) = self.targets.get_mut(id) {
@@ -76,6 +114,8 @@ where
             }
         }
 
+        let old_first = time_scale.index_to_time(TimePointIndex::new(0.0)).cloned();
+        let replaced_whitespace = update.time_scale.first_changed_point_index.is_none();
         if let (Some(points), Some(first_changed_point_index)) = (
             update.time_scale.points,
             update.time_scale.first_changed_point_index,
@@ -85,33 +125,46 @@ where
                 first_changed_point_index,
             });
         }
-        let _ = time_scale.set_base_index(update.time_scale.base_index);
+        let new_first = time_scale.index_to_time(TimePointIndex::new(0.0)).cloned();
+        let current_base = time_scale.base_index().unwrap_or_default();
+        let visible = time_scale.visible_strict_range();
+        if let (Some(visible), Some(old_first), Some(new_first)) = (visible, old_first, new_first) {
+            let added_to_right = update
+                .time_scale
+                .base_index
+                .is_some_and(|base| base > current_base)
+                && !matches!(
+                    time_scale
+                        .behavior()
+                        .key(&old_first)
+                        .partial_cmp(&time_scale.behavior().key(&new_first)),
+                    Some(std::cmp::Ordering::Greater)
+                );
+            let options = time_scale.options();
+            let should_shift = visible.contains(current_base)
+                && (!replaced_whitespace
+                    || options.allow_shift_visible_range_on_whitespace_replacement)
+                && options.shift_visible_range_on_new_bar;
+            if added_to_right && !should_shift {
+                let shift = update.time_scale.base_index.unwrap().value() - current_base.value();
+                time_scale.set_right_offset(time_scale.right_offset() - shift);
+            }
+        }
+        time_scale.set_base_index(update.time_scale.base_index);
 
         for (id, changes) in update.series {
             if let Some(target) = self.targets.get_mut(&id) {
                 target.apply_built_in_rows(changes.rows, changes.info);
             }
         }
+        apply_custom_rows();
         for (id, changes) in update.custom {
             if let Some(target) = self.targets.get_mut(&id) {
                 target.apply_custom_indices(&changes);
             }
         }
 
-        let next_fulfilled = self
-            .targets
-            .values()
-            .flat_map(|target| target.fulfilled_indices())
-            .filter_map(TimePointIndex::as_usize)
-            .collect::<BTreeSet<_>>();
-        if next_fulfilled != self.fulfilled_indices {
-            self.fulfilled_indices = next_fulfilled;
-            self.fulfilled_indices_version = self.fulfilled_indices_version.wrapping_add(1);
-        }
-        time_scale.set_indices_with_data(
-            self.fulfilled_indices.clone(),
-            self.fulfilled_indices_version,
-        );
+        self.refresh_fulfilled_indices(time_scale);
 
         vec![
             ChartDataEffect::RecalculateAllPanes,

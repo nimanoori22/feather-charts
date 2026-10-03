@@ -86,6 +86,7 @@ where
             .right_offset_pixels
             .map(|v| v / bar_spacing)
             .unwrap_or(options.right_offset);
+        behavior.update_scale_options(&options);
         behavior.update_formatter(&localization);
         Self {
             behavior,
@@ -116,6 +117,21 @@ where
     }
     pub fn behavior(&self) -> &B {
         &self.behavior
+    }
+    pub fn base_index(&self) -> Option<TimePointIndex> {
+        self.base_index
+    }
+    pub fn localization(&self) -> &LocalizationOptions<B::Item> {
+        &self.localization
+    }
+    pub fn configure_behavior(&mut self, options: B::Options) -> Vec<TimeScaleEffect> {
+        self.behavior.set_options(options);
+        self.behavior.update_scale_options(&self.options);
+        self.behavior.update_formatter(&self.localization);
+        self.formatted_by_weight.clear();
+        self.time_marks_cache = None;
+        self.options_applied.emit(&());
+        vec![TimeScaleEffect::OptionsApplied]
     }
     pub fn options(&self) -> &HorzScaleOptions {
         &self.options
@@ -234,7 +250,9 @@ where
             self.visible_range_invalidated = true;
             self.time_marks_cache = None;
         }
+        self.behavior.update_scale_options(&self.options);
         if formatting {
+            self.behavior.update_formatter(&self.localization);
             self.formatted_by_weight.clear();
             self.time_marks_cache = None;
         }
@@ -293,13 +311,13 @@ where
         viewport_changed_effects()
     }
     pub fn set_width(&mut self, width: f64) -> Vec<TimeScaleEffect> {
-        if !width.is_finite() || width <= 0.0 || width == self.width {
+        if !width.is_finite() || width < 0.0 || width == self.width {
             return vec![];
         }
         let previous_visible_range = self.visible_logical_range();
         let old = self.width;
         self.width = width;
-        if self.options.lock_visible_time_range_on_resize && old != 0.0 {
+        if self.options.lock_visible_time_range_on_resize && old != 0.0 && width != 0.0 {
             self.bar_spacing *= width / old;
         }
         if self.options.fix_left_edge

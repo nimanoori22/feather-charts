@@ -156,6 +156,13 @@ impl HorzScaleBehavior for HorzScaleBehaviorTime {
         self.item_formatter = Self::build_item_formatter(&options);
         self.options = options;
     }
+    fn update_scale_options(
+        &mut self,
+        options: &crate::model::time_scale_options::HorzScaleOptions,
+    ) {
+        self.options.time_scale.base = options.clone();
+        self.item_formatter = Self::build_item_formatter(&self.options);
+    }
 
     fn preprocess_data<D: TimedData<Item = Self::Item>>(
         &mut self,
