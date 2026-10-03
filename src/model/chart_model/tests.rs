@@ -1,6 +1,7 @@
 use super::*;
 mod axis_snapshots;
 mod price_axis;
+mod time_axis;
 use crate::{
     model::{
         data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem, TimedData, WhitespaceData},

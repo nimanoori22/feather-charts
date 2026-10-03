@@ -82,6 +82,14 @@ pub struct IcedAxisTextMeasurer {
     size: f32,
 }
 impl IcedAxisTextMeasurer {
+    pub fn with_font(font: Font, size: f32) -> Result<Self, PriceAxisUiError> {
+        if !size.is_finite() || size <= 0. {
+            return Err(PriceAxisUiError::Renderer(
+                PriceAxisRenderError::InvalidSnapshot,
+            ));
+        }
+        Ok(Self { font, size })
+    }
     pub fn new(
         options: &PriceAxisViewRendererOptions,
         fonts: &AxisFontResolver,
@@ -120,7 +128,7 @@ impl TextMeasurer for IcedAxisTextMeasurer {
 }
 
 #[derive(Clone, Debug)]
-enum AxisPrimitive {
+pub(crate) enum AxisPrimitive {
     Fill {
         origin: Point,
         size: Size,
@@ -213,16 +221,7 @@ impl IcedPriceAxis {
         let Some(clip) = self.clip_bounds(frame.size()) else {
             return;
         };
-        frame.with_clip(clip, |frame| {
-            for primitive in &self.primitives {
-                match primitive {
-                    AxisPrimitive::Fill { origin, size, fill } => {
-                        frame.fill_rectangle(*origin, *size, *fill)
-                    }
-                    AxisPrimitive::Glyph { path, color } => frame.fill(path, *color),
-                }
-            }
-        });
+        draw_axis_primitives(&self.primitives, clip, frame);
     }
     fn clip_bounds(&self, available: Size) -> Option<Rectangle> {
         let size = Size::new(
@@ -231,6 +230,23 @@ impl IcedPriceAxis {
         );
         (size.width > 0. && size.height > 0.).then(|| Rectangle::new(Point::ORIGIN, size))
     }
+}
+
+pub(crate) fn draw_axis_primitives(
+    primitives: &[AxisPrimitive],
+    clip: Rectangle,
+    frame: &mut Frame,
+) {
+    frame.with_clip(clip, |frame| {
+        for primitive in primitives {
+            match primitive {
+                AxisPrimitive::Fill { origin, size, fill } => {
+                    frame.fill_rectangle(*origin, *size, *fill)
+                }
+                AxisPrimitive::Glyph { path, color } => frame.fill(path, *color),
+            }
+        }
+    });
 }
 
 #[derive(Clone, Debug, Default)]

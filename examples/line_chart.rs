@@ -22,7 +22,7 @@ use feather_charts::{
         },
         time_data::{Logical, LogicalRange},
         time_scale::TimeScale,
-        time_scale_options::HorzScaleOptions,
+        time_scale_options::{HorzScaleOptions, HorzScaleOptionsPatch},
     },
     renderers::{
         draw_line::{LineStyle, LineType, LineWidth},
@@ -32,6 +32,7 @@ use feather_charts::{
     ui::{
         line_chart::{FrameLayout, PlotSnapshot, prepare_frame},
         price_axis::{AxisFontResolver, IcedPriceAxes, IcedPriceAxis, prepare_iced_price_axes},
+        time_axis::{IcedTimeAxis, prepare_iced_time_axis},
     },
     views::time_scale_animation::TimeScaleAnimationController,
 };
@@ -49,6 +50,7 @@ const ID: SeriesId = SeriesId::new(1);
 const LEFT_ID: SeriesId = SeriesId::new(2);
 // A fixed allocation demonstrates drawing, not a multi-pass layout solver.
 const AXIS_WIDTH: f32 = 120.;
+const TIME_AXIS_HEIGHT: f32 = 40.;
 fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap {
     SeriesOptionsMap::Line(SeriesOptions {
         common: SeriesOptionsCommon {
@@ -126,6 +128,7 @@ struct Demo {
     view: LinePaneView,
     snapshot: PlotSnapshot,
     axes: IcedPriceAxes,
+    time_axis: IcedTimeAxis,
     fonts: AxisFontResolver,
     left_enabled: bool,
     left_registered: bool,
@@ -210,6 +213,7 @@ impl Default for Demo {
             view: LinePaneView::default(),
             snapshot: PlotSnapshot::default(),
             axes: IcedPriceAxes::default(),
+            time_axis: IcedTimeAxis::default(),
             fonts: AxisFontResolver::default(),
             left_enabled: false,
             left_registered: false,
@@ -223,6 +227,15 @@ impl Default for Demo {
             style: LineStyle::Solid,
             markers: false,
         };
+        demo.model.apply_time_scale_options(
+            &mut demo.layer,
+            HorzScaleOptionsPatch {
+                time_visible: Some(true),
+                fix_left_edge: Some(std::env::args().any(|arg| arg == "--fixed-edges")),
+                fix_right_edge: Some(std::env::args().any(|arg| arg == "--fixed-edges")),
+                ..Default::default()
+            },
+        );
         demo.load();
         if std::env::args().any(|arg| arg == "--left-axis") {
             let _ = demo.update(Message::LeftAxis);
@@ -334,6 +347,21 @@ impl Demo {
                     }
                 }
                 self.snapshot = snapshot;
+                match prepare_iced_time_axis(
+                    &self.snapshot.axes.as_ref().unwrap().time,
+                    AxisBounds {
+                        width: f64::from(self.size.width),
+                        height: f64::from(TIME_AXIS_HEIGHT),
+                    },
+                    layout.pixel_ratio,
+                    &self.fonts,
+                ) {
+                    Ok(axis) => self.time_axis = axis,
+                    Err(error) => {
+                        self.time_axis = IcedTimeAxis::default();
+                        self.error = Some(format!("{error:?}"));
+                    }
+                }
             }
             Err(error) => {
                 self.snapshot = PlotSnapshot {
@@ -342,6 +370,7 @@ impl Demo {
                 };
                 self.error = Some(format!("{error:?}"));
                 self.axes = IcedPriceAxes::default();
+                self.time_axis = IcedTimeAxis::default();
             }
         }
     }
@@ -432,6 +461,13 @@ impl Demo {
             }
             Message::Ticks => {
                 self.ticks = !self.ticks;
+                self.model.apply_time_scale_options(
+                    &mut self.layer,
+                    HorzScaleOptionsPatch {
+                        ticks_visible: Some(self.ticks),
+                        ..Default::default()
+                    },
+                );
                 for side in [PriceAxisSide::Left, PriceAxisSide::Right] {
                     self.model
                         .apply_price_axis_options(
@@ -492,13 +528,15 @@ impl Demo {
                 controls,
                 styles,
                 text(self.error.clone().unwrap_or_else(|| format!(
-                    "{} bars · axis requests L {:.0} / R {:.0} px · fixed slots {:.0} px",
+                    "{} bars · axis requests L {:.0} / R {:.0} / T {:.0} px · fixed slots {:.0} × {:.0} px",
                     self.count,
                     self.axes.left.required_width,
                     self.axes.right.required_width,
-                    AXIS_WIDTH
+                    self.time_axis.required_height,
+                    AXIS_WIDTH,
+                    TIME_AXIS_HEIGHT
                 ))),
-                row![
+                column![row![
                     Canvas::new(PriceAxis {
                         snapshot: &self.axes.left
                     })
@@ -511,7 +549,13 @@ impl Demo {
                     .width(AXIS_WIDTH)
                     .height(iced::Fill)
                 ]
-                .height(iced::Fill)
+                .height(iced::Fill),
+                row![
+                    iced::widget::Space::new().width(if self.left_enabled { AXIS_WIDTH } else { 0. }),
+                    Canvas::new(TimeAxis { snapshot: &self.time_axis }).width(iced::Fill).height(TIME_AXIS_HEIGHT),
+                    iced::widget::Space::new().width(AXIS_WIDTH),
+                ].height(TIME_AXIS_HEIGHT)]
+                .spacing(0).height(iced::Fill)
             ]
             .spacing(8),
         )
@@ -525,6 +569,24 @@ struct Plot<'a> {
 }
 struct PriceAxis<'a> {
     snapshot: &'a IcedPriceAxis,
+}
+struct TimeAxis<'a> {
+    snapshot: &'a IcedTimeAxis,
+}
+impl canvas::Program<Message> for TimeAxis<'_> {
+    type State = ();
+    fn draw(
+        &self,
+        _: &(),
+        renderer: &iced::Renderer,
+        _: &Theme,
+        bounds: iced::Rectangle,
+        _: iced::mouse::Cursor,
+    ) -> Vec<Geometry> {
+        let mut frame = Frame::new(renderer, bounds.size());
+        self.snapshot.draw(&mut frame);
+        vec![frame.into_geometry()]
+    }
 }
 impl canvas::Program<Message> for PriceAxis<'_> {
     type State = ();
@@ -587,6 +649,8 @@ fn smoke() {
     assert!(!demo.snapshot.lines.is_empty());
     assert!(demo.axes.right.required_width > 0.);
     assert_eq!(demo.axes.right.size.height, demo.snapshot.size.height);
+    assert!(demo.time_axis.required_height > 0.);
+    assert_eq!(demo.time_axis.size.width, demo.snapshot.size.width);
     if !demo.left_enabled {
         let _ = demo.update(Message::LeftAxis);
     }
@@ -605,12 +669,14 @@ fn smoke() {
     let _ = demo.update(Message::Markers);
     let _ = demo.update(Message::Bounds(Size::new(500., 300.)));
     assert_eq!(demo.snapshot.size, Size::new(500., 300.));
+    assert_eq!(demo.time_axis.size.width, 500.);
     let _ = demo.update(Message::Animate);
     assert!(demo.controller.is_active());
     let _ = demo.update(Message::Stop);
     assert!(!demo.controller.is_active());
     let _ = demo.update(Message::Remove);
     assert!(demo.snapshot.lines.is_empty());
+    assert!(demo.snapshot.axes.as_ref().unwrap().time.ticks.is_empty());
     let _ = demo.update(Message::Reload);
     assert!(!demo.snapshot.lines.is_empty());
     println!(
@@ -623,7 +689,7 @@ fn main() -> iced::Result {
         return Ok(());
     }
     iced::application(Demo::default, Demo::update, Demo::view)
-        .title("Feather Charts — price axes")
+        .title("Feather Charts — price and time axes")
         .theme(Theme::Dark)
         .subscription(Demo::subscription)
         .run()

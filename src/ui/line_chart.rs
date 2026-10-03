@@ -51,7 +51,7 @@ pub struct CanvasMarker {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
-    /// Prepared from the same settled viewport; intentionally not drawn yet.
+    /// Prepared from the same settled viewport as the grid and line.
     pub axes: Option<AxisSnapshots>,
     pub size: Size,
     pub background: Color,

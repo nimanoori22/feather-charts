@@ -753,6 +753,11 @@ where
         self.time_marks_cache = None;
     }
     fn correct_bar_spacing(&mut self) {
+        // A zero-sized Rust layout is explicitly supported (the source widget
+        // ignores nonpositive widths). Preserve spacing until layout is usable.
+        if self.width == 0. {
+            return;
+        }
         let min =
             if self.options.fix_left_edge && self.options.fix_right_edge && !self.points.is_empty()
             {
@@ -790,7 +795,7 @@ where
         self.correct_bar_spacing();
     }
     fn correct_offset(&mut self) {
-        if self.points.is_empty() || self.base_index.is_none() {
+        if self.width == 0. || self.points.is_empty() || self.base_index.is_none() {
             return;
         }
         let bars = if self.options.fix_left_edge {
