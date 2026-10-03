@@ -249,6 +249,24 @@ where
     pub fn right_price_scale(&self) -> &PriceScale {
         &self.right_price_scale
     }
+    pub(crate) fn axis_price_scale_mut(
+        &mut self,
+        side: crate::model::axis_snapshots::PriceAxisSide,
+    ) -> &mut PriceScale {
+        match side {
+            crate::model::axis_snapshots::PriceAxisSide::Left => &mut self.left_price_scale,
+            crate::model::axis_snapshots::PriceAxisSide::Right => &mut self.right_price_scale,
+        }
+    }
+    pub(crate) fn set_font_size(&mut self, font_size: f64) {
+        self.layout_font_size = font_size;
+        self.left_price_scale.set_font_size(font_size);
+        self.right_price_scale.set_font_size(font_size);
+        for scale in self.overlay_price_scales.values_mut() {
+            scale.set_font_size(font_size);
+        }
+        self.invalidate_grid();
+    }
     pub fn grid(&self) -> &Grid {
         &self.grid
     }
@@ -284,6 +302,10 @@ where
             RIGHT_PRICE_SCALE_ID => Some(&self.right_price_scale),
             _ => self.overlay_price_scales.get(id),
         }
+    }
+
+    pub(crate) fn price_scale_for_source(&self, id: SeriesId) -> Option<&PriceScale> {
+        self.price_scale_existing(self.source_position(id)?)
     }
 
     pub fn default_visible_price_scale(&self) -> Option<&PriceScale> {
@@ -711,7 +733,7 @@ where
             .any(|attached| &attached.position == position)
     }
 
-    fn refresh_formatter_sources(&mut self) {
+    pub(crate) fn refresh_formatter_sources(&mut self) {
         self.left_price_scale.refresh_formatter_source();
         self.right_price_scale.refresh_formatter_source();
         for scale in self.overlay_price_scales.values_mut() {

@@ -1,5 +1,7 @@
 //! Non-rendering series state: plot rows, formatting, and invalidation.
 
+pub mod line_pane_view;
+
 use crate::{
     formatters::{
         iprice_formatter::PriceValueFormatter, percentage_formatter::PercentageFormatter,

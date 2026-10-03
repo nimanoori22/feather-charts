@@ -1,4 +1,5 @@
 use super::*;
+mod axis_snapshots;
 use crate::{
     model::{
         data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem, TimedData, WhitespaceData},
@@ -167,6 +168,375 @@ fn fixture() -> (Layer, Model, SeriesId) {
         .unwrap();
     view(&mut model, 10.0, 19.0);
     (layer, model, id)
+}
+
+#[test]
+fn line_snapshot_matches_selected_scale_and_extends_both_visible_edges() {
+    let (_, mut model, id) = fixture();
+    view(&mut model, 5., 10.);
+    let data = model.prepare_line(id).unwrap().unwrap();
+    let range = model.visible_strict_range().unwrap();
+    let first = model.series(id).unwrap().first_value(Some(&range)).unwrap();
+    assert_eq!(
+        data.visible_range,
+        crate::model::time_data::ValueRange { from: 4, to: 12 }
+    );
+    for point in &data.items {
+        assert_eq!(
+            point.x,
+            model.time_scale().index_to_coordinate(point.index).value()
+        );
+        assert_eq!(
+            point.y,
+            model.panes()[0]
+                .right_price_scale()
+                .price_to_coordinate(point.index.value() + 1., first.value)
+                .value()
+        );
+    }
+}
+
+#[test]
+fn line_snapshot_uses_percentage_indexed_log_and_left_scale_coordinates() {
+    use crate::model::price_scale::PriceScaleMode;
+    for mode in [
+        PriceScaleMode::Percentage,
+        PriceScaleMode::IndexedTo100,
+        PriceScaleMode::Logarithmic,
+    ] {
+        let mut options = PaneOptions::default();
+        options.left_price_scale.mode = mode;
+        let mut model = model_with(options, true);
+        let mut layer = Layer::new(HorzScaleBehaviorTime::default());
+        let id = SeriesId::new(10);
+        model
+            .register_series(
+                id,
+                SeriesType::Line,
+                line_options(),
+                0,
+                PriceScalePosition::Left,
+            )
+            .unwrap();
+        model.set_width(200.).unwrap();
+        model.set_pane_height(0, 150.).unwrap();
+        model
+            .apply_data_update(
+                layer
+                    .set_series_data(
+                        id,
+                        SeriesType::Line,
+                        (0..10)
+                            .map(|i| line(i as f64, 100. + i as f64 * 10.))
+                            .collect(),
+                    )
+                    .unwrap(),
+            )
+            .unwrap();
+        view(&mut model, 4., 8.);
+        let data = model.prepare_line(id).unwrap().unwrap();
+        for p in &data.items {
+            assert_eq!(
+                p.y,
+                model.panes()[0]
+                    .left_price_scale()
+                    .price_to_coordinate(100. + p.index.value() * 10., 140.)
+                    .value()
+            );
+        }
+    }
+}
+
+#[test]
+fn line_snapshot_connects_across_whitespace_and_uses_row_color_fallback() {
+    let (mut layer, mut model, id) = fixture();
+    let mut colored = line(1., 10.);
+    if let BuiltInSeriesDataItem::Line(LineDataItem::Data(data)) = &mut colored {
+        data.color = Some("red".into());
+    }
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Line,
+                    vec![colored, whitespace(2.), line(3., 20.)],
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    model.fit_content();
+    flush(&mut model);
+    let data = model.prepare_line(id).unwrap().unwrap();
+    assert_eq!(data.items.len(), 2);
+    assert_eq!(data.items[0].color, "red");
+    assert_eq!(data.items[1].color, "#000");
+    assert_eq!(data.items[1].index.value(), 2.);
+    let commands = data.draw_commands(crate::renderers::grid_renderer::PixelRatio {
+        horizontal: 1.,
+        vertical: 1.,
+    });
+    assert_eq!(commands.strokes.len(), 1);
+    assert_eq!(commands.strokes[0].path.len(), 2);
+}
+
+#[test]
+fn line_view_clears_stale_output_for_hidden_empty_zero_size_and_unknown_series() {
+    use crate::model::series::line_pane_view::{LinePaneView, LinePreparationError};
+    let (mut layer, mut model, id) = fixture();
+    let mut render_view = LinePaneView::default();
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_some());
+    let mut options = line_options();
+    if let SeriesOptionsMap::Line(options) = &mut options {
+        options.common.visible = false;
+    }
+    model.replace_series_options(id, options).unwrap();
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_none());
+    model.replace_series_options(id, line_options()).unwrap();
+    flush(&mut model);
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_some());
+    model.set_width(0.).unwrap();
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_none());
+    model.set_width(100.).unwrap();
+    model.set_pane_height(0, 0.).unwrap();
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_none());
+    model.set_pane_height(0, 200.).unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(id, SeriesType::Line, vec![whitespace(1.), whitespace(2.)])
+                .unwrap(),
+        )
+        .unwrap();
+    render_view.refresh(&mut model, id).unwrap();
+    assert!(render_view.data().is_none());
+    model
+        .remove_series(id, layer.remove_series(id).unwrap())
+        .unwrap();
+    assert_eq!(
+        render_view.refresh(&mut model, id),
+        Err(LinePreparationError::UnknownSeries(id))
+    );
+    assert!(render_view.data().is_none());
+}
+
+#[test]
+fn line_preparation_rejects_non_line_and_enabled_conflation() {
+    use crate::model::series::line_pane_view::LinePreparationError;
+    let (mut layer, mut model, id) = fixture();
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(true),
+            ..Default::default()
+        },
+    );
+    flush(&mut model);
+    assert_eq!(
+        model.prepare_line(id),
+        Err(LinePreparationError::UnsupportedConflation)
+    );
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(false),
+            ..Default::default()
+        },
+    );
+    let custom = SeriesId::new(77);
+    let handle = Rc::new(RefCell::new(CustomSeries::<_, _, Datum>::new(
+        custom,
+        CustomSeriesOptions {
+            common: common(),
+            style: CustomStyleOptions {
+                color: "#000".into(),
+            },
+        },
+    )));
+    model
+        .register_custom_series(handle, 0, PriceScalePosition::Right)
+        .unwrap();
+    assert_eq!(
+        model.prepare_line(custom),
+        Err(LinePreparationError::NotLineSeries(custom))
+    );
+}
+
+#[test]
+fn line_options_and_marker_defaults_refresh_without_a_cache() {
+    let (_, mut model, id) = fixture();
+    for radius in [None, Some(0.), Some(4.)] {
+        let mut options = line_options();
+        if let SeriesOptionsMap::Line(options) = &mut options {
+            options.style.line_visible = false;
+            options.style.point_markers_visible = true;
+            options.style.point_markers_radius = radius;
+        }
+        model.replace_series_options(id, options).unwrap();
+        flush(&mut model);
+        let data = model.prepare_line(id).unwrap().unwrap();
+        assert_eq!(data.line_type, None);
+        assert_eq!(
+            data.point_markers_radius,
+            Some(radius.filter(|r| *r != 0.).unwrap_or(2.5))
+        );
+    }
+}
+
+#[test]
+fn frame_validation_does_not_mutate_model_for_invalid_layout_or_wrong_pane() {
+    use crate::{
+        model::series::line_pane_view::LinePaneView,
+        renderers::grid_renderer::PixelRatio,
+        ui::line_chart::{FrameError, FrameLayout, prepare_frame},
+    };
+    let (_, mut model, id) = fixture();
+    let mut controller = TimeScaleAnimationController::default();
+    let mut render_view = LinePaneView::default();
+    let mut layout = FrameLayout {
+        pane: 0,
+        size: iced::Size::new(300., f32::NAN),
+        pixel_ratio: PixelRatio {
+            horizontal: 1.,
+            vertical: 1.,
+        },
+        background: "white".into(),
+    };
+    assert!(matches!(
+        prepare_frame(
+            &mut model,
+            &mut controller,
+            &mut render_view,
+            Some(id),
+            &layout,
+            Instant::now()
+        ),
+        Err(FrameError::Model(ChartModelError::InvalidDimensions))
+    ));
+    assert_eq!(model.time_scale().width(), 100.);
+    layout.size = iced::Size::new(300., 200.);
+    layout.pane = model.add_pane();
+    assert!(matches!(
+        prepare_frame(
+            &mut model,
+            &mut controller,
+            &mut render_view,
+            Some(id),
+            &layout,
+            Instant::now()
+        ),
+        Err(FrameError::SeriesPaneMismatch { .. })
+    ));
+    assert_eq!(model.time_scale().width(), 100.);
+    assert!(render_view.data().is_none());
+}
+
+#[test]
+fn rendering_snapshots_rebuild_on_resize_append_and_historical_updates() {
+    let (mut layer, mut model, id) = fixture();
+    let old = model.prepare_line(id).unwrap().unwrap();
+    model.set_width(300.).unwrap();
+    model.set_pane_height(0, 400.).unwrap();
+    flush(&mut model);
+    let resized = model.prepare_line(id).unwrap().unwrap();
+    assert_ne!(resized.items[15].x, old.items[15].x);
+    assert_ne!(resized.items[15].y, old.items[15].y);
+    view(&mut model, 5., 10.);
+    let before = model.prepare_line(id).unwrap().unwrap();
+    model
+        .apply_data_update(layer.update_series_data(id, line(21., 21.), false).unwrap())
+        .unwrap();
+    flush(&mut model);
+    let appended = model.prepare_line(id).unwrap().unwrap();
+    assert_eq!(before.items[7].x, appended.items[7].x);
+    model
+        .apply_data_update(layer.update_series_data(id, line(8., 100.), true).unwrap())
+        .unwrap();
+    flush(&mut model);
+    let updated = model.prepare_line(id).unwrap().unwrap();
+    assert_ne!(appended.items[7].y, updated.items[7].y);
+}
+
+#[test]
+fn prepared_ui_frames_retain_replay_mask_align_animation_and_clear_on_removal() {
+    use crate::{
+        model::series::line_pane_view::LinePaneView,
+        renderers::grid_renderer::PixelRatio,
+        ui::line_chart::{FrameLayout, prepare_frame},
+    };
+    let (mut layer, mut model, id) = fixture();
+    let mut controller = TimeScaleAnimationController::default();
+    let mut render_view = LinePaneView::default();
+    let layout = FrameLayout {
+        pane: 0,
+        size: iced::Size::new(300., 200.),
+        pixel_ratio: PixelRatio {
+            horizontal: 1.5,
+            vertical: 1.5,
+        },
+        background: "#fff".into(),
+    };
+    model.fit_content();
+    let now = Instant::now();
+    let (snapshot, mask) = prepare_frame(
+        &mut model,
+        &mut controller,
+        &mut render_view,
+        Some(id),
+        &layout,
+        now,
+    )
+    .unwrap();
+    assert!(!snapshot.lines.is_empty());
+    let mask = mask.unwrap();
+    let before = render_view.data().unwrap().clone();
+    controller.apply_frame(&mut model, &mask, now);
+    render_view.refresh(&mut model, id).unwrap();
+    assert_eq!(render_view.data(), Some(&before));
+    model.scroll_to_offset_animated(-5., Duration::from_secs(1));
+    prepare_frame(
+        &mut model,
+        &mut controller,
+        &mut render_view,
+        Some(id),
+        &layout,
+        now,
+    )
+    .unwrap();
+    let (snapshot, _) = prepare_frame(
+        &mut model,
+        &mut controller,
+        &mut render_view,
+        Some(id),
+        &layout,
+        now + Duration::from_millis(500),
+    )
+    .unwrap();
+    assert!(controller.is_active());
+    assert!(!snapshot.grid.is_empty());
+    for p in &render_view.data().unwrap().items {
+        assert_eq!(p.x, model.time_scale().index_to_coordinate(p.index).value());
+    }
+    model
+        .remove_series(id, layer.remove_series(id).unwrap())
+        .unwrap();
+    let (empty, _) = prepare_frame(
+        &mut model,
+        &mut controller,
+        &mut render_view,
+        None,
+        &layout,
+        now + Duration::from_millis(600),
+    )
+    .unwrap();
+    assert!(empty.lines.is_empty());
+    assert!(empty.markers.is_empty());
+    assert!(render_view.data().is_none());
 }
 
 #[test]

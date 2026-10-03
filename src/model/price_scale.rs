@@ -55,6 +55,10 @@ pub struct PriceScaleOptionsPatch {
     pub scale_margins: Option<PriceScaleMarginsPatch>,
     pub entire_text_only: Option<bool>,
     pub visible: Option<bool>,
+    pub border_visible: Option<bool>,
+    pub border_color: Option<String>,
+    /// `Some(None)` restores the layout text color.
+    pub text_color: Option<Option<String>>,
     pub ticks_visible: Option<bool>,
     pub minimum_width: Option<f64>,
     pub ensure_edge_tick_marks_visible: Option<bool>,
@@ -82,6 +86,9 @@ pub struct PriceScaleOptions {
     pub scale_margins: PriceScaleMargins,
     pub entire_text_only: bool,
     pub visible: bool,
+    pub border_visible: bool,
+    pub border_color: String,
+    pub text_color: Option<String>,
     pub ticks_visible: bool,
     pub minimum_width: f64,
     pub ensure_edge_tick_marks_visible: bool,
@@ -100,6 +107,9 @@ impl Default for PriceScaleOptions {
             },
             entire_text_only: false,
             visible: true,
+            border_visible: true,
+            border_color: "#2B2B43".into(),
+            text_color: None,
             ticks_visible: false,
             minimum_width: 0.0,
             ensure_edge_tick_marks_visible: false,
@@ -187,6 +197,15 @@ impl PriceScale {
         if let Some(value) = patch.visible {
             self.options.visible = value;
         }
+        if let Some(value) = patch.border_visible {
+            self.options.border_visible = value;
+        }
+        if let Some(value) = patch.border_color {
+            self.options.border_color = value;
+        }
+        if let Some(value) = patch.text_color {
+            self.options.text_color = value;
+        }
         if let Some(value) = patch.ticks_visible {
             self.options.ticks_visible = value;
         }
@@ -229,6 +248,9 @@ impl PriceScale {
             }),
             entire_text_only: Some(options.entire_text_only),
             visible: Some(options.visible),
+            border_visible: Some(options.border_visible),
+            border_color: Some(options.border_color),
+            text_color: Some(options.text_color),
             ticks_visible: Some(options.ticks_visible),
             minimum_width: Some(options.minimum_width),
             ensure_edge_tick_marks_visible: Some(options.ensure_edge_tick_marks_visible),
@@ -250,6 +272,13 @@ impl PriceScale {
     }
     pub fn font_size(&self) -> f64 {
         self.layout_font_size
+    }
+    pub(crate) fn set_font_size(&mut self, font_size: f64) {
+        if self.layout_font_size != font_size {
+            self.layout_font_size = font_size;
+            self.rebuild_tick_mark_builder();
+            self.invalidate_marks();
+        }
     }
     pub fn is_auto_scale(&self) -> bool {
         self.options.auto_scale

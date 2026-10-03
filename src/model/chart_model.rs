@@ -1,6 +1,9 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
 use crate::model::{
+    axis_snapshots::{
+        self, AxisSnapshotError, AxisSnapshots, PriceAxisOptionsError, PriceAxisSide,
+    },
     chart_data_coordinator::{ChartDataCoordinator, ChartDataEffect},
     data_layer::{
         BuiltInDataUpdate, CustomDataUpdateResponse, DataLayer, SeriesId, TimeScaleChanges,
@@ -16,6 +19,7 @@ use crate::model::{
         DEFAULT_STRETCH_FACTOR, Pane, PaneEffect, PaneError, PaneOptions, PriceScalePosition,
         SeriesHandle,
     },
+    price_scale::PriceScaleOptionsPatch,
     series::{
         BuiltInSeriesTarget, CustomSeriesHandle, CustomSeriesTarget, Series,
         SeriesConstructionError,
@@ -26,6 +30,7 @@ use crate::model::{
     time_scale_host::{ScrollAnimation, TimeScaleEffect, TimeScaleHost, TimeScaleLayoutContext},
     time_scale_options::HorzScaleOptionsPatch,
 };
+use crate::renderers::price_axis_renderer_options_provider::PriceAxisRendererOptionsProvider;
 use std::{
     cell::{Ref, RefCell},
     collections::{BTreeMap, BTreeSet},
@@ -46,6 +51,7 @@ pub enum ChartModelError {
     UnknownSeries(SeriesId),
     InvalidPane(usize),
     InvalidDimensions,
+    InvalidTypography,
     Construction(SeriesConstructionError),
     Pane(PaneError),
     CustomSeriesRequiresTypedRegistration,
@@ -146,6 +152,135 @@ where
     }
     pub fn pane_for_series(&self, id: SeriesId) -> Option<usize> {
         self.series.get(&id).map(|entry| entry.pane)
+    }
+
+    /// Materializes lazy marks only; does not drain invalidation, change layout,
+    /// or measure text. All returned values survive subsequent model updates.
+    pub fn prepare_axis_snapshots(
+        &mut self,
+        pane: usize,
+    ) -> Result<AxisSnapshots, AxisSnapshotError> {
+        if pane >= self.panes.len() {
+            return Err(AxisSnapshotError::InvalidPane(pane));
+        }
+        let layout = &self.options.layout;
+        let pane_state = &mut self.panes[pane];
+        let has_width = pane_state.width() > 0.;
+        let mut provider = PriceAxisRendererOptionsProvider::new();
+        let left = axis_snapshots::price_snapshot(
+            pane_state.axis_price_scale_mut(PriceAxisSide::Left),
+            PriceAxisSide::Left,
+            layout,
+            has_width,
+            &mut provider,
+        );
+        let right = axis_snapshots::price_snapshot(
+            pane_state.axis_price_scale_mut(PriceAxisSide::Right),
+            PriceAxisSide::Right,
+            layout,
+            has_width,
+            &mut provider,
+        );
+        let marks = self
+            .time_scale
+            .marks(TimeScaleLayoutContext {
+                font_size: layout.font_size,
+            })
+            .unwrap_or_default()
+            .to_vec();
+        // Grid and axes share the same refreshed marks, including font changes.
+        pane_state.refresh_grid(&self.options.grid, &marks);
+        let time = axis_snapshots::time_snapshot(
+            marks,
+            self.time_scale.behavior(),
+            self.time_scale.options(),
+            layout,
+        );
+        Ok(AxisSnapshots { left, right, time })
+    }
+
+    pub fn set_layout_typography(
+        &mut self,
+        font_size: f64,
+        font_family: impl Into<String>,
+    ) -> Result<(), ChartModelError> {
+        if !font_size.is_finite() || font_size <= 0. || font_size > f64::from(f32::MAX) {
+            return Err(ChartModelError::InvalidTypography);
+        }
+        self.options.layout.font_size = font_size;
+        self.options.layout.font_family = font_family.into();
+        for pane in &mut self.panes {
+            pane.set_font_size(font_size);
+        }
+        self.full_update();
+        self.flush_effects();
+        Ok(())
+    }
+
+    pub fn apply_price_axis_options(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        patch: PriceScaleOptionsPatch,
+    ) -> Result<(), PriceAxisOptionsError> {
+        let pane_state = self
+            .panes
+            .get_mut(pane)
+            .ok_or(PriceAxisOptionsError::InvalidPane(pane))?;
+        pane_state
+            .axis_price_scale_mut(side)
+            .apply_options(patch)
+            .map_err(PriceAxisOptionsError::Options)?;
+        self.recalculate_requested = true;
+        self.full_update();
+        self.flush_effects();
+        Ok(())
+    }
+
+    pub fn prepare_line(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::line_renderer::LineRendererData>,
+        crate::model::series::line_pane_view::LinePreparationError,
+    > {
+        use crate::model::series::line_pane_view::{self, LinePreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(LinePreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(LinePreparationError::NotLineSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(LinePreparationError::MissingPriceScale(id))?;
+        line_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
+    pub fn replace_series_options(
+        &mut self,
+        id: SeriesId,
+        options: SeriesOptionsMap,
+    ) -> Result<(), ChartModelError> {
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(ChartModelError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(ChartModelError::WrongUpdateKind(id))?;
+        handle
+            .borrow_mut()
+            .replace_options(options)
+            .map_err(ChartModelError::Construction)?;
+        self.panes[entry.pane].refresh_formatter_sources();
+        self.recalculate_requested = true;
+        self.full_update();
+        self.flush_effects();
+        Ok(())
     }
 
     pub fn add_pane(&mut self) -> usize {

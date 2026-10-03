@@ -49,6 +49,7 @@ where
     formatted_by_weight:
         BTreeMap<crate::model::time_data::TickMarkWeightValue, FormattedLabelsCache<B::CacheKey>>,
     time_marks_cache: Option<Vec<TimeMark>>,
+    time_marks_font_size: Option<f64>,
     scale_start: Option<Coordinate>,
     scroll_start: Option<Coordinate>,
     transition_start: Option<TransitionState>,
@@ -102,6 +103,7 @@ where
             localization,
             formatted_by_weight: BTreeMap::new(),
             time_marks_cache: None,
+            time_marks_font_size: None,
             scale_start: None,
             scroll_start: None,
             transition_start: None,
@@ -511,6 +513,11 @@ where
         &mut self,
         layout: crate::model::time_scale_host::TimeScaleLayoutContext,
     ) -> Option<&[TimeMark]> {
+        // Tick selection depends on the layout font size, not just the viewport.
+        if self.time_marks_font_size != Some(layout.font_size) {
+            self.time_marks_font_size = Some(layout.font_size);
+            self.time_marks_cache = None;
+        }
         if self.is_empty() {
             return None;
         }
