@@ -903,7 +903,15 @@ impl PriceScale {
     }
 
     fn logical_to_coordinate(&self, logical: f64, first_value: f64) -> Coordinate {
-        self.price_to_coordinate(self.unlogical(logical, first_value), first_value)
+        // Log tick values are absolute prices, not already transformed values.
+        // Applying from_log here a second time can overflow for large prices.
+        let price = match self.options.mode {
+            PriceScaleMode::Normal | PriceScaleMode::Logarithmic => logical,
+            PriceScaleMode::Percentage | PriceScaleMode::IndexedTo100 => {
+                self.unlogical(logical, first_value)
+            }
+        };
+        self.price_to_coordinate(price, first_value)
     }
 
     fn coordinate_to_tick_logical(&self, coordinate: f64, first_value: f64) -> f64 {

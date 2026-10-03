@@ -32,3 +32,25 @@ for(const c of cases) {
     actual.forEach((v,i)=>assert.ok(Math.abs(v-c.result[i])<1e-9,`${v} != ${c.result[i]}`));
 }
 console.log(`${cases.length} allocation cases match original ChartWidget rounding, minima, visibility and undersized-pane behavior.`);
+const cornerOutput=spawnSync(path.resolve('target/debug/examples/chart_layout_reference'),['--corners'],{encoding:'utf8'});
+if(cornerOutput.status!==0)throw new Error(cornerOutput.stderr);
+const cornerCases=JSON.parse(cornerOutput.stdout);
+let recorded;
+const Stub=new Function('clearRect',`${source('gui/price-axis-stub.ts')}\nreturn PriceAxisStub;`)(
+    (_ctx,_x,_y,_w,_h,color)=>recorded.push(['bg',color]));
+function compare(a,b) {
+    if(typeof a==='number')assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+    else if(Array.isArray(a)) { assert.equal(a.length,b.length);a.forEach((v,i)=>compare(v,b[i])); }
+    else assert.equal(a,b);
+}
+for(const c of cornerCases) {
+    recorded=[];
+    const ctx={fillRect(x,y,w,h){recorded.push(['rect',x/c.ratio,y/c.ratio,w/c.ratio,h/c.ratio,this.fillStyle]);}};
+    const stub=Object.create(Stub.prototype);
+    Object.assign(stub,{_isLeft:c.side==='left',_borderVisible:()=>c.leftBorder&&c.timeBorder,
+        _bottomColor:()=>c.gradient?'#ddd':'#fff',_options:{timeScale:{borderColor:'#123'}},
+        _rendererOptionsProvider:{options:()=>({borderSize:1})}});
+    const scope={context:ctx,bitmapSize:{width:83.5*c.ratio,height:28*c.ratio},horizontalPixelRatio:c.ratio,verticalPixelRatio:c.ratio};
+    stub._drawBackground(scope);stub._drawBorder(scope);compare(recorded,c.commands);
+}
+console.log(`${cornerCases.length} corner cases match original PriceAxisStub gradients, shared visibility and fractional snapping.`);

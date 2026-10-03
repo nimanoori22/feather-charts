@@ -400,6 +400,33 @@ impl IcedChartFrame {
         })
     }
     pub fn draw(&self, frame: &mut iced::widget::canvas::Frame) {
+        // Fractional clip edges can leave partially covered pixels on WGPU.
+        // Paint a continuous prepared backdrop before the independently clipped
+        // regions, so their antialiasing never exposes the parent's clear color.
+        let size = iced::Size::new(
+            self.layout.chart_size.width as f32,
+            self.layout.chart_size.height as f32,
+        );
+        if size.width > 0. && size.height > 0. {
+            // Keep the backdrop in its own draft: WGPU flushes a frame's
+            // ungrouped meshes after pasted clips, otherwise obscuring them.
+            frame.with_clip(iced::Rectangle::with_size(size), |frame| {
+                if let Some((top, bottom)) = self.plot.background_gradient {
+                    frame.fill_rectangle(
+                        iced::Point::ORIGIN,
+                        size,
+                        iced::widget::canvas::gradient::Linear::new(
+                            iced::Point::ORIGIN,
+                            iced::Point::new(0., self.plot.size.height),
+                        )
+                        .add_stop(0., top)
+                        .add_stop(1., bottom),
+                    );
+                } else {
+                    frame.fill_rectangle(iced::Point::ORIGIN, size, self.plot.background);
+                }
+            });
+        }
         self.plot.draw_at(frame, self.layout.plot);
         self.prices.left.draw_at(frame, self.layout.left_axis);
         self.prices.right.draw_at(frame, self.layout.right_axis);

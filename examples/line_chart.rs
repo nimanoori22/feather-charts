@@ -1,4 +1,7 @@
 //! Run with `cargo run --example line_chart`; `--smoke` checks the demo headlessly.
+#[path = "support/display_scenario.rs"]
+mod display_scenario;
+use display_scenario::{DisplayConfig, DisplayScenario};
 use feather_charts::{
     model::{
         axis_snapshots::PriceAxisSide,
@@ -91,18 +94,8 @@ fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap 
         },
     })
 }
-fn bar(index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
-    let value = 100. + (index as f64 * 0.2).sin() * 8. + index as f64 * 0.04 + adjustment;
-    let value = if std::env::args().any(|arg| arg == "--large") {
-        value * 10000.
-    } else {
-        value
-    };
-    let value = if std::env::args().any(|arg| arg == "--negative") {
-        -value
-    } else {
-        value
-    };
+fn bar(config: &DisplayConfig, index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
+    let value = config.value(index, adjustment);
     BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
         time: Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.)),
         value,
@@ -118,6 +111,7 @@ fn bar(index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
     }))
 }
 struct Demo {
+    config: DisplayConfig,
     layer: DataLayer<HorzScaleBehaviorTime>,
     model: ChartModel<HorzScaleBehaviorTime>,
     controller: TimeScaleAnimationController,
@@ -160,6 +154,11 @@ enum Message {
 }
 impl Default for Demo {
     fn default() -> Self {
+        Self::new(DisplayConfig::default())
+    }
+}
+impl Demo {
+    fn new(config: DisplayConfig) -> Self {
         let model = ChartModel::new(
             TimeScale::new(
                 HorzScaleBehaviorTime::default(),
@@ -168,7 +167,7 @@ impl Default for Demo {
             ),
             ChartModelOptions {
                 layout: LayoutOptions {
-                    background: if std::env::args().any(|arg| arg == "--gradient") {
+                    background: if config.gradient {
                         Background::VerticalGradient {
                             top_color: "#101820".into(),
                             bottom_color: "#36536a".into(),
@@ -179,8 +178,8 @@ impl Default for Demo {
                         }
                     },
                     text_color: "#eee".into(),
-                    font_size: 12.,
-                    font_family: "sans-serif".into(),
+                    font_size: config.font_size,
+                    font_family: config.font_family.clone(),
                     panes: LayoutPanesOptions {
                         enable_resize: false,
                         separator_color: String::new(),
@@ -202,6 +201,7 @@ impl Default for Demo {
             },
         );
         let mut demo = Self {
+            config,
             layer: DataLayer::new(HorzScaleBehaviorTime::default()),
             model,
             controller: TimeScaleAnimationController::default(),
@@ -225,22 +225,45 @@ impl Default for Demo {
             &mut demo.layer,
             HorzScaleOptionsPatch {
                 time_visible: Some(true),
-                fix_left_edge: Some(std::env::args().any(|arg| arg == "--fixed-edges")),
-                fix_right_edge: Some(std::env::args().any(|arg| arg == "--fixed-edges")),
+                fix_left_edge: Some(demo.config.fixed_edges),
+                fix_right_edge: Some(demo.config.fixed_edges),
                 ..Default::default()
             },
         );
         demo.load();
-        if std::env::args().any(|arg| arg == "--left-axis") {
+        if demo.config.left_axis {
             let _ = demo.update(Message::LeftAxis);
         }
-        if std::env::args().any(|arg| arg == "--ticks") {
+        if demo.config.ticks {
             let _ = demo.update(Message::Ticks);
         }
         demo
     }
 }
 impl Demo {
+    fn apply_scenario(&mut self, now: Instant) {
+        self.size = Size::new(self.config.width, self.config.height);
+        self.model.fit_content();
+        match self.config.scenario {
+            DisplayScenario::Historical => {
+                let _ = self.update(Message::Older);
+                let _ = self.update(Message::Append);
+            }
+            DisplayScenario::Empty => {
+                let _ = self.update(Message::Remove);
+            }
+            DisplayScenario::Animation => {
+                self.model
+                    .scroll_to_offset_animated(-40., Duration::from_secs(2));
+                self.prepare(now);
+                self.size = Size::new(620., 360.);
+                self.prepare(now + Duration::from_secs(1));
+                return;
+            }
+            _ => {}
+        }
+        self.prepare(now);
+    }
     fn load(&mut self) {
         if !self.registered {
             self.model
@@ -260,7 +283,7 @@ impl Demo {
             .set_series_data(
                 ID,
                 SeriesType::Line,
-                (0..self.count).map(|i| bar(i, 0.)).collect(),
+                (0..self.count).map(|i| bar(&self.config, i, 0.)).collect(),
             )
             .unwrap();
         self.model.apply_data_update(response).unwrap();
@@ -283,7 +306,7 @@ impl Demo {
             }
             let data = (0..self.count)
                 .map(|index| {
-                    let mut item = bar(index, 0.);
+                    let mut item = bar(&self.config, index, 0.);
                     if let BuiltInSeriesDataItem::Line(LineDataItem::Data(row)) = &mut item {
                         row.value = row.value * 100. - 12000.;
                     }
@@ -359,7 +382,7 @@ impl Demo {
             Message::Append if self.registered => {
                 let response = self
                     .layer
-                    .update_series_data(ID, bar(self.count, 0.), false)
+                    .update_series_data(ID, bar(&self.config, self.count, 0.), false)
                     .unwrap();
                 self.model.apply_data_update(response).unwrap();
                 self.count += 1;
@@ -368,7 +391,7 @@ impl Demo {
             Message::Replace if self.registered && self.count > 0 => {
                 let response = self
                     .layer
-                    .update_series_data(ID, bar(self.count - 1, 3.), false)
+                    .update_series_data(ID, bar(&self.config, self.count - 1, 3.), false)
                     .unwrap();
                 self.model.apply_data_update(response).unwrap();
             }
@@ -500,6 +523,9 @@ impl Demo {
                     self.frame.layout.plot.size.height,
                     self.frame.passes
                 ))),
+                text(format!("{} · chart {:.0} × {:.0} · ratio {} · requested {:.0}/{:.0}/{:.0}",
+                    self.config.scenario.name(), self.size.width, self.size.height, self.scale,
+                    self.frame.requests.left_width, self.frame.requests.right_width, self.frame.requests.time_height)),
                 chart
             ]
             .spacing(8),
@@ -557,8 +583,8 @@ impl canvas::Program<Message> for Chart<'_> {
         vec![frame.into_geometry()]
     }
 }
-fn smoke() {
-    let mut demo = Demo::default();
+fn smoke(config: DisplayConfig) {
+    let mut demo = Demo::new(config);
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
     assert!(!demo.frame.plot.lines.is_empty());
     assert!(demo.frame.prices.right.required_width > 0.);
@@ -607,20 +633,156 @@ fn smoke() {
     );
 }
 fn main() -> iced::Result {
+    let args = std::env::args().collect::<Vec<_>>();
+    let scenario = args
+        .windows(2)
+        .find(|a| a[0] == "--scenario")
+        .map(|a| DisplayScenario::parse(&a[1]).expect("unknown display scenario"))
+        .unwrap_or_default();
+    let mut config = DisplayConfig::for_scenario(scenario);
+    config.multiplier = if args.iter().any(|a| a == "--large") {
+        10000.
+    } else {
+        config.multiplier
+    };
+    config.negative |= args.iter().any(|a| a == "--negative");
+    config.gradient |= args.iter().any(|a| a == "--gradient");
+    config.left_axis |= args.iter().any(|a| a == "--left-axis");
+    config.ticks |= args.iter().any(|a| a == "--ticks");
+    config.fixed_edges |= args.iter().any(|a| a == "--fixed-edges");
     if std::env::args().any(|arg| arg == "--smoke") {
-        smoke();
+        smoke(config);
         return Ok(());
     }
-    iced::application(Demo::default, Demo::update, Demo::view)
-        .title("Feather Charts — price and time axes")
-        .theme(Theme::Dark)
-        .subscription(Demo::subscription)
-        .run()
+    if let Some(directory) = args.windows(2).find(|a| a[0] == "--capture-dir") {
+        capture_display(
+            std::path::Path::new(&directory[1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
+    let size = Size::new(config.width + 24., config.height + 145.);
+    iced::application(
+        move || {
+            let mut demo = Demo::new(config.clone());
+            demo.apply_scenario(Instant::now());
+            demo
+        },
+        Demo::update,
+        Demo::view,
+    )
+    .title("Feather Charts — price and time axes")
+    .theme(Theme::Dark)
+    .subscription(Demo::subscription)
+    .window_size(size)
+    .run()
+}
+
+/// Real Iced backend output at explicit physical sizes; no window-scale spoofing.
+/// Captures are PPM plus JSON metadata, and can be converted to PNG externally.
+fn capture_display(directory: &std::path::Path, wgpu: bool) {
+    use iced::advanced::{
+        graphics::geometry::Renderer as _,
+        renderer::{Headless, Renderer as _},
+    };
+    let backend = if wgpu { "wgpu" } else { "tiny-skia" };
+    let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
+        iced::Font::DEFAULT,
+        iced::Pixels(12.),
+        Some(backend),
+    ))
+    .expect("requested Iced headless backend unavailable");
+    std::fs::create_dir_all(directory).unwrap();
+    for scenario in DisplayScenario::ALL {
+        for ratio in [1., 1.25, 1.5, 2.] {
+            let mut demo = Demo::new(DisplayConfig::for_scenario(scenario));
+            demo.scale = ratio;
+            demo.apply_scenario(Instant::now());
+            assert!(demo.error.is_none(), "{:?}", demo.error);
+            let before = format!("{:?}", demo.frame);
+            let offset = demo.model.time_scale().right_offset();
+            let active = demo.controller.is_active();
+            let size = Size::new(
+                (demo.size.width * ratio).round() as u32,
+                (demo.size.height * ratio).round() as u32,
+            );
+            let mut last = None;
+            for _ in 0..2 {
+                renderer.reset(iced::Rectangle::with_size(demo.size));
+                let mut frame = Frame::new(&renderer, demo.size);
+                demo.frame.draw(&mut frame);
+                renderer.draw_geometry(frame.into_geometry());
+                let rgba = renderer.screenshot(size, ratio, iced::Color::from_rgb8(255, 0, 255));
+                assert_eq!(rgba.len(), size.width as usize * size.height as usize * 4);
+                if let Some(previous) = &last {
+                    assert_eq!(previous, &rgba, "drawing must be repeatable");
+                }
+                last = Some(rgba);
+            }
+            assert_eq!(before, format!("{:?}", demo.frame));
+            assert_eq!(offset, demo.model.time_scale().right_offset());
+            assert_eq!(active, demo.controller.is_active());
+            let name = format!("{}-{backend}-{ratio}", scenario.name());
+            let rgba = last.unwrap();
+            if !demo.frame.plot.lines.is_empty() {
+                assert!(
+                    rgba.as_chunks::<4>()
+                        .0
+                        .iter()
+                        .any(|p| p[2] > 180 && p[1] > 80 && p[0] < 80),
+                    "prepared blue line must remain visible in {name}"
+                );
+            }
+            // Magenta is the offscreen clear color, never a chart color. An
+            // exposed interior pixel indicates a hole between region clips.
+            for pixel in rgba.as_chunks::<4>().0 {
+                assert!(
+                    !(pixel[0] > pixel[1].saturating_add(30)
+                        && pixel[2] > pixel[1].saturating_add(30)),
+                    "unpainted chart seam in {name}: {pixel:?}"
+                );
+            }
+            let mut ppm = format!("P6\n{} {}\n255\n", size.width, size.height).into_bytes();
+            for pixel in rgba.as_chunks::<4>().0 {
+                ppm.extend_from_slice(&pixel[..3]);
+            }
+            std::fs::write(directory.join(format!("{name}.ppm")), ppm).unwrap();
+            std::fs::write(directory.join(format!("{name}.json")), format!(
+                "{{\"scenario\":\"{}\",\"backend\":\"{}\",\"font\":\"sans-serif\",\"fontSize\":12,\"logicalWidth\":{},\"logicalHeight\":{},\"physicalWidth\":{},\"physicalHeight\":{},\"scaleFactor\":{},\"plotWidth\":{},\"plotHeight\":{},\"leftWidth\":{},\"rightWidth\":{},\"timeHeight\":{},\"passes\":{}}}\n",
+                scenario.name(), renderer.name(), demo.size.width, demo.size.height, size.width, size.height,
+                ratio, demo.frame.layout.plot.size.width, demo.frame.layout.plot.size.height,
+                demo.frame.layout.left_axis.size.width, demo.frame.layout.right_axis.size.width,
+                demo.frame.layout.time_axis.size.height, demo.frame.passes)).unwrap();
+        }
+    }
+    println!(
+        "28 {backend} captures and metadata written to {}",
+        directory.display()
+    );
 }
 #[cfg(test)]
 mod tests {
     #[test]
     fn connected_demo_operations() {
-        super::smoke();
+        super::smoke(super::DisplayConfig::default());
+    }
+    #[test]
+    fn explicit_display_scenarios_prepare_without_global_argument_state() {
+        for scenario in super::DisplayScenario::ALL {
+            let mut demo = super::Demo::new(super::DisplayConfig::for_scenario(scenario));
+            demo.apply_scenario(std::time::Instant::now());
+            assert!(demo.error.is_none(), "{scenario:?}: {:?}", demo.error);
+            assert_eq!(demo.config.scenario, scenario);
+            assert_eq!(
+                demo.frame.layout.available.width,
+                f64::from(demo.size.width)
+            );
+            assert_eq!(demo.frame.time.size.width, demo.frame.plot.size.width);
+            if scenario == super::DisplayScenario::Empty {
+                assert!(demo.frame.plot.lines.is_empty());
+                let _ = demo.update(super::Message::Reload);
+            }
+            assert!(!demo.frame.plot.lines.is_empty());
+        }
     }
 }
