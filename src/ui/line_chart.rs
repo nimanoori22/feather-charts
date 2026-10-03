@@ -236,59 +236,74 @@ impl PlotSnapshot {
             return;
         }
         frame.with_clip(Rectangle::new(iced::Point::ORIGIN, size), |frame| {
-            if let Some((top, bottom)) = self.background_gradient {
-                frame.fill_rectangle(
-                    iced::Point::ORIGIN,
-                    size,
-                    iced::widget::canvas::gradient::Linear::new(
-                        iced::Point::ORIGIN,
-                        iced::Point::new(0., self.size.height),
-                    )
-                    .add_stop(0., top)
-                    .add_stop(1., bottom),
-                );
-            } else {
-                frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
-            }
-            for stroke in self.grid.iter().chain(&self.lines) {
-                let path = Path::new(|builder| {
-                    for op in &stroke.path {
-                        let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
-                        match *op {
-                            PathOperation::MoveTo(p) => builder.move_to(to_iced(p)),
-                            PathOperation::LineTo(p) => builder.line_to(to_iced(p)),
-                            PathOperation::CubicTo {
-                                control1,
-                                control2,
-                                end,
-                            } => builder.bezier_curve_to(
-                                to_iced(control1),
-                                to_iced(control2),
-                                to_iced(end),
-                            ),
-                        }
-                    }
-                });
-                frame.stroke(
-                    &path,
-                    Stroke::default()
-                        .with_color(stroke.color)
-                        .with_width(stroke.width)
-                        .with_line_cap(LineCap::Butt)
-                        .with_line_join(LineJoin::Round),
-                );
-            }
-            // One fill per source style run avoids double alpha blending where
-            // adjacent same-color markers overlap.
-            for group in self.markers.chunk_by(|a, b| a.color_key == b.color_key) {
-                let path = Path::new(|builder| {
-                    for marker in group {
-                        builder.circle(marker.center, marker.radius);
-                    }
-                });
-                frame.fill(&path, group[0].color);
-            }
+            self.draw_contents(frame, size);
         });
+    }
+    pub fn draw_at(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+    ) {
+        if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
+            frame.with_clip(clip, |frame| {
+                frame.translate(iced::Vector::new(clip.x, clip.y));
+                self.draw_contents(frame, clip.size());
+            });
+        }
+    }
+    fn draw_contents(&self, frame: &mut Frame, size: Size) {
+        if let Some((top, bottom)) = self.background_gradient {
+            frame.fill_rectangle(
+                iced::Point::ORIGIN,
+                size,
+                iced::widget::canvas::gradient::Linear::new(
+                    iced::Point::ORIGIN,
+                    iced::Point::new(0., self.size.height),
+                )
+                .add_stop(0., top)
+                .add_stop(1., bottom),
+            );
+        } else {
+            frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
+        }
+        for stroke in self.grid.iter().chain(&self.lines) {
+            let path = Path::new(|builder| {
+                for op in &stroke.path {
+                    let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
+                    match *op {
+                        PathOperation::MoveTo(p) => builder.move_to(to_iced(p)),
+                        PathOperation::LineTo(p) => builder.line_to(to_iced(p)),
+                        PathOperation::CubicTo {
+                            control1,
+                            control2,
+                            end,
+                        } => builder.bezier_curve_to(
+                            to_iced(control1),
+                            to_iced(control2),
+                            to_iced(end),
+                        ),
+                    }
+                }
+            });
+            frame.stroke(
+                &path,
+                Stroke::default()
+                    .with_color(stroke.color)
+                    .with_width(stroke.width)
+                    .with_line_cap(LineCap::Butt)
+                    .with_line_join(LineJoin::Round),
+            );
+        }
+        // One fill per source style run avoids double alpha blending where
+        // adjacent same-color markers overlap.
+        for group in self.markers.chunk_by(|a, b| a.color_key == b.color_key) {
+            let path = Path::new(|builder| {
+                for marker in group {
+                    builder.circle(marker.center, marker.radius);
+                }
+            });
+            frame.fill(&path, group[0].color);
+        }
     }
 }
 
@@ -355,6 +370,57 @@ where
             .map_err(FrameError::Model)?;
     }
     let mask = controller.draw_frame(model, now);
+    let snapshot = prepare_settled_plot(model, view, id, layout)?;
+    Ok((snapshot, mask))
+}
+
+/// Geometry only: dimensions, deferred commands and timing have already settled.
+pub fn prepare_settled_plot<B, M>(
+    model: &mut ChartModel<B, M>,
+    view: &mut LinePaneView,
+    id: Option<SeriesId>,
+    layout: &FrameLayout,
+) -> Result<PlotSnapshot, FrameError>
+where
+    B: HorzScaleBehavior,
+    B::Item: 'static,
+    B::InternalItem: 'static,
+    B::Key: PartialOrd,
+    B::CacheKey: Eq + Hash,
+    M: Clone + 'static,
+{
+    view.clear();
+    let pane = model
+        .panes()
+        .get(layout.pane)
+        .ok_or(FrameError::Model(ChartModelError::InvalidPane(layout.pane)))?;
+    if !layout.size.width.is_finite()
+        || !layout.size.height.is_finite()
+        || layout.size.width < 0.
+        || layout.size.height < 0.
+        || model.time_scale().width() != f64::from(layout.size.width)
+        || pane.height() != f64::from(layout.size.height)
+    {
+        return Err(FrameError::Model(ChartModelError::InvalidDimensions));
+    }
+    if layout.pixel_ratio.horizontal != layout.pixel_ratio.vertical
+        || !layout.pixel_ratio.horizontal.is_finite()
+        || layout.pixel_ratio.horizontal <= 0.
+    {
+        return Err(FrameError::InvalidPixelRatio);
+    }
+    if let Some(id) = id {
+        match model.pane_for_series(id) {
+            None => return Err(FrameError::Line(LinePreparationError::UnknownSeries(id))),
+            Some(pane) if pane != layout.pane => {
+                return Err(FrameError::SeriesPaneMismatch {
+                    series: id,
+                    pane: layout.pane,
+                });
+            }
+            _ => {}
+        }
+    }
     let axes = model
         .prepare_axis_snapshots(layout.pane)
         .map_err(FrameError::Axes)?;
@@ -388,7 +454,7 @@ where
         snapshot.background_gradient = Some((color(top_color)?, color(bottom_color)?));
     }
     snapshot.axes = Some(axes);
-    Ok((snapshot, mask))
+    Ok(snapshot)
 }
 
 #[cfg(test)]

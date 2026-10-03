@@ -31,7 +31,7 @@ pub enum TimeAxisUiError {
     Color(FrameError),
 }
 
-fn axis_font(
+pub(crate) fn axis_font(
     fonts: &AxisFontResolver,
     family: &str,
     emphasis: TimeLabelEmphasis,
@@ -105,6 +105,15 @@ impl IcedTimeAxis {
     }
     pub fn draw(&self, frame: &mut Frame) {
         if let Some(clip) = self.clip_bounds(frame.size()) {
+            draw_axis_primitives(&self.primitives, clip, frame);
+        }
+    }
+    pub fn draw_at(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+    ) {
+        if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
             draw_axis_primitives(&self.primitives, clip, frame);
         }
     }

@@ -223,6 +223,15 @@ impl IcedPriceAxis {
         };
         draw_axis_primitives(&self.primitives, clip, frame);
     }
+    pub fn draw_at(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+    ) {
+        if let Some(clip) = axis_region_clip(region, frame.size()) {
+            draw_axis_primitives(&self.primitives, clip, frame);
+        }
+    }
     fn clip_bounds(&self, available: Size) -> Option<Rectangle> {
         let size = Size::new(
             self.size.width.min(available.width),
@@ -238,6 +247,8 @@ pub(crate) fn draw_axis_primitives(
     frame: &mut Frame,
 ) {
     frame.with_clip(clip, |frame| {
+        // Frame::draft does not inherit its parent's transform in Iced 0.14.
+        frame.translate(iced::Vector::new(clip.x, clip.y));
         for primitive in primitives {
             match primitive {
                 AxisPrimitive::Fill { origin, size, fill } => {
@@ -247,6 +258,19 @@ pub(crate) fn draw_axis_primitives(
             }
         }
     });
+}
+
+pub(crate) fn axis_region_clip(
+    region: crate::renderers::price_axis_renderer::AxisRect,
+    available: Size,
+) -> Option<Rectangle> {
+    let x = region.origin.x as f32;
+    let y = region.origin.y as f32;
+    let size = Size::new(
+        (region.size.width as f32).min((available.width - x).max(0.)),
+        (region.size.height as f32).min((available.height - y).max(0.)),
+    );
+    (size.width > 0. && size.height > 0.).then(|| Rectangle::new(Point::new(x, y), size))
 }
 
 #[derive(Clone, Debug, Default)]

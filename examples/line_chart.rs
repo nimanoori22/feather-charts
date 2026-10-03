@@ -30,9 +30,8 @@ use feather_charts::{
         price_axis_renderer::AxisBounds,
     },
     ui::{
-        line_chart::{FrameLayout, PlotSnapshot, prepare_frame},
-        price_axis::{AxisFontResolver, IcedPriceAxes, IcedPriceAxis, prepare_iced_price_axes},
-        time_axis::{IcedTimeAxis, prepare_iced_time_axis},
+        chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer, IcedChartFrame},
+        price_axis::AxisFontResolver,
     },
     views::time_scale_animation::TimeScaleAnimationController,
 };
@@ -48,9 +47,6 @@ use std::time::{Duration, Instant};
 
 const ID: SeriesId = SeriesId::new(1);
 const LEFT_ID: SeriesId = SeriesId::new(2);
-// A fixed allocation demonstrates drawing, not a multi-pass layout solver.
-const AXIS_WIDTH: f32 = 120.;
-const TIME_AXIS_HEIGHT: f32 = 40.;
 fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap {
     SeriesOptionsMap::Line(SeriesOptions {
         common: SeriesOptionsCommon {
@@ -126,9 +122,8 @@ struct Demo {
     model: ChartModel<HorzScaleBehaviorTime>,
     controller: TimeScaleAnimationController,
     view: LinePaneView,
-    snapshot: PlotSnapshot,
-    axes: IcedPriceAxes,
-    time_axis: IcedTimeAxis,
+    frame: IcedChartFrame,
+    frame_owner: ChartFrameOwner,
     fonts: AxisFontResolver,
     left_enabled: bool,
     left_registered: bool,
@@ -211,9 +206,8 @@ impl Default for Demo {
             model,
             controller: TimeScaleAnimationController::default(),
             view: LinePaneView::default(),
-            snapshot: PlotSnapshot::default(),
-            axes: IcedPriceAxes::default(),
-            time_axis: IcedTimeAxis::default(),
+            frame: IcedChartFrame::default(),
+            frame_owner: ChartFrameOwner::default(),
             fonts: AxisFontResolver::default(),
             left_enabled: false,
             left_registered: false,
@@ -308,69 +302,38 @@ impl Demo {
         }
     }
     fn prepare(&mut self, now: Instant) {
-        let layout = FrameLayout {
-            pane: 0,
-            size: self.size,
+        let input = ChartFrameInput {
+            series: self.registered.then_some(ID),
+            bounds: AxisBounds {
+                width: f64::from(self.size.width),
+                height: f64::from(self.size.height),
+            },
             pixel_ratio: PixelRatio {
                 horizontal: self.scale,
                 vertical: self.scale,
             },
             background: "#101820".into(),
         };
-        match prepare_frame(
-            &mut self.model,
-            &mut self.controller,
-            &mut self.view,
-            self.registered.then_some(ID),
-            &layout,
-            now,
-        ) {
-            Ok((snapshot, _retained_mask)) => {
-                let bounds = AxisBounds {
-                    width: f64::from(AXIS_WIDTH),
-                    height: f64::from(self.size.height),
-                };
-                match prepare_iced_price_axes(
-                    snapshot.axes.as_ref().unwrap(),
-                    bounds,
-                    bounds,
-                    layout.pixel_ratio,
-                    &self.fonts,
-                ) {
-                    Ok(axes) => {
-                        self.axes = axes;
-                        self.error = None;
-                    }
-                    Err(error) => {
-                        self.axes = IcedPriceAxes::default();
-                        self.error = Some(format!("{error:?}"));
-                    }
-                }
-                self.snapshot = snapshot;
-                match prepare_iced_time_axis(
-                    &self.snapshot.axes.as_ref().unwrap().time,
-                    AxisBounds {
-                        width: f64::from(self.size.width),
-                        height: f64::from(TIME_AXIS_HEIGHT),
-                    },
-                    layout.pixel_ratio,
-                    &self.fonts,
-                ) {
-                    Ok(axis) => self.time_axis = axis,
-                    Err(error) => {
-                        self.time_axis = IcedTimeAxis::default();
-                        self.error = Some(format!("{error:?}"));
-                    }
-                }
+        let result = self
+            .frame_owner
+            .prepare(
+                &mut self.model,
+                &mut self.controller,
+                &mut self.view,
+                &input,
+                &mut IcedAxisMeasurer { fonts: &self.fonts },
+                now,
+            )
+            .and_then(|snapshot| IcedChartFrame::from_snapshot(snapshot, &self.fonts));
+        match result {
+            Ok(frame) => {
+                self.frame = frame;
+                self.error = None;
             }
             Err(error) => {
-                self.snapshot = PlotSnapshot {
-                    size: self.size,
-                    ..PlotSnapshot::default()
-                };
+                self.frame = IcedChartFrame::default();
+                self.frame.layout.available = input.bounds;
                 self.error = Some(format!("{error:?}"));
-                self.axes = IcedPriceAxes::default();
-                self.time_axis = IcedTimeAxis::default();
             }
         }
     }
@@ -517,8 +480,8 @@ impl Demo {
             button("Ticks").on_press(Message::Ticks)
         ]
         .spacing(5);
-        let plot = Canvas::new(Plot {
-            snapshot: &self.snapshot,
+        let chart = Canvas::new(Chart {
+            snapshot: &self.frame,
             animate: self.controller.is_active(),
         })
         .width(iced::Fill)
@@ -528,34 +491,16 @@ impl Demo {
                 controls,
                 styles,
                 text(self.error.clone().unwrap_or_else(|| format!(
-                    "{} bars · axis requests L {:.0} / R {:.0} / T {:.0} px · fixed slots {:.0} × {:.0} px",
+                    "{} bars · axes L {:.0} / R {:.0} / T {:.0} px · plot {:.0} × {:.0} · {} passes",
                     self.count,
-                    self.axes.left.required_width,
-                    self.axes.right.required_width,
-                    self.time_axis.required_height,
-                    AXIS_WIDTH,
-                    TIME_AXIS_HEIGHT
+                    self.frame.layout.left_axis.size.width,
+                    self.frame.layout.right_axis.size.width,
+                    self.frame.layout.time_axis.size.height,
+                    self.frame.layout.plot.size.width,
+                    self.frame.layout.plot.size.height,
+                    self.frame.passes
                 ))),
-                column![row![
-                    Canvas::new(PriceAxis {
-                        snapshot: &self.axes.left
-                    })
-                    .width(if self.left_enabled { AXIS_WIDTH } else { 0. })
-                    .height(iced::Fill),
-                    plot,
-                    Canvas::new(PriceAxis {
-                        snapshot: &self.axes.right
-                    })
-                    .width(AXIS_WIDTH)
-                    .height(iced::Fill)
-                ]
-                .height(iced::Fill),
-                row![
-                    iced::widget::Space::new().width(if self.left_enabled { AXIS_WIDTH } else { 0. }),
-                    Canvas::new(TimeAxis { snapshot: &self.time_axis }).width(iced::Fill).height(TIME_AXIS_HEIGHT),
-                    iced::widget::Space::new().width(AXIS_WIDTH),
-                ].height(TIME_AXIS_HEIGHT)]
-                .spacing(0).height(iced::Fill)
+                chart
             ]
             .spacing(8),
         )
@@ -563,47 +508,11 @@ impl Demo {
         .into()
     }
 }
-struct Plot<'a> {
-    snapshot: &'a PlotSnapshot,
+struct Chart<'a> {
+    snapshot: &'a IcedChartFrame,
     animate: bool,
 }
-struct PriceAxis<'a> {
-    snapshot: &'a IcedPriceAxis,
-}
-struct TimeAxis<'a> {
-    snapshot: &'a IcedTimeAxis,
-}
-impl canvas::Program<Message> for TimeAxis<'_> {
-    type State = ();
-    fn draw(
-        &self,
-        _: &(),
-        renderer: &iced::Renderer,
-        _: &Theme,
-        bounds: iced::Rectangle,
-        _: iced::mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let mut frame = Frame::new(renderer, bounds.size());
-        self.snapshot.draw(&mut frame);
-        vec![frame.into_geometry()]
-    }
-}
-impl canvas::Program<Message> for PriceAxis<'_> {
-    type State = ();
-    fn draw(
-        &self,
-        _: &(),
-        renderer: &iced::Renderer,
-        _: &Theme,
-        bounds: iced::Rectangle,
-        _: iced::mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let mut frame = Frame::new(renderer, bounds.size());
-        self.snapshot.draw(&mut frame);
-        vec![frame.into_geometry()]
-    }
-}
-impl canvas::Program<Message> for Plot<'_> {
+impl canvas::Program<Message> for Chart<'_> {
     type State = Option<Instant>;
     fn update(
         &self,
@@ -613,7 +522,12 @@ impl canvas::Program<Message> for Plot<'_> {
         _cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
-            if bounds.size() != self.snapshot.size {
+            if bounds.size()
+                != Size::new(
+                    self.snapshot.layout.available.width as f32,
+                    self.snapshot.layout.available.height as f32,
+                )
+            {
                 return Some(canvas::Action::publish(Message::Bounds(bounds.size())));
             }
             if self.animate {
@@ -646,18 +560,21 @@ impl canvas::Program<Message> for Plot<'_> {
 fn smoke() {
     let mut demo = Demo::default();
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
-    assert!(!demo.snapshot.lines.is_empty());
-    assert!(demo.axes.right.required_width > 0.);
-    assert_eq!(demo.axes.right.size.height, demo.snapshot.size.height);
-    assert!(demo.time_axis.required_height > 0.);
-    assert_eq!(demo.time_axis.size.width, demo.snapshot.size.width);
+    assert!(!demo.frame.plot.lines.is_empty());
+    assert!(demo.frame.prices.right.required_width > 0.);
+    assert_eq!(
+        demo.frame.prices.right.size.height,
+        demo.frame.plot.size.height
+    );
+    assert!(demo.frame.time.required_height > 0.);
+    assert_eq!(demo.frame.time.size.width, demo.frame.plot.size.width);
     if !demo.left_enabled {
         let _ = demo.update(Message::LeftAxis);
     }
     if !demo.ticks {
         let _ = demo.update(Message::Ticks);
     }
-    assert!(demo.axes.left.required_width > 0.);
+    assert!(demo.frame.prices.left.required_width > 0.);
     let _ = demo.update(Message::Older);
     let before = demo.model.time_scale().right_offset();
     let _ = demo.update(Message::Append);
@@ -668,17 +585,23 @@ fn smoke() {
     let _ = demo.update(Message::Style);
     let _ = demo.update(Message::Markers);
     let _ = demo.update(Message::Bounds(Size::new(500., 300.)));
-    assert_eq!(demo.snapshot.size, Size::new(500., 300.));
-    assert_eq!(demo.time_axis.size.width, 500.);
+    assert_eq!(
+        demo.frame.layout.available,
+        AxisBounds {
+            width: 500.,
+            height: 300.
+        }
+    );
+    assert_eq!(demo.frame.time.size.width, demo.frame.plot.size.width);
     let _ = demo.update(Message::Animate);
     assert!(demo.controller.is_active());
     let _ = demo.update(Message::Stop);
     assert!(!demo.controller.is_active());
     let _ = demo.update(Message::Remove);
-    assert!(demo.snapshot.lines.is_empty());
-    assert!(demo.snapshot.axes.as_ref().unwrap().time.ticks.is_empty());
+    assert!(demo.frame.plot.lines.is_empty());
+    assert!(demo.frame.plot.axes.as_ref().unwrap().time.ticks.is_empty());
     let _ = demo.update(Message::Reload);
-    assert!(!demo.snapshot.lines.is_empty());
+    assert!(!demo.frame.plot.lines.is_empty());
     println!(
         "Line chart demo smoke test passed: load, fit, resize, append, replace, styles, animation, remove/reload."
     );

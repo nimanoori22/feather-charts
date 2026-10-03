@@ -1,5 +1,6 @@
 use super::*;
 mod axis_snapshots;
+mod chart_layout;
 mod price_axis;
 mod time_axis;
 use crate::{
