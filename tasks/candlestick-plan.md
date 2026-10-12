@@ -1,6 +1,6 @@
 # Implementation roadmap: interactive candlestick charts
 
-Date: 2026-10-12. Status: in progress; source contract and backend-neutral candle preparation implemented.
+Date: 2026-10-12. Status: implemented and verified automatically; native startup checked, physical mouse/touchpad acceptance pending.
 Execution checklist: [candlestick-todo.md](candlestick-todo.md).
 Previous milestone: [mouse navigation and crosshair](plan.md). Its remaining
 hardware checks are preserved in [todo.md](todo.md).

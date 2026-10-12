@@ -1,7 +1,9 @@
 # Candlestick implementation checklist
 
 Plan and source map: [candlestick-plan.md](candlestick-plan.md).
-All tasks are pending. Existing navigation hardware checks remain in [todo.md](todo.md).
+Implementation tasks 0–6 are delivered. Automated verification and native startup pass.
+Physical mouse/touchpad acceptance remains pending; see the report. Existing
+navigation hardware checks remain in [todo.md](todo.md).
 Likely files are provisional; include affected exports, callers and fixtures.
 
 ## Task 0: Establish the source contract
@@ -54,19 +56,19 @@ coordinates/colors with the Task 0 contract, and run all-target check.
 
 ## Checkpoint: Backend-neutral candles
 
-- [ ] Geometry oracle and connected preparation tests pass.
-- [ ] Run the plan's milestone commands; existing line behavior remains green.
-- [ ] Recheck source consumers before changing UI/frame APIs.
+- [x] Geometry oracle and connected preparation tests pass.
+- [x] Run the plan's milestone commands; existing line behavior remains green.
+- [x] Recheck source consumers before changing UI/frame APIs.
 
 ## Task 3: Integrate candle frames with Iced
 
 **Dependencies:** Task 2. **Scope:** Medium frame/rendering slice.
 
-- [ ] Implement the selected bounded frame design, updating all existing callers
+- [x] Implement the selected bounded frame design, updating all existing callers
   and fixtures while retaining shared layout, animation and invalidation ordering.
-- [ ] Draw owned candle commands through an Iced adapter with correct clipping,
+- [x] Draw owned candle commands through an Iced adapter with correct clipping,
   device scaling and layer order; preserve read-only draw and the axis glyph cache.
-- [ ] Test fractional ratios, zero-size/resize, bounded settlement, failure cleanup
+- [x] Test fractional ratios, zero-size/resize, bounded settlement, failure cleanup
   and retained-frame immutability for both line and candle outputs.
 
 **Likely files:** `src/ui/chart_frame.rs`, `src/ui/line_chart.rs`,
@@ -79,11 +81,11 @@ line captures pass; no new duplicated layout/animation loop.
 
 **Dependencies:** Task 3. **Scope:** Medium interaction slice.
 
-- [ ] Verify Normal/Magnet/MagnetOhlc with actual candles, including labels,
+- [x] Verify Normal/Magnet/MagnetOhlc with actual candles, including labels,
   close/OHLC candidates, source tie order and candle marker eligibility.
-- [ ] Test whitespace, hidden/overlay candidates, unequal scales, option changes
+- [x] Test whitespace, hidden/overlay candidates, unequal scales, option changes
   and crosshair refresh after zoom, scroll, resize and data updates.
-- [ ] Change existing magnet/crosshair code only for demonstrated gaps and
+- [x] Change existing magnet/crosshair code only for demonstrated gaps and
   extend actual-source comparisons for the candle cases.
 
 **Likely files:** `src/model/chart_model.rs`, focused navigation tests,
@@ -94,18 +96,18 @@ crosshair tests pass; displayed labels refer to the applied crosshair coordinate
 
 ## Checkpoint: Interactive candle frame
 
-- [ ] Candles, axes, labels and crosshair share current settled scales.
-- [ ] Run milestone commands; preserve line input responsiveness and geometry.
+- [x] Candles, axes, labels and crosshair share current settled scales.
+- [x] Run milestone commands; preserve line input responsiveness and geometry.
 
 ## Task 5: Deliver the runnable candlestick demo
 
 **Dependencies:** Task 4. **Scope:** Small-to-medium application slice.
 
-- [ ] Add a candle example reusing existing input/frame patterns, with controls
+- [x] Add a candle example reusing existing input/frame patterns, with controls
   for crosshair modes, resize, append/update, clear/reload and candle styles.
-- [ ] Provide deterministic scenes with rising/falling/doji candles, whitespace
+- [x] Provide deterministic scenes with rising/falling/doji candles, whitespace
   and per-row overrides, plus headless smoke/capture paths using existing helpers.
-- [ ] Confirm wheel zoom, horizontal scrolling and drag operate through the
+- [x] Confirm wheel zoom, horizontal scrolling and drag operate through the
   existing model/input lifecycle without copied interaction logic.
 
 **Likely files:** `examples/candlestick_chart.rs` (new), existing example support,
@@ -117,11 +119,11 @@ native behavior and record which input devices/platforms were exercised.
 
 **Dependencies:** Task 5. **Scope:** Medium verification/documentation slice.
 
-- [ ] Run source comparisons and affected existing oracles; inspect TinySkia/WGPU
+- [x] Run source comparisons and affected existing oracles; inspect TinySkia/WGPU
   captures at normal/fractional ratios, narrow spacing and representative styles.
-- [ ] Run connected update/history/removal/resize/navigation sequences and compare
+- [x] Run connected update/history/removal/resize/navigation sequences and compare
   equivalent line zoom workloads plus measured candle workloads for regressions.
-- [ ] Finish the source/consumer/design/ownership report with exact changed files,
+- [x] Finish the source/consumer/design/ownership report with exact changed files,
   tests, results, measured limits and remaining dependencies.
 
 **Likely files:** Candle reference/demo fixtures, existing verification scripts,
@@ -132,7 +134,9 @@ manual hardware results separately from synthetic events.
 
 ## Checkpoint: Verified candlestick milestone
 
-- [ ] Correct candle geometry, colors, axes, crosshair and live updates work together.
-- [ ] Source parity, behavioral tests, both raster backends and line regressions pass.
-- [ ] Native responsiveness is checked; unavailable device/platform checks are listed.
-- [ ] Report remaining work separately: histogram/volume, multiple panes and public API.
+- [x] Correct candle geometry, colors, axes, crosshair and live updates work together.
+- [x] Source parity, behavioral tests, both raster backends and line regressions pass.
+- [ ] Manually exercise physical mouse/touchpad navigation, resizing and candle
+  mode/style/data controls. Native startup and synthetic event sequences pass;
+  physical input acceptance remains pending.
+- [x] Report remaining work separately: histogram/volume, multiple panes and public API.
