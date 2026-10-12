@@ -659,6 +659,70 @@ where
         }
     }
 
+    /// Begin manual price panning; the caller chooses when to leave autoscale.
+    pub fn start_scroll_price(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
+        use crate::model::price_scale::PriceScaleStatePatch;
+        if !y.is_finite() {
+            return Err(ChartModelError::InvalidPriceInteraction);
+        }
+        let state = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?;
+        let scale = state.axis_price_scale_mut(side);
+        if scale.is_empty() || scale.is_percentage() || scale.is_indexed_to_100() {
+            return Ok(());
+        }
+        scale.set_mode(PriceScaleStatePatch {
+            auto_scale: Some(false),
+            ..Default::default()
+        });
+        state
+            .start_scroll_price(Self::axis_position(side), y.into())
+            .map_err(ChartModelError::Pane)?;
+        self.light_update();
+        self.flush_effects();
+        Ok(())
+    }
+
+    pub fn scroll_price_to(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
+        if !y.is_finite() {
+            return Err(ChartModelError::InvalidPriceInteraction);
+        }
+        let effects = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .scroll_price_to(Self::axis_position(side), y.into())
+            .map_err(ChartModelError::Pane)?;
+        self.consume_pane_effects(effects);
+        self.flush_effects();
+        Ok(())
+    }
+
+    pub fn end_scroll_price(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+    ) -> Result<(), ChartModelError> {
+        self.panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .end_scroll_price(Self::axis_position(side))
+            .map_err(ChartModelError::Pane)?;
+        Ok(())
+    }
+
     pub fn prepare_line(
         &mut self,
         id: SeriesId,

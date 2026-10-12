@@ -10,6 +10,9 @@ function source(file) {
         .replace(/^import[\s\S]*?from ['"][^'"]+['"];?\s*$/gm,'').replace(/\bexport /g,'');
 }
 const Scale=new Function('clamp','isInteger','ensureNotNull',`${source('model/time-scale.ts')}\nreturn TimeScale;`)((v,a,b)=>Math.min(Math.max(v,a),b),Number.isInteger,v=>v);
+const Range=new Function('isNumber',`${source('model/price-range-impl.ts')}\nreturn PriceRangeImpl;`)(v=>typeof v==='number'&&Number.isFinite(v));
+// Formatter globals are unused by the exercised price-pan/projection methods.
+const PriceScale=new Function('ensureNotNull','PercentageFormatter','PriceFormatter',`${source('model/price-scale.ts')}\nreturn PriceScale;`)(v=>v,class {},class {});
 class Base {}
 let paths;
 const lines=new Function(`${source('renderers/draw-line.ts')}\nreturn {setLineStyle,drawVerticalLine,drawHorizontalLine};`)();
@@ -33,7 +36,17 @@ function near(a,b) {
     else assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 }
 for(const c of cases) {
-    if(c.kind==='price-label') {
+    if(c.kind==='price-pan') {
+        const scale=Object.create(PriceScale.prototype);
+        Object.assign(scale,{_height:c.height,_options:{autoScale:false,invertScale:c.inverted,mode:0,scaleMargins:{top:0.2,bottom:0.1}},_priceRange:new Range(...c.bounds),_marginAbove:0,_marginBelow:0,_internalHeightCache:null,_scrollStartPoint:null,_priceRangeSnapshot:null,
+            _makeSureItIsValid(){},isEmpty(){return this._priceRange.isEmpty();},priceRange(){return this._priceRange;},setPriceRange(range){this._priceRange=range;}});
+        const value=(c.bounds[0]+c.bounds[1])*0.5;
+        const before=scale.priceToCoordinate(value,1);
+        scale.startScroll(c.height*c.fraction);scale.scrollTo(c.height*c.fraction+c.delta);scale.endScroll();
+        const after=scale.priceToCoordinate(value,1),range=scale.priceRange();
+        near([before,after,range.minValue(),range.maxValue(),scale.coordinateToPrice(after,1)],c.result);
+        assert.equal(scale._scrollStartPoint,null);
+    } else if(c.kind==='price-label') {
         const renderer=new PriceLabel({visible:true,text:'98.11',tickVisible:true,separatorVisible:false},{coordinate:c.coordinate,additionalPaddingTop:2,additionalPaddingBottom:2});
         const g=renderer._calculateGeometry({context:{},bitmapSize:{width:100*c.ratio,height:80*c.ratio},mediaSize:{width:100,height:80},horizontalPixelRatio:c.ratio,verticalPixelRatio:c.ratio},{fontSize:12,borderSize:1,tickLength:5,paddingTop:2.5,paddingBottom:2.5,paddingInner:5,paddingOuter:5},{measureText:()=>35,yMidCorrection:()=>0},c.left?'right':'left').bitmap;
         near([(c.left?g.xOutside:g.xInside)/c.ratio,g.yTop/c.ratio,g.totalWidth/c.ratio,g.totalHeight/c.ratio,Math.min(g.xInside,g.xTick)/c.ratio,g.yMid/c.ratio,Math.abs(g.xTick-g.xInside)/c.ratio,g.tickHeight/c.ratio],c.result);
@@ -61,4 +74,4 @@ for(const c of cases) {
         renderer._drawImpl({context,bitmapSize:{width:100*c.ratio,height:60*c.ratio},horizontalPixelRatio:c.ratio,verticalPixelRatio:c.ratio});near(paths,c.result);
     }
 }
-console.log(`${cases.length} navigation, crosshair-line, floating-label and magnet cases match original TypeScript methods.`);
+console.log(`${cases.length} navigation, price-pan/projection, crosshair-line, floating-label and magnet cases match original TypeScript methods.`);

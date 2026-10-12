@@ -3,8 +3,19 @@ use iced::{Point, mouse, widget::canvas::Event};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Navigation {
-    Wheel { x: f64, zoom: f64, scroll: f64 },
-    Scroll { start: Option<f64>, x: f64 },
+    Wheel {
+        x: f64,
+        zoom: f64,
+        scroll: f64,
+    },
+    Scroll {
+        start: Option<f64>,
+        x: f64,
+    },
+    Pan {
+        start: Option<Point>,
+        position: Point,
+    },
     EndScroll,
 }
 #[derive(Clone, Copy, Debug)]
@@ -33,6 +44,7 @@ pub struct ChartInput {
     pub options: MouseNavigationOptions,
     pressed: Option<Point>,
     scrolling: bool,
+    gesture_origin: Option<Point>,
     plot: Option<LayoutRect>,
     last_cursor: Option<Point>,
 }
@@ -47,16 +59,22 @@ impl ChartInput {
         plot: LayoutRect,
         enabled: bool,
     ) -> Option<ChartInteraction> {
-        let local = cursor
-            .filter(|p| p.x.is_finite() && p.y.is_finite())
-            .map(|p| Point::new(p.x - plot.origin.x as f32, p.y - plot.origin.y as f32));
+        let cursor = cursor.filter(|p| p.x.is_finite() && p.y.is_finite());
+        let local =
+            cursor.map(|p| Point::new(p.x - plot.origin.x as f32, p.y - plot.origin.y as f32));
         let position = local.filter(|p| {
             p.x >= 0.
                 && p.y >= 0.
                 && f64::from(p.x) < plot.size.width
                 && f64::from(p.y) < plot.size.height
         });
-        let changed = self.plot.replace(plot).is_some_and(|old| old != plot);
+        let changed = self.plot.replace(plot).is_some_and(|old| {
+            if self.pressed.is_some() {
+                old.origin.y != plot.origin.y || old.size.height != plot.size.height
+            } else {
+                old != plot
+            }
+        });
         let leaving = matches!(
             event,
             Event::Mouse(mouse::Event::CursorLeft) | Event::Window(iced::window::Event::Unfocused)
@@ -67,6 +85,7 @@ impl ChartInput {
             || leaving
         {
             self.pressed = None;
+            self.gesture_origin = None;
             self.scrolling = false;
             self.last_cursor = if !leaving && enabled { local } else { None };
             return Some(ChartInteraction {
@@ -97,6 +116,7 @@ impl ChartInput {
                     return None;
                 }
                 self.pressed = None;
+                self.gesture_origin = None;
                 self.scrolling = false;
                 action.navigation = Some(Navigation::Wheel {
                     x: f64::from(position.unwrap().x),
@@ -117,6 +137,7 @@ impl ChartInput {
                 if position.is_some() && self.options.pressed_mouse_move =>
             {
                 self.pressed = local;
+                self.gesture_origin = Some(Point::new(plot.origin.x as f32, plot.origin.y as f32));
                 self.scrolling = false;
                 action.capture = true;
             }
@@ -125,12 +146,15 @@ impl ChartInput {
                 if self.last_cursor == local {
                     return None;
                 }
-                if let (Some(start), Some(point)) = (self.pressed, local) {
+                let drag_point = cursor
+                    .zip(self.gesture_origin)
+                    .map(|(p, origin)| Point::new(p.x - origin.x, p.y - origin.y));
+                if let (Some(start), Some(point)) = (self.pressed, drag_point) {
                     if self.scrolling || (point.x - start.x).abs() + (point.y - start.y).abs() >= 5.
                     {
-                        action.navigation = Some(Navigation::Scroll {
-                            start: (!self.scrolling).then_some(f64::from(point.x)),
-                            x: f64::from(point.x),
+                        action.navigation = Some(Navigation::Pan {
+                            start: (!self.scrolling).then_some(point),
+                            position: point,
                         });
                         self.scrolling = true;
                     }
@@ -141,6 +165,7 @@ impl ChartInput {
                 if self.pressed.take().is_some() =>
             {
                 self.scrolling = false;
+                self.gesture_origin = None;
                 action.navigation = Some(Navigation::EndScroll);
                 action.capture = true;
             }
@@ -189,11 +214,7 @@ pub struct MultiPaneInput {
     selected: Option<usize>,
     gesture: Option<usize>,
     divider: Option<DividerDrag>,
-    viewport: Option<(
-        crate::renderers::price_axis_renderer::AxisBounds,
-        f64,
-        usize,
-    )>,
+    viewport: Option<(crate::renderers::price_axis_renderer::AxisBounds, usize)>,
     pub hovered_divider: Option<usize>,
 }
 impl MultiPaneInput {
@@ -210,11 +231,7 @@ impl MultiPaneInput {
         resize_enabled: bool,
     ) -> Option<MultiPaneInteraction> {
         let cursor = cursor.filter(|p| p.x.is_finite() && p.y.is_finite());
-        let viewport = (
-            layout.chart.available,
-            layout.chart.plot.size.width,
-            layout.panes.len(),
-        );
+        let viewport = (layout.chart.available, layout.panes.len());
         let changed = self
             .viewport
             .replace(viewport)
@@ -495,16 +512,13 @@ mod tests {
             .unwrap();
         assert!(matches!(
             start.navigation,
-            Some(Navigation::Scroll { start: Some(_), .. })
+            Some(Navigation::Pan { start: Some(_), .. })
         ));
         let outside = state
             .update(&movement, Some(Point::new(700., 50.)), plot(), true)
             .unwrap();
         assert!(outside.position.is_none());
-        assert!(matches!(
-            outside.navigation,
-            Some(Navigation::Scroll { .. })
-        ));
+        assert!(matches!(outside.navigation, Some(Navigation::Pan { .. })));
         let release = state
             .update(
                 &event(mouse::Event::ButtonReleased(mouse::Button::Left)),
@@ -579,7 +593,7 @@ mod tests {
             Some(MultiPaneInteraction::Plot {
                 pane: 1,
                 interaction: ChartInteraction {
-                    navigation: Some(Navigation::Scroll { .. }),
+                    navigation: Some(Navigation::Pan { .. }),
                     position: None,
                     ..
                 }
@@ -699,5 +713,44 @@ mod tests {
                 )
                 .is_none()
         );
+    }
+}
+
+#[cfg(test)]
+mod pan_tests {
+    use super::*;
+    use crate::renderers::{line_renderer::Point as EnginePoint, price_axis_renderer::AxisBounds};
+    #[test]
+    fn price_label_width_changes_do_not_cancel_or_shift_a_plot_pan() {
+        let mut input = ChartInput::default();
+        let mut plot = LayoutRect {
+            origin: EnginePoint { x: 50., y: 0. },
+            size: AxisBounds {
+                width: 600.,
+                height: 300.,
+            },
+        };
+        let press = Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+        let movement = Event::Mouse(mouse::Event::CursorMoved {
+            position: Point::ORIGIN,
+        });
+        input
+            .update(&press, Some(Point::new(200., 100.)), plot, true)
+            .unwrap();
+        input
+            .update(&movement, Some(Point::new(210., 110.)), plot, true)
+            .unwrap();
+        plot.origin.x += 10.;
+        plot.size.width -= 10.;
+        let action = input
+            .update(&movement, Some(Point::new(230., 130.)), plot, true)
+            .unwrap();
+        assert!(matches!(
+            action.navigation,
+            Some(Navigation::Pan {
+                start: None,
+                position: Point { x: 180., y: 130. }
+            })
+        ));
     }
 }

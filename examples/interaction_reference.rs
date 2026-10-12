@@ -173,9 +173,53 @@ fn label_cases(cases: &mut Vec<String>) {
         }
     }
 }
+fn price_pan_cases(cases: &mut Vec<String>) {
+    use feather_charts::model::{
+        price_range_impl::PriceRangeImpl,
+        price_scale::{PriceScale, PriceScaleOptions},
+    };
+    for height in [120., 300., 470.25] {
+        for bounds in [[-10., 10.], [100., 120.], [0., 40_000.]] {
+            for fraction in [0.2, 0.5, 0.8] {
+                for delta in [-100., -25., 0., 25., 100.] {
+                    for inverted in [false, true] {
+                        let mut scale = PriceScale::new_with_font_size(
+                            "right",
+                            PriceScaleOptions {
+                                auto_scale: false,
+                                invert_scale: inverted,
+                                ..Default::default()
+                            },
+                            12.,
+                        );
+                        scale.set_height(height);
+                        scale.set_price_range(Some(PriceRangeImpl::new(bounds[0], bounds[1])));
+                        let value = (bounds[0] + bounds[1]) * 0.5;
+                        let before_y = scale.price_to_coordinate(value, 1.).value();
+                        scale.start_scroll((height * fraction).into());
+                        scale.scroll_to((height * fraction + delta).into());
+                        scale.end_scroll();
+                        let range = scale.price_range().unwrap();
+                        let after_y = scale.price_to_coordinate(value, 1.).value();
+                        let restored = scale.coordinate_to_price(after_y.into(), 1.);
+                        let result = [
+                            before_y,
+                            after_y,
+                            range.min_value(),
+                            range.max_value(),
+                            restored,
+                        ];
+                        cases.push(format!("{{\"kind\":\"price-pan\",\"height\":{height},\"bounds\":{bounds:?},\"fraction\":{fraction},\"delta\":{delta},\"inverted\":{inverted},\"result\":{result:?}}}"));
+                    }
+                }
+            }
+        }
+    }
+}
 fn main() {
     let mut cases = vec![];
     label_cases(&mut cases);
+    price_pan_cases(&mut cases);
     for candidates in [
         vec![],
         vec![8., 12.],

@@ -642,31 +642,38 @@ impl PriceScale {
         let Some(range) = self.range else {
             return Coordinate::new(f64::NAN);
         };
-        let h =
-            self.height * (1. - self.options.scale_margins.top - self.options.scale_margins.bottom);
+        let h = self.internal_height() - 1.;
         if h <= 0. || range.length() == 0. {
             return Coordinate::new(f64::NAN);
         }
         let ratio = (self.logical(price, base) - range.min_value()) / range.length();
-        let y = self.height * (1. - self.options.scale_margins.bottom) - ratio * h;
+        let y = self.bottom_margin_px() + ratio * h;
         Coordinate::new(if self.options.invert_scale {
-            self.height - y
-        } else {
             y
+        } else {
+            self.height - 1. - y
         })
     }
     pub fn coordinate_to_price(&self, coord: Coordinate, base: f64) -> f64 {
         let Some(range) = self.range else {
             return f64::NAN;
         };
-        let h =
-            self.height * (1. - self.options.scale_margins.top - self.options.scale_margins.bottom);
-        let mut y = coord.value();
-        if self.options.invert_scale {
-            y = self.height - y
-        }
-        let ratio = (self.height * (1. - self.options.scale_margins.bottom) - y) / h;
+        let h = self.internal_height() - 1.;
+        let y = if self.options.invert_scale {
+            coord.value()
+        } else {
+            self.height - 1. - coord.value()
+        };
+        let ratio = (y - self.bottom_margin_px()) / h;
         self.unlogical(range.min_value() + ratio * range.length(), base)
+    }
+    fn bottom_margin_px(&self) -> f64 {
+        self.height
+            * if self.options.invert_scale {
+                self.options.scale_margins.top
+            } else {
+                self.options.scale_margins.bottom
+            }
     }
     pub fn format_price(&self, price: f64, base: f64) -> String {
         match self.options.mode {
