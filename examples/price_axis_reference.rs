@@ -37,6 +37,9 @@ fn main() {
                         for gradient in [false, true] {
                             let mut provider = PriceAxisRendererOptionsProvider::new();
                             let snapshot = PriceAxisSnapshot {
+                                labels: vec![],
+                                align_labels: true,
+                                label_center: None,
                                 crosshair_label: None,
                                 crosshair_width_labels: vec![],
                                 side,

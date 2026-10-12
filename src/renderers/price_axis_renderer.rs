@@ -1,5 +1,6 @@
 //! Ordinary price-axis commands in local logical pixels. Only tick/border
 //! rectangles are bitmap-snapped, then converted back once.
+mod labels;
 use crate::{
     model::{
         axis_snapshots::{PriceAxisSide, PriceAxisSnapshot},
@@ -66,6 +67,8 @@ pub struct PriceAxisMeasurement {
     metrics: Vec<TextMetrics>,
     required_width: f64,
     floating_metrics: Option<TextMetrics>,
+    label_metrics: Vec<TextMetrics>,
+    pane_metrics: Vec<TextMetrics>,
 }
 impl PriceAxisMeasurement {
     pub fn required_width(&self) -> f64 {
@@ -93,6 +96,8 @@ pub fn measure_price_axis<M: TextMeasurer>(
             options.tick_length,
             options.padding_inner,
             options.padding_outer,
+            options.padding_top,
+            options.padding_bottom,
         ]
         .iter()
         .any(|value| !value.is_finite() || *value < 0.)
@@ -121,6 +126,30 @@ pub fn measure_price_axis<M: TextMeasurer>(
                 .map(|label| measurer.measure_text(&label.text))
         })
         .flatten();
+    let label_metrics = snapshot
+        .labels
+        .iter()
+        .map(|l| measurer.measure_text(&l.axis.text))
+        .collect::<Vec<_>>();
+    let pane_metrics = snapshot
+        .labels
+        .iter()
+        .map(|l| {
+            if l.pane_text.is_empty() {
+                TextMetrics::default()
+            } else {
+                measurer.measure_text(&l.pane_text)
+            }
+        })
+        .collect::<Vec<_>>();
+    if snapshot
+        .labels
+        .iter()
+        .any(|l| !l.axis.coordinate.is_finite() || !l.render_coordinate.is_finite())
+        || snapshot.label_center.is_some_and(|v| !v.is_finite())
+    {
+        return Err(PriceAxisRenderError::InvalidSnapshot);
+    }
     let reserve_metrics = if snapshot.visible {
         snapshot
             .crosshair_width_labels
@@ -141,6 +170,8 @@ pub fn measure_price_axis<M: TextMeasurer>(
         .iter()
         .chain(&reserve_metrics)
         .chain(floating_metrics.iter())
+        .chain(&label_metrics)
+        .chain(&pane_metrics)
         .any(|metric| {
             !metric.width.is_finite()
                 || metric.width < 0.
@@ -166,6 +197,7 @@ pub fn measure_price_axis<M: TextMeasurer>(
                 .map(|metric| metric.width)
                 .fold(0., f32::max),
         );
+    let label_width = label_width.max(label_metrics.iter().map(|m| m.width).fold(0., f32::max));
     let intrinsic = even_width(
         (f64::from(
             options.border_size
@@ -191,6 +223,8 @@ pub fn measure_price_axis<M: TextMeasurer>(
         metrics,
         required_width,
         floating_metrics,
+        label_metrics,
+        pane_metrics,
     })
 }
 
@@ -200,24 +234,7 @@ pub fn prepare_price_axis(
     bounds: AxisBounds,
     ratio: PixelRatio,
 ) -> Result<PreparedPriceAxis, PriceAxisRenderError> {
-    if !bounds.width.is_finite()
-        || !bounds.height.is_finite()
-        || bounds.width < 0.
-        || bounds.height < 0.
-        || bounds.width > f64::from(f32::MAX)
-        || bounds.height > f64::from(f32::MAX)
-    {
-        return Err(PriceAxisRenderError::InvalidBounds);
-    }
-    if !ratio.horizontal.is_finite()
-        || !ratio.vertical.is_finite()
-        || ratio.horizontal <= 0.
-        || ratio.vertical <= 0.
-        || !(bounds.width * f64::from(ratio.horizontal)).is_finite()
-        || !(bounds.height * f64::from(ratio.vertical)).is_finite()
-    {
-        return Err(PriceAxisRenderError::InvalidPixelRatio);
-    }
+    validate_frame(bounds, ratio)?;
     let mut result = PreparedPriceAxis {
         required_width: measurement.required_width,
         bounds,
@@ -308,6 +325,9 @@ pub fn prepare_price_axis(
             color: options.color.clone(),
         });
     }
+    result
+        .commands
+        .extend(labels::prepare(measurement, bounds, ratio, false));
     if let (Some(label), Some(metric)) = (&snapshot.crosshair_label, &measurement.floating_metrics)
     {
         let width = f64::from(
@@ -395,3 +415,39 @@ pub fn prepare_price_axis(
 
 #[cfg(test)]
 pub(crate) mod tests;
+
+/// Pane titles use the same aligned positions as their axis values.
+pub fn prepare_pane_price_labels(
+    measurement: &PriceAxisMeasurement,
+    bounds: AxisBounds,
+    ratio: PixelRatio,
+) -> Result<PreparedPriceAxis, PriceAxisRenderError> {
+    validate_frame(bounds, ratio)?;
+    Ok(PreparedPriceAxis {
+        required_width: 0.,
+        bounds,
+        commands: labels::prepare(measurement, bounds, ratio, true),
+    })
+}
+
+fn validate_frame(bounds: AxisBounds, ratio: PixelRatio) -> Result<(), PriceAxisRenderError> {
+    if !bounds.width.is_finite()
+        || !bounds.height.is_finite()
+        || bounds.width < 0.
+        || bounds.height < 0.
+        || bounds.width > f64::from(f32::MAX)
+        || bounds.height > f64::from(f32::MAX)
+    {
+        return Err(PriceAxisRenderError::InvalidBounds);
+    }
+    if !ratio.horizontal.is_finite()
+        || !ratio.vertical.is_finite()
+        || ratio.horizontal <= 0.
+        || ratio.vertical <= 0.
+        || !(bounds.width * f64::from(ratio.horizontal)).is_finite()
+        || !(bounds.height * f64::from(ratio.vertical)).is_finite()
+    {
+        return Err(PriceAxisRenderError::InvalidPixelRatio);
+    }
+    Ok(())
+}

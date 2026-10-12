@@ -32,7 +32,16 @@ pub struct FloatingAxisLabel {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct SeriesAxisLabel {
+    pub axis: FloatingAxisLabel,
+    pub pane_text: String,
+    pub render_coordinate: f64,
+}
+#[derive(Clone, Debug, PartialEq)]
 pub struct PriceAxisSnapshot {
+    pub labels: Vec<SeriesAxisLabel>,
+    pub align_labels: bool,
+    pub label_center: Option<f64>,
     pub crosshair_label: Option<FloatingAxisLabel>,
     pub crosshair_width_labels: Vec<String>,
     pub side: PriceAxisSide,
@@ -111,6 +120,7 @@ pub struct AxisSnapshots {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum AxisSnapshotError {
     InvalidPane(usize),
+    InvalidLabelColor,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -154,6 +164,9 @@ pub(crate) fn price_snapshot(
         })
         .clone();
     PriceAxisSnapshot {
+        labels: vec![],
+        align_labels: options.align_labels,
+        label_center: None,
         crosshair_label: None,
         crosshair_width_labels: vec![],
         side,

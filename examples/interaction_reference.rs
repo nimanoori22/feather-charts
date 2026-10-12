@@ -52,6 +52,9 @@ fn label_cases(cases: &mut Vec<String>) {
             for side in [PriceAxisSide::Left, PriceAxisSide::Right] {
                 let mut provider = PriceAxisRendererOptionsProvider::new();
                 let snapshot = PriceAxisSnapshot {
+                    labels: vec![],
+                    align_labels: true,
+                    label_center: None,
                     crosshair_label: Some(label.clone()),
                     crosshair_width_labels: vec![],
                     side,
