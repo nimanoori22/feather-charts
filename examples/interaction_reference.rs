@@ -273,5 +273,21 @@ fn main() {
             ));
         }
     }
+    for mode in [1, 3] {
+        for origin in [-5., 0., 5., 10., 15., 20., 30.] {
+            for values in [
+                vec![],
+                vec![[8., 20., 0., 12.]],
+                vec![[8., 20., 0., 12.], [12., 25., -5., 18.]],
+            ] {
+                let candidates = values
+                    .iter()
+                    .flat_map(|v| if mode == 3 { v.to_vec() } else { vec![v[3]] })
+                    .collect::<Vec<_>>();
+                let result = feather_charts::model::magnet::nearest_coordinate(origin, candidates);
+                cases.push(format!("{{\"kind\":\"ohlc-magnet\",\"mode\":{mode},\"origin\":{origin},\"values\":{values:?},\"result\":{result}}}"));
+            }
+        }
+    }
     println!("[{}]", cases.join(","));
 }

@@ -19,7 +19,7 @@ class Series {
     visible(){return true;}
     priceScale(){return priceScale;}
     firstValue(){return {value:1};}
-    bars(){return {contains:()=>true,valueAt:()=>({value:[this.value,this.value,this.value,this.value]})};}
+    bars(){return {contains:()=>true,valueAt:()=>({value:Array.isArray(this.value)?this.value:[this.value,this.value,this.value,this.value]})};}
 }
 const priceScale={firstValue:()=>1,isEmpty:()=>false,priceToCoordinate:p=>p,coordinateToPrice:y=>y};
 const Magnet=new Function('ensure','CrosshairMode','PlotRowValueIndex','Series',`${source('model/magnet.ts')}\nreturn Magnet;`)(v=>v,{Normal:0,Magnet:1,MagnetOHLC:3},{Open:0,High:1,Low:2,Close:3},Series);
@@ -48,6 +48,9 @@ for(const c of cases) {
         Object.assign(scale,{_width:c.width,_barSpacing:c.initial[0],_rightOffset:c.initial[1],_baseIndexOrNull:99,_points:Array(100),_options:{minBarSpacing:0.5,maxBarSpacing:0,fixLeftEdge:c.fixed,fixRightEdge:c.fixed,rightBarStaysOnScroll:c.stay},_model:{recalculateAllPanes(){},lightUpdate(){}},_scrollStartPoint:null,_commonTransitionStartState:null});
         scale.zoom(c.width*0.4,c.zoom);near([scale.barSpacing(),scale.rightOffset()],c.zoomed);
         scale.startScroll(20);scale.scrollTo(65);scale.endScroll();near([scale.barSpacing(),scale.rightOffset()],c.scrolled);
+    } else if(c.kind==='ohlc-magnet') {
+        const pane={defaultPriceScale:()=>priceScale,dataSources:()=>c.values.map(v=>new Series(v)),isOverlay:()=>false};
+        near(new Magnet({mode:c.mode}).align(c.origin,0,pane),c.result);
     } else if(c.kind==='magnet') {
         const pane={defaultPriceScale:()=>priceScale,dataSources:()=>c.candidates.map(v=>new Series(v)),isOverlay:()=>false};
         near(new Magnet({mode:1}).align(10,0,pane),c.result);
