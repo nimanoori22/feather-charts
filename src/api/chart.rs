@@ -16,6 +16,17 @@ use crate::model::{
     time_scale::TimeScale,
     time_scale_options::HorzScaleOptions,
 };
+use crate::renderers::{grid_renderer::PixelRatio, price_axis_renderer::AxisBounds};
+use crate::ui::{
+    chart_frame::{ChartFrameError, IcedAxisMeasurer, IcedChartFrame},
+    multi_pane_frame::{
+        IcedMultiPaneChartFrame, MultiPaneChartFrameInput, MultiPaneChartFrameOwner,
+        MultiPaneChartFrameSnapshot, SeriesPaneView,
+    },
+    price_axis::AxisFontResolver,
+};
+use crate::views::time_scale_animation::TimeScaleAnimationController;
+use std::time::Instant;
 use std::{
     collections::BTreeMap,
     sync::atomic::{AtomicU64, Ordering},
@@ -24,6 +35,8 @@ use std::{
 #[derive(Debug)]
 pub enum ChartError {
     Model(ChartModelError),
+    Frame(ChartFrameError),
+    PriceAxis(crate::model::axis_snapshots::PriceAxisOptionsError),
     Data(DataLayerError<TimeConversionError>),
     Time(TimeConversionError),
     UnknownSeries(SeriesId),
@@ -31,6 +44,7 @@ pub enum ChartError {
     InvalidData { index: usize },
     UnorderedData { index: usize },
     IdExhausted,
+    InvalidInteraction,
 }
 impl std::fmt::Display for ChartError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -55,7 +69,22 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 pub struct Chart {
     pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
     layer: DataLayer<HorzScaleBehaviorTime>,
-    kinds: BTreeMap<SeriesId, SeriesType>,
+    pub(crate) size: iced::Size,
+    pub(crate) ratio: f32,
+    pub(crate) plot_pan: Option<super::interaction::PlotPan>,
+    pub(crate) active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
+    pub(super) kinds: BTreeMap<SeriesId, SeriesType>,
+    views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
+    owner: MultiPaneChartFrameOwner,
+    pub(crate) controller: TimeScaleAnimationController,
+    frame: IcedMultiPaneChartFrame,
+    fonts: AxisFontResolver,
+    background: String,
+    separator: String,
+    separator_hover: String,
+    pub(super) hover_color: iced::Color,
+    pub(crate) resize_panes: bool,
+    pub(crate) revision: u64,
 }
 impl Default for Chart {
     fn default() -> Self {
@@ -64,7 +93,33 @@ impl Default for Chart {
 }
 impl Chart {
     pub fn new(options: ChartModelOptions) -> Self {
+        let background = match &options.layout.background {
+            crate::model::layout_options::Background::Solid { color } => color.clone(),
+            crate::model::layout_options::Background::VerticalGradient { top_color, .. } => {
+                top_color.clone()
+            }
+        };
+        let separator = options.layout.panes.separator_color.clone();
+        let resize_panes = options.layout.panes.enable_resize;
+        let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            size: iced::Size::ZERO,
+            ratio: 1.,
+            plot_pan: None,
+            active_price_axis: None,
+            views: (0..usize::from(options.add_default_pane))
+                .map(|_| vec![])
+                .collect(),
+            owner: Default::default(),
+            controller: Default::default(),
+            frame: Default::default(),
+            fonts: Default::default(),
+            background,
+            separator,
+            separator_hover,
+            hover_color: iced::Color::TRANSPARENT,
+            resize_panes,
+            revision: 0,
             model: ChartModel::new(
                 TimeScale::new(
                     HorzScaleBehaviorTime::default(),
@@ -100,10 +155,21 @@ impl Chart {
         self.model
             .register_series(id, kind, options, pane, position)?;
         self.kinds.insert(id, kind);
+        let view = match kind {
+            SeriesType::Line => SeriesPaneView::Line(Default::default()),
+            SeriesType::Candlestick => SeriesPaneView::Candlesticks(Default::default()),
+            SeriesType::Histogram => SeriesPaneView::Histogram(Default::default()),
+            _ => unreachable!(),
+        };
+        self.views[pane].push((id, view));
+        self.revision += 1;
         // Establish DataLayer membership so update() also works before set_data().
         let update = self.layer.set_series_data(id, kind, vec![])?;
         self.model.apply_data_update(update)?;
         Ok(id)
+    }
+    pub fn series_ids(&self) -> impl Iterator<Item = SeriesId> + '_ {
+        self.kinds.keys().copied()
     }
     fn kind(&self, id: SeriesId) -> Result<SeriesType, ChartError> {
         self.kinds
@@ -119,6 +185,9 @@ impl Chart {
     ) -> Result<(), ChartError> {
         let kind = self.kind(id)?;
         validate_data(kind, &data, true)?;
+        if data.is_empty() {
+            self.cancel_interaction();
+        }
         let update = self.layer.set_series_data(id, kind, data)?;
         self.model.apply_data_update(update)?;
         Ok(())
@@ -137,9 +206,22 @@ impl Chart {
     }
     pub fn remove_series(&mut self, id: SeriesId) -> Result<(), ChartError> {
         self.kind(id)?;
+        let pane = self
+            .model
+            .pane_for_series(id)
+            .ok_or(ChartError::UnknownSeries(id))?;
+        self.cancel_interaction();
         let update = self.layer.remove_series(id)?;
         self.model.remove_series(id, update)?;
         self.kinds.remove(&id);
+        for views in &mut self.views {
+            views.retain(|(other, _)| *other != id);
+        }
+        if self.views.len() != self.model.panes().len() {
+            // Model removes an unpreserved pane when its final series is removed.
+            self.views.remove(pane);
+        }
+        self.revision += 1;
         Ok(())
     }
     pub fn replace_series_options(
@@ -152,6 +234,9 @@ impl Chart {
         Ok(())
     }
     pub fn add_pane(&mut self) -> usize {
+        self.cancel_interaction();
+        self.views.push(vec![]);
+        self.revision += 1;
         self.model.add_pane()
     }
     pub fn apply_time_scale_options(
@@ -160,7 +245,138 @@ impl Chart {
     ) {
         self.model.apply_time_scale_options(&mut self.layer, patch);
     }
+    /// Settle shared layout and geometry without converting glyphs. Primarily
+    /// useful for hosts with their own frame conversion/inspection.
+    pub fn prepare_snapshot(
+        &mut self,
+        size: iced::Size,
+        ratio: f32,
+        now: Instant,
+    ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        let series = self
+            .views
+            .iter()
+            .map(|v| v.first().map(|(id, _)| *id))
+            .collect();
+        self.owner
+            .prepare_composed(
+                &mut self.model,
+                &mut self.controller,
+                &mut self.views,
+                &MultiPaneChartFrameInput {
+                    series,
+                    bounds: AxisBounds {
+                        width: f64::from(size.width),
+                        height: f64::from(size.height),
+                    },
+                    pixel_ratio: PixelRatio {
+                        horizontal: ratio,
+                        vertical: ratio,
+                    },
+                    background: self.background.clone(),
+                },
+                &mut IcedAxisMeasurer { fonts: &self.fonts },
+                now,
+            )
+            .map_err(ChartError::Frame)
+    }
+    /// Prepare an immutable frame after a batch of updates. Failed preparation
+    /// clears the displayed geometry instead of retaining a stale chart.
+    pub fn prepare(
+        &mut self,
+        size: iced::Size,
+        ratio: f32,
+        now: Instant,
+    ) -> Result<(), ChartError> {
+        if self.size != size || self.ratio != ratio {
+            self.cancel_viewport_interaction();
+        }
+        self.size = size;
+        self.ratio = ratio;
+        let result = self
+            .prepare_snapshot(size, ratio, now)
+            .and_then(|snapshot| {
+                self.hover_color = crate::ui::line_chart::color(&self.separator_hover)
+                    .map_err(|error| ChartError::Frame(ChartFrameError::Plot(error)))?;
+                IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, &self.separator)
+                    .map_err(ChartError::Frame)
+            });
+        match result {
+            Ok(frame) => {
+                self.frame = frame;
+                Ok(())
+            }
+            Err(error) => {
+                self.frame = Default::default();
+                let mut pane = IcedChartFrame::default();
+                pane.layout.available = AxisBounds {
+                    width: f64::from(size.width),
+                    height: f64::from(size.height),
+                };
+                self.frame.panes.push(pane);
+                Err(error)
+            }
+        }
+    }
+    pub fn frame(&self) -> &IcedChartFrame {
+        self.frame.panes.first().unwrap_or(&EMPTY_FRAME)
+    }
+    pub fn multi_frame(&self) -> Option<&IcedMultiPaneChartFrame> {
+        (self.frame.panes.len() > 1).then_some(&self.frame)
+    }
+    pub fn is_animating(&self) -> bool {
+        self.controller.is_active()
+    }
+    pub fn fit_content(&mut self) {
+        self.model.fit_content();
+    }
+    pub fn set_logical_range(&mut self, range: crate::model::time_data::LogicalRange) {
+        self.model.set_logical_range(range);
+    }
+    pub fn set_right_offset(&mut self, offset: f64) {
+        self.model.set_right_offset(offset);
+    }
+    pub fn scroll_to_offset_animated(&mut self, offset: f64, duration: std::time::Duration) {
+        self.model.scroll_to_offset_animated(offset, duration);
+    }
+    pub fn stop_time_scale_animation(&mut self) {
+        self.model.stop_time_scale_animation();
+    }
+    pub fn set_pane_stretch_factor(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
+        self.model
+            .set_pane_stretch_factor(pane, factor)
+            .map_err(Into::into)
+    }
+    pub fn set_preserve_empty_pane(
+        &mut self,
+        pane: usize,
+        preserve: bool,
+    ) -> Result<(), ChartError> {
+        self.model
+            .set_preserve_empty_pane(pane, preserve)
+            .map_err(Into::into)
+    }
+    pub fn apply_price_axis_options(
+        &mut self,
+        pane: usize,
+        side: crate::model::axis_snapshots::PriceAxisSide,
+        patch: crate::model::price_scale::PriceScaleOptionsPatch,
+    ) -> Result<(), ChartError> {
+        self.model
+            .apply_price_axis_options(pane, side, patch)
+            .map_err(ChartError::PriceAxis)
+    }
+    pub fn set_crosshair_options(
+        &mut self,
+        options: crate::model::crosshair::CrosshairOptions,
+    ) -> Result<(), ChartError> {
+        self.model
+            .set_crosshair_options(options)
+            .map_err(Into::into)
+    }
 }
+static EMPTY_FRAME: std::sync::LazyLock<IcedChartFrame> =
+    std::sync::LazyLock::new(IcedChartFrame::default);
 
 // Validate the entire replacement before DataLayer removes previous memberships.
 fn validate_data(

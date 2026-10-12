@@ -93,17 +93,23 @@ impl Default for crate::model::chart_model::ChartModelOptions {
                 },
                 text_color: "#191919".into(),
                 font_size: 12.,
-                font_family: "Arial".into(),
+                font_family: "sans-serif".into(),
                 panes: LayoutPanesOptions {
                     enable_resize: true,
-                    separator_color: "#2B2B43".into(),
+                    separator_color: "#E0E3EB".into(),
                     separator_hover_color: "rgba(178, 181, 189, 0.2)".into(),
                 },
                 attribution_logo: false,
                 color_space: ColorSpace::Srgb,
                 color_parsers: vec![],
             },
-            pane: Default::default(),
+            pane: crate::model::pane::PaneOptions {
+                left_price_scale: crate::model::price_scale::PriceScaleOptions {
+                    visible: false,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             grid: Default::default(),
             add_default_pane: true,
         }
