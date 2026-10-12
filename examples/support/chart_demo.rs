@@ -68,10 +68,17 @@ const VOLUME_ID: SeriesId = SeriesId::new(3);
 #[path = "chart_demo/series.rs"]
 mod series;
 use series::{SeriesKind, bar, options};
+struct PlotPan {
+    pane: usize,
+    side: PriceAxisSide,
+    anchor_y: f32,
+    price_started: bool,
+}
 struct Demo {
     config: DisplayConfig,
     series_kind: SeriesKind,
     volume_registered: bool,
+    plot_pan: Option<PlotPan>,
     active_price_axis: Option<(usize, feather_charts::model::axis_snapshots::PriceAxisSide)>,
     multi_frame: Option<IcedMultiPaneChartFrame>,
     multi_owner: MultiPaneChartFrameOwner,
@@ -192,6 +199,7 @@ impl Demo {
             config,
             series_kind,
             volume_registered: false,
+            plot_pan: None,
             active_price_axis: None,
             multi_frame: None,
             multi_owner: MultiPaneChartFrameOwner::default(),
@@ -452,6 +460,12 @@ impl Demo {
             !self.frame.plot.lines.is_empty()
         }
     }
+    fn cancel_plot_pan(&mut self) {
+        self.model.end_scroll_time();
+        if let Some(pan) = self.plot_pan.take() {
+            let _ = self.model.end_scroll_price(pan.pane, pan.side);
+        }
+    }
     fn cancel_price_axis(&mut self) {
         if let Some((pane, side)) = self.active_price_axis.take() {
             let _ = self.model.end_scale_price(pane, side);
@@ -483,10 +497,11 @@ impl Demo {
                 | Message::LeftAxis
         ) {
             self.cancel_price_axis();
+            self.cancel_plot_pan();
         }
         match message {
             Message::PriceAxis(input) => {
-                self.model.end_scroll_time();
+                self.cancel_plot_pan();
                 self.model.set_crosshair_position(0, None).unwrap();
                 let result = match input.action {
                     PriceAxisAction::Start { y } => {
@@ -540,7 +555,7 @@ impl Demo {
                     upper_stretch,
                     lower_stretch,
                 } => {
-                    self.model.end_scroll_time();
+                    self.cancel_plot_pan();
                     self.model.set_crosshair_position(0, None).unwrap();
                     self.model
                         .set_pane_stretch_factor(top, upper_stretch)
@@ -729,7 +744,7 @@ impl Demo {
         use feather_charts::model::coordinate::Coordinate;
         match input.navigation {
             Some(Navigation::Wheel { x, zoom, scroll }) => {
-                self.model.end_scroll_time();
+                self.cancel_plot_pan();
                 self.model.zoom_time(Coordinate::new(x), zoom);
                 if scroll != 0. {
                     self.model.start_scroll_time(Coordinate::new(0.));
@@ -737,13 +752,47 @@ impl Demo {
                     self.model.end_scroll_time();
                 }
             }
+            Some(Navigation::Pan { start, position }) => {
+                if let Some(start) = start {
+                    self.cancel_plot_pan();
+                    let side = if self.model.panes()[pane].default_price_scale().id() == "left" {
+                        PriceAxisSide::Left
+                    } else {
+                        PriceAxisSide::Right
+                    };
+                    self.plot_pan = Some(PlotPan {
+                        pane,
+                        side,
+                        anchor_y: start.y,
+                        price_started: false,
+                    });
+                    self.model
+                        .start_scroll_time(Coordinate::new(f64::from(start.x)));
+                }
+                if let Some(pan) = &mut self.plot_pan {
+                    if !pan.price_started && position.y != pan.anchor_y {
+                        self.model
+                            .start_scroll_price(pan.pane, pan.side, f64::from(pan.anchor_y))
+                            .unwrap();
+                        pan.price_started = true;
+                    }
+                    if pan.price_started {
+                        self.model
+                            .scroll_price_to(pan.pane, pan.side, f64::from(position.y))
+                            .unwrap();
+                    }
+                    self.model
+                        .scroll_time_to(Coordinate::new(f64::from(position.x)));
+                }
+            }
             Some(Navigation::Scroll { start, x }) => {
                 if let Some(start) = start {
+                    self.cancel_plot_pan();
                     self.model.start_scroll_time(Coordinate::new(start));
                 }
                 self.model.scroll_time_to(Coordinate::new(x));
             }
-            Some(Navigation::EndScroll) => self.model.end_scroll_time(),
+            Some(Navigation::EndScroll) => self.cancel_plot_pan(),
             None => {}
         }
         self.model
@@ -868,6 +917,7 @@ struct ChartState {
     axis_input: PriceAxisInput,
     pane_series: Vec<Option<SeriesId>>,
     last_redraw: Option<Instant>,
+    available: Option<AxisBounds>,
 }
 impl Chart<'_> {
     fn axis_layouts(&self) -> &[feather_charts::ui::chart_layout::ChartLayout] {
@@ -886,6 +936,20 @@ impl canvas::Program<Message> for Chart<'_> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
+        if state
+            .available
+            .replace(self.snapshot.layout.available)
+            .is_some_and(|old| old != self.snapshot.layout.available)
+        {
+            state.input = ChartInput::default();
+            state.multi_input = MultiPaneInput::default();
+            if let Some(end) = state.axis_input.cancel() {
+                return Some(canvas::Action::publish(Message::PriceAxis(end)));
+            }
+            return Some(canvas::Action::publish(Message::PaneInteraction(
+                MultiPaneInteraction::Cancel,
+            )));
+        }
         if let Some(multi) = self.multi
             && state.pane_series != multi.series
         {
@@ -1005,6 +1069,9 @@ impl canvas::Program<Message> for Chart<'_> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> iced::mouse::Interaction {
+        if state.input.is_dragging() || state.multi_input.is_dragging() {
+            return iced::mouse::Interaction::Grabbing;
+        }
         if state.axis_input.is_dragging()
             || cursor.position().is_some_and(|p| {
                 PriceAxisInput::hit_test(

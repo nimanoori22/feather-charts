@@ -98,6 +98,6 @@ autoscale. Manual scaling persists through time navigation and data updates
 until reset. Percentage/indexed scales remain non-interactive like the source.
 
 Physical mouse/touchpad feel and sensitivity remain unverified on real devices;
-confirm both gestures and reset in the updated demos. Vertical dragging inside
-the plot, touch/kinetic input and the general public chart/widget facade remain
-subsequent capabilities. Earlier raster/performance reports are unchanged.
+confirm both gestures and reset in the updated demos. Free dragging inside the plot is now implemented; see
+[plot panning](plot-panning.md). Touch/kinetic input and the general public
+chart/widget facade remain subsequent capabilities. Earlier raster/performance reports are unchanged.

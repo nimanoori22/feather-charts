@@ -783,3 +783,194 @@ fn axis_drag_redraw_does_not_route_plot_input_when_label_width_changes() {
     assert!(state.axis_input.is_dragging());
     assert!(demo.model.crosshair().position().is_none());
 }
+
+#[test]
+fn native_plot_drag_pans_price_and_time_in_all_demos() {
+    use super::*;
+    use iced::{Point, mouse};
+    for kind in [
+        SeriesKind::Line,
+        SeriesKind::Candlesticks,
+        SeriesKind::Histogram,
+        SeriesKind::PriceVolume,
+    ] {
+        let mut demo = Demo::new_chart(DisplayConfig::default(), kind);
+        let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+        for pane in 0..demo.model.panes().len() {
+            let mut state = ChartState::default();
+            let layout = demo
+                .multi_frame
+                .as_ref()
+                .map_or(demo.frame.layout, |f| f.layout.panes[pane]);
+            let point = Point::new(
+                layout.plot.origin.x as f32 + 200.,
+                layout.plot.origin.y as f32 + 70.,
+            );
+            let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+            assert!(dispatch_axis_event(&mut demo, &mut state, &press, point));
+            let anchor = Point::new(point.x + 10., point.y + 10.);
+            dispatch_axis_event(
+                &mut demo,
+                &mut state,
+                &canvas::Event::Mouse(mouse::Event::CursorMoved { position: anchor }),
+                anchor,
+            );
+            let before = demo.model.panes()[pane]
+                .right_price_scale()
+                .price_range()
+                .unwrap();
+            let others = demo
+                .model
+                .panes()
+                .iter()
+                .map(|p| p.right_price_scale().price_range())
+                .collect::<Vec<_>>();
+            let offset = demo.model.time_scale().right_offset();
+            let moved = Point::new(anchor.x + 30., anchor.y + 30.);
+            assert!(dispatch_axis_event(
+                &mut demo,
+                &mut state,
+                &canvas::Event::Mouse(mouse::Event::CursorMoved { position: moved }),
+                moved
+            ));
+            let after = demo.model.panes()[pane]
+                .right_price_scale()
+                .price_range()
+                .unwrap();
+            assert_ne!(
+                after, before,
+                "a diagonal plot drag must pan the price range"
+            );
+            assert!((after.length() - before.length()).abs() < before.length() * 1e-10);
+            assert_ne!(offset, demo.model.time_scale().right_offset());
+            assert!(!demo.model.panes()[pane].right_price_scale().is_auto_scale());
+            for (other, range) in others.into_iter().enumerate() {
+                if other != pane {
+                    assert_eq!(
+                        demo.model.panes()[other].right_price_scale().price_range(),
+                        range
+                    );
+                }
+            }
+            dispatch_axis_event(
+                &mut demo,
+                &mut state,
+                &canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+                moved,
+            );
+        }
+    }
+}
+
+#[test]
+fn vertical_plot_drag_preserves_time_horizontal_drag_preserves_autoscale_and_focus_ends_both() {
+    use super::*;
+    use iced::{Point, mouse};
+    let mut demo = Demo::new_chart(DisplayConfig::default(), SeriesKind::PriceVolume);
+    let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+    let mut state = ChartState::default();
+    let x = demo.frame.layout.plot.origin.x as f32 + 200.;
+    let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+    let release = canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left));
+    let mut point = Point::new(x, 100.);
+    dispatch_axis_event(&mut demo, &mut state, &press, point);
+    let before = demo.model.panes()[0].right_price_scale().price_range();
+    let time = (
+        demo.model.time_scale().bar_spacing(),
+        demo.model.time_scale().right_offset(),
+    );
+    for y in [110., 130., 80.] {
+        point = Point::new(x, y);
+        dispatch_axis_event(
+            &mut demo,
+            &mut state,
+            &canvas::Event::Mouse(mouse::Event::CursorMoved { position: point }),
+            point,
+        );
+    }
+    assert_ne!(
+        demo.model.panes()[0].right_price_scale().price_range(),
+        before
+    );
+    assert_eq!(
+        time,
+        (
+            demo.model.time_scale().bar_spacing(),
+            demo.model.time_scale().right_offset()
+        )
+    );
+    let stopped = demo.model.panes()[0].right_price_scale().price_range();
+    dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Window(iced::window::Event::Unfocused),
+        point,
+    );
+    assert!(demo.plot_pan.is_none());
+    point = Point::new(x + 20., 150.);
+    dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Mouse(mouse::Event::CursorMoved { position: point }),
+        point,
+    );
+    assert_eq!(
+        demo.model.panes()[0].right_price_scale().price_range(),
+        stopped
+    );
+    assert_eq!(
+        time,
+        (
+            demo.model.time_scale().bar_spacing(),
+            demo.model.time_scale().right_offset()
+        )
+    );
+    demo.model
+        .reset_price_scale(0, PriceAxisSide::Right)
+        .unwrap();
+    point = Point::new(x, 100.);
+    dispatch_axis_event(&mut demo, &mut state, &press, point);
+    for dx in [10., 30., 50.] {
+        point = Point::new(x + dx, 100.);
+        dispatch_axis_event(
+            &mut demo,
+            &mut state,
+            &canvas::Event::Mouse(mouse::Event::CursorMoved { position: point }),
+            point,
+        );
+    }
+    assert!(demo.model.panes()[0].right_price_scale().is_auto_scale());
+    assert_ne!(demo.model.time_scale().right_offset(), time.1);
+    dispatch_axis_event(&mut demo, &mut state, &release, point);
+    assert!(demo.plot_pan.is_none());
+}
+#[test]
+fn plot_pan_keeps_origin_pane_when_crossing_volume_and_ends_on_removal() {
+    use super::*;
+    use iced::{Point, mouse};
+    let mut demo = Demo::new_chart(DisplayConfig::default(), SeriesKind::PriceVolume);
+    let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+    let mut state = ChartState::default();
+    let x = demo.frame.layout.plot.origin.x as f32 + 200.;
+    let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+    dispatch_axis_event(&mut demo, &mut state, &press, Point::new(x, 100.));
+    let bottom = demo.model.panes()[1].right_price_scale().price_range();
+    for y in [110., 130., 360.] {
+        let point = Point::new(x, y);
+        dispatch_axis_event(
+            &mut demo,
+            &mut state,
+            &canvas::Event::Mouse(mouse::Event::CursorMoved { position: point }),
+            point,
+        );
+    }
+    assert_eq!(demo.plot_pan.as_ref().unwrap().pane, 0);
+    assert_eq!(
+        demo.model.panes()[1].right_price_scale().price_range(),
+        bottom
+    );
+    let _ = demo.update(Message::Remove);
+    assert!(demo.plot_pan.is_none());
+    let _ = demo.update(Message::Reload);
+    assert!(demo.error.is_none());
+}
