@@ -8,6 +8,7 @@ use crate::{
         invalidate_mask::InvalidateMask,
         series::{
             candlesticks_pane_view::{CandlestickPreparationError, CandlesticksPaneView},
+            histogram_pane_view::{HistogramPaneView, HistogramPreparationError},
             line_pane_view::{LinePaneView, LinePreparationError},
         },
     },
@@ -15,6 +16,7 @@ use crate::{
         candlesticks_renderer::{CandleRectangle, CandlestickRenderError},
         draw_line::dash_pattern,
         grid_renderer::{BitmapSize, GridDrawCommand, PixelRatio},
+        histogram_renderer::HistogramRenderError,
         line_renderer::{LineDrawCommands, PathOperation, Point, StyledStroke},
     },
     views::time_scale_animation::TimeScaleAnimationController,
@@ -32,6 +34,8 @@ pub enum FrameError {
     Line(LinePreparationError),
     Candlesticks(CandlestickPreparationError),
     CandleGeometry(CandlestickRenderError),
+    Histogram(HistogramPreparationError),
+    HistogramGeometry(HistogramRenderError),
     InvalidPixelRatio,
     InvalidColor(String),
     SeriesPaneMismatch { series: SeriesId, pane: usize },
@@ -39,16 +43,21 @@ pub enum FrameError {
 pub(crate) enum PaneView<'a> {
     Line(&'a mut LinePaneView),
     Candlesticks(&'a mut CandlesticksPaneView),
+    Histogram(&'a mut HistogramPaneView),
 }
 impl PaneView<'_> {
     pub(crate) fn clear(&mut self) {
         match self {
             Self::Line(v) => v.clear(),
             Self::Candlesticks(v) => v.clear(),
+            Self::Histogram(v) => v.clear(),
         }
     }
     pub(crate) fn unknown_series(&self, id: SeriesId) -> FrameError {
         match self {
+            Self::Histogram(_) => {
+                FrameError::Histogram(HistogramPreparationError::UnknownSeries(id))
+            }
             Self::Line(_) => FrameError::Line(LinePreparationError::UnknownSeries(id)),
             Self::Candlesticks(_) => {
                 FrameError::Candlesticks(CandlestickPreparationError::UnknownSeries(id))
@@ -521,6 +530,7 @@ where
         .map_err(FrameError::Axes)?;
     if let Some(id) = id {
         match view {
+            PaneView::Histogram(view) => view.refresh(model, id).map_err(FrameError::Histogram)?,
             PaneView::Line(view) => view.refresh(model, id).map_err(FrameError::Line)?,
             PaneView::Candlesticks(view) => {
                 view.refresh(model, id).map_err(FrameError::Candlesticks)?
@@ -546,7 +556,7 @@ where
             .data()
             .map(|data| data.draw_commands(ratio))
             .unwrap_or_default(),
-        PaneView::Candlesticks(_) => LineDrawCommands::default(),
+        PaneView::Candlesticks(_) | PaneView::Histogram(_) => LineDrawCommands::default(),
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
     if let PaneView::Candlesticks(view) = view
@@ -558,6 +568,16 @@ where
             .into_iter()
             .map(|rectangle| canvas_rectangle(rectangle, ratio))
             .collect::<Result<_, FrameError>>()?;
+    }
+    if let PaneView::Histogram(view) = view
+        && let Some(data) = view.data()
+    {
+        snapshot.candles = data
+            .draw_commands(ratio)
+            .map_err(FrameError::HistogramGeometry)?
+            .into_iter()
+            .map(|r| canvas_rectangle(r, ratio))
+            .collect::<Result<_, _>>()?;
     }
     if let Some(position) = model
         .crosshair()

@@ -209,6 +209,7 @@ fn native_event_sequence_navigation_crosshair_labels_and_cancel() {
 fn connected_demo_operations() {
     super::smoke(super::DisplayConfig::default(), false);
     super::smoke(super::DisplayConfig::default(), true);
+    super::smoke_series(super::DisplayConfig::default(), false, true);
 }
 #[test]
 fn explicit_display_scenarios_prepare_without_global_argument_state() {

@@ -2,7 +2,12 @@ use super::*;
 
 /// Real Iced backend output at explicit physical sizes; no window-scale spoofing.
 /// Captures are PPM plus JSON metadata, and can be converted to PNG externally.
-pub(super) fn capture_display(directory: &std::path::Path, wgpu: bool, candlesticks: bool) {
+pub(super) fn capture_display(
+    directory: &std::path::Path,
+    wgpu: bool,
+    candlesticks: bool,
+    histogram: bool,
+) {
     use iced::advanced::{
         graphics::geometry::Renderer as _,
         renderer::{Headless, Renderer as _},
@@ -26,7 +31,11 @@ pub(super) fn capture_display(directory: &std::path::Path, wgpu: bool, candlesti
                 continue;
             }
             for ratio in [1., 1.25, 1.5, 2.] {
-                let mut demo = Demo::new_kind(DisplayConfig::for_scenario(scenario), candlesticks);
+                let mut demo = Demo::new_series(
+                    DisplayConfig::for_scenario(scenario),
+                    candlesticks,
+                    histogram,
+                );
                 demo.scale = ratio;
                 if style_index > 0 {
                     demo.kind = if style_index & 1 == 0 {
@@ -60,7 +69,7 @@ pub(super) fn capture_display(directory: &std::path::Path, wgpu: bool, candlesti
                     assert!(!demo.frame.plot.crosshair.is_empty());
                     assert_eq!(
                         demo.frame.plot.crosshair_markers.is_empty(),
-                        candlesticks && !demo.left_registered
+                        (candlesticks || histogram) && !demo.left_registered
                     );
                 }
                 assert!(demo.error.is_none(), "{:?}", demo.error);

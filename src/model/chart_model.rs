@@ -594,6 +594,29 @@ where
         candlesticks_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
     }
 
+    pub fn prepare_histogram(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::histogram_renderer::HistogramRendererData>,
+        crate::model::series::histogram_pane_view::HistogramPreparationError,
+    > {
+        use crate::model::series::histogram_pane_view::{self, HistogramPreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(HistogramPreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(HistogramPreparationError::NotHistogramSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(HistogramPreparationError::MissingPriceScale(id))?;
+        histogram_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
     pub fn replace_series_options(
         &mut self,
         id: SeriesId,

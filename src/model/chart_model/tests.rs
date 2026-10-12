@@ -1422,3 +1422,5 @@ fn rejected_dimensions_and_unknown_removal_leave_the_chart_unchanged() {
     assert_eq!(model.time_scale().width(), width);
     assert!(model.series(id).is_some());
 }
+
+mod histogram;

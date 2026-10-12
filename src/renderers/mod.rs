@@ -2,6 +2,7 @@ pub mod candlesticks_renderer;
 pub mod crosshair_renderer;
 pub mod draw_line;
 pub mod grid_renderer;
+pub mod histogram_renderer;
 pub mod ipane_renderer;
 pub mod iprice_axis_view_renderer;
 pub mod line_renderer;

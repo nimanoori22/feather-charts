@@ -7,8 +7,8 @@ use feather_charts::{
         axis_snapshots::PriceAxisSide,
         chart_model::{ChartModel, ChartModelOptions},
         data_consumer::{
-            BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, LineData, LineDataItem,
-            WhitespaceData,
+            BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, HistogramData,
+            HistogramDataItem, LineData, LineDataItem, WhitespaceData,
         },
         data_layer::{DataLayer, SeriesId},
         grid::GridOptions,
@@ -20,11 +20,14 @@ use feather_charts::{
         localization_options::LocalizationOptions,
         pane::{PaneOptions, PriceScalePosition},
         price_scale::PriceScaleOptionsPatch,
-        series::{candlesticks_pane_view::CandlesticksPaneView, line_pane_view::LinePaneView},
+        series::{
+            candlesticks_pane_view::CandlesticksPaneView, histogram_pane_view::HistogramPaneView,
+            line_pane_view::LinePaneView,
+        },
         series_options::{
-            CandlestickStyleOptions, LastPriceAnimationMode, LineStyleOptions, PriceFormat,
-            PriceFormatBuiltIn, PriceFormatBuiltInType, PriceLineSource, SeriesOptions,
-            SeriesOptionsCommon, SeriesOptionsMap, SeriesType,
+            CandlestickStyleOptions, HistogramStyleOptions, LastPriceAnimationMode,
+            LineStyleOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
+            PriceLineSource, SeriesOptions, SeriesOptionsCommon, SeriesOptionsMap, SeriesType,
         },
         time_data::{Logical, LogicalRange},
         time_scale::TimeScale,
@@ -117,6 +120,8 @@ fn bar(config: &DisplayConfig, index: usize, adjustment: f64) -> BuiltInSeriesDa
 struct Demo {
     config: DisplayConfig,
     candlesticks: bool,
+    histogram: bool,
+    histogram_view: HistogramPaneView,
     candle_view: CandlesticksPaneView,
     layer: DataLayer<HorzScaleBehaviorTime>,
     model: ChartModel<HorzScaleBehaviorTime>,
@@ -167,6 +172,9 @@ impl Default for Demo {
 }
 impl Demo {
     fn new_kind(config: DisplayConfig, candlesticks: bool) -> Self {
+        Self::new_series(config, candlesticks, false)
+    }
+    fn new_series(config: DisplayConfig, candlesticks: bool, histogram: bool) -> Self {
         let model = ChartModel::new(
             TimeScale::new(
                 HorzScaleBehaviorTime::default(),
@@ -211,6 +219,8 @@ impl Demo {
         let mut demo = Self {
             config,
             candlesticks,
+            histogram,
+            histogram_view: HistogramPaneView::default(),
             candle_view: CandlesticksPaneView::default(),
             layer: DataLayer::new(HorzScaleBehaviorTime::default()),
             model,
@@ -371,7 +381,16 @@ impl Demo {
         feather_charts::ui::chart_frame::ChartFrameError,
     > {
         let mut measurer = IcedAxisMeasurer { fonts: &self.fonts };
-        if self.candlesticks {
+        if self.histogram {
+            self.frame_owner.prepare_histogram(
+                &mut self.model,
+                &mut self.controller,
+                &mut self.histogram_view,
+                input,
+                &mut measurer,
+                now,
+            )
+        } else if self.candlesticks {
             self.frame_owner.prepare_candlesticks(
                 &mut self.model,
                 &mut self.controller,
@@ -392,7 +411,9 @@ impl Demo {
         }
     }
     fn series_type(&self) -> SeriesType {
-        if self.candlesticks {
+        if self.histogram {
+            SeriesType::Histogram
+        } else if self.candlesticks {
             SeriesType::Candlestick
         } else {
             SeriesType::Line
@@ -400,6 +421,18 @@ impl Demo {
     }
     fn series_options(&self) -> SeriesOptionsMap {
         let line = options(self.kind, self.style, self.markers);
+        if self.histogram {
+            let SeriesOptionsMap::Line(line) = line else {
+                unreachable!()
+            };
+            return SeriesOptionsMap::Histogram(SeriesOptions {
+                common: line.common,
+                style: HistogramStyleOptions {
+                    color: "#2196f3".into(),
+                    base: 0.,
+                },
+            });
+        }
         if !self.candlesticks {
             return line;
         }
@@ -428,6 +461,22 @@ impl Demo {
         })
     }
     fn bar(&self, index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
+        if self.histogram {
+            let time = Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.));
+            return BuiltInSeriesDataItem::Histogram(if index % 13 == 5 {
+                HistogramDataItem::Whitespace(WhitespaceData {
+                    time,
+                    custom_values: None,
+                })
+            } else {
+                HistogramDataItem::Data(HistogramData {
+                    time,
+                    value: self.config.value(index, adjustment),
+                    color: index.is_multiple_of(19).then(|| "#f59e0b".into()),
+                    custom_values: None,
+                })
+            });
+        }
         if !self.candlesticks {
             return bar(&self.config, index, adjustment);
         }
@@ -461,7 +510,7 @@ impl Demo {
         }))
     }
     fn has_series_geometry(&self) -> bool {
-        if self.candlesticks {
+        if self.candlesticks || self.histogram {
             !self.frame.plot.candles.is_empty()
         } else {
             !self.frame.plot.lines.is_empty()
@@ -786,7 +835,10 @@ impl canvas::Program<Message> for Chart<'_> {
     }
 }
 fn smoke(config: DisplayConfig, candlesticks: bool) {
-    let mut demo = Demo::new_kind(config, candlesticks);
+    smoke_series(config, candlesticks, false);
+}
+fn smoke_series(config: DisplayConfig, candlesticks: bool, histogram: bool) {
+    let mut demo = Demo::new_series(config, candlesticks, histogram);
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
     assert!(demo.has_series_geometry());
     assert!(demo.frame.prices.right.required_width > 0.);
@@ -835,6 +887,12 @@ fn smoke(config: DisplayConfig, candlesticks: bool) {
     );
 }
 pub fn run(candlesticks: bool) -> iced::Result {
+    run_series(candlesticks, false)
+}
+pub fn run_histogram() -> iced::Result {
+    run_series(false, true)
+}
+fn run_series(candlesticks: bool, histogram: bool) -> iced::Result {
     let args = std::env::args().collect::<Vec<_>>();
     let scenario = args
         .windows(2)
@@ -853,7 +911,7 @@ pub fn run(candlesticks: bool) -> iced::Result {
     config.ticks |= args.iter().any(|a| a == "--ticks");
     config.fixed_edges |= args.iter().any(|a| a == "--fixed-edges");
     if std::env::args().any(|arg| arg == "--smoke") {
-        smoke(config, candlesticks);
+        smoke_series(config, candlesticks, histogram);
         return Ok(());
     }
     if let Some(directory) = args.windows(2).find(|a| a[0] == "--capture-dir") {
@@ -861,20 +919,23 @@ pub fn run(candlesticks: bool) -> iced::Result {
             std::path::Path::new(&directory[1]),
             args.iter().any(|a| a == "--wgpu"),
             candlesticks,
+            histogram,
         );
         return Ok(());
     }
     let size = Size::new(config.width + 24., config.height + 145.);
     iced::application(
         move || {
-            let mut demo = Demo::new_kind(config.clone(), candlesticks);
+            let mut demo = Demo::new_series(config.clone(), candlesticks, histogram);
             demo.apply_scenario(Instant::now());
             demo
         },
         Demo::update,
         Demo::view,
     )
-    .title(if candlesticks {
+    .title(if histogram {
+        "Feather Charts — histogram"
+    } else if candlesticks {
         "Feather Charts — candlesticks"
     } else {
         "Feather Charts — price and time axes"

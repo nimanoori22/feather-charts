@@ -6,7 +6,10 @@ use crate::{
         data_layer::SeriesId,
         ihorz_scale_behavior::HorzScaleBehavior,
         invalidate_mask::{InvalidateMask, InvalidationLevel},
-        series::{candlesticks_pane_view::CandlesticksPaneView, line_pane_view::LinePaneView},
+        series::{
+            candlesticks_pane_view::CandlesticksPaneView, histogram_pane_view::HistogramPaneView,
+            line_pane_view::LinePaneView,
+        },
     },
     renderers::{
         grid_renderer::PixelRatio,
@@ -207,6 +210,33 @@ impl ChartFrameOwner {
             model,
             controller,
             PaneView::Candlesticks(view),
+            input,
+            measurer,
+            now,
+        )
+    }
+    pub fn prepare_histogram<B, M, A>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        view: &mut HistogramPaneView,
+        input: &ChartFrameInput,
+        measurer: &mut A,
+        now: Instant,
+    ) -> Result<ChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+    {
+        self.prepare_series(
+            model,
+            controller,
+            PaneView::Histogram(view),
             input,
             measurer,
             now,
