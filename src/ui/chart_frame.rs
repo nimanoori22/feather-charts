@@ -123,6 +123,8 @@ pub struct ChartFrameSnapshot {
     pub plot: PlotSnapshot,
     pub left: PreparedPriceAxis,
     pub right: PreparedPriceAxis,
+    pub pane_left: PreparedPriceAxis,
+    pub pane_right: PreparedPriceAxis,
     pub time: PreparedTimeAxis,
     pub left_corner: PreparedTimeAxis,
     pub right_corner: PreparedTimeAxis,
@@ -385,6 +387,18 @@ impl ChartFrameOwner {
                 plot,
                 left,
                 right,
+                pane_left: crate::renderers::price_axis_renderer::prepare_pane_price_labels(
+                    &measured.left,
+                    layout.plot.size,
+                    input.pixel_ratio,
+                )
+                .map_err(ChartFrameError::Price)?,
+                pane_right: crate::renderers::price_axis_renderer::prepare_pane_price_labels(
+                    &measured.right,
+                    layout.plot.size,
+                    input.pixel_ratio,
+                )
+                .map_err(ChartFrameError::Price)?,
                 time,
                 left_corner,
                 right_corner,
@@ -453,6 +467,7 @@ pub struct IcedChartFrame {
     pub passes: usize,
     pub plot: PlotSnapshot,
     pub prices: IcedPriceAxes,
+    pub pane_labels: IcedPriceAxes,
     pub time: IcedTimeAxis,
     pub left_corner: IcedTimeAxis,
     pub right_corner: IcedTimeAxis,
@@ -462,7 +477,14 @@ impl IcedChartFrame {
         snapshot: ChartFrameSnapshot,
         fonts: &AxisFontResolver,
     ) -> Result<Self, ChartFrameError> {
+        let pane_labels = IcedPriceAxes {
+            left: IcedPriceAxis::from_commands(&snapshot.pane_left, fonts)
+                .map_err(ChartFrameError::PriceUi)?,
+            right: IcedPriceAxis::from_commands(&snapshot.pane_right, fonts)
+                .map_err(ChartFrameError::PriceUi)?,
+        };
         Ok(Self {
+            pane_labels,
             layout: snapshot.layout,
             requests: snapshot.requests,
             passes: snapshot.passes,
@@ -509,7 +531,10 @@ impl IcedChartFrame {
                 }
             });
         }
-        self.plot.draw_at(frame, self.layout.plot);
+        self.plot.draw_base_at(frame, self.layout.plot);
+        self.pane_labels.left.draw_at(frame, self.layout.plot);
+        self.pane_labels.right.draw_at(frame, self.layout.plot);
+        self.plot.draw_crosshair_at(frame, self.layout.plot);
         self.prices.left.draw_at(frame, self.layout.left_axis);
         self.prices.right.draw_at(frame, self.layout.right_axis);
         self.time.draw_at(frame, self.layout.time_axis);

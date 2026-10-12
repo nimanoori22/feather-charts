@@ -391,3 +391,323 @@ fn native_wheel_detent_changes_time_spacing_by_ten_percent() {
         assert!((chart.model().time_scale().bar_spacing() / before - factor).abs() < 1e-9);
     }
 }
+
+#[test]
+fn price_line_lifecycle_validation_and_series_cleanup() {
+    use feather_charts::api::PriceLineOptions;
+    let mut chart = Chart::default();
+    let series = add(&mut chart);
+    let line = chart
+        .add_price_line(series, PriceLineOptions::new(100.))
+        .unwrap();
+    let mut options = chart.price_line_options(line).unwrap();
+    options.price = f64::NAN;
+    assert!(chart.replace_price_line_options(line, options).is_err());
+    assert_eq!(chart.price_line_options(line).unwrap().price, 100.);
+    let mut other = Chart::default();
+    assert!(other.remove_price_line(line).is_err());
+    chart.set_data(series, vec![]).unwrap();
+    assert_eq!(chart.price_line_options(line).unwrap().price, 100.);
+    chart.remove_series(series).unwrap();
+    assert!(chart.price_line_options(line).is_err());
+    assert!(chart.remove_price_line(line).is_err());
+}
+
+#[test]
+fn price_lines_and_last_labels_use_different_source_selection() {
+    use feather_charts::api::PriceLineOptions;
+    use feather_charts::model::time_data::LogicalRange;
+    let mut chart = Chart::default();
+    let series = add(&mut chart);
+    chart
+        .set_data(
+            series,
+            (0..20).map(|i| row(i as f64, 100. + i as f64)).collect(),
+        )
+        .unwrap();
+    chart
+        .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+        .unwrap();
+    chart.set_logical_range(LogicalRange {
+        from: 0.0.into(),
+        to: 9.0.into(),
+    });
+    let line = chart
+        .add_price_line(series, PriceLineOptions::new(110.))
+        .unwrap();
+    chart
+        .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+        .unwrap();
+    let axes = chart.frame().plot.axes.as_ref().unwrap();
+    assert_eq!(axes.right.labels[0].axis.text, "109.00");
+    assert_eq!(axes.right.labels[1].axis.text, "110.00");
+    assert_eq!(chart.frame().plot.price_lines.len(), 1);
+    let range = chart.model().panes()[0]
+        .right_price_scale()
+        .price_range()
+        .unwrap();
+    let mut options = chart.price_line_options(line).unwrap();
+    options.price = 100_000.;
+    chart.replace_price_line_options(line, options).unwrap();
+    chart
+        .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+        .unwrap();
+    assert_eq!(
+        chart.model().panes()[0]
+            .right_price_scale()
+            .price_range()
+            .unwrap(),
+        range
+    );
+    chart.set_data(series, vec![]).unwrap();
+    chart
+        .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+        .unwrap();
+    assert!(chart.frame().plot.price_lines.is_empty());
+    assert!(
+        chart
+            .frame()
+            .plot
+            .axes
+            .as_ref()
+            .unwrap()
+            .right
+            .labels
+            .is_empty()
+    );
+}
+
+#[test]
+fn custom_price_labels_visibility_live_updates_and_pane_isolation() {
+    use feather_charts::api::PriceLineOptions;
+    let mut chart = Chart::default();
+    let first = add(&mut chart);
+    chart
+        .set_data(first, vec![row(0., 100.), row(1., 110.)])
+        .unwrap();
+    let pane = chart.add_pane();
+    let second = chart
+        .add_series(
+            SeriesOptionsMap::Line(LineSeriesOptions::default()),
+            pane,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    chart
+        .set_data(second, vec![row(0., 1.), row(1., 2.)])
+        .unwrap();
+    let mut options = PriceLineOptions::new(1.5);
+    options.title = "Volume level".into();
+    options.line_visible = false;
+    options.axis_label_color = "white".into();
+    options.axis_label_text_color = "black".into();
+    let line = chart.add_price_line(second, options.clone()).unwrap();
+    let prepare = |chart: &mut Chart| {
+        chart
+            .prepare(iced::Size::new(800., 500.), 1.5, std::time::Instant::now())
+            .unwrap()
+    };
+    prepare(&mut chart);
+    let frames = &chart.multi_frame().unwrap().panes;
+    assert_eq!(frames[0].plot.price_lines.len(), 1);
+    assert_eq!(frames[1].plot.price_lines.len(), 1);
+    let labels = &frames[1].plot.axes.as_ref().unwrap().right.labels;
+    assert_eq!(labels.len(), 2);
+    assert_eq!(labels[1].pane_text, "Volume level");
+    assert_eq!(labels[1].axis.text, "1.50");
+    assert_eq!(labels[1].axis.color, "black");
+    let old = labels[1].axis.coordinate;
+    chart.update_data(second, row(1., 3.), false).unwrap();
+    prepare(&mut chart);
+    let labels = &chart.multi_frame().unwrap().panes[1]
+        .plot
+        .axes
+        .as_ref()
+        .unwrap()
+        .right
+        .labels;
+    assert_eq!(labels[0].axis.text, "3.00");
+    assert_ne!(labels[1].axis.coordinate, old);
+    options.color = "not a color".into();
+    assert!(
+        chart
+            .replace_price_line_options(line, options.clone())
+            .is_err()
+    );
+    assert_eq!(chart.price_line_options(line).unwrap().color, "#FF0000");
+    options.color = "red".into();
+    options.line_visible = true;
+    options.axis_label_visible = false;
+    chart.replace_price_line_options(line, options).unwrap();
+    prepare(&mut chart);
+    let frame = &chart.multi_frame().unwrap().panes[1];
+    assert_eq!(frame.plot.price_lines.len(), 2);
+    assert_eq!(frame.plot.axes.as_ref().unwrap().right.labels.len(), 1);
+    chart.remove_price_line(line).unwrap();
+    prepare(&mut chart);
+    assert_eq!(
+        chart.multi_frame().unwrap().panes[1].plot.price_lines.len(),
+        1
+    );
+    let mut hidden = LineSeriesOptions::default();
+    hidden.common.visible = false;
+    chart
+        .replace_series_options(second, SeriesOptionsMap::Line(hidden))
+        .unwrap();
+    prepare(&mut chart);
+    let frame = &chart.multi_frame().unwrap().panes[1];
+    assert!(frame.plot.price_lines.is_empty());
+    assert!(frame.plot.axes.as_ref().unwrap().right.labels.is_empty());
+}
+
+#[test]
+fn visible_last_line_and_collision_alignment_preserve_price_coordinates() {
+    use feather_charts::{
+        api::PriceLineOptions,
+        model::{
+            axis_snapshots::PriceAxisSide, price_scale::PriceScaleOptionsPatch,
+            series_options::PriceLineSource, time_data::LogicalRange,
+        },
+    };
+    let mut chart = Chart::default();
+    let series = add(&mut chart);
+    chart
+        .set_data(
+            series,
+            (0..20).map(|i| row(i as f64, 100. + i as f64)).collect(),
+        )
+        .unwrap();
+    chart.set_logical_range(LogicalRange {
+        from: 0.0.into(),
+        to: 9.0.into(),
+    });
+    let mut options = LineSeriesOptions::default();
+    options.common.price_line_source = PriceLineSource::LastVisible;
+    chart
+        .replace_series_options(series, SeriesOptionsMap::Line(options))
+        .unwrap();
+    let mut levels = vec![];
+    for price in [108.99, 109., 109.01] {
+        let mut options = PriceLineOptions::new(price);
+        options.title = "Cluster".into();
+        levels.push(chart.add_price_line(series, options).unwrap());
+    }
+    let prepare = |chart: &mut Chart| {
+        chart
+            .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+            .unwrap()
+    };
+    prepare(&mut chart);
+    let axes = chart.frame().plot.axes.as_ref().unwrap();
+    let labels = &axes.right.labels;
+    assert_eq!(chart.frame().plot.price_lines.len(), 4);
+    assert!(
+        labels
+            .iter()
+            .any(|l| (l.axis.coordinate - l.render_coordinate).abs() > 1.)
+    );
+    let coordinates = labels.iter().map(|l| l.axis.coordinate).collect::<Vec<_>>();
+    let lines = format!("{:?}", chart.frame().plot.price_lines);
+    chart
+        .apply_price_axis_options(
+            0,
+            PriceAxisSide::Right,
+            PriceScaleOptionsPatch {
+                align_labels: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    prepare(&mut chart);
+    let labels = &chart.frame().plot.axes.as_ref().unwrap().right.labels;
+    assert_eq!(
+        labels.iter().map(|l| l.axis.coordinate).collect::<Vec<_>>(),
+        coordinates
+    );
+    assert!(
+        labels
+            .iter()
+            .all(|l| l.axis.coordinate == l.render_coordinate)
+    );
+    assert_eq!(format!("{:?}", chart.frame().plot.price_lines), lines);
+    let retained = format!("{:?}", chart.frame());
+    prepare(&mut chart);
+    assert_eq!(format!("{:?}", chart.frame()), retained);
+}
+
+#[test]
+fn last_value_scale_modes_display_modes_and_color_precedence() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide,
+        price_scale::{PriceScaleMode, PriceScaleOptionsPatch},
+        series_options::PriceAxisLastValueMode,
+    };
+    let mut chart = Chart::default();
+    let series = add(&mut chart);
+    let mut last = row(1., 110.);
+    if let BuiltInSeriesDataItem::Line(LineDataItem::Data(data)) = &mut last {
+        data.color = Some("red".into());
+    }
+    chart.set_data(series, vec![row(0., 100.), last]).unwrap();
+    chart.fit_content();
+    for mode in [
+        PriceScaleMode::Normal,
+        PriceScaleMode::Logarithmic,
+        PriceScaleMode::Percentage,
+        PriceScaleMode::IndexedTo100,
+    ] {
+        chart
+            .apply_price_axis_options(
+                0,
+                PriceAxisSide::Right,
+                PriceScaleOptionsPatch {
+                    mode: Some(mode),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        for both in [false, true] {
+            let mut options = LineSeriesOptions::default();
+            options.common.title = "ALPHA".into();
+            options.common.series_last_value_mode =
+                both.then_some(PriceAxisLastValueMode::LastPriceAndPercentageValue);
+            if both {
+                options.common.price_line_color = "blue".into();
+            }
+            chart
+                .replace_series_options(series, SeriesOptionsMap::Line(options))
+                .unwrap();
+            chart
+                .prepare(iced::Size::new(800., 500.), 1.25, std::time::Instant::now())
+                .unwrap();
+            let label = &chart.frame().plot.axes.as_ref().unwrap().right.labels[0];
+            assert_eq!(
+                label.axis.text,
+                if mode == PriceScaleMode::Percentage {
+                    "10.00%"
+                } else {
+                    "110.00"
+                }
+            );
+            assert_eq!(
+                label.pane_text,
+                if !both {
+                    "ALPHA"
+                } else if mode == PriceScaleMode::Percentage {
+                    "ALPHA 110.00"
+                } else {
+                    "ALPHA 10.00%"
+                }
+            );
+            assert_eq!(
+                label.axis.background,
+                if both {
+                    "rgb(0, 0, 255)"
+                } else {
+                    "rgb(255, 0, 0)"
+                }
+            );
+            assert!(label.axis.coordinate.is_finite());
+        }
+    }
+}

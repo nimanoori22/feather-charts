@@ -309,6 +309,20 @@ impl MultiPaneChartFrameOwner {
                     }
                     panes.push(ChartFrameSnapshot {
                         layout: *pane_layout,
+                        pane_left:
+                            crate::renderers::price_axis_renderer::prepare_pane_price_labels(
+                                &measured.left,
+                                pane_layout.plot.size,
+                                input.pixel_ratio,
+                            )
+                            .map_err(ChartFrameError::Price)?,
+                        pane_right:
+                            crate::renderers::price_axis_renderer::prepare_pane_price_labels(
+                                &measured.right,
+                                pane_layout.plot.size,
+                                input.pixel_ratio,
+                            )
+                            .map_err(ChartFrameError::Price)?,
                         requests: measured.requests(),
                         passes: pass,
                         plot,
@@ -397,7 +411,10 @@ impl IcedMultiPaneChartFrame {
             first.draw(frame);
         }
         for pane in self.panes.iter().skip(1) {
-            pane.plot.draw_at(frame, pane.layout.plot);
+            pane.plot.draw_base_at(frame, pane.layout.plot);
+            pane.pane_labels.left.draw_at(frame, pane.layout.plot);
+            pane.pane_labels.right.draw_at(frame, pane.layout.plot);
+            pane.plot.draw_crosshair_at(frame, pane.layout.plot);
             pane.prices.left.draw_at(frame, pane.layout.left_axis);
             pane.prices.right.draw_at(frame, pane.layout.right_axis);
         }

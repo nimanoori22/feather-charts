@@ -108,6 +108,7 @@ pub struct PlotSnapshot {
     pub markers: Vec<CanvasMarker>,
     pub candles: Vec<CanvasRectangle>,
     pub series_layers: Vec<CanvasSeriesGeometry>,
+    pub price_lines: Vec<CanvasStroke>,
     pub crosshair: Vec<CanvasStroke>,
     pub crosshair_markers: Vec<CanvasMarker>,
 }
@@ -123,6 +124,7 @@ impl Default for PlotSnapshot {
             markers: vec![],
             candles: vec![],
             series_layers: vec![],
+            price_lines: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         }
@@ -309,6 +311,7 @@ impl PlotSnapshot {
             markers,
             candles: vec![],
             series_layers: vec![],
+            price_lines: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         })
@@ -322,7 +325,7 @@ impl PlotSnapshot {
             return;
         }
         frame.with_clip(Rectangle::new(iced::Point::ORIGIN, size), |frame| {
-            self.draw_contents(frame, size);
+            self.draw_contents(frame, size, true);
         });
     }
     pub fn draw_at(
@@ -333,11 +336,35 @@ impl PlotSnapshot {
         if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
             frame.with_clip(clip, |frame| {
                 frame.translate(iced::Vector::new(clip.x, clip.y));
-                self.draw_contents(frame, clip.size());
+                self.draw_contents(frame, clip.size(), true);
             });
         }
     }
-    fn draw_contents(&self, frame: &mut Frame, size: Size) {
+    pub(crate) fn draw_base_at(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+    ) {
+        if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
+            frame.with_clip(clip, |frame| {
+                frame.translate(iced::Vector::new(clip.x, clip.y));
+                self.draw_contents(frame, clip.size(), false);
+            });
+        }
+    }
+    pub(crate) fn draw_crosshair_at(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+    ) {
+        if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
+            frame.with_clip(clip, |frame| {
+                frame.translate(iced::Vector::new(clip.x, clip.y));
+                self.draw_crosshair(frame);
+            });
+        }
+    }
+    fn draw_contents(&self, frame: &mut Frame, size: Size, crosshair: bool) {
         if let Some((top, bottom)) = self.background_gradient {
             frame.fill_rectangle(
                 iced::Point::ORIGIN,
@@ -365,6 +392,12 @@ impl PlotSnapshot {
             }
             self.draw_markers(frame, &layer.markers);
         }
+        self.draw_strokes(frame, self.price_lines.iter());
+        if crosshair {
+            self.draw_crosshair(frame);
+        }
+    }
+    fn draw_crosshair(&self, frame: &mut Frame) {
         self.draw_strokes(frame, self.crosshair.iter());
         for marker in &self.crosshair_markers {
             frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
@@ -599,6 +632,23 @@ where
             .map(|r| canvas_rectangle(r, ratio))
             .collect::<Result<_, _>>()?;
     }
+    snapshot.price_lines = model
+        .price_decorations(layout.pane)
+        .map_err(FrameError::Axes)?
+        .lines
+        .iter()
+        .filter_map(|line| {
+            crate::renderers::horizontal_line_renderer::draw_commands(
+                line,
+                crate::renderers::price_axis_renderer::AxisBounds {
+                    width: f64::from(layout.size.width),
+                    height: f64::from(layout.size.height),
+                },
+                ratio,
+            )
+        })
+        .map(|stroke| canvas_stroke(stroke, ratio))
+        .collect::<Result<_, _>>()?;
     if let Some(mut position) = model.crosshair().position() {
         if position.pane != layout.pane {
             position.y = None;
