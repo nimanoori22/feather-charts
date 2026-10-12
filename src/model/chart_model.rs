@@ -53,6 +53,7 @@ pub enum ChartModelError {
     InvalidPane(usize),
     InvalidDimensions,
     InvalidTypography,
+    InvalidPriceInteraction,
     Construction(SeriesConstructionError),
     Pane(PaneError),
     CustomSeriesRequiresTypedRegistration,
@@ -549,6 +550,113 @@ where
         self.full_update();
         self.flush_effects();
         Ok(())
+    }
+
+    pub fn start_scale_price(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
+        if !y.is_finite() {
+            return Err(ChartModelError::InvalidPriceInteraction);
+        }
+        self.panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .start_scale_price(Self::axis_position(side), y.into())
+            .map_err(ChartModelError::Pane)?;
+        Ok(())
+    }
+
+    pub fn scale_price_to(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
+        if !y.is_finite() {
+            return Err(ChartModelError::InvalidPriceInteraction);
+        }
+        let effects = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .scale_price_to(Self::axis_position(side), y.into())
+            .map_err(ChartModelError::Pane)?;
+        self.consume_pane_effects(effects);
+        self.flush_effects();
+        Ok(())
+    }
+
+    pub fn end_scale_price(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+    ) -> Result<(), ChartModelError> {
+        self.panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .end_scale_price(Self::axis_position(side))
+            .map_err(ChartModelError::Pane)?;
+        Ok(())
+    }
+
+    pub fn reset_price_scale(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+    ) -> Result<(), ChartModelError> {
+        let state = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?;
+        state
+            .end_scale_price(Self::axis_position(side))
+            .map_err(ChartModelError::Pane)?;
+        let effects = state
+            .reset_price_scale(Self::axis_position(side))
+            .map_err(ChartModelError::Pane)?;
+        self.consume_pane_effects(effects);
+        self.flush_effects();
+        Ok(())
+    }
+
+    /// Wheel extension: positive normalized delta narrows the price range.
+    pub fn zoom_price_scale(
+        &mut self,
+        pane: usize,
+        side: PriceAxisSide,
+        delta: f64,
+    ) -> Result<(), ChartModelError> {
+        if !delta.is_finite() {
+            return Err(ChartModelError::InvalidPriceInteraction);
+        }
+        let scale = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?
+            .axis_price_scale_mut(side);
+        if delta == 0. || scale.height() <= 1. {
+            return Ok(());
+        }
+        let height = scale.height();
+        let center = height * 0.5;
+        if !scale.start_scale(center.into()) {
+            return Ok(());
+        }
+        let padding = (height - 1.) * 0.2;
+        let factor = (-delta.clamp(-1., 1.) * 0.2).exp();
+        let y = height + padding - (height - center + padding) / factor;
+        self.scale_price_to(pane, side, y)?;
+        self.end_scale_price(pane, side)
+    }
+
+    fn axis_position(side: PriceAxisSide) -> PriceScalePosition {
+        match side {
+            PriceAxisSide::Left => PriceScalePosition::Left,
+            PriceAxisSide::Right => PriceScalePosition::Right,
+        }
     }
 
     pub fn prepare_line(

@@ -37,6 +37,9 @@ pub struct ChartInput {
     last_cursor: Option<Point>,
 }
 impl ChartInput {
+    pub fn is_dragging(&self) -> bool {
+        self.pressed.is_some()
+    }
     pub fn update(
         &mut self,
         event: &Event,
@@ -194,6 +197,9 @@ pub struct MultiPaneInput {
     pub hovered_divider: Option<usize>,
 }
 impl MultiPaneInput {
+    pub fn is_dragging(&self) -> bool {
+        self.gesture.is_some() || self.divider.is_some()
+    }
     pub fn update(
         &mut self,
         event: &Event,

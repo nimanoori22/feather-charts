@@ -5,6 +5,7 @@ mod chart_layout;
 mod complete_display;
 mod navigation;
 mod price_axis;
+mod price_interaction;
 mod time_axis;
 use crate::{
     model::{

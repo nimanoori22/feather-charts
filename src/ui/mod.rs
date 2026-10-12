@@ -6,4 +6,5 @@ pub mod line_chart;
 pub mod multi_pane_frame;
 pub mod multi_pane_layout;
 pub mod price_axis;
+pub mod price_axis_input;
 pub mod time_axis;
