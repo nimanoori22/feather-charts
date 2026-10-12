@@ -12,6 +12,7 @@ use crate::{
         },
     },
     renderers::{
+        candlesticks_renderer::{CandleRectangle, CandlestickRenderError},
         draw_line::dash_pattern,
         grid_renderer::{BitmapSize, GridDrawCommand, PixelRatio},
         line_renderer::{LineDrawCommands, PathOperation, Point, StyledStroke},
@@ -30,7 +31,7 @@ pub enum FrameError {
     Model(ChartModelError),
     Line(LinePreparationError),
     Candlesticks(CandlestickPreparationError),
-    CandleGeometry(crate::renderers::candlesticks_renderer::CandlestickRenderError),
+    CandleGeometry(CandlestickRenderError),
     InvalidPixelRatio,
     InvalidColor(String),
     SeriesPaneMismatch { series: SeriesId, pane: usize },
@@ -115,6 +116,33 @@ pub(crate) fn color(value: &str) -> Result<Color, FrameError> {
         .parse::<csscolorparser::Color>()
         .map_err(|_| FrameError::InvalidColor(value.into()))?;
     Ok(Color::from_rgba(parsed.r, parsed.g, parsed.b, parsed.a))
+}
+fn canvas_rectangle(
+    rect: CandleRectangle,
+    ratio: PixelRatio,
+) -> Result<CanvasRectangle, FrameError> {
+    let x = rect.x / f64::from(ratio.horizontal);
+    let y = rect.y / f64::from(ratio.vertical);
+    let width = rect.width / f64::from(ratio.horizontal);
+    let height = rect.height / f64::from(ratio.vertical);
+    // Canvas2D fills negative extents in the opposite direction.
+    let rectangle = CanvasRectangle {
+        origin: iced::Point::new(x.min(x + width) as f32, y.min(y + height) as f32),
+        size: Size::new(width.abs() as f32, height.abs() as f32),
+        color: color(&rect.color)?,
+    };
+    let coordinates = [
+        rectangle.origin.x,
+        rectangle.origin.y,
+        rectangle.size.width,
+        rectangle.size.height,
+    ];
+    if coordinates.iter().any(|v| !v.is_finite()) {
+        return Err(FrameError::CandleGeometry(
+            CandlestickRenderError::InvalidData,
+        ));
+    }
+    Ok(rectangle)
 }
 fn logical(p: Point, ratio: PixelRatio) -> Point {
     Point {
@@ -528,21 +556,7 @@ where
             .draw_commands(ratio)
             .map_err(FrameError::CandleGeometry)?
             .into_iter()
-            .map(|r| {
-                let x = r.x / f64::from(ratio.horizontal);
-                let y = r.y / f64::from(ratio.vertical);
-                let w = r.width / f64::from(ratio.horizontal);
-                let h = r.height / f64::from(ratio.vertical);
-                // Canvas2D fills negative extents in the opposite direction.
-                let rectangle=CanvasRectangle {
-                    origin: iced::Point::new(x.min(x+w) as f32,y.min(y+h) as f32),
-                    size: Size::new(w.abs() as f32,h.abs() as f32),color:color(&r.color)?,
-                };
-                if [rectangle.origin.x,rectangle.origin.y,rectangle.size.width,rectangle.size.height].iter().any(|v|!v.is_finite()) {
-                    return Err(FrameError::CandleGeometry(crate::renderers::candlesticks_renderer::CandlestickRenderError::InvalidData));
-                }
-                Ok(rectangle)
-            })
+            .map(|rectangle| canvas_rectangle(rectangle, ratio))
             .collect::<Result<_, FrameError>>()?;
     }
     if let Some(position) = model
@@ -602,6 +616,38 @@ where
 mod tests {
     use super::*;
     use crate::renderers::{draw_line::LineStyle, line_renderer::PointMarker};
+    #[test]
+    fn candle_rectangles_preserve_signed_extents_and_reject_invalid_canvas_values() {
+        let rectangle = CandleRectangle {
+            x: 10.,
+            y: 20.,
+            width: -4.,
+            height: -8.,
+            color: "rgba(255,0,0,0.5)".into(),
+        };
+        let ratio = PixelRatio {
+            horizontal: 2.,
+            vertical: 2.,
+        };
+        let canvas = canvas_rectangle(rectangle.clone(), ratio).unwrap();
+        assert_eq!(canvas.origin, iced::Point::new(3., 6.));
+        assert_eq!(canvas.size, Size::new(2., 4.));
+        assert_eq!(canvas.color.a, 0.5);
+        let mut overflowing = rectangle.clone();
+        overflowing.x = f64::MAX;
+        assert!(matches!(
+            canvas_rectangle(overflowing, ratio),
+            Err(FrameError::CandleGeometry(
+                CandlestickRenderError::InvalidData
+            ))
+        ));
+        let mut invalid_color = rectangle;
+        invalid_color.color = "invalid".into();
+        assert!(matches!(
+            canvas_rectangle(invalid_color, ratio),
+            Err(FrameError::InvalidColor(_))
+        ));
+    }
     #[test]
     fn adapter_converts_once_and_preserves_fractional_phase_at_multiple_ratios() {
         for r in [1., 1.25, 1.5, 2.] {
