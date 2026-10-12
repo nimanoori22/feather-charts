@@ -59,18 +59,22 @@ fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
         PriceFormat::BuiltIn(PriceFormatBuiltIn {
             kind: PriceFormatBuiltInType::Price,
             min_move,
-            base,
+            precision,
             ..
-        }) => SeriesValueFormatter::Price(
-            PriceFormatter::new(*base, Some(*min_move))
-                .unwrap_or_else(|_| PriceFormatter::default()),
-        ),
+        }) => {
+            let scale = 10_f64.powf(f64::from(*precision));
+            SeriesValueFormatter::Price(
+                PriceFormatter::new(Some(scale), Some(*min_move * scale))
+                    .unwrap_or_else(|_| PriceFormatter::default()),
+            )
+        }
         PriceFormat::BuiltIn(PriceFormatBuiltIn {
             kind: PriceFormatBuiltInType::Percent,
-            base,
+            precision,
             ..
         }) => SeriesValueFormatter::Percentage(
-            PercentageFormatter::new(*base).unwrap_or_else(|_| PercentageFormatter::default()),
+            PercentageFormatter::new(Some(10_f64.powf(f64::from(*precision))))
+                .unwrap_or_else(|_| PercentageFormatter::default()),
         ),
         PriceFormat::BuiltIn(PriceFormatBuiltIn {
             kind: PriceFormatBuiltInType::Volume,
@@ -888,6 +892,35 @@ mod tests {
         })
     }
 
+    #[test]
+    fn series_price_labels_round_to_configured_precision_and_minimum_move() {
+        let series =
+            Series::<(), (), ()>::new(SeriesId::new(1), SeriesType::Line, line_options()).unwrap();
+        assert_eq!(series.format_price(98.1074), "98.11");
+        let mut options = line_options();
+        if let SeriesOptionsMap::Line(line) = &mut options {
+            line.common.price_format = PriceFormat::BuiltIn(PriceFormatBuiltIn {
+                kind: PriceFormatBuiltInType::Price,
+                precision: 3,
+                min_move: 0.005,
+                base: Some(200.),
+            });
+        }
+        let mut series =
+            Series::<(), (), ()>::new(SeriesId::new(1), SeriesType::Line, options).unwrap();
+        assert_eq!(series.format_price(98.1074), "98.105");
+        let mut options = line_options();
+        if let SeriesOptionsMap::Line(line) = &mut options {
+            line.common.price_format = PriceFormat::BuiltIn(PriceFormatBuiltIn {
+                kind: PriceFormatBuiltInType::Percent,
+                precision: 1,
+                min_move: 0.1,
+                base: Some(100.),
+            });
+        }
+        series.replace_options(options).unwrap();
+        assert_eq!(series.format_price(1.234), "1.2%");
+    }
     #[test]
     fn validates_options_replaces_data_and_queries_the_first_visible_value() {
         assert!(matches!(
