@@ -412,6 +412,9 @@ where
     pub fn index_to_time(&self, index: TimePointIndex) -> Option<&B::InternalItem> {
         self.point(index).map(|p| &p.time)
     }
+    pub fn index_to_original_time(&self, index: TimePointIndex) -> Option<&B::Item> {
+        self.point(index).map(|p| &p.original_time)
+    }
     pub fn format_index(&self, index: TimePointIndex) -> Option<String> {
         self.points
             .get(index.as_usize()?)

@@ -90,6 +90,12 @@ pub struct CanvasMarker {
     pub color: Color,
     pub color_key: String,
 }
+#[derive(Clone, Debug, Default)]
+pub struct CanvasSeriesGeometry {
+    pub lines: Vec<CanvasStroke>,
+    pub candles: Vec<CanvasRectangle>,
+    pub markers: Vec<CanvasMarker>,
+}
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
     /// Prepared from the same settled viewport as the grid and line.
@@ -101,6 +107,7 @@ pub struct PlotSnapshot {
     pub lines: Vec<CanvasStroke>,
     pub markers: Vec<CanvasMarker>,
     pub candles: Vec<CanvasRectangle>,
+    pub series_layers: Vec<CanvasSeriesGeometry>,
     pub crosshair: Vec<CanvasStroke>,
     pub crosshair_markers: Vec<CanvasMarker>,
 }
@@ -115,6 +122,7 @@ impl Default for PlotSnapshot {
             lines: vec![],
             markers: vec![],
             candles: vec![],
+            series_layers: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         }
@@ -300,6 +308,7 @@ impl PlotSnapshot {
             lines,
             markers,
             candles: vec![],
+            series_layers: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         })
@@ -347,19 +356,30 @@ impl PlotSnapshot {
         for rect in &self.candles {
             frame.fill_rectangle(rect.origin, rect.size, rect.color);
         }
+
+        self.draw_markers(frame, &self.markers);
+        for layer in &self.series_layers {
+            self.draw_strokes(frame, layer.lines.iter());
+            for rect in &layer.candles {
+                frame.fill_rectangle(rect.origin, rect.size, rect.color);
+            }
+            self.draw_markers(frame, &layer.markers);
+        }
         self.draw_strokes(frame, self.crosshair.iter());
+        for marker in &self.crosshair_markers {
+            frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
+        }
+    }
+    fn draw_markers(&self, frame: &mut Frame, markers: &[CanvasMarker]) {
         // One fill per source style run avoids double alpha blending where
         // adjacent same-color markers overlap.
-        for group in self.markers.chunk_by(|a, b| a.color_key == b.color_key) {
+        for group in markers.chunk_by(|a, b| a.color_key == b.color_key) {
             let path = Path::new(|builder| {
                 for marker in group {
                     builder.circle(marker.center, marker.radius);
                 }
             });
             frame.fill(&path, group[0].color);
-        }
-        for marker in &self.crosshair_markers {
-            frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
         }
     }
     fn draw_strokes<'a>(&self, frame: &mut Frame, strokes: impl Iterator<Item = &'a CanvasStroke>) {

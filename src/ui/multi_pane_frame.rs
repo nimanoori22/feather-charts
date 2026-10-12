@@ -106,8 +106,67 @@ impl MultiPaneChartFrameOwner {
         M: Clone + 'static,
         A: AxisMeasurer,
     {
+        if views.len() != input.series.len() {
+            for view in views {
+                view.borrowed().clear();
+            }
+            return Err(ChartFrameError::UnsupportedPaneCount(model.panes().len()));
+        }
+        let mut borrowed = views
+            .iter_mut()
+            .zip(&input.series)
+            .map(|(view, id)| vec![(*id, view)])
+            .collect::<Vec<_>>();
+        self.prepare_borrowed(model, controller, &mut borrowed, input, measurer, now)
+    }
+    pub fn prepare_composed<B, M, A>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        views: &mut [Vec<(SeriesId, SeriesPaneView)>],
+        input: &MultiPaneChartFrameInput,
+        measurer: &mut A,
+        now: Instant,
+    ) -> Result<MultiPaneChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+    {
+        let mut borrowed = views
+            .iter_mut()
+            .map(|pane| {
+                pane.iter_mut()
+                    .map(|(id, view)| (Some(*id), view))
+                    .collect()
+            })
+            .collect::<Vec<_>>();
+        self.prepare_borrowed(model, controller, &mut borrowed, input, measurer, now)
+    }
+    fn prepare_borrowed<B, M, A>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        views: &mut [Vec<(Option<SeriesId>, &mut SeriesPaneView)>],
+        input: &MultiPaneChartFrameInput,
+        measurer: &mut A,
+        now: Instant,
+    ) -> Result<MultiPaneChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+    {
         let result = (|| {
-            for view in views.iter_mut() {
+            for (_, view) in views.iter_mut().flatten() {
                 view.borrowed().clear();
             }
             let count = model.panes().len();
@@ -129,21 +188,22 @@ impl MultiPaneChartFrameOwner {
             if input.pixel_ratio.horizontal != input.pixel_ratio.vertical {
                 return Err(ChartFrameError::Plot(FrameError::InvalidPixelRatio));
             }
-            for (pane, id) in input.series.iter().enumerate() {
-                if let Some(id) = id {
-                    match model.pane_for_series(*id) {
-                        None => {
-                            return Err(ChartFrameError::Plot(
-                                views[pane].borrowed().unknown_series(*id),
-                            ));
+            for (pane, entries) in views.iter_mut().enumerate() {
+                for (id, view) in entries {
+                    if let Some(id) = id {
+                        match model.pane_for_series(*id) {
+                            None => {
+                                return Err(ChartFrameError::Plot(
+                                    view.borrowed().unknown_series(*id),
+                                ));
+                            }
+                            Some(index) if index != pane => {
+                                return Err(ChartFrameError::Plot(
+                                    FrameError::SeriesPaneMismatch { series: *id, pane },
+                                ));
+                            }
+                            _ => {}
                         }
-                        Some(index) if index != pane => {
-                            return Err(ChartFrameError::Plot(FrameError::SeriesPaneMismatch {
-                                series: *id,
-                                pane,
-                            }));
-                        }
-                        _ => {}
                     }
                 }
             }
@@ -228,13 +288,25 @@ impl MultiPaneChartFrameOwner {
                         pixel_ratio: input.pixel_ratio,
                         background: input.background.clone(),
                     };
-                    let plot = prepare_series_plot(
-                        model,
-                        &mut views[i].borrowed(),
-                        input.series[i],
-                        &plot_layout,
-                    )
+                    let mut entries = views[i].iter_mut();
+                    let mut empty = SeriesPaneView::Line(Default::default());
+                    let mut plot = if let Some((id, view)) = entries.next() {
+                        prepare_series_plot(model, &mut view.borrowed(), *id, &plot_layout)
+                    } else {
+                        prepare_series_plot(model, &mut empty.borrowed(), None, &plot_layout)
+                    }
                     .map_err(ChartFrameError::Plot)?;
+                    for (id, view) in entries {
+                        let series_plot =
+                            prepare_series_plot(model, &mut view.borrowed(), *id, &plot_layout)
+                                .map_err(ChartFrameError::Plot)?;
+                        plot.series_layers
+                            .push(super::line_chart::CanvasSeriesGeometry {
+                                lines: series_plot.lines,
+                                candles: series_plot.candles,
+                                markers: series_plot.markers,
+                            });
+                    }
                     panes.push(ChartFrameSnapshot {
                         layout: *pane_layout,
                         requests: measured.requests(),
@@ -287,7 +359,7 @@ impl MultiPaneChartFrameOwner {
             })
         })();
         if result.is_err() {
-            for view in views.iter_mut() {
+            for (_, view) in views.iter_mut().flatten() {
                 view.borrowed().clear();
             }
         }
