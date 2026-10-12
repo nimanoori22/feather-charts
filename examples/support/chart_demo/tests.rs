@@ -131,6 +131,8 @@ fn cursor_replay_and_redraw_settle_without_rebuilding_frames_forever() {
                         snapshot: &demo.frame,
                         multi: None,
                         stretches: vec![],
+                        axis_scaling: demo.axis_scaling(),
+                        active_price_axis: demo.active_price_axis,
                         animate: false,
                         enabled: true,
                     })
@@ -176,6 +178,8 @@ fn native_event_sequence_navigation_crosshair_labels_and_cancel() {
                 snapshot: &demo.frame,
                 multi: None,
                 stretches: vec![],
+                axis_scaling: demo.axis_scaling(),
+                active_price_axis: demo.active_price_axis,
                 animate: false,
                 enabled: true,
             }
@@ -222,6 +226,8 @@ fn native_event_sequence_navigation_crosshair_labels_and_cancel() {
                 snapshot: &demo.frame,
                 multi: None,
                 stretches: vec![],
+                axis_scaling: demo.axis_scaling(),
+                active_price_axis: demo.active_price_axis,
                 animate: false,
                 enabled: true,
             }
@@ -280,6 +286,8 @@ fn price_volume_native_input_resize_updates_and_cursor_replay() {
                     .iter()
                     .map(|p| p.stretch_factor())
                     .collect(),
+                axis_scaling: demo.axis_scaling(),
+                active_price_axis: demo.active_price_axis,
                 animate: false,
                 enabled: true,
             }
@@ -305,6 +313,8 @@ fn price_volume_native_input_resize_updates_and_cursor_replay() {
                     .iter()
                     .map(|p| p.stretch_factor())
                     .collect(),
+                axis_scaling: demo.axis_scaling(),
+                active_price_axis: demo.active_price_axis,
                 animate: false,
                 enabled: true,
             })
@@ -359,6 +369,8 @@ fn price_volume_native_input_resize_updates_and_cursor_replay() {
                 .iter()
                 .map(|p| p.stretch_factor())
                 .collect(),
+            axis_scaling: demo.axis_scaling(),
+            active_price_axis: demo.active_price_axis,
             animate: false,
             enabled: true,
         }
@@ -399,6 +411,8 @@ fn replacing_pane_membership_cancels_an_old_gesture_even_at_same_count() {
         snapshot: &demo.frame,
         multi: demo.multi_frame.as_ref(),
         stretches: vec![2., 1.],
+        axis_scaling: demo.axis_scaling(),
+        active_price_axis: demo.active_price_axis,
         animate: false,
         enabled: true,
     }
@@ -419,6 +433,8 @@ fn replacing_pane_membership_cancels_an_old_gesture_even_at_same_count() {
         snapshot: &demo.frame,
         multi: demo.multi_frame.as_ref(),
         stretches: vec![2., 1.],
+        axis_scaling: demo.axis_scaling(),
+        active_price_axis: demo.active_price_axis,
         animate: false,
         enabled: true,
     }
@@ -455,4 +471,315 @@ fn explicit_display_scenarios_prepare_without_global_argument_state() {
             assert!(demo.has_series_geometry());
         }
     }
+}
+
+#[test]
+fn native_price_axis_wheel_changes_only_the_hovered_scale() {
+    use super::*;
+    use iced::{Point, Rectangle, mouse, widget::canvas::Program};
+    for kind in [
+        SeriesKind::Line,
+        SeriesKind::Candlesticks,
+        SeriesKind::Histogram,
+        SeriesKind::PriceVolume,
+    ] {
+        let mut demo = Demo::new_chart(DisplayConfig::default(), kind);
+        let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+        let mut state = ChartState::default();
+        let count = demo.model.panes().len();
+        for pane in 0..count {
+            let layout = demo
+                .multi_frame
+                .as_ref()
+                .map_or(demo.frame.layout, |f| f.layout.panes[pane]);
+            let axis = layout.right_axis;
+            let point = Point::new(
+                (axis.origin.x + axis.size.width / 2.) as f32,
+                (axis.origin.y + axis.size.height / 2.) as f32,
+            );
+            let before = demo.model.panes()[pane]
+                .right_price_scale()
+                .price_range()
+                .unwrap();
+            let others = demo
+                .model
+                .panes()
+                .iter()
+                .map(|p| p.right_price_scale().price_range())
+                .collect::<Vec<_>>();
+            let time = (
+                demo.model.time_scale().bar_spacing(),
+                demo.model.time_scale().right_offset(),
+            );
+            let action = Chart {
+                snapshot: &demo.frame,
+                multi: demo.multi_frame.as_ref(),
+                stretches: demo
+                    .model
+                    .panes()
+                    .iter()
+                    .map(|p| p.stretch_factor())
+                    .collect(),
+                axis_scaling: demo.axis_scaling(),
+                active_price_axis: demo.active_price_axis,
+                animate: false,
+                enabled: true,
+            }
+            .update(
+                &mut state,
+                &canvas::Event::Mouse(mouse::Event::WheelScrolled {
+                    delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+                }),
+                Rectangle::with_size(demo.size),
+                mouse::Cursor::Available(point),
+            )
+            .expect("wheel over the price axis must publish a scale action");
+            let _ = demo.update(action.into_inner().0.unwrap());
+            assert!(demo.error.is_none(), "{:?}", demo.error);
+            let after = demo.model.panes()[pane]
+                .right_price_scale()
+                .price_range()
+                .unwrap();
+            assert!(after.length() < before.length());
+            assert!(!demo.model.panes()[pane].right_price_scale().is_auto_scale());
+            assert_eq!(
+                time,
+                (
+                    demo.model.time_scale().bar_spacing(),
+                    demo.model.time_scale().right_offset()
+                )
+            );
+            for (other, range) in others.into_iter().enumerate() {
+                if other != pane {
+                    assert_eq!(
+                        demo.model.panes()[other].right_price_scale().price_range(),
+                        range
+                    );
+                }
+            }
+        }
+    }
+}
+
+fn dispatch_axis_event(
+    demo: &mut super::Demo,
+    state: &mut super::ChartState,
+    event: &iced::widget::canvas::Event,
+    point: iced::Point,
+) -> bool {
+    use super::*;
+    use iced::widget::canvas::Program;
+    let action = Chart {
+        snapshot: &demo.frame,
+        multi: demo.multi_frame.as_ref(),
+        stretches: demo
+            .model
+            .panes()
+            .iter()
+            .map(|p| p.stretch_factor())
+            .collect(),
+        axis_scaling: demo.axis_scaling(),
+        active_price_axis: demo.active_price_axis,
+        animate: false,
+        enabled: true,
+    }
+    .update(
+        state,
+        event,
+        iced::Rectangle::with_size(demo.size),
+        iced::mouse::Cursor::Available(point),
+    );
+    if let Some(message) = action.and_then(|a| a.into_inner().0) {
+        let _ = demo.update(message);
+        assert!(demo.error.is_none(), "{:?}", demo.error);
+        true
+    } else {
+        false
+    }
+}
+#[test]
+fn native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes() {
+    use super::*;
+    use iced::{Point, mouse};
+    for kind in [
+        SeriesKind::Line,
+        SeriesKind::Candlesticks,
+        SeriesKind::Histogram,
+        SeriesKind::PriceVolume,
+    ] {
+        let mut demo = Demo::new_chart(DisplayConfig::default(), kind);
+        let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+        let _ = demo.update(Message::LeftAxis);
+        let count = demo.model.panes().len();
+        for pane in 0..count {
+            for side in [
+                feather_charts::model::axis_snapshots::PriceAxisSide::Right,
+                feather_charts::model::axis_snapshots::PriceAxisSide::Left,
+            ] {
+                let mut state = ChartState::default();
+                let layout = demo
+                    .multi_frame
+                    .as_ref()
+                    .map_or(demo.frame.layout, |f| f.layout.panes[pane]);
+                let axis = if side == feather_charts::model::axis_snapshots::PriceAxisSide::Right {
+                    layout.right_axis
+                } else {
+                    layout.left_axis
+                };
+                if axis.size.width == 0.
+                    || !demo.axis_scaling()[pane][if side
+                        == feather_charts::model::axis_snapshots::PriceAxisSide::Left
+                    {
+                        0
+                    } else {
+                        1
+                    }]
+                {
+                    continue;
+                }
+                let scale = |demo: &Demo| {
+                    if side == feather_charts::model::axis_snapshots::PriceAxisSide::Right {
+                        demo.model.panes()[pane].right_price_scale().price_range()
+                    } else {
+                        demo.model.panes()[pane].left_price_scale().price_range()
+                    }
+                };
+                let before = scale(&demo).unwrap();
+                let time = (
+                    demo.model.time_scale().bar_spacing(),
+                    demo.model.time_scale().right_offset(),
+                );
+                let point = Point::new(
+                    (axis.origin.x + axis.size.width / 2.) as f32,
+                    (axis.origin.y + axis.size.height / 2.) as f32,
+                );
+                let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+                let release =
+                    canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left));
+                assert!(dispatch_axis_event(&mut demo, &mut state, &press, point));
+                let outside = Point::new(layout.plot.origin.x as f32 + 100., point.y - 25.);
+                let movement =
+                    canvas::Event::Mouse(mouse::Event::CursorMoved { position: outside });
+                assert!(dispatch_axis_event(
+                    &mut demo, &mut state, &movement, outside
+                ));
+                assert!(scale(&demo).unwrap().length() < before.length());
+                for _ in 0..5 {
+                    assert!(!dispatch_axis_event(
+                        &mut demo, &mut state, &movement, outside
+                    ));
+                }
+                // Redraw events must still deliver bounds/animation while an axis owns the pointer.
+                assert!(!dispatch_axis_event(
+                    &mut demo,
+                    &mut state,
+                    &canvas::Event::Window(iced::window::Event::RedrawRequested(Instant::now())),
+                    outside
+                ));
+                assert!(dispatch_axis_event(
+                    &mut demo, &mut state, &release, outside
+                ));
+                assert!(demo.active_price_axis.is_none());
+                assert_eq!(
+                    time,
+                    (
+                        demo.model.time_scale().bar_spacing(),
+                        demo.model.time_scale().right_offset()
+                    )
+                );
+                // Fresh, consecutive clicks reset through the real native input path.
+                let mut state = ChartState::default();
+                for event in [&press, &release, &press] {
+                    assert!(dispatch_axis_event(&mut demo, &mut state, event, point));
+                }
+                assert!((scale(&demo).unwrap().length() - before.length()).abs() < 1e-8);
+                let mut state = ChartState::default();
+                assert!(dispatch_axis_event(&mut demo, &mut state, &press, point));
+                assert!(dispatch_axis_event(
+                    &mut demo,
+                    &mut state,
+                    &canvas::Event::Window(iced::window::Event::Unfocused),
+                    point
+                ));
+                assert!(demo.active_price_axis.is_none());
+                let range_after_focus = scale(&demo);
+                dispatch_axis_event(&mut demo, &mut state, &movement, outside);
+                assert_eq!(scale(&demo), range_after_focus);
+                assert!(demo.active_price_axis.is_none());
+            }
+        }
+    }
+}
+#[test]
+fn axis_crossing_does_not_steal_plot_drag_and_data_removal_ends_axis_drag() {
+    use super::*;
+    use iced::{Point, mouse};
+    let mut demo = Demo::new_chart(DisplayConfig::default(), SeriesKind::PriceVolume);
+    let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+    let mut state = ChartState::default();
+    let layout = demo.multi_frame.as_ref().unwrap().layout.panes[0];
+    let plot = Point::new(layout.plot.origin.x as f32 + 100., 100.);
+    let axis = Point::new((layout.right_axis.origin.x + 10.) as f32, 100.);
+    let press = canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left));
+    let release = canvas::Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left));
+    let before = demo.model.panes()[0].right_price_scale().price_range();
+    assert!(dispatch_axis_event(&mut demo, &mut state, &press, plot));
+    assert!(dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Mouse(mouse::Event::CursorMoved { position: axis }),
+        axis
+    ));
+    assert!(!state.axis_input.is_dragging());
+    assert_eq!(
+        demo.model.panes()[0].right_price_scale().price_range(),
+        before
+    );
+    assert!(dispatch_axis_event(&mut demo, &mut state, &release, axis));
+    assert!(dispatch_axis_event(&mut demo, &mut state, &press, axis));
+    assert!(demo.active_price_axis.is_some());
+    let _ = demo.update(Message::Remove);
+    assert!(demo.active_price_axis.is_none());
+    dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Mouse(mouse::Event::CursorMoved { position: axis }),
+        axis,
+    );
+    assert!(!state.axis_input.is_dragging());
+    let _ = demo.update(Message::Reload);
+    assert!(demo.error.is_none());
+}
+
+#[test]
+fn axis_drag_redraw_does_not_route_plot_input_when_label_width_changes() {
+    use super::*;
+    use iced::{Point, mouse};
+    let mut demo = Demo::new_chart(DisplayConfig::default(), SeriesKind::Line);
+    let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+    let mut state = ChartState::default();
+    let plot = Point::new(200., 100.);
+    dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Mouse(mouse::Event::CursorMoved { position: plot }),
+        plot,
+    );
+    let point = Point::new((demo.frame.layout.right_axis.origin.x + 10.) as f32, 100.);
+    dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+        point,
+    );
+    // Axis label measurement may grow the axis and change plot bounds mid-drag.
+    demo.frame.layout.plot.size.width -= 10.;
+    assert!(!dispatch_axis_event(
+        &mut demo,
+        &mut state,
+        &canvas::Event::Window(iced::window::Event::RedrawRequested(Instant::now())),
+        plot
+    ));
+    assert!(state.axis_input.is_dragging());
+    assert!(demo.model.crosshair().position().is_none());
 }

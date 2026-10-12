@@ -48,6 +48,7 @@ use feather_charts::{
             SeriesPaneView,
         },
         price_axis::AxisFontResolver,
+        price_axis_input::{PriceAxisAction, PriceAxisInput, PriceAxisInteraction},
     },
     views::time_scale_animation::TimeScaleAnimationController,
 };
@@ -71,6 +72,7 @@ struct Demo {
     config: DisplayConfig,
     series_kind: SeriesKind,
     volume_registered: bool,
+    active_price_axis: Option<(usize, feather_charts::model::axis_snapshots::PriceAxisSide)>,
     multi_frame: Option<IcedMultiPaneChartFrame>,
     multi_owner: MultiPaneChartFrameOwner,
     multi_views: Vec<SeriesPaneView>,
@@ -101,6 +103,7 @@ enum Message {
     CrosshairMode,
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
+    PriceAxis(PriceAxisInteraction),
     Bounds(Size),
     Tick(Instant),
     Window(iced::window::Id, iced::window::Event),
@@ -189,6 +192,7 @@ impl Demo {
             config,
             series_kind,
             volume_registered: false,
+            active_price_axis: None,
             multi_frame: None,
             multi_owner: MultiPaneChartFrameOwner::default(),
             multi_views: vec![],
@@ -448,9 +452,71 @@ impl Demo {
             !self.frame.plot.lines.is_empty()
         }
     }
+    fn cancel_price_axis(&mut self) {
+        if let Some((pane, side)) = self.active_price_axis.take() {
+            let _ = self.model.end_scale_price(pane, side);
+        }
+    }
+    fn axis_scaling(&self) -> Vec<[bool; 2]> {
+        self.model
+            .panes()
+            .iter()
+            .map(|pane| {
+                [pane.left_price_scale(), pane.right_price_scale()].map(|scale| {
+                    scale.options().visible
+                        && !scale.is_empty()
+                        && !scale.is_percentage()
+                        && !scale.is_indexed_to_100()
+                })
+            })
+            .collect()
+    }
     fn update(&mut self, message: Message) -> iced::Task<Message> {
         let mut now = Instant::now();
+        if matches!(
+            message,
+            Message::Bounds(_)
+                | Message::Scale(_)
+                | Message::Remove
+                | Message::Reload
+                | Message::Clear
+                | Message::LeftAxis
+        ) {
+            self.cancel_price_axis();
+        }
         match message {
+            Message::PriceAxis(input) => {
+                self.model.end_scroll_time();
+                self.model.set_crosshair_position(0, None).unwrap();
+                let result = match input.action {
+                    PriceAxisAction::Start { y } => {
+                        self.cancel_price_axis();
+                        self.active_price_axis = Some((input.pane, input.side));
+                        self.model.start_scale_price(input.pane, input.side, y)
+                    }
+                    PriceAxisAction::Move { y } => {
+                        if self.active_price_axis == Some((input.pane, input.side)) {
+                            self.model.scale_price_to(input.pane, input.side, y)
+                        } else {
+                            Ok(())
+                        }
+                    }
+                    PriceAxisAction::End => {
+                        self.cancel_price_axis();
+                        Ok(())
+                    }
+                    PriceAxisAction::Wheel { delta } => {
+                        self.model.zoom_price_scale(input.pane, input.side, delta)
+                    }
+                    PriceAxisAction::Reset => {
+                        self.cancel_price_axis();
+                        self.model.reset_price_scale(input.pane, input.side)
+                    }
+                };
+                if let Err(error) = result {
+                    self.error = Some(format!("{error:?}"));
+                }
+            }
             Message::CrosshairMode => {
                 use feather_charts::model::crosshair::CrosshairMode;
                 let mut options = self.model.crosshair().options().clone();
@@ -754,6 +820,8 @@ impl Demo {
                 .iter()
                 .map(|p| p.stretch_factor())
                 .collect(),
+            axis_scaling: self.axis_scaling(),
+            active_price_axis: self.active_price_axis,
             animate: self.controller.is_active(),
             enabled: !self.model.time_scale().is_empty(),
         })
@@ -788,6 +856,8 @@ struct Chart<'a> {
     snapshot: &'a IcedChartFrame,
     multi: Option<&'a IcedMultiPaneChartFrame>,
     stretches: Vec<f64>,
+    axis_scaling: Vec<[bool; 2]>,
+    active_price_axis: Option<(usize, feather_charts::model::axis_snapshots::PriceAxisSide)>,
     animate: bool,
     enabled: bool,
 }
@@ -795,8 +865,17 @@ struct Chart<'a> {
 struct ChartState {
     input: ChartInput,
     multi_input: MultiPaneInput,
+    axis_input: PriceAxisInput,
     pane_series: Vec<Option<SeriesId>>,
     last_redraw: Option<Instant>,
+}
+impl Chart<'_> {
+    fn axis_layouts(&self) -> &[feather_charts::ui::chart_layout::ChartLayout] {
+        self.multi
+            .map_or(std::slice::from_ref(&self.snapshot.layout), |multi| {
+                multi.layout.panes.as_slice()
+            })
+    }
 }
 impl canvas::Program<Message> for Chart<'_> {
     type State = ChartState;
@@ -807,50 +886,93 @@ impl canvas::Program<Message> for Chart<'_> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
-        if let Some(multi) = self.multi {
-            if state.pane_series != multi.series {
-                let replacing = !state.pane_series.is_empty();
-                state.pane_series = multi.series.clone();
-                state.multi_input = MultiPaneInput::default();
-                if replacing {
-                    return Some(canvas::Action::publish(Message::PaneInteraction(
-                        MultiPaneInteraction::Cancel,
-                    )));
+        if let Some(multi) = self.multi
+            && state.pane_series != multi.series
+        {
+            let replacing = !state.pane_series.is_empty();
+            state.pane_series = multi.series.clone();
+            state.multi_input = MultiPaneInput::default();
+            if replacing {
+                if let Some(end) = state.axis_input.cancel() {
+                    return Some(canvas::Action::publish(Message::PriceAxis(end)));
                 }
+                return Some(canvas::Action::publish(Message::PaneInteraction(
+                    MultiPaneInteraction::Cancel,
+                )));
             }
-            if let Some(action) = state.multi_input.update(
-                event,
-                cursor
-                    .position()
-                    .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
-                &multi.layout,
-                &self.stretches,
-                self.enabled,
-                true,
-            ) {
-                let capture = action.capture();
-                let publish = canvas::Action::publish(Message::PaneInteraction(action));
-                return Some(if capture {
-                    publish.and_capture()
-                } else {
-                    publish
-                });
-            }
+        }
+        if state.axis_input.is_dragging()
+            && state.axis_input.target() != self.active_price_axis
+            && let Some(end) = state.axis_input.cancel()
+        {
+            return Some(canvas::Action::publish(Message::PriceAxis(end)));
+        }
+        let local = cursor
+            .position()
+            .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y));
+        let over_divider = self.multi.is_some_and(|multi| {
+            local.is_some_and(|p| {
+                multi.layout.separators.iter().any(|r| {
+                    f64::from(p.y) >= r.origin.y - 4.
+                        && f64::from(p.y) < r.origin.y + 5.
+                        && p.x >= 0.
+                        && f64::from(p.x) < r.size.width
+                })
+            })
+        });
+        let plot_dragging = if self.multi.is_some() {
+            state.multi_input.is_dragging()
         } else {
-            if let Some(action) = state.input.update(
-                event,
-                cursor
-                    .position()
-                    .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
-                self.snapshot.layout.plot,
-                self.enabled,
-            ) {
-                let publish = canvas::Action::publish(Message::Interaction(action));
-                return Some(if action.capture {
-                    publish.and_capture()
-                } else {
-                    publish
-                });
+            state.input.is_dragging()
+        };
+        if !plot_dragging && (!over_divider || state.axis_input.is_dragging()) {
+            if let Some(action) =
+                state
+                    .axis_input
+                    .update(event, local, self.axis_layouts(), &self.axis_scaling)
+            {
+                return Some(canvas::Action::publish(Message::PriceAxis(action)).and_capture());
+            }
+            if state.axis_input.is_dragging() && matches!(event, canvas::Event::Mouse(_)) {
+                return None;
+            }
+        }
+        if !state.axis_input.is_dragging() {
+            if let Some(multi) = self.multi {
+                if let Some(action) = state.multi_input.update(
+                    event,
+                    cursor
+                        .position()
+                        .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+                    &multi.layout,
+                    &self.stretches,
+                    self.enabled,
+                    true,
+                ) {
+                    let capture = action.capture();
+                    let publish = canvas::Action::publish(Message::PaneInteraction(action));
+                    return Some(if capture {
+                        publish.and_capture()
+                    } else {
+                        publish
+                    });
+                }
+            } else {
+                if let Some(action) = state.input.update(
+                    event,
+                    cursor
+                        .position()
+                        .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+                    self.snapshot.layout.plot,
+                    self.enabled,
+                ) {
+                    let publish = canvas::Action::publish(Message::Interaction(action));
+                    return Some(if action.capture {
+                        publish.and_capture()
+                    } else {
+                        publish
+                    });
+                }
             }
         }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
@@ -876,6 +998,27 @@ impl canvas::Program<Message> for Chart<'_> {
             state.last_redraw = None;
         }
         None
+    }
+    fn mouse_interaction(
+        &self,
+        state: &ChartState,
+        bounds: iced::Rectangle,
+        cursor: iced::mouse::Cursor,
+    ) -> iced::mouse::Interaction {
+        if state.axis_input.is_dragging()
+            || cursor.position().is_some_and(|p| {
+                PriceAxisInput::hit_test(
+                    iced::Point::new(p.x - bounds.x, p.y - bounds.y),
+                    self.axis_layouts(),
+                    &self.axis_scaling,
+                )
+                .is_some()
+            })
+        {
+            iced::mouse::Interaction::ResizingVertically
+        } else {
+            iced::mouse::Interaction::default()
+        }
     }
     fn draw(
         &self,

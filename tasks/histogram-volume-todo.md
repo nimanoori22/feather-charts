@@ -206,5 +206,7 @@ events and native startup remain distinct from physical device acceptance.
 - [x] Existing single-pane behavior/performance is preserved; new costs are measured.
 - [ ] Manually exercise physical mouse/touchpad zoom, scroll, crosshair, divider
   dragging, window resizing and live-data controls; record devices/results.
+  Also check price-axis wheel/drag scaling and double-click reset as described
+  in [price-axis interaction](../docs/porting/price-axis-interaction.md).
 - [x] Report pending hardware checks honestly and identify public chart/widget API
   as subsequent work, without treating it as part of this milestone.
