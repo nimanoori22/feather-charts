@@ -9,6 +9,8 @@ use crate::{
 pub(crate) fn snapshot(side: PriceAxisSide) -> PriceAxisSnapshot {
     let mut provider = PriceAxisRendererOptionsProvider::new();
     PriceAxisSnapshot {
+        crosshair_label: None,
+        crosshair_width_labels: vec![],
         side,
         visible: true,
         marks: vec![
@@ -118,6 +120,37 @@ fn source_endpoint_width_fallback_minimum_and_even_rounding() {
         0.
     );
     assert!(commands(&snapshot, 1.).commands.is_empty());
+}
+
+#[test]
+fn floating_label_reserves_extremes_and_keeps_price_coordinate() {
+    let mut source = snapshot(PriceAxisSide::Right);
+    let old = measure_price_axis(&source, &mut RecordingMeasurer::default())
+        .unwrap()
+        .required_width();
+    source.crosshair_width_labels = vec!["12345678901234567890".into()];
+    let reserve = measure_price_axis(&source, &mut RecordingMeasurer::default())
+        .unwrap()
+        .required_width();
+    assert!(reserve > old);
+    source.crosshair_label = Some(crate::model::axis_snapshots::FloatingAxisLabel {
+        coordinate: 1.,
+        text: "123.45".into(),
+        background: "#4c525e".into(),
+        color: "white".into(),
+    });
+    for ratio in [1., 1.25, 1.5, 2.] {
+        let frame = commands(&source, ratio);
+        assert_eq!(frame.required_width, reserve);
+        assert!(frame.commands.iter().any(
+            |c| matches!(c, PriceAxisCommand::RoundedRectangle { rect, .. } if rect.origin.y < 0.)
+        ));
+        assert!(
+            matches!(frame.commands.last(), Some(PriceAxisCommand::Text { label, .. }) if label == "123.45")
+        );
+    }
+    source.visible = false;
+    assert!(commands(&source, 1.).commands.is_empty());
 }
 
 #[test]

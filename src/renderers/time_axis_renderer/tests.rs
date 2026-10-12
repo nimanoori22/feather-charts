@@ -9,6 +9,7 @@ use crate::model::{
 
 pub(crate) fn snapshot() -> TimeAxisSnapshot {
     TimeAxisSnapshot {
+        crosshair_label: None,
         visible: true,
         ticks: [
             (1., "Jan", true),
@@ -57,6 +58,37 @@ pub(crate) fn snapshot() -> TimeAxisSnapshot {
     }
 }
 pub(crate) struct Metrics(pub f32);
+
+#[test]
+fn floating_time_label_aligns_background_without_moving_tick() {
+    let mut source = snapshot();
+    source.crosshair_label = Some(crate::model::axis_snapshots::FloatingAxisLabel {
+        coordinate: 1.,
+        text: "2026-10-12".into(),
+        background: "#4c525e".into(),
+        color: "white".into(),
+    });
+    for ratio in [1., 1.25, 1.5, 2.] {
+        let frame = prepared(&source, 100., ratio, ratio);
+        assert!(frame.commands.iter().any(|c| matches!(c, TimeAxisCommand::RoundedRectangle { rect, .. } if rect.origin.x >= 0. && rect.origin.x+rect.size.width <= 101.)));
+        assert!(
+            matches!(frame.commands.last(), Some(TimeAxisCommand::Text { label, position, .. }) if label == "2026-10-12" && position.x > 1.)
+        );
+        let ticks = frame
+            .commands
+            .iter()
+            .filter_map(|c| {
+                if let TimeAxisCommand::Rectangle { rect, color } = c {
+                    (color == "white").then_some(rect.origin.x)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(ticks.len(), 1);
+        assert!((ticks[0] - 1.).abs() <= 1.);
+    }
+}
 impl TextMeasurer for Metrics {
     fn measure_text(&mut self, label: &str) -> TextMetrics {
         TextMetrics {

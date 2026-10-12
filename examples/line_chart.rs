@@ -34,6 +34,7 @@ use feather_charts::{
     },
     ui::{
         chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer, IcedChartFrame},
+        chart_input::{ChartInput, ChartInteraction, Navigation},
         price_axis::AxisFontResolver,
     },
     views::time_scale_animation::TimeScaleAnimationController,
@@ -85,7 +86,7 @@ fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap 
             line_visible: true,
             point_markers_visible: markers,
             point_markers_radius: None,
-            crosshair_marker_visible: false,
+            crosshair_marker_visible: true,
             crosshair_marker_radius: 4.,
             crosshair_marker_border_color: String::new(),
             crosshair_marker_background_color: String::new(),
@@ -133,6 +134,8 @@ struct Demo {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    CrosshairMode,
+    Interaction(ChartInteraction),
     Bounds(Size),
     Tick(Instant),
     Window(iced::window::Id, iced::window::Event),
@@ -363,6 +366,49 @@ impl Demo {
     fn update(&mut self, message: Message) -> iced::Task<Message> {
         let mut now = Instant::now();
         match message {
+            Message::CrosshairMode => {
+                use feather_charts::model::crosshair::CrosshairMode;
+                let mut options = self.model.crosshair().options().clone();
+                options.mode = match options.mode {
+                    CrosshairMode::Magnet => CrosshairMode::Normal,
+                    CrosshairMode::Normal => CrosshairMode::Hidden,
+                    _ => CrosshairMode::Magnet,
+                };
+                self.model.set_crosshair_options(options).unwrap();
+            }
+            Message::Interaction(input) => {
+                use feather_charts::model::coordinate::Coordinate;
+                match input.navigation {
+                    Some(Navigation::Wheel { x, zoom, scroll }) => {
+                        self.model.end_scroll_time();
+                        self.model.zoom_time(Coordinate::new(x), zoom);
+                        if scroll != 0. {
+                            self.model.start_scroll_time(Coordinate::new(0.));
+                            self.model.scroll_time_to(Coordinate::new(scroll));
+                            self.model.end_scroll_time();
+                        }
+                    }
+                    Some(Navigation::Scroll { start, x }) => {
+                        if let Some(start) = start {
+                            self.model.start_scroll_time(Coordinate::new(start));
+                        }
+                        self.model.scroll_time_to(Coordinate::new(x));
+                    }
+                    Some(Navigation::EndScroll) => self.model.end_scroll_time(),
+                    None => {}
+                }
+                self.model
+                    .set_crosshair_position(
+                        0,
+                        input.position.map(|point| {
+                            feather_charts::renderers::line_renderer::Point {
+                                x: f64::from(point.x),
+                                y: f64::from(point.y),
+                            }
+                        }),
+                    )
+                    .unwrap();
+            }
             Message::Bounds(size) => {
                 let startup = self.size.width == 0. && size.width > 0.;
                 self.size = size;
@@ -500,12 +546,18 @@ impl Demo {
             button("Animate").on_press(Message::Animate),
             button("Stop").on_press(Message::Stop),
             button("Left axis").on_press(Message::LeftAxis),
-            button("Ticks").on_press(Message::Ticks)
+            button("Ticks").on_press(Message::Ticks),
+            button(text(format!(
+                "Crosshair: {:?}",
+                self.model.crosshair().options().mode
+            )))
+            .on_press(Message::CrosshairMode)
         ]
         .spacing(5);
         let chart = Canvas::new(Chart {
             snapshot: &self.frame,
             animate: self.controller.is_active(),
+            enabled: !self.model.time_scale().is_empty(),
         })
         .width(iced::Fill)
         .height(iced::Fill);
@@ -537,16 +589,37 @@ impl Demo {
 struct Chart<'a> {
     snapshot: &'a IcedChartFrame,
     animate: bool,
+    enabled: bool,
+}
+#[derive(Default)]
+struct ChartState {
+    input: ChartInput,
+    last_redraw: Option<Instant>,
 }
 impl canvas::Program<Message> for Chart<'_> {
-    type State = Option<Instant>;
+    type State = ChartState;
     fn update(
         &self,
-        state: &mut Option<Instant>,
+        state: &mut ChartState,
         event: &canvas::Event,
         bounds: iced::Rectangle,
-        _cursor: iced::mouse::Cursor,
+        cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
+        if let Some(action) = state.input.update(
+            event,
+            cursor
+                .position()
+                .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+            self.snapshot.layout.plot,
+            self.enabled,
+        ) {
+            let publish = canvas::Action::publish(Message::Interaction(action));
+            return Some(if action.capture {
+                publish.and_capture()
+            } else {
+                publish
+            });
+        }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
             if bounds.size()
                 != Size::new(
@@ -558,21 +631,22 @@ impl canvas::Program<Message> for Chart<'_> {
             }
             if self.animate {
                 let next = state
+                    .last_redraw
                     .map(|last| last + Duration::from_millis(16))
                     .unwrap_or(*now);
                 if *now < next {
                     return Some(canvas::Action::request_redraw_at(next));
                 }
-                *state = Some(*now);
+                state.last_redraw = Some(*now);
                 return Some(canvas::Action::publish(Message::Tick(*now)));
             }
-            *state = None;
+            state.last_redraw = None;
         }
         None
     }
     fn draw(
         &self,
-        _state: &Option<Instant>,
+        _state: &ChartState,
         renderer: &iced::Renderer,
         _theme: &Theme,
         bounds: iced::Rectangle,
@@ -698,6 +772,23 @@ fn capture_display(directory: &std::path::Path, wgpu: bool) {
             let mut demo = Demo::new(DisplayConfig::for_scenario(scenario));
             demo.scale = ratio;
             demo.apply_scenario(Instant::now());
+            if std::env::args().any(|arg| arg == "--capture-interactions") && demo.registered {
+                let point = iced::Point::new(
+                    demo.frame.plot.size.width * 0.5,
+                    demo.frame.plot.size.height * 0.4,
+                );
+                let _ = demo.update(Message::Interaction(ChartInteraction {
+                    position: Some(point),
+                    navigation: Some(Navigation::Wheel {
+                        x: f64::from(point.x),
+                        zoom: 0.32,
+                        scroll: 0.,
+                    }),
+                    capture: true,
+                }));
+                assert!(!demo.frame.plot.crosshair.is_empty());
+                assert!(!demo.frame.plot.crosshair_markers.is_empty());
+            }
             assert!(demo.error.is_none(), "{:?}", demo.error);
             let before = format!("{:?}", demo.frame);
             let offset = demo.model.time_scale().right_offset();
@@ -762,6 +853,209 @@ fn capture_display(directory: &std::path::Path, wgpu: bool) {
 }
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn profile_zoom_frame_stages() {
+        use super::*;
+        for continuous in [false, true] {
+            let mut demo = Demo::default();
+            let _ = demo.update(Message::Bounds(Size::new(917., 870.80005)));
+            let mut samples = vec![];
+            for i in 0..120 {
+                let start = Instant::now();
+                demo.model.zoom_time(
+                    200.0.into(),
+                    if (continuous && i < 70) || (!continuous && i % 2 == 0) {
+                        0.32
+                    } else {
+                        -0.32 / 1.032
+                    },
+                );
+                demo.model
+                    .set_crosshair_position(
+                        0,
+                        Some(feather_charts::renderers::line_renderer::Point { x: 200., y: 200. }),
+                    )
+                    .unwrap();
+                let model = start.elapsed();
+                let input = ChartFrameInput {
+                    series: Some(ID),
+                    bounds: AxisBounds {
+                        width: f64::from(demo.size.width),
+                        height: f64::from(demo.size.height),
+                    },
+                    pixel_ratio: PixelRatio {
+                        horizontal: demo.scale,
+                        vertical: demo.scale,
+                    },
+                    background: "#101820".into(),
+                };
+                let start = Instant::now();
+                let snapshot = demo
+                    .frame_owner
+                    .prepare(
+                        &mut demo.model,
+                        &mut demo.controller,
+                        &mut demo.view,
+                        &input,
+                        &mut IcedAxisMeasurer { fonts: &demo.fonts },
+                        Instant::now(),
+                    )
+                    .unwrap();
+                let engine = start.elapsed();
+                let start = Instant::now();
+                demo.frame = IcedChartFrame::from_snapshot(snapshot, &demo.fonts).unwrap();
+                let glyphs = start.elapsed();
+                if i >= 20 {
+                    samples.push([
+                        model.as_secs_f64() * 1000.,
+                        engine.as_secs_f64() * 1000.,
+                        glyphs.as_secs_f64() * 1000.,
+                    ]);
+                }
+            }
+            for (index, name) in ["model", "engine/measurement", "Iced glyph paths"]
+                .into_iter()
+                .enumerate()
+            {
+                let mut values = samples.iter().map(|s| s[index]).collect::<Vec<_>>();
+                values.sort_by(f64::total_cmp);
+                println!(
+                    "continuous={continuous} {name}: median {:.3} ms, p95 {:.3} ms",
+                    values[50], values[95]
+                );
+            }
+        }
+    }
+    #[test]
+    fn cursor_replay_and_redraw_settle_without_rebuilding_frames_forever() {
+        use super::*;
+        use iced::widget::canvas::Program;
+        let mut demo = Demo::default();
+        let mut state = ChartState::default();
+        for size in [Size::new(800., 500.), Size::new(917., 870.80005)] {
+            let _ = demo.update(Message::Bounds(size));
+            let bounds = iced::Rectangle::new(iced::Point::new(12., 150.), size);
+            let point = iced::Point::new(
+                bounds.x + demo.frame.layout.plot.origin.x as f32 + 200.,
+                bounds.y + 100.,
+            );
+            let cursor = iced::mouse::Cursor::Available(point);
+            let movement =
+                canvas::Event::Mouse(iced::mouse::Event::CursorMoved { position: point });
+            let redraw =
+                canvas::Event::Window(iced::window::Event::RedrawRequested(Instant::now()));
+            let mut published = 0;
+            for _ in 0..10 {
+                for event in [&movement, &redraw] {
+                    if let Some(action) = (Chart {
+                        snapshot: &demo.frame,
+                        animate: false,
+                        enabled: true,
+                    })
+                    .update(&mut state, event, bounds, cursor)
+                    {
+                        if let Some(message) = action.into_inner().0 {
+                            published += 1;
+                            let _ = demo.update(message);
+                        }
+                    }
+                }
+            }
+            assert!(
+                published <= 2,
+                "unchanged cursor and redraw events must settle, got {published} messages"
+            );
+            assert!(demo.error.is_none());
+            assert!(demo.model.crosshair().position().is_some());
+        }
+    }
+    #[test]
+    fn native_event_sequence_navigation_crosshair_labels_and_cancel() {
+        use super::*;
+        use iced::widget::canvas::Program;
+        use iced::{Point, Rectangle, mouse};
+        let mut demo = Demo::default();
+        let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+        let mut state = ChartState::default();
+        for ratio in [1., 1.25, 1.5, 2.] {
+            demo.scale = ratio;
+            demo.prepare(Instant::now());
+            let width_before = demo.frame.layout.plot.size.width;
+            let retained = format!("{:?}", demo.frame);
+            let point = Point::new(demo.frame.layout.plot.origin.x as f32 + 200., 100.);
+            let bounds = Rectangle::with_size(demo.size);
+            let event = canvas::Event::Mouse(mouse::Event::WheelScrolled {
+                delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+            });
+            let before = demo.model.time_scale().bar_spacing();
+            let message = Chart {
+                snapshot: &demo.frame,
+                animate: false,
+                enabled: true,
+            }
+            .update(&mut state, &event, bounds, mouse::Cursor::Available(point))
+            .unwrap()
+            .into_inner()
+            .0
+            .unwrap();
+            let _ = demo.update(message);
+            assert!(demo.error.is_none());
+            assert!(demo.model.time_scale().bar_spacing() > before);
+            assert!(!demo.frame.plot.crosshair.is_empty());
+            assert!(!demo.frame.plot.crosshair_markers.is_empty());
+            let axes = demo.frame.plot.axes.as_ref().unwrap();
+            assert!(axes.right.crosshair_label.is_some());
+            assert!(axes.time.crosshair_label.is_some());
+            assert_eq!(demo.frame.layout.plot.size.width, width_before);
+            assert_ne!(format!("{:?}", demo.frame), retained);
+            let _ = demo.update(Message::Animate);
+            let _ = demo.update(Message::Interaction(ChartInteraction {
+                position: Some(Point::new(200., 100.)),
+                navigation: Some(Navigation::Scroll {
+                    start: Some(200.),
+                    x: 200.,
+                }),
+                capture: true,
+            }));
+            assert!(!demo.controller.is_active());
+            let offset = demo.model.time_scale().right_offset();
+            let _ = demo.update(Message::Interaction(ChartInteraction {
+                position: None,
+                navigation: Some(Navigation::Scroll {
+                    start: None,
+                    x: 250.,
+                }),
+                capture: true,
+            }));
+            assert_ne!(demo.model.time_scale().right_offset(), offset);
+            let leave = canvas::Event::Window(iced::window::Event::Unfocused);
+            let message = Chart {
+                snapshot: &demo.frame,
+                animate: false,
+                enabled: true,
+            }
+            .update(&mut state, &leave, bounds, mouse::Cursor::Unavailable)
+            .unwrap()
+            .into_inner()
+            .0
+            .unwrap();
+            let _ = demo.update(message);
+            assert!(demo.frame.plot.crosshair.is_empty());
+            assert!(
+                demo.frame
+                    .plot
+                    .axes
+                    .as_ref()
+                    .unwrap()
+                    .time
+                    .crosshair_label
+                    .is_none()
+            );
+            let _ = demo.update(Message::Remove);
+            assert!(demo.frame.plot.crosshair_markers.is_empty());
+            let _ = demo.update(Message::Reload);
+        }
+    }
     #[test]
     fn connected_demo_operations() {
         super::smoke(super::DisplayConfig::default());

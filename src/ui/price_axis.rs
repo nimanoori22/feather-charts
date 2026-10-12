@@ -24,6 +24,16 @@ use iced::{
     alignment,
     widget::canvas::{self, Frame, Path, gradient},
 };
+use std::{cell::RefCell, collections::VecDeque};
+
+struct CachedAxisText {
+    content: String,
+    font: Font,
+    size: f32,
+    alignment: text::Alignment,
+    color: Color,
+    paths: Vec<(Path, Color)>,
+}
 
 #[derive(Debug)]
 pub enum PriceAxisUiError {
@@ -34,12 +44,15 @@ pub enum PriceAxisUiError {
 
 /// Named families in Iced 0.14 require static strings. Registration avoids
 /// leaking arbitrarily changing layout strings to satisfy that requirement.
+/// Bounded label paths are stored at the origin and translated during preparation.
 #[derive(Default)]
 pub struct AxisFontResolver {
     named: Vec<(&'static str, Font)>,
+    glyphs: RefCell<VecDeque<CachedAxisText>>,
 }
 impl AxisFontResolver {
     pub fn register(&mut self, name: &'static str, font: Font) {
+        self.glyphs.get_mut().clear();
         if let Some(entry) = self.named.iter_mut().find(|(family, _)| *family == name) {
             entry.1 = font;
         } else {
@@ -74,6 +87,64 @@ impl AxisFontResolver {
             }
         }
         Err(PriceAxisUiError::UnsupportedFontFamily(families.into()))
+    }
+    pub(crate) fn glyph_paths(
+        &self,
+        content: &str,
+        font: Font,
+        size: f32,
+        alignment: text::Alignment,
+        color: Color,
+        position: Point,
+    ) -> Vec<(Path, Color)> {
+        let mut cache = self.glyphs.borrow_mut();
+        let index = cache.iter().position(|entry| {
+            entry.content == content
+                && entry.font == font
+                && entry.size == size
+                && entry.alignment == alignment
+                && entry.color == color
+        });
+        let index = match index {
+            Some(index) => index,
+            None => {
+                let text = canvas::Text {
+                    content: content.into(),
+                    position: Point::ORIGIN,
+                    font,
+                    size: size.into(),
+                    align_x: alignment,
+                    align_y: alignment::Vertical::Center,
+                    line_height: LineHeight::Relative(1.2),
+                    shaping: Shaping::Advanced,
+                    max_width: f32::INFINITY,
+                    color,
+                };
+                let mut paths = vec![];
+                text.draw_with(|path, color| paths.push((path, color)));
+                if cache.len() == 256 {
+                    cache.pop_front();
+                }
+                cache.push_back(CachedAxisText {
+                    content: content.into(),
+                    font,
+                    size,
+                    alignment,
+                    color,
+                    paths,
+                });
+                cache.len() - 1
+            }
+        };
+        let translation =
+            iced::advanced::graphics::geometry::path::lyon_path::math::Transform::translation(
+                position.x, position.y,
+            );
+        cache[index]
+            .paths
+            .iter()
+            .map(|(path, color)| (path.transform(&translation), *color))
+            .collect()
     }
 }
 
@@ -154,6 +225,25 @@ impl IcedPriceAxis {
         let mut primitives = vec![];
         for command in &commands.commands {
             match command {
+                PriceAxisCommand::RoundedRectangle {
+                    rect,
+                    radii,
+                    color: value,
+                } => {
+                    primitives.push(AxisPrimitive::Glyph {
+                        path: Path::rounded_rectangle(
+                            Point::new(rect.origin.x as f32, rect.origin.y as f32),
+                            Size::new(rect.size.width as f32, rect.size.height as f32),
+                            iced::border::Radius {
+                                top_left: radii[0],
+                                top_right: radii[1],
+                                bottom_right: radii[2],
+                                bottom_left: radii[3],
+                            },
+                        ),
+                        color: color(value).map_err(PriceAxisUiError::Color)?,
+                    });
+                }
                 PriceAxisCommand::Background(background) => {
                     let fill = match background {
                         Background::Solid { color: value } => {
@@ -188,26 +278,24 @@ impl IcedPriceAxis {
                     font_family,
                     color: value,
                 } => {
-                    let text = canvas::Text {
-                        content: label.clone(),
-                        position: Point::new(position.x as f32, position.y as f32),
-                        color: color(value).map_err(PriceAxisUiError::Color)?,
-                        size: (*font_size).into(),
-                        line_height: LineHeight::Relative(1.2),
-                        font: fonts.resolve(font_family)?,
-                        align_x: match align {
+                    let paths = fonts.glyph_paths(
+                        label,
+                        fonts.resolve(font_family)?,
+                        *font_size,
+                        match align {
                             AxisTextAlignment::Left => text::Alignment::Left,
                             AxisTextAlignment::Right => text::Alignment::Right,
                         },
-                        align_y: alignment::Vertical::Center,
-                        shaping: Shaping::Advanced,
-                        max_width: f32::INFINITY,
-                    };
+                        color(value).map_err(PriceAxisUiError::Color)?,
+                        Point::new(position.x as f32, position.y as f32),
+                    );
                     // Cached Canvas text escapes clipping on the 0.14 TinySkia
                     // backend. Prepared paths preserve clip and paint order.
-                    text.draw_with(|path, color| {
-                        primitives.push(AxisPrimitive::Glyph { path, color })
-                    });
+                    primitives.extend(
+                        paths
+                            .into_iter()
+                            .map(|(path, color)| AxisPrimitive::Glyph { path, color }),
+                    );
                 }
             }
         }
@@ -318,6 +406,108 @@ mod tests {
             horizontal: value,
             vertical: value,
         }
+    }
+    #[test]
+    fn cached_text_preserves_glyphs_and_reuses_positions_without_mixing_styles() {
+        let fonts = AxisFontResolver::default();
+        let text = canvas::Text {
+            content: "−123.45%".into(),
+            position: Point::ORIGIN,
+            color: Color::WHITE,
+            font: Font::DEFAULT,
+            size: 12.0.into(),
+            align_x: text::Alignment::Right,
+            align_y: alignment::Vertical::Center,
+            line_height: LineHeight::Relative(1.2),
+            shaping: Shaping::Advanced,
+            max_width: f32::INFINITY,
+        };
+        let mut expected = vec![];
+        text.draw_with(|path, color| expected.push((path, color)));
+        for position in [Point::ORIGIN, Point::new(30.5, 20.25)] {
+            let cached = fonts.glyph_paths(
+                &text.content,
+                text.font,
+                12.,
+                text.align_x,
+                text.color,
+                position,
+            );
+            let transform =
+                iced::advanced::graphics::geometry::path::lyon_path::math::Transform::translation(
+                    position.x, position.y,
+                );
+            assert_eq!(cached.len(), expected.len());
+            for ((path, color), (original, expected_color)) in cached.iter().zip(&expected) {
+                assert_eq!(*color, *expected_color);
+                assert_eq!(
+                    path.raw().iter().collect::<Vec<_>>(),
+                    original
+                        .transform(&transform)
+                        .raw()
+                        .iter()
+                        .collect::<Vec<_>>()
+                );
+            }
+        }
+        assert_eq!(fonts.glyphs.borrow().len(), 1);
+        for (font, size, alignment, color) in [
+            (Font::MONOSPACE, 12., text.align_x, text.color),
+            (text.font, 24., text.align_x, text.color),
+            (text.font, 12., text::Alignment::Center, text.color),
+            (text.font, 12., text.align_x, Color::BLACK),
+        ] {
+            fonts.glyph_paths(&text.content, font, size, alignment, color, Point::ORIGIN);
+        }
+        assert_eq!(fonts.glyphs.borrow().len(), 5);
+        let mut fonts = fonts;
+        fonts.register("New", Font::DEFAULT);
+        assert!(fonts.glyphs.borrow().is_empty());
+    }
+    #[test]
+    fn text_path_cache_evicts_old_labels_and_keeps_prepared_geometry_owned() {
+        let fonts = AxisFontResolver::default();
+        let retained = fonts.glyph_paths(
+            "123",
+            Font::DEFAULT,
+            12.,
+            text::Alignment::Left,
+            Color::WHITE,
+            Point::ORIGIN,
+        );
+        for i in 0..256 {
+            fonts.glyphs.borrow_mut().push_back(CachedAxisText {
+                content: format!("old-{i}"),
+                font: Font::DEFAULT,
+                size: 12.,
+                alignment: text::Alignment::Left,
+                color: Color::WHITE,
+                paths: vec![],
+            });
+        }
+        fonts.glyphs.borrow_mut().pop_front();
+        fonts.glyph_paths(
+            "new",
+            Font::DEFAULT,
+            12.,
+            text::Alignment::Left,
+            Color::WHITE,
+            Point::ORIGIN,
+        );
+        assert_eq!(fonts.glyphs.borrow().len(), 256);
+        assert!(
+            fonts
+                .glyphs
+                .borrow()
+                .iter()
+                .all(|entry| entry.content != "old-0")
+        );
+        assert!(!retained.is_empty());
+        assert!(
+            retained
+                .iter()
+                .all(|(path, _)| path.raw().iter().next().is_some())
+        );
     }
     #[test]
     fn real_iced_measurement_uses_font_size_and_no_fake_ink_metrics() {

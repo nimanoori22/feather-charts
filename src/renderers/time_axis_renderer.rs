@@ -14,6 +14,11 @@ use crate::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TimeAxisCommand {
+    RoundedRectangle {
+        rect: AxisRect,
+        radii: [f32; 4],
+        color: String,
+    },
     Background(String),
     Rectangle {
         rect: AxisRect,
@@ -51,6 +56,7 @@ pub struct TimeAxisMeasurement {
     snapshot: TimeAxisSnapshot,
     widths: Vec<f64>,
     required_height: f64,
+    floating_width: Option<f64>,
 }
 impl TimeAxisMeasurement {
     pub fn required_height(&self) -> f64 {
@@ -75,6 +81,7 @@ pub fn measure_time_axis<N: TextMeasurer, E: TextMeasurer>(
             options.tick_length,
             options.padding_top,
             options.padding_bottom,
+            options.padding_horizontal,
             options.label_bottom_offset,
         ]
         .iter()
@@ -87,6 +94,24 @@ pub fn measure_time_axis<N: TextMeasurer, E: TextMeasurer>(
         return Err(TimeAxisRenderError::InvalidSnapshot);
     }
     let mut widths = vec![];
+    let floating_width = if snapshot.visible {
+        snapshot
+            .crosshair_label
+            .as_ref()
+            .map(|label| f64::from(normal.measure_text(&label.text).width))
+    } else {
+        None
+    };
+    if floating_width.is_some_and(|width| !width.is_finite() || width < 0.) {
+        return Err(TimeAxisRenderError::InvalidMetrics);
+    }
+    if snapshot
+        .crosshair_label
+        .as_ref()
+        .is_some_and(|label| !label.coordinate.is_finite())
+    {
+        return Err(TimeAxisRenderError::InvalidSnapshot);
+    }
     if snapshot.visible {
         for tick in &snapshot.ticks {
             let metrics = match tick.emphasis {
@@ -125,6 +150,7 @@ pub fn measure_time_axis<N: TextMeasurer, E: TextMeasurer>(
         snapshot: snapshot.clone(),
         widths,
         required_height,
+        floating_width,
     })
 }
 
@@ -226,6 +252,74 @@ pub fn prepare_time_axis(
                 color: options.text_color.clone(),
             });
         }
+    }
+    if let (Some(label), Some(width)) = (&snapshot.crosshair_label, measurement.floating_width) {
+        let width = source_round(width) + 2. * f64::from(options.padding_horizontal);
+        let mut x = (label.coordinate - width / 2.).floor() + 0.5;
+        if x < 0. {
+            x = 0.5;
+        } else if x + width > bounds.width {
+            x = (bounds.width - width).floor() + 0.5;
+        }
+        let snap = |value: f64, ratio: f64| source_round(value * ratio) / ratio;
+        let right = snap(x + width, horizontal);
+        let top = snap(x, horizontal);
+        let height = snap(
+            f64::from(
+                options.border_size
+                    + options.tick_length
+                    + options.padding_top
+                    + options.font_size
+                    + options.padding_bottom,
+            )
+            .ceil(),
+            vertical,
+        );
+        result.commands.push(TimeAxisCommand::RoundedRectangle {
+            rect: AxisRect {
+                origin: Point { x: top, y: 0. },
+                size: AxisBounds {
+                    width: right - top,
+                    height,
+                },
+            },
+            radii: [
+                0.,
+                0.,
+                (source_round(2. * horizontal) / horizontal) as f32,
+                (source_round(2. * horizontal) / horizontal) as f32,
+            ],
+            color: label.background.clone(),
+        });
+        if snapshot.ticks_visible {
+            result.commands.push(TimeAxisCommand::Rectangle {
+                rect: AxisRect {
+                    origin: Point {
+                        x: (source_round(label.coordinate * horizontal)
+                            - (horizontal * 0.5).floor())
+                            / horizontal,
+                        y: 0.,
+                    },
+                    size: AxisBounds {
+                        width: horizontal.floor().max(1.) / horizontal,
+                        height: snap(f64::from(options.tick_length), vertical),
+                    },
+                },
+                color: label.color.clone(),
+            });
+        }
+        result.commands.push(TimeAxisCommand::Text {
+            label: label.text.clone(),
+            position: Point {
+                x: x + f64::from(options.padding_horizontal)
+                    + source_round(measurement.floating_width.unwrap()) / 2.,
+                y,
+            },
+            emphasis: TimeLabelEmphasis::Normal,
+            font_size: options.font_size,
+            font_family: options.font_family.clone(),
+            color: label.color.clone(),
+        });
     }
     Ok(result)
 }

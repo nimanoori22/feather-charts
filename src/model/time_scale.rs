@@ -412,6 +412,11 @@ where
     pub fn index_to_time(&self, index: TimePointIndex) -> Option<&B::InternalItem> {
         self.point(index).map(|p| &p.time)
     }
+    pub fn format_index(&self, index: TimePointIndex) -> Option<String> {
+        self.points
+            .get(index.as_usize()?)
+            .map(|point| self.format_date_time(point))
+    }
     pub fn time_to_index(
         &self,
         time: &B::InternalItem,
@@ -644,8 +649,12 @@ where
     }
     pub fn zoom(&mut self, point: Coordinate, scale: f64) -> Vec<TimeScaleEffect> {
         let before = self.float_index(point);
-        let effects = self.set_bar_spacing(self.bar_spacing + scale * self.bar_spacing / 10.0);
-        self.set_right_offset(self.right_offset + before - self.float_index(point));
+        let mut effects = self.set_bar_spacing(self.bar_spacing + scale * self.bar_spacing / 10.0);
+        if !self.options.right_bar_stays_on_scroll {
+            effects.extend(
+                self.set_right_offset(self.right_offset + before - self.float_index(point)),
+            );
+        }
         effects
     }
     pub fn start_scale(&mut self, point: Coordinate) {

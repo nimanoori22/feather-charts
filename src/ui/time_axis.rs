@@ -17,12 +17,7 @@ use crate::{
         },
     },
 };
-use iced::{
-    Font, Point, Rectangle, Size,
-    advanced::text::{Alignment, LineHeight, Shaping},
-    alignment,
-    widget::canvas::{Frame, Text},
-};
+use iced::{Font, Point, Rectangle, Size, advanced::text::Alignment, widget::canvas::Frame};
 
 #[derive(Debug)]
 pub enum TimeAxisUiError {
@@ -59,6 +54,25 @@ impl IcedTimeAxis {
         let mut primitives = vec![];
         for command in &commands.commands {
             match command {
+                TimeAxisCommand::RoundedRectangle {
+                    rect,
+                    radii,
+                    color: value,
+                } => {
+                    primitives.push(AxisPrimitive::Glyph {
+                        path: iced::widget::canvas::Path::rounded_rectangle(
+                            Point::new(rect.origin.x as f32, rect.origin.y as f32),
+                            Size::new(rect.size.width as f32, rect.size.height as f32),
+                            iced::border::Radius {
+                                top_left: radii[0],
+                                top_right: radii[1],
+                                bottom_right: radii[2],
+                                bottom_left: radii[3],
+                            },
+                        ),
+                        color: color(value).map_err(TimeAxisUiError::Color)?,
+                    });
+                }
                 TimeAxisCommand::Background(value) => primitives.push(AxisPrimitive::Fill {
                     origin: Point::ORIGIN,
                     size,
@@ -79,21 +93,19 @@ impl IcedTimeAxis {
                     font_family,
                     color: value,
                 } => {
-                    let text = Text {
-                        content: label.clone(),
-                        position: Point::new(position.x as f32, position.y as f32),
-                        color: color(value).map_err(TimeAxisUiError::Color)?,
-                        size: (*font_size).into(),
-                        font: axis_font(fonts, font_family, *emphasis)?,
-                        align_x: Alignment::Center,
-                        align_y: alignment::Vertical::Center,
-                        shaping: Shaping::Advanced,
-                        line_height: LineHeight::Relative(1.2),
-                        max_width: f32::INFINITY,
-                    };
-                    text.draw_with(|path, color| {
-                        primitives.push(AxisPrimitive::Glyph { path, color })
-                    });
+                    let paths = fonts.glyph_paths(
+                        label,
+                        axis_font(fonts, font_family, *emphasis)?,
+                        *font_size,
+                        Alignment::Center,
+                        color(value).map_err(TimeAxisUiError::Color)?,
+                        Point::new(position.x as f32, position.y as f32),
+                    );
+                    primitives.extend(
+                        paths
+                            .into_iter()
+                            .map(|(path, color)| AxisPrimitive::Glyph { path, color }),
+                    );
                 }
             }
         }

@@ -47,6 +47,7 @@ pub struct ChartModelOptions {
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum ChartModelError {
+    InvalidCrosshairOptions,
     DuplicateSeries(SeriesId),
     UnknownSeries(SeriesId),
     InvalidPane(usize),
@@ -93,6 +94,7 @@ where
     recalculate_requested: bool,
     animation_requests: Vec<ScrollAnimation>,
     options_applied: bool,
+    crosshair: crate::model::crosshair::Crosshair,
 }
 
 impl<B, M> ChartModel<B, M>
@@ -115,6 +117,7 @@ where
             recalculate_requested: false,
             animation_requests: Vec::new(),
             options_applied: false,
+            crosshair: Default::default(),
         };
         if model.options.add_default_pane {
             let index = model.add_pane();
@@ -127,6 +130,250 @@ where
 
     pub fn time_scale(&self) -> &TimeScale<B> {
         &self.time_scale
+    }
+    pub fn crosshair(&self) -> &crate::model::crosshair::Crosshair {
+        &self.crosshair
+    }
+    pub fn crosshair_markers(
+        &mut self,
+        pane: usize,
+    ) -> Vec<crate::model::crosshair::CrosshairMarker> {
+        use crate::model::crosshair::CrosshairMarker;
+        use crate::renderers::line_renderer::Point;
+        let Some(position) = self.crosshair.position.filter(|p| p.pane == pane) else {
+            return vec![];
+        };
+        let visible = self.time_scale.visible_strict_range();
+        let ids = self.panes[pane].ordered_source_ids().to_vec();
+        let mut markers = vec![];
+        let mut parser = crate::model::colors::ColorParser::default();
+        for id in ids {
+            let Some(handle) = self.series.get(&id).and_then(|entry| entry.built_in()) else {
+                continue;
+            };
+            let series = handle.borrow();
+            let SeriesOptionsMap::Line(options) = series.options() else {
+                continue;
+            };
+            if !series.visible() || !options.style.crosshair_marker_visible {
+                continue;
+            }
+            let Some(crate::model::series_data::SeriesPlotRow::Line(row)) =
+                series.bars().value_at(position.index)
+            else {
+                continue;
+            };
+            let Some(first) = series.first_value(visible.as_ref()) else {
+                continue;
+            };
+            let Some(scale) = self.panes[pane]
+                .price_scale_for_source(id)
+                .filter(|scale| !scale.is_empty())
+            else {
+                continue;
+            };
+            let y = scale
+                .price_to_coordinate(row.base.value[3], first.value)
+                .value();
+            let style = &options.style;
+            if !y.is_finite()
+                || !style.crosshair_marker_radius.is_finite()
+                || style.crosshair_marker_radius < 0.
+                || !style.crosshair_marker_border_width.is_finite()
+                || style.crosshair_marker_border_width < 0.
+            {
+                continue;
+            }
+            let border_color = if style.crosshair_marker_border_color.is_empty() {
+                match &self.options.layout.background {
+                    crate::model::layout_options::Background::Solid { color } => color.clone(),
+                    crate::model::layout_options::Background::VerticalGradient {
+                        top_color,
+                        bottom_color,
+                    } => parser
+                        .gradient_color_at_percent(
+                            top_color,
+                            bottom_color,
+                            (y / scale.height()).clamp(0., 1.) as f32,
+                        )
+                        .unwrap_or_else(|_| top_color.clone()),
+                }
+            } else {
+                style.crosshair_marker_border_color.clone()
+            };
+            markers.push(CrosshairMarker {
+                point: Point { x: position.x, y },
+                radius: style.crosshair_marker_radius,
+                border_width: style.crosshair_marker_border_width,
+                color: if style.crosshair_marker_background_color.is_empty() {
+                    row.color.clone().unwrap_or_else(|| style.color.clone())
+                } else {
+                    style.crosshair_marker_background_color.clone()
+                },
+                border_color,
+            });
+        }
+        markers
+    }
+    pub fn set_crosshair_options(
+        &mut self,
+        options: crate::model::crosshair::CrosshairOptions,
+    ) -> Result<(), ChartModelError> {
+        let mut parser = crate::model::colors::ColorParser::default();
+        for line in [&options.vertical, &options.horizontal] {
+            if parser
+                .generate_contrast_colors(&line.label_background_color)
+                .is_err()
+                || parser.generate_contrast_colors(&line.color).is_err()
+            {
+                return Err(ChartModelError::InvalidCrosshairOptions);
+            }
+        }
+        self.crosshair.options = options;
+        self.refresh_crosshair();
+        self.full_update();
+        Ok(())
+    }
+    pub fn set_crosshair_position(
+        &mut self,
+        pane: usize,
+        point: Option<crate::renderers::line_renderer::Point>,
+    ) -> Result<(), ChartModelError> {
+        if pane >= self.panes.len() {
+            return Err(ChartModelError::InvalidPane(pane));
+        }
+        self.crosshair.origin = point
+            .filter(|p| p.x.is_finite() && p.y.is_finite())
+            .map(|point| crate::model::crosshair::CrosshairOrigin { pane, point });
+        self.refresh_crosshair();
+        self.queue_invalidation(InvalidateMask::new(InvalidationLevel::Cursor));
+        Ok(())
+    }
+    fn refresh_crosshair(&mut self) {
+        use crate::model::{
+            coordinate::Coordinate,
+            crosshair::{CrosshairMode, CrosshairPosition},
+            time_data::TimePointIndex,
+        };
+        self.crosshair.position = None;
+        let Some(origin) = self.crosshair.origin else {
+            return;
+        };
+        if self.crosshair.options.mode == CrosshairMode::Hidden || self.time_scale.is_empty() {
+            return;
+        }
+        let Some(pane) = self.panes.get_mut(origin.pane) else {
+            self.crosshair.origin = None;
+            return;
+        };
+        let ordered_ids = pane.ordered_source_ids().to_vec();
+        if origin.point.x < 0.
+            || origin.point.y < 0.
+            || origin.point.x >= self.time_scale.width()
+            || origin.point.y >= pane.height()
+        {
+            return;
+        }
+        let mut index = self
+            .time_scale
+            .coordinate_to_index(Coordinate::new(origin.point.x), true);
+        let visible = self.time_scale.visible_strict_range();
+        if let Some(range) = &visible {
+            index = TimePointIndex::new(
+                index
+                    .value()
+                    .max(range.left().value())
+                    .min(range.right().value()),
+            );
+        }
+        if self.crosshair.options.do_not_snap_to_hidden_series_indices {
+            use crate::model::plot_list::MismatchDirection;
+            let mut left: Option<TimePointIndex> = None;
+            let mut right: Option<TimePointIndex> = None;
+            for entry in self.series.values() {
+                let Some(handle) = entry.built_in() else {
+                    continue;
+                };
+                let series = handle.borrow();
+                if !series.visible() {
+                    continue;
+                }
+                if let Some(row) = series.bars().search(index, MismatchDirection::NearestLeft) {
+                    use crate::model::plot_data::PlotRowLike;
+                    let at = row.index();
+                    if left.is_none_or(|old| at > old) {
+                        left = Some(at);
+                    }
+                }
+                if let Some(row) = series.bars().search(index, MismatchDirection::NearestRight) {
+                    use crate::model::plot_data::PlotRowLike;
+                    let at = row.index();
+                    if right.is_none_or(|old| at < old) {
+                        right = Some(at);
+                    }
+                }
+            }
+            let x = self.time_scale.index_to_coordinate(index).value();
+            let mut distance = f64::INFINITY;
+            for candidate in [left, right].into_iter().flatten() {
+                let next = (self.time_scale.index_to_coordinate(candidate).value() - x).abs();
+                if next < distance {
+                    index = candidate;
+                    distance = next;
+                }
+            }
+        }
+        let scale = pane.default_price_scale();
+        let mut y = scale
+            .first_value()
+            .filter(|_| !scale.is_empty())
+            .map(|_| origin.point.y);
+        if self.crosshair.options.mode != CrosshairMode::Normal
+            && let Some(raw_y) = y
+        {
+            use crate::model::plot_data::PlotRowLike;
+            let mut candidates = vec![];
+            for id in ordered_ids {
+                let Some(handle) = self.series.get(&id).and_then(|entry| entry.built_in()) else {
+                    continue;
+                };
+                let series = handle.borrow();
+                let Some(price_scale) = pane.price_scale_for_source(id) else {
+                    continue;
+                };
+                if !series.visible()
+                    || price_scale.is_empty()
+                    || !matches!(price_scale.id(), "left" | "right")
+                {
+                    continue;
+                }
+                if let (Some(row), Some(first)) = (
+                    series.bars().value_at(index),
+                    series.first_value(visible.as_ref()),
+                ) {
+                    let keys: &[usize] = if self.crosshair.options.mode == CrosshairMode::MagnetOhlc
+                    {
+                        &[0, 1, 2, 3]
+                    } else {
+                        &[3]
+                    };
+                    for key in keys {
+                        candidates.push(
+                            price_scale
+                                .price_to_coordinate(row.values()[*key], first.value)
+                                .value(),
+                        );
+                    }
+                }
+            }
+            y = Some(crate::model::magnet::nearest_coordinate(raw_y, candidates));
+        }
+        self.crosshair.position = Some(CrosshairPosition {
+            pane: origin.pane,
+            index,
+            x: self.time_scale.index_to_coordinate(index).value(),
+            y,
+        });
     }
     pub fn visible_logical_range(
         &mut self,
@@ -167,14 +414,14 @@ where
         let pane_state = &mut self.panes[pane];
         let has_width = pane_state.width() > 0.;
         let mut provider = PriceAxisRendererOptionsProvider::new();
-        let left = axis_snapshots::price_snapshot(
+        let mut left = axis_snapshots::price_snapshot(
             pane_state.axis_price_scale_mut(PriceAxisSide::Left),
             PriceAxisSide::Left,
             layout,
             has_width,
             &mut provider,
         );
-        let right = axis_snapshots::price_snapshot(
+        let mut right = axis_snapshots::price_snapshot(
             pane_state.axis_price_scale_mut(PriceAxisSide::Right),
             PriceAxisSide::Right,
             layout,
@@ -190,12 +437,76 @@ where
             .to_vec();
         // Grid and axes share the same refreshed marks, including font changes.
         pane_state.refresh_grid(&self.options.grid, &marks);
-        let time = axis_snapshots::time_snapshot(
+        let mut time = axis_snapshots::time_snapshot(
             marks,
             self.time_scale.behavior(),
             self.time_scale.options(),
             layout,
         );
+        use crate::model::{
+            axis_snapshots::FloatingAxisLabel, coordinate::Coordinate, crosshair::CrosshairMode,
+        };
+        let options = &self.crosshair.options;
+        if options.mode != CrosshairMode::Hidden {
+            let position = self.crosshair.position.filter(|p| p.pane == pane);
+            let mut parser = crate::model::colors::ColorParser::default();
+            if options.horizontal.label_visible {
+                let colors = parser
+                    .generate_contrast_colors(&options.horizontal.label_background_color)
+                    .expect("validated crosshair color");
+                for (snapshot, scale) in [
+                    (&mut left, pane_state.left_price_scale()),
+                    (&mut right, pane_state.right_price_scale()),
+                ] {
+                    if !scale.is_empty()
+                        && let Some(base) = scale.first_value()
+                    {
+                        if options.horizontal.visible {
+                            let top = scale.coordinate_to_price(Coordinate::new(1.), base);
+                            let bottom = scale.coordinate_to_price(
+                                Coordinate::new(pane_state.height() - 2.),
+                                base,
+                            );
+                            for price in [
+                                top.min(bottom).floor() + 0.11111111111111,
+                                top.max(bottom).ceil() - 0.11111111111111,
+                            ] {
+                                if price.is_finite() {
+                                    snapshot
+                                        .crosshair_width_labels
+                                        .push(scale.format_price(price, base));
+                                }
+                            }
+                        }
+                        if let Some(y) = position.and_then(|p| p.y) {
+                            let price = scale.coordinate_to_price(Coordinate::new(y), base);
+                            if price.is_finite() {
+                                snapshot.crosshair_label = Some(FloatingAxisLabel {
+                                    coordinate: y,
+                                    text: scale.format_price(price, base),
+                                    background: colors.background.clone(),
+                                    color: colors.foreground.clone(),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            if options.vertical.label_visible
+                && let Some(position) = position
+                && let Some(text) = self.time_scale.format_index(position.index)
+            {
+                let colors = parser
+                    .generate_contrast_colors(&options.vertical.label_background_color)
+                    .expect("validated crosshair color");
+                time.crosshair_label = Some(FloatingAxisLabel {
+                    coordinate: position.x,
+                    text,
+                    background: colors.background,
+                    color: colors.foreground,
+                });
+            }
+        }
         Ok(AxisSnapshots { left, right, time })
     }
 
@@ -397,6 +708,7 @@ where
             && !self.panes[pane].preserve_empty_pane()
         {
             self.panes.remove(pane);
+            self.crosshair.origin = None;
             for (index, remaining) in self.panes.iter_mut().enumerate() {
                 remaining.set_index(index);
             }
@@ -536,6 +848,42 @@ where
         let mut mask = InvalidateMask::light();
         mask.fit_content();
         self.queue_invalidation(mask);
+    }
+    pub fn zoom_time(&mut self, point: crate::model::coordinate::Coordinate, scale: f64) {
+        if self.time_scale.is_empty()
+            || !point.value().is_finite()
+            || !scale.is_finite()
+            || scale == 0.
+        {
+            return;
+        }
+        self.end_scroll_time();
+        self.stop_time_scale_animation();
+        let point = crate::model::coordinate::Coordinate::new(
+            point.value().max(1.).min(self.time_scale.width()),
+        );
+        let effects = self.time_scale.zoom(point, scale);
+        self.consume_time_effects(effects);
+        self.flush_effects();
+    }
+    pub fn start_scroll_time(&mut self, point: crate::model::coordinate::Coordinate) {
+        if !point.value().is_finite() || self.time_scale.is_empty() {
+            return;
+        }
+        self.stop_time_scale_animation();
+        self.time_scale.start_scroll(point);
+    }
+    pub fn scroll_time_to(&mut self, point: crate::model::coordinate::Coordinate) {
+        if !point.value().is_finite() || self.time_scale.is_empty() {
+            self.end_scroll_time();
+            return;
+        }
+        let effects = self.time_scale.scroll_to(point);
+        self.consume_time_effects(effects);
+        self.flush_effects();
+    }
+    pub fn end_scroll_time(&mut self) {
+        self.time_scale.end_scroll();
     }
     pub fn set_logical_range(&mut self, range: LogicalRange) {
         let mut mask = InvalidateMask::light();
@@ -717,6 +1065,7 @@ where
     }
     fn flush_effects(&mut self) {
         if !std::mem::take(&mut self.recalculate_requested) {
+            self.refresh_crosshair();
             return;
         }
         let visible = self.time_scale.visible_strict_range();
@@ -730,6 +1079,7 @@ where
         if redraw {
             self.light_update();
         }
+        self.refresh_crosshair();
     }
     fn refresh_grids(&mut self) {
         let layout = self.layout_context();

@@ -59,6 +59,8 @@ pub struct PlotSnapshot {
     pub grid: Vec<CanvasStroke>,
     pub lines: Vec<CanvasStroke>,
     pub markers: Vec<CanvasMarker>,
+    pub crosshair: Vec<CanvasStroke>,
+    pub crosshair_markers: Vec<CanvasMarker>,
 }
 impl Default for PlotSnapshot {
     fn default() -> Self {
@@ -70,6 +72,8 @@ impl Default for PlotSnapshot {
             grid: vec![],
             lines: vec![],
             markers: vec![],
+            crosshair: vec![],
+            crosshair_markers: vec![],
         }
     }
 }
@@ -225,6 +229,8 @@ impl PlotSnapshot {
             grid: grid_strokes,
             lines,
             markers,
+            crosshair: vec![],
+            crosshair_markers: vec![],
         })
     }
     pub fn draw(&self, frame: &mut Frame) {
@@ -266,7 +272,7 @@ impl PlotSnapshot {
         } else {
             frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
         }
-        for stroke in self.grid.iter().chain(&self.lines) {
+        for stroke in self.grid.iter().chain(&self.lines).chain(&self.crosshair) {
             let path = Path::new(|builder| {
                 for op in &stroke.path {
                     let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
@@ -303,6 +309,9 @@ impl PlotSnapshot {
                 }
             });
             frame.fill(&path, group[0].color);
+        }
+        for marker in &self.crosshair_markers {
+            frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
         }
     }
 }
@@ -446,6 +455,24 @@ where
         .map(|data| data.draw_commands(ratio))
         .unwrap_or_default();
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    if let Some(position) = model
+        .crosshair()
+        .position()
+        .filter(|p| p.pane == layout.pane)
+    {
+        snapshot.crosshair = crate::renderers::crosshair_renderer::draw_commands(
+            position,
+            model.crosshair().options(),
+            crate::renderers::price_axis_renderer::AxisBounds {
+                width: f64::from(layout.size.width),
+                height: f64::from(layout.size.height),
+            },
+            ratio,
+        )
+        .into_iter()
+        .map(|stroke| canvas_stroke(stroke, ratio))
+        .collect::<Result<_, _>>()?;
+    }
     if let crate::model::layout_options::Background::VerticalGradient {
         top_color,
         bottom_color,
@@ -454,6 +481,30 @@ where
         snapshot.background_gradient = Some((color(top_color)?, color(bottom_color)?));
     }
     snapshot.axes = Some(axes);
+    let correction = (ratio.horizontal.floor().max(1.) as u32 % 2) as f64 / 2.;
+    for marker in model.crosshair_markers(layout.pane) {
+        let center = iced::Point::new(
+            ((marker.point.x * f64::from(ratio.horizontal) + 0.5).floor() + correction) as f32
+                / ratio.horizontal,
+            marker.point.y as f32,
+        );
+        if marker.border_width > 0. {
+            snapshot.crosshair_markers.push(CanvasMarker {
+                center,
+                radius: (marker.radius
+                    + marker.border_width
+                    + correction / f64::from(ratio.vertical)) as f32,
+                color: color(&marker.border_color)?,
+                color_key: marker.border_color,
+            });
+        }
+        snapshot.crosshair_markers.push(CanvasMarker {
+            center,
+            radius: (marker.radius + correction / f64::from(ratio.vertical)) as f32,
+            color: color(&marker.color)?,
+            color_key: marker.color,
+        });
+    }
     Ok(snapshot)
 }
 

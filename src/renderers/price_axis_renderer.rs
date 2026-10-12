@@ -26,6 +26,11 @@ pub enum AxisTextAlignment {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum PriceAxisCommand {
+    RoundedRectangle {
+        rect: AxisRect,
+        radii: [f32; 4],
+        color: String,
+    },
     Background(Background),
     Rectangle {
         rect: AxisRect,
@@ -60,6 +65,7 @@ pub struct PriceAxisMeasurement {
     snapshot: PriceAxisSnapshot,
     metrics: Vec<TextMetrics>,
     required_width: f64,
+    floating_metrics: Option<TextMetrics>,
 }
 impl PriceAxisMeasurement {
     pub fn required_width(&self) -> f64 {
@@ -106,16 +112,46 @@ pub fn measure_price_axis<M: TextMeasurer>(
     } else {
         vec![]
     };
-    if metrics.iter().any(|metric| {
-        !metric.width.is_finite()
-            || metric.width < 0.
-            || metric
-                .actual_bounding_box_ascent
-                .is_some_and(|v| !v.is_finite())
-            || metric
-                .actual_bounding_box_descent
-                .is_some_and(|v| !v.is_finite())
-    }) {
+    let floating_metrics = snapshot
+        .visible
+        .then(|| {
+            snapshot
+                .crosshair_label
+                .as_ref()
+                .map(|label| measurer.measure_text(&label.text))
+        })
+        .flatten();
+    let reserve_metrics = if snapshot.visible {
+        snapshot
+            .crosshair_width_labels
+            .iter()
+            .map(|text| measurer.measure_text(text))
+            .collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
+    if snapshot
+        .crosshair_label
+        .as_ref()
+        .is_some_and(|label| !label.coordinate.is_finite())
+    {
+        return Err(PriceAxisRenderError::InvalidSnapshot);
+    }
+    if metrics
+        .iter()
+        .chain(&reserve_metrics)
+        .chain(floating_metrics.iter())
+        .any(|metric| {
+            !metric.width.is_finite()
+                || metric.width < 0.
+                || metric
+                    .actual_bounding_box_ascent
+                    .is_some_and(|v| !v.is_finite())
+                || metric
+                    .actual_bounding_box_descent
+                    .is_some_and(|v| !v.is_finite())
+        })
+    {
         return Err(PriceAxisRenderError::InvalidMetrics);
     }
     // Other labels still need metrics for y correction; only endpoints affect
@@ -123,7 +159,13 @@ pub fn measure_price_axis<M: TextMeasurer>(
     let label_width = metrics
         .first()
         .map_or(0., |metric| metric.width)
-        .max(metrics.last().map_or(0., |metric| metric.width));
+        .max(metrics.last().map_or(0., |metric| metric.width))
+        .max(
+            reserve_metrics
+                .iter()
+                .map(|metric| metric.width)
+                .fold(0., f32::max),
+        );
     let intrinsic = even_width(
         (f64::from(
             options.border_size
@@ -148,6 +190,7 @@ pub fn measure_price_axis<M: TextMeasurer>(
         snapshot: snapshot.clone(),
         metrics,
         required_width,
+        floating_metrics,
     })
 }
 
@@ -263,6 +306,88 @@ pub fn prepare_price_axis(
             font_size: options.font_size,
             font_family: options.font_family.clone(),
             color: options.color.clone(),
+        });
+    }
+    if let (Some(label), Some(metric)) = (&snapshot.crosshair_label, &measurement.floating_metrics)
+    {
+        let width = f64::from(
+            options.border_size
+                + options.padding_inner
+                + options.padding_outer
+                + options.tick_length,
+        ) + f64::from(metric.width).ceil();
+        let tick_height = vertical.floor().max(1.);
+        let mut height = source_round(
+            f64::from(
+                options.font_size
+                    + options.padding_top
+                    + options.padding_bottom
+                    + options.font_size / 3.,
+            ) * vertical,
+        );
+        if height % 2. != tick_height % 2. {
+            height += 1.;
+        }
+        let middle = source_round(label.coordinate * vertical) - (vertical * 0.5).floor();
+        let top = (middle + tick_height / 2. - height / 2.).floor() / vertical;
+        let width = source_round(width * horizontal) / horizontal;
+        let x = if left { bounds.width - width } else { 0. };
+        result.commands.push(PriceAxisCommand::RoundedRectangle {
+            rect: AxisRect {
+                origin: Point { x, y: top },
+                size: AxisBounds {
+                    width,
+                    height: height / vertical,
+                },
+            },
+            radii: if left {
+                [2., 0., 0., 2.]
+            } else {
+                [0., 2., 2., 0.]
+            },
+            color: label.background.clone(),
+        });
+        result.commands.push(PriceAxisCommand::Rectangle {
+            rect: AxisRect {
+                origin: Point {
+                    x: if left {
+                        bounds.width
+                            - source_round(f64::from(options.tick_length) * horizontal) / horizontal
+                    } else {
+                        0.
+                    },
+                    y: middle / vertical,
+                },
+                size: AxisBounds {
+                    width: source_round(f64::from(options.tick_length) * horizontal) / horizontal,
+                    height: tick_height / vertical,
+                },
+            },
+            color: label.color.clone(),
+        });
+        result.commands.push(PriceAxisCommand::Text {
+            label: label.text.clone(),
+            position: Point {
+                x: if left {
+                    bounds.width - f64::from(options.tick_length + options.padding_inner)
+                } else {
+                    f64::from(options.tick_length + options.padding_inner)
+                },
+                y: top
+                    + height / vertical / 2.
+                    + f64::from(
+                        metric.actual_bounding_box_ascent.unwrap_or_default()
+                            - metric.actual_bounding_box_descent.unwrap_or_default(),
+                    ) / 2.,
+            },
+            alignment: if left {
+                AxisTextAlignment::Right
+            } else {
+                AxisTextAlignment::Left
+            },
+            font_size: options.font_size,
+            font_family: options.font_family.clone(),
+            color: label.color.clone(),
         });
     }
     Ok(result)

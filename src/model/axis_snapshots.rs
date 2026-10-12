@@ -24,7 +24,17 @@ pub enum PriceAxisSide {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct FloatingAxisLabel {
+    pub coordinate: f64,
+    pub text: String,
+    pub background: String,
+    pub color: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct PriceAxisSnapshot {
+    pub crosshair_label: Option<FloatingAxisLabel>,
+    pub crosshair_width_labels: Vec<String>,
     pub side: PriceAxisSide,
     pub visible: bool,
     pub marks: Vec<PriceMark>,
@@ -72,6 +82,7 @@ pub struct TimeAxisRendererOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TimeAxisSnapshot {
+    pub crosshair_label: Option<FloatingAxisLabel>,
     pub visible: bool,
     pub ticks: Vec<TimeAxisTick>,
     pub background: Background,
@@ -143,6 +154,8 @@ pub(crate) fn price_snapshot(
         })
         .clone();
     PriceAxisSnapshot {
+        crosshair_label: None,
+        crosshair_width_labels: vec![],
         side,
         visible: options.visible,
         marks,
@@ -181,6 +194,7 @@ pub(crate) fn time_snapshot<B: HorzScaleBehavior>(
         .collect();
     let size = layout.font_size as f32;
     TimeAxisSnapshot {
+        crosshair_label: None,
         visible: options.visible,
         ticks,
         background: layout.background.clone(),

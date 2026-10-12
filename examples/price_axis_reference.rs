@@ -37,6 +37,8 @@ fn main() {
                         for gradient in [false, true] {
                             let mut provider = PriceAxisRendererOptionsProvider::new();
                             let snapshot = PriceAxisSnapshot {
+                                crosshair_label: None,
+                                crosshair_width_labels: vec![],
                                 side,
                                 visible: true,
                                 marks: if empty {
@@ -93,6 +95,9 @@ fn main() {
                                 .commands
                                 .iter()
                                 .map(|cmd| match cmd {
+                                    PriceAxisCommand::RoundedRectangle { .. } => unreachable!(
+                                        "ordinary axis reference has no floating label"
+                                    ),
                                     PriceAxisCommand::Background(Background::Solid { color }) => {
                                         format!("[\"bg\",{:?}]", color)
                                     }

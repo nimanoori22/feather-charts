@@ -33,6 +33,7 @@ fn main() {
                     for bold in [false, true] {
                         for empty in [false, true] {
                             let snapshot = TimeAxisSnapshot {
+                                crosshair_label: None,
                                 visible: true,
                                 ticks: if empty {
                                     vec![]
@@ -99,6 +100,9 @@ fn main() {
                                 .commands
                                 .iter()
                                 .map(|c| match c {
+                                    TimeAxisCommand::RoundedRectangle { .. } => unreachable!(
+                                        "ordinary axis reference has no floating label"
+                                    ),
                                     TimeAxisCommand::Background(value) => {
                                         format!("[\"bg\",{:?}]", value)
                                     }
