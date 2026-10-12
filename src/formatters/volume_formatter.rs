@@ -33,7 +33,11 @@ impl VolumeFormatter {
         } else {
             value.to_string()
         };
-        raw.trim_end_matches('0').trim_end_matches('.').to_owned()
+        if raw.contains('.') {
+            raw.trim_end_matches('0').trim_end_matches('.').to_owned()
+        } else {
+            raw
+        }
     }
 }
 impl PriceValueFormatter for VolumeFormatter {
@@ -51,5 +55,15 @@ mod tests {
         assert_eq!(f.format(995.), "1K");
         assert_eq!(f.format(1_000_000.), "1M");
         assert_eq!(f.format(-2_500.), "-2.5K");
+    }
+    #[test]
+    fn preserves_integer_zeroes_and_zero_in_axis_labels() {
+        for precision in [0,2] {
+            let formatter=VolumeFormatter::new(precision);
+            assert_eq!(formatter.format(0.),"0");
+            assert_eq!(formatter.format(100.),"100");
+            assert_eq!(formatter.format(40_000.),"40K");
+            assert_eq!(formatter.format(-30_000_000.),"-30M");
+        }
     }
 }
