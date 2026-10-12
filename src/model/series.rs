@@ -1,5 +1,6 @@
 //! Non-rendering series state: plot rows, formatting, and invalidation.
 
+pub mod candlesticks_pane_view;
 pub mod line_pane_view;
 
 use crate::{

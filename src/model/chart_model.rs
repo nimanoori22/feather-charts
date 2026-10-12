@@ -571,6 +571,29 @@ where
         line_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
     }
 
+    pub fn prepare_candlesticks(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::candlesticks_renderer::CandlestickRendererData>,
+        crate::model::series::candlesticks_pane_view::CandlestickPreparationError,
+    > {
+        use crate::model::series::candlesticks_pane_view::{self, CandlestickPreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(CandlestickPreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(CandlestickPreparationError::NotCandlestickSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(CandlestickPreparationError::MissingPriceScale(id))?;
+        candlesticks_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
     pub fn replace_series_options(
         &mut self,
         id: SeriesId,

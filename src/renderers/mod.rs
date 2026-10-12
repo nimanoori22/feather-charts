@@ -1,3 +1,4 @@
+pub mod candlesticks_renderer;
 pub mod crosshair_renderer;
 pub mod draw_line;
 pub mod grid_renderer;
