@@ -38,9 +38,31 @@ Vertical plot movement explicitly enters manual price mode. Panes share time
 navigation and keep independent price ranges.
 
 This API covers the currently rendered built-in series and the default `Time`
-behavior. Area/bar/baseline/custom rendering, arbitrary pane reordering, price
-lines, touch/kinetic input and full TradingView API parity remain future work.
+behavior. Area/bar/baseline/custom rendering, arbitrary pane reordering,
+touch/kinetic input and full TradingView API parity remain future work.
 Options already represented by the engine do not imply every visual feature is
 rendered. Read-only `model()` inspection remains available for advanced hosts.
 
 Implementation contract and verification: [public chart API report](docs/porting/public-chart-api.md).
+
+## Price lines and labels
+
+Series defaults now draw an automatic last-price line and last-value axis label.
+The label uses the last value at the visible right edge; the line uses the latest
+bar overall unless `price_line_source` is `LastVisible`. Series options control
+visibility, line style/color/width, titles and price/percentage display mode.
+
+Use `PriceLineOptions::new(price)` with `Chart::add_price_line(series, options)`
+for custom entry/stop/target levels. Retain the returned `PriceLineId`, inspect
+options with `price_line_options`, then call `replace_price_line_options` or
+`remove_price_line`. Line and axis-label visibility are independent. Custom lines
+use their series' scale and do not enlarge autoscale. Clearing data retains the
+levels; removing the series invalidates their IDs. Invalid updates preserve options.
+After a batch, call `prepare` once, as for other direct Chart mutations.
+
+Labels align per scale without moving the line's actual price coordinate; set
+`align_labels: false` on the price-axis options to disable alignment. The public
+example includes append/move/remove/cluster controls and supports `--capture-dir`.
+These levels are visual annotations; trading actions, alerts, dragging and hit
+testing are outside this milestone. Source contract and results:
+[price-line report](docs/porting/price-lines.md).
