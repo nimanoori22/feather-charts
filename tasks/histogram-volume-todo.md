@@ -1,7 +1,7 @@
 # Execution checklist: histogram and price/volume panes
 
 Roadmap: [histogram-volume-plan.md](histogram-volume-plan.md).
-Status: not started. Check items only when their stated evidence exists.
+Status: implemented and automatically verified; physical device acceptance pending.
 Existing physical input checks remain in [candlestick-todo.md](candlestick-todo.md).
 
 ## Task 0: Establish the histogram contract and integration design
@@ -73,13 +73,13 @@ line/candle comparisons pass. Split demo wiring from frame changes if needed.
 
 **Dependencies:** Task 3. **Scope:** Medium investigation/documentation slice.
 
-- [ ] Read source chart/pane/separator/input/crosshair consumers; inspect exact
+- [x] Read source chart/pane/separator/input/crosshair consumers; inspect exact
   local Iced and relevant Flowsurface examples, with coverage checks.
-- [ ] Resolve shared axis widths, height allocation/minima, divider options,
+- [x] Resolve shared axis widths, height allocation/minima, divider options,
   time-axis ownership, active-pane routing and crosshair projection/labels.
-- [ ] Verify existing model pane lifecycle/index semantics and invalidation;
+- [x] Verify existing model pane lifecycle/index semantics and invalidation;
   do not assume stable IDs or a complete removal/movement API.
-- [ ] Compare both coordinated frame designs, show ownership/API signatures,
+- [x] Compare both coordinated frame designs, show ownership/API signatures,
   map real consumers and record choices in the multi-pane report before coding.
 
 **Likely files:** `docs/porting/multi-pane-rendering.md` (new), this checklist.
@@ -88,17 +88,17 @@ invalidation cycle; every UI event and pane snapshot has a defined owner.
 
 ## Checkpoint: Working histogram and reviewed multi-pane design
 
-- [ ] Histogram demo and regressions pass; run milestone commands.
-- [ ] Source contract resolves layout, lifecycle and event-routing risks.
+- [x] Histogram demo and regressions pass; run milestone commands.
+- [x] Source contract resolves layout, lifecycle and event-routing risks.
 
 ## Task 5: Implement pure multi-pane layout
 
 **Dependencies:** Task 4. **Scope:** Medium layout slice.
 
-- [ ] Add pane rectangles, shared left/right axis extents, one time-axis region,
+- [x] Add pane rectangles, shared left/right axis extents, one time-axis region,
   source-defined height allocation and separator bounds.
-- [ ] Preserve single-pane callers where practical; update affected fixtures.
-- [ ] Test unequal labels, zero/tiny bounds, hidden axes, fractional ratios,
+- [x] Preserve single-pane callers where practical; update affected fixtures.
+- [x] Test unequal labels, zero/tiny bounds, hidden axes, fractional ratios,
   height changes and pane insertion/removal using source-derived fixtures.
 
 **Likely files:** `src/ui/chart_layout.rs`, connected layout tests and existing
@@ -110,11 +110,11 @@ and finite clipped rectangles fit available bounds.
 
 **Dependencies:** Task 5. **Scope:** Medium slices: settlement, then drawing/callers.
 
-- [ ] Prepare pane-local series/axes with globally settled widths and one sampled
+- [x] Prepare pane-local series/axes with globally settled widths and one sampled
   animation/invalidation cycle; keep settlement bounded and failure cleanup defined.
-- [ ] Draw owned pane snapshots with correct clipping/layers and one time axis;
+- [x] Draw owned pane snapshots with correct clipping/layers and one time axis;
   retain glyph-cache behavior and immutable previously retained frames.
-- [ ] Test line/candle/histogram combinations, height/width changes, empty panes
+- [x] Test line/candle/histogram combinations, height/width changes, empty panes
   and source-supported lifecycle operations without stale snapshots.
 
 **Likely files:** `src/ui/chart_frame.rs`, UI draw adapters/exports, frame tests;
@@ -124,20 +124,20 @@ all existing single-pane frame tests and source comparisons pass.
 
 ## Checkpoint: Aligned static price/volume frame
 
-- [ ] Candles and histogram share time coordinates with separate price scales.
-- [ ] Shared settlement, clipping and lifecycle tests pass; run milestone commands.
+- [x] Candles and histogram share time coordinates with separate price scales.
+- [x] Shared settlement, clipping and lifecycle tests pass; run milestone commands.
 
 ## Task 7: Route navigation and crosshair by pane
 
 **Dependencies:** Task 6. **Scope:** Medium slices: input routing, then crosshair.
 
-- [ ] Add explicit pane targeting and one gesture owner; wheel/drag navigation
+- [x] Add explicit pane targeting and one gesture owner; wheel/drag navigation
   from either pane changes the shared time scale once per event.
-- [ ] Preserve coalescing, stationary-pointer suppression and source cancellation
+- [x] Preserve coalescing, stationary-pointer suppression and source cancellation
   behavior through pane transitions, outside drags, layout changes and focus loss.
-- [ ] Implement source-defined vertical projection across panes and active-pane
+- [x] Implement source-defined vertical projection across panes and active-pane
   horizontal/price labels, including magnet modes and a shared time label.
-- [ ] Extend actual-source interaction comparisons and synthetic event sequences
+- [x] Extend actual-source interaction comparisons and synthetic event sequences
   for unequal scales, whitespace, hidden series and data/navigation refresh.
 
 **Likely files:** `src/ui/chart_input.rs`, application input callers, crosshair
@@ -149,11 +149,11 @@ geometry/labels match source and existing single-pane interaction remains correc
 
 **Dependencies:** Task 7. **Scope:** Medium interaction/layout slice.
 
-- [ ] Connect divider hit regions/drag ownership to source-defined height updates,
+- [x] Connect divider hit regions/drag ownership to source-defined height updates,
   minimum sizes and resize-enabled behavior without triggering plot navigation.
-- [ ] Preserve coherent frames and crosshair refresh through drag, window resize,
+- [x] Preserve coherent frames and crosshair refresh through drag, window resize,
   focus loss and layout changes; maintain the established global time width.
-- [ ] Test minimum-size clamps, fractional bounds, disabled resizing and gesture
+- [x] Test minimum-size clamps, fractional bounds, disabled resizing and gesture
   cancellation using source behavior and Iced event sequences.
 
 **Likely files:** Existing layout/input/frame modules, shared demo event handling,
@@ -163,20 +163,20 @@ and ordinary navigation still works before and after resizing.
 
 ## Checkpoint: Synchronized interactive panes
 
-- [ ] Both panes navigate together, with source-correct crosshair and resizing.
-- [ ] Input, layout and frame regressions pass; run milestone commands.
+- [x] Both panes navigate together, with source-correct crosshair and resizing.
+- [x] Input, layout and frame regressions pass; run milestone commands.
 
 ## Task 9: Deliver the price/volume demo and live lifecycle
 
 **Dependencies:** Task 8. **Scope:** Medium application slice.
 
-- [ ] Add a runnable candlestick/volume example using shared support and existing
+- [x] Add a runnable candlestick/volume example using shared support and existing
   typed rows, with independent scale/volume formatting and aligned timestamps.
-- [ ] Exercise missing volume as whitespace, append/same-time updates, history
+- [x] Exercise missing volume as whitespace, append/same-time updates, history
   replacement/prepend, clear/reload, styles, series removal and pane-height changes.
-- [ ] Apply paired demo data changes before preparing the next frame; reuse the
+- [x] Apply paired demo data changes before preparing the next frame; reuse the
   existing synchronous lifecycle without adding speculative batching infrastructure.
-- [ ] Add deterministic captures and connected tests; document run/control commands.
+- [x] Add deterministic captures and connected tests; document run/control commands.
 
 **Likely files:** `examples/price_volume_chart.rs` (new), `examples/support/`,
 connected demo tests and the two porting reports.
@@ -187,12 +187,12 @@ axes or crosshair labels after lifecycle changes.
 
 **Dependencies:** Task 9. **Scope:** Medium verification/documentation slice.
 
-- [ ] Run all affected source oracles and TinySkia/WGPU captures for histogram,
+- [x] Run all affected source oracles and TinySkia/WGPU captures for histogram,
   multi-pane layout, interaction, fractional ratios and clipping.
-- [ ] Measure equivalent existing single-pane navigation before/after; record
+- [x] Measure equivalent existing single-pane navigation before/after; record
   separate two-pane median/p95 costs and investigate material regressions.
-- [ ] Run final format/tests/check/Clippy/example builds specified in the roadmap.
-- [ ] Complete source/consumer/contract/design/alternatives/ownership reports with
+- [x] Run final format/tests/check/Clippy/example builds specified in the roadmap.
+- [x] Complete source/consumer/contract/design/alternatives/ownership reports with
   exact files changed, evidence, limitations and remaining dependencies.
 
 **Likely files:** Verification fixtures/scripts, navigation benchmark fixtures,
@@ -202,9 +202,9 @@ events and native startup remain distinct from physical device acceptance.
 
 ## Checkpoint: Verified price/volume milestone
 
-- [ ] Runnable two-pane demo, source parity, behavioral tests and both backends pass.
-- [ ] Existing single-pane behavior/performance is preserved; new costs are measured.
+- [x] Runnable two-pane demo, source parity, behavioral tests and both backends pass.
+- [x] Existing single-pane behavior/performance is preserved; new costs are measured.
 - [ ] Manually exercise physical mouse/touchpad zoom, scroll, crosshair, divider
   dragging, window resizing and live-data controls; record devices/results.
-- [ ] Report pending hardware checks honestly and identify public chart/widget API
+- [x] Report pending hardware checks honestly and identify public chart/widget API
   as subsequent work, without treating it as part of this milestone.

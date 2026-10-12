@@ -1,6 +1,8 @@
 # Implementation roadmap: histogram and synchronized price/volume panes
 
-Date: 2026-10-12. Status: planned; implementation has not started.
+Date: 2026-10-12. Status: implemented; physical mouse/touchpad acceptance pending.
+Results: [histogram report](../docs/porting/histogram-rendering.md) and
+[multi-pane report](../docs/porting/multi-pane-rendering.md).
 Execution checklist: [histogram-volume-todo.md](histogram-volume-todo.md).
 Previous milestone: [candlestick-plan.md](candlestick-plan.md). Its pending
 physical mouse/touchpad checks remain in [candlestick-todo.md](candlestick-todo.md).

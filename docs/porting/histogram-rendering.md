@@ -63,10 +63,17 @@ Renderer tests pass; 9,900 bitmap rectangle cases match the actual TypeScript
 renderer. Model tests cover extended visible range and projection in normal,
 logarithmic, percentage and indexed modes, row colors/whitespace/options,
 updates, hidden/zero-width/removal clearing and wrong series types.
-`cargo test --all-targets` passes (310 library tests, existing example tests).
-`cargo run --example histogram_chart -- --smoke` verifies the shared frame/demo
-lifecycle. Final captures, frame-specific failure/conflation coverage and full
-validation remain Task 10 work; multi-pane coordination is reported separately.
+Additional tests cover failed-frame cleanup, explicit conflation rejection,
+whitespace-only data, immutable retained output and prepended history preserving
+coordinates. The shared demo exercises positive/negative/base values, overrides,
+whitespace and live lifecycle changes. Final validation is recorded in the
+[multi-pane report](multi-pane-rendering.md): 318 library tests, all example tests,
+strict Clippy, source comparisons and both raster backends passed.
+
+Run `cargo run --example histogram_chart`; use `-- --smoke` for headless lifecycle
+verification. The demo also accepts `--capture-dir <path> --capture-interactions`
+and `--wgpu` to exercise the GPU backend. 28 captures per backend passed at
+ratios 1, 1.25, 1.5 and 2, including seam/clipping and repeatability assertions.
 
 Changed: `src/renderers/histogram_renderer.rs`, renderer exports,
 `src/model/series/histogram_pane_view.rs`, series exports, `chart_model.rs`, its
