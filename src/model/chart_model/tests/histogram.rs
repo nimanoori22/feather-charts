@@ -5,7 +5,7 @@ use crate::model::{
     series::histogram_pane_view::{HistogramPaneView, HistogramPreparationError},
     series_options::HistogramStyleOptions,
 };
-fn histogram_options() -> SeriesOptionsMap {
+pub(super) fn histogram_options() -> SeriesOptionsMap {
     SeriesOptionsMap::Histogram(SeriesOptions {
         common: common(),
         style: HistogramStyleOptions {
@@ -14,7 +14,7 @@ fn histogram_options() -> SeriesOptionsMap {
         },
     })
 }
-fn histogram(at: f64, _open: f64, close: f64) -> BuiltInSeriesDataItem<Time> {
+pub(super) fn histogram(at: f64, _open: f64, close: f64) -> BuiltInSeriesDataItem<Time> {
     BuiltInSeriesDataItem::Histogram(HistogramDataItem::Data(HistogramData {
         time: Time::from(UtcTimestamp::new(at)),
         value: close,

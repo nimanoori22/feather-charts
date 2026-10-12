@@ -493,7 +493,7 @@ where
                 }
             }
             if options.vertical.label_visible
-                && let Some(position) = position
+                && let Some(position) = self.crosshair.position
                 && let Some(text) = self.time_scale.format_index(position.index)
             {
                 let colors = parser
@@ -862,6 +862,25 @@ where
         self.flush_effects();
         Ok(())
     }
+    pub fn set_pane_stretch_factor(
+        &mut self,
+        pane: usize,
+        factor: f64,
+    ) -> Result<(), ChartModelError> {
+        if !factor.is_finite() || factor <= 0. {
+            return Err(ChartModelError::InvalidDimensions);
+        }
+        let state = self
+            .panes
+            .get_mut(pane)
+            .ok_or(ChartModelError::InvalidPane(pane))?;
+        let effects = state.set_stretch_factor(factor);
+        self.consume_pane_effects(effects);
+        self.full_update();
+        self.flush_effects();
+        Ok(())
+    }
+
     pub fn set_pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartModelError> {
         if !height.is_finite() || height < 0.0 {
             return Err(ChartModelError::InvalidDimensions);

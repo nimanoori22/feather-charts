@@ -579,11 +579,10 @@ where
             .map(|r| canvas_rectangle(r, ratio))
             .collect::<Result<_, _>>()?;
     }
-    if let Some(position) = model
-        .crosshair()
-        .position()
-        .filter(|p| p.pane == layout.pane)
-    {
+    if let Some(mut position) = model.crosshair().position() {
+        if position.pane != layout.pane {
+            position.y = None;
+        }
         snapshot.crosshair = crate::renderers::crosshair_renderer::draw_commands(
             position,
             model.crosshair().options(),

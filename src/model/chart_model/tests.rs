@@ -1424,3 +1424,4 @@ fn rejected_dimensions_and_unknown_removal_leave_the_chart_unchanged() {
 }
 
 mod histogram;
+mod multi_pane;

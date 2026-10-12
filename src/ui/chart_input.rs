@@ -148,6 +148,204 @@ impl ChartInput {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum MultiPaneInteraction {
+    Plot {
+        pane: usize,
+        interaction: ChartInteraction,
+    },
+    Resize {
+        top: usize,
+        upper_stretch: f64,
+        lower_stretch: f64,
+    },
+    Cancel,
+}
+impl MultiPaneInteraction {
+    pub fn capture(self) -> bool {
+        match self {
+            Self::Plot { interaction, .. } => interaction.capture,
+            Self::Resize { .. } => true,
+            Self::Cancel => false,
+        }
+    }
+}
+struct DividerDrag {
+    top: usize,
+    start_y: f32,
+    last_y: f32,
+    initial_upper: f64,
+    total_stretch: f64,
+    factor: f64,
+    minimum: f64,
+}
+#[derive(Default)]
+pub struct MultiPaneInput {
+    pub options: MouseNavigationOptions,
+    input: ChartInput,
+    selected: Option<usize>,
+    gesture: Option<usize>,
+    divider: Option<DividerDrag>,
+    viewport: Option<(
+        crate::renderers::price_axis_renderer::AxisBounds,
+        f64,
+        usize,
+    )>,
+    pub hovered_divider: Option<usize>,
+}
+impl MultiPaneInput {
+    pub fn update(
+        &mut self,
+        event: &Event,
+        cursor: Option<Point>,
+        layout: &crate::ui::multi_pane_layout::MultiPaneLayout,
+        stretches: &[f64],
+        enabled: bool,
+        resize_enabled: bool,
+    ) -> Option<MultiPaneInteraction> {
+        let cursor = cursor.filter(|p| p.x.is_finite() && p.y.is_finite());
+        let viewport = (
+            layout.chart.available,
+            layout.chart.plot.size.width,
+            layout.panes.len(),
+        );
+        let changed = self
+            .viewport
+            .replace(viewport)
+            .is_some_and(|old| old != viewport);
+        let leaving = matches!(
+            event,
+            Event::Mouse(mouse::Event::CursorLeft) | Event::Window(iced::window::Event::Unfocused)
+        );
+        self.hovered_divider = if resize_enabled {
+            cursor.and_then(|p| {
+                layout.separators.iter().position(|r| {
+                    p.x >= 0.
+                        && f64::from(p.x) < r.size.width
+                        && f64::from(p.y) >= r.origin.y - 4.
+                        && f64::from(p.y) < r.origin.y + 5.
+                })
+            })
+        } else {
+            None
+        };
+        if changed
+            || leaving
+            || (!enabled && self.gesture.is_some())
+            || (!resize_enabled && self.divider.is_some())
+        {
+            self.gesture = None;
+            self.divider = None;
+            self.selected = None;
+            self.input = ChartInput::default();
+            if leaving {
+                self.hovered_divider = None;
+            }
+            return Some(MultiPaneInteraction::Cancel);
+        }
+        if let Some(drag) = &mut self.divider {
+            match event {
+                Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) => {
+                    self.divider = None;
+                    return Some(MultiPaneInteraction::Cancel);
+                }
+                Event::Mouse(mouse::Event::CursorMoved { .. }) => {
+                    let y = cursor?.y;
+                    if y == drag.last_y {
+                        return None;
+                    }
+                    drag.last_y = y;
+                    let upper = (drag.initial_upper + f64::from(y - drag.start_y) * drag.factor)
+                        .clamp(drag.minimum, drag.total_stretch - drag.minimum);
+                    return Some(MultiPaneInteraction::Resize {
+                        top: drag.top,
+                        upper_stretch: upper,
+                        lower_stretch: drag.total_stretch - upper,
+                    });
+                }
+                _ => return None,
+            }
+        }
+        if matches!(
+            event,
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+        ) && let Some(top) = self.hovered_divider
+        {
+            let upper = *stretches.get(top)?;
+            let lower = *stretches.get(top + 1)?;
+            let height =
+                layout.panes[top].plot.size.height + layout.panes[top + 1].plot.size.height;
+            if height <= 60.
+                || !upper.is_finite()
+                || !lower.is_finite()
+                || upper <= 0.
+                || lower <= 0.
+            {
+                return None;
+            }
+            let total_stretch = upper + lower;
+            let factor = total_stretch / height;
+            self.divider = Some(DividerDrag {
+                top,
+                start_y: cursor?.y,
+                last_y: cursor?.y,
+                initial_upper: upper,
+                total_stretch,
+                factor,
+                minimum: 30. * factor,
+            });
+            self.gesture = None;
+            self.input = ChartInput::default();
+            self.selected = None;
+            return Some(MultiPaneInteraction::Resize {
+                top,
+                upper_stretch: upper,
+                lower_stretch: lower,
+            });
+        }
+        let target = self.gesture.or_else(|| {
+            cursor.and_then(|p| {
+                layout.panes.iter().position(|pane| {
+                    let r = pane.plot;
+                    f64::from(p.x) >= r.origin.x
+                        && f64::from(p.x) < r.origin.x + r.size.width
+                        && f64::from(p.y) >= r.origin.y
+                        && f64::from(p.y) < r.origin.y + r.size.height
+                })
+            })
+        });
+        let Some(pane) = target else {
+            if self.selected.take().is_some() {
+                self.input = ChartInput::default();
+                return Some(MultiPaneInteraction::Cancel);
+            }
+            return None;
+        };
+        if self.selected != Some(pane) {
+            self.input = ChartInput::default();
+            self.selected = Some(pane);
+        }
+        self.input.options = self.options;
+        let interaction =
+            self.input
+                .update(event, cursor, layout.panes.get(pane)?.plot, enabled)?;
+        if matches!(
+            event,
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+        ) && interaction.capture
+        {
+            self.gesture = Some(pane);
+        }
+        if matches!(
+            interaction.navigation,
+            Some(Navigation::EndScroll) | Some(Navigation::Wheel { .. })
+        ) {
+            self.gesture = None;
+        }
+        Some(MultiPaneInteraction::Plot { pane, interaction })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -320,6 +518,179 @@ mod tests {
                 .update(&movement, Some(Point::new(200., 50.)), plot(), true)
                 .unwrap()
                 .navigation
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn multi_pane_routes_once_and_keeps_drag_owner() {
+        let layout = crate::ui::multi_pane_layout::allocate_multi_pane_layout(
+            crate::renderers::price_axis_renderer::AxisBounds {
+                width: 800.,
+                height: 500.,
+            },
+            crate::ui::chart_layout::AxisSizeRequests {
+                left_width: 60.,
+                right_width: 80.,
+                time_height: 28.,
+            },
+            crate::renderers::grid_renderer::PixelRatio {
+                horizontal: 1.5,
+                vertical: 1.5,
+            },
+            &[2., 1.],
+        )
+        .unwrap();
+        let mut input = MultiPaneInput::default();
+        let bottom = Point::new(160., layout.panes[1].plot.origin.y as f32 + 50.);
+        let wheel = event(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+        });
+        let action = input
+            .update(&wheel, Some(bottom), &layout, &[2., 1.], true, true)
+            .unwrap();
+        assert!(matches!(
+            action,
+            MultiPaneInteraction::Plot {
+                pane: 1,
+                interaction: ChartInteraction {
+                    position: Some(Point { x: 100., y: 50. }),
+                    navigation: Some(Navigation::Wheel { .. }),
+                    ..
+                }
+            }
+        ));
+        let press = event(mouse::Event::ButtonPressed(mouse::Button::Left));
+        input
+            .update(&press, Some(bottom), &layout, &[2., 1.], true, true)
+            .unwrap();
+        let movement = event(mouse::Event::CursorMoved {
+            position: Point::ORIGIN,
+        });
+        let moved = Point::new(180., 20.);
+        assert!(matches!(
+            input.update(&movement, Some(moved), &layout, &[2., 1.], true, true),
+            Some(MultiPaneInteraction::Plot {
+                pane: 1,
+                interaction: ChartInteraction {
+                    navigation: Some(Navigation::Scroll { .. }),
+                    position: None,
+                    ..
+                }
+            })
+        ));
+        assert!(
+            input
+                .update(&movement, Some(moved), &layout, &[2., 1.], true, true)
+                .is_none()
+        );
+        assert!(matches!(
+            input.update(
+                &Event::Window(iced::window::Event::Unfocused),
+                None,
+                &layout,
+                &[2., 1.],
+                true,
+                true
+            ),
+            Some(MultiPaneInteraction::Cancel)
+        ));
+    }
+
+    #[test]
+    fn divider_priority_clamps_minimum_and_survives_own_height_changes() {
+        use crate::{
+            renderers::{grid_renderer::PixelRatio, price_axis_renderer::AxisBounds},
+            ui::{chart_layout::AxisSizeRequests, multi_pane_layout::allocate_multi_pane_layout},
+        };
+        let bounds = AxisBounds {
+            width: 800.,
+            height: 500.,
+        };
+        let ratio = PixelRatio {
+            horizontal: 1.,
+            vertical: 1.,
+        };
+        let layout =
+            allocate_multi_pane_layout(bounds, AxisSizeRequests::default(), ratio, &[2., 1.])
+                .unwrap();
+        let mut input = MultiPaneInput::default();
+        let point = Point::new(100., layout.separators[0].origin.y as f32 - 3.);
+        let press = event(mouse::Event::ButtonPressed(mouse::Button::Left));
+        assert!(matches!(
+            input.update(&press, Some(point), &layout, &[2., 1.], true, true),
+            Some(MultiPaneInteraction::Resize { top: 0, .. })
+        ));
+        let movement = event(mouse::Event::CursorMoved {
+            position: Point::ORIGIN,
+        });
+        let Some(MultiPaneInteraction::Resize {
+            upper_stretch,
+            lower_stretch,
+            ..
+        }) = input.update(
+            &movement,
+            Some(Point::new(100., -1000.)),
+            &layout,
+            &[2., 1.],
+            true,
+            true,
+        )
+        else {
+            panic!("divider must own gesture");
+        };
+        assert!((upper_stretch + lower_stretch - 3.).abs() < 1e-9);
+        let resized = allocate_multi_pane_layout(
+            bounds,
+            AxisSizeRequests::default(),
+            ratio,
+            &[upper_stretch, lower_stretch],
+        )
+        .unwrap();
+        assert_eq!(resized.panes[0].plot.size.height, 30.);
+        assert!(matches!(
+            input.update(
+                &movement,
+                Some(Point::new(100., 1000.)),
+                &resized,
+                &[upper_stretch, lower_stretch],
+                true,
+                true
+            ),
+            Some(MultiPaneInteraction::Resize { .. })
+        ));
+        assert!(matches!(
+            input.update(
+                &movement,
+                Some(point),
+                &resized,
+                &[upper_stretch, lower_stretch],
+                true,
+                false
+            ),
+            Some(MultiPaneInteraction::Cancel)
+        ));
+        let tiny = allocate_multi_pane_layout(
+            AxisBounds {
+                width: 800.,
+                height: 50.,
+            },
+            AxisSizeRequests::default(),
+            ratio,
+            &[2., 1.],
+        )
+        .unwrap();
+        let mut input = MultiPaneInput::default();
+        assert!(
+            input
+                .update(
+                    &press,
+                    Some(Point::new(100., tiny.separators[0].origin.y as f32)),
+                    &tiny,
+                    &[2., 1.],
+                    true,
+                    true
+                )
                 .is_none()
         );
     }
