@@ -27,6 +27,7 @@ pub mod pane;
 pub mod plot_data;
 pub mod plot_list;
 pub mod price_formatter_fn;
+pub mod price_line;
 pub mod price_range_impl;
 pub mod price_scale;
 pub mod price_scale_conversions;

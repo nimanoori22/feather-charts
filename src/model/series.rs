@@ -137,6 +137,10 @@ pub struct Series<I, O, M = ()> {
     pane_data_generation: u64,
     z_order: Cell<i32>,
     last_update_info: Option<SeriesUpdateInfo>,
+    pub(crate) price_lines: Vec<(
+        crate::model::price_line::PriceLineId,
+        crate::model::price_line::PriceLineOptions,
+    )>,
 }
 
 /// Object-safe chart-owner boundary. DataLayer intentionally does not know
@@ -177,6 +181,7 @@ where
             pane_data_generation: 0,
             z_order: Cell::new(0),
             last_update_info: None,
+            price_lines: vec![],
         })
     }
     pub const fn id(&self) -> SeriesId {
@@ -201,6 +206,60 @@ where
         self.options = options;
         self.invalidate_pane_data();
         Ok(())
+    }
+    pub fn common_options(&self) -> &SeriesOptionsCommon {
+        common(&self.options)
+    }
+    pub fn last_value_data(
+        &self,
+        scale: &crate::model::price_scale::PriceScale,
+        visible: Option<&RangeImpl<TimePointIndex>>,
+        global: bool,
+    ) -> Option<crate::model::price_line::LastValueData> {
+        if scale.is_empty() {
+            return None;
+        }
+        let visible = visible?;
+        let first = self.first_value(Some(visible))?;
+        let row = if global {
+            self.data.last()?
+        } else {
+            self.data
+                .search(visible.right(), MismatchDirection::NearestLeft)?
+        };
+        let value = PlotRowLike::values(row);
+        let price = value[3];
+        let color = match (row, &self.options) {
+            (SeriesPlotRow::Line(r), SeriesOptionsMap::Line(o)) => {
+                r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Histogram(r), SeriesOptionsMap::Histogram(o)) => {
+                r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Candlestick(r), SeriesOptionsMap::Candlestick(o)) => {
+                r.color.as_ref().unwrap_or(if value[0] <= price {
+                    &o.style.up_color
+                } else {
+                    &o.style.down_color
+                })
+            }
+            _ => return None,
+        }
+        .clone();
+        let coordinate = scale.price_to_coordinate(price, first.value).value();
+        if !coordinate.is_finite() {
+            return None;
+        }
+        use crate::model::price_scale_conversions::to_percent;
+        Some(crate::model::price_line::LastValueData {
+            price,
+            index: PlotRowLike::index(row),
+            coordinate,
+            color,
+            text: scale.format_price(price, first.value),
+            absolute: scale.format_price_absolute(price),
+            percentage: PercentageFormatter::default().format(to_percent(price, first.value)),
+        })
     }
     pub fn bars(&self) -> &PlotList<SeriesPlotRow<I, O, (), M>> {
         &self.data

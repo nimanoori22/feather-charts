@@ -808,6 +808,9 @@ impl PriceScale {
         }
     }
 
+    pub fn format_price_absolute(&self, price: f64) -> String {
+        self.format_absolute(price)
+    }
     fn format_absolute(&self, price: f64) -> String {
         self.selected_formatter_source
             .as_ref()
