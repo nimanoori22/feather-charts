@@ -369,3 +369,206 @@ fn candle_frames_settle_and_remain_owned_across_navigation_and_lifecycle() {
     assert!(pane.data().is_none());
     assert_eq!(retained, format!("{:?}", first));
 }
+
+#[test]
+fn candle_history_whitespace_conflation_and_failed_frame_clear_output() {
+    use crate::model::time_scale_options::HorzScaleOptionsPatch;
+    use crate::renderers::{grid_renderer::PixelRatio, price_axis_renderer::AxisBounds};
+    use crate::ui::{
+        chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer},
+        price_axis::AxisFontResolver,
+    };
+    let (mut layer, mut model, id) = candle_fixture(PriceScaleMode::Normal);
+    let previous = model.prepare_candlesticks(id).unwrap().unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Candlestick,
+                    (-5..20)
+                        .map(|i| candle(i as f64, 100. + i as f64, 102. + i as f64))
+                        .collect(),
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    flush(&mut model);
+    let next = model.prepare_candlesticks(id).unwrap().unwrap();
+    assert_eq!(next.items, previous.items);
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(true),
+            ..Default::default()
+        },
+    );
+    flush(&mut model);
+    assert_eq!(
+        model.prepare_candlesticks(id),
+        Err(CandlestickPreparationError::UnsupportedConflation)
+    );
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(false),
+            ..Default::default()
+        },
+    );
+    flush(&mut model);
+    let mut pane = CandlesticksPaneView::default();
+    pane.refresh(&mut model, id).unwrap();
+    let mut owner = ChartFrameOwner::default();
+    let fonts = AxisFontResolver::default();
+    let input = ChartFrameInput {
+        series: Some(id),
+        bounds: AxisBounds {
+            width: f64::NAN,
+            height: 500.,
+        },
+        pixel_ratio: PixelRatio {
+            horizontal: 1.,
+            vertical: 1.,
+        },
+        background: "white".into(),
+    };
+    assert!(
+        owner
+            .prepare_candlesticks(
+                &mut model,
+                &mut TimeScaleAnimationController::default(),
+                &mut pane,
+                &input,
+                &mut IcedAxisMeasurer { fonts: &fonts },
+                Instant::now()
+            )
+            .is_err()
+    );
+    assert!(pane.data().is_none());
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Candlestick,
+                    vec![BuiltInSeriesDataItem::Candlestick(
+                        CandlestickDataItem::Whitespace(WhitespaceData {
+                            time: Time::from(UtcTimestamp::new(0.)),
+                            custom_values: None,
+                        }),
+                    )],
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    flush(&mut model);
+    pane.refresh(&mut model, id).unwrap();
+    assert!(pane.data().is_none());
+}
+
+#[test]
+fn candle_magnet_compares_selected_scales_and_excludes_hidden_and_overlay_sources() {
+    use crate::renderers::line_renderer::Point;
+    let (mut layer, mut model, _) = candle_fixture(PriceScaleMode::Normal);
+    let left = SeriesId::new(2);
+    model
+        .register_series(
+            left,
+            SeriesType::Candlestick,
+            candle_options(),
+            0,
+            PriceScalePosition::Left,
+        )
+        .unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    left,
+                    SeriesType::Candlestick,
+                    (0..20)
+                        .map(|i| {
+                            candle(
+                                i as f64,
+                                1000. + (i % 4) as f64 * 100.,
+                                1100. + (i % 4) as f64 * 100.,
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    let x = model.time_scale().index_to_coordinate(6.0.into()).value();
+    let scale = model.panes()[0].left_price_scale();
+    let expected = scale
+        .price_to_coordinate(1300., scale.first_value().unwrap())
+        .value();
+    model
+        .set_crosshair_position(
+            0,
+            Some(Point {
+                x,
+                y: expected + 0.01,
+            }),
+        )
+        .unwrap();
+    assert!((model.crosshair().position().unwrap().y.unwrap() - expected).abs() < 1e-8);
+    let overlay = SeriesId::new(3);
+    model
+        .register_series(
+            overlay,
+            SeriesType::Candlestick,
+            candle_options(),
+            0,
+            PriceScalePosition::Overlay("study".into()),
+        )
+        .unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    overlay,
+                    SeriesType::Candlestick,
+                    (0..20)
+                        .map(|i| candle(i as f64, 200. + i as f64, 202. + i as f64))
+                        .collect(),
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    model
+        .set_crosshair_position(
+            0,
+            Some(Point {
+                x,
+                y: expected + 0.01,
+            }),
+        )
+        .unwrap();
+    assert!((model.crosshair().position().unwrap().y.unwrap() - expected).abs() < 1e-8);
+    let axes = model.prepare_axis_snapshots(0).unwrap();
+    assert_eq!(
+        axes.left.crosshair_label.as_ref().unwrap().coordinate,
+        axes.right.crosshair_label.as_ref().unwrap().coordinate
+    );
+    assert_ne!(
+        axes.left.crosshair_label.as_ref().unwrap().text,
+        axes.right.crosshair_label.as_ref().unwrap().text
+    );
+    let mut hidden = candle_options();
+    if let SeriesOptionsMap::Candlestick(ref mut o) = hidden {
+        o.common.visible = false;
+    }
+    model.replace_series_options(left, hidden).unwrap();
+    model
+        .set_crosshair_position(
+            0,
+            Some(Point {
+                x,
+                y: expected + 0.01,
+            }),
+        )
+        .unwrap();
+    assert!((model.crosshair().position().unwrap().y.unwrap() - expected).abs() > 1e-8);
+}

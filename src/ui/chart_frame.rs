@@ -230,6 +230,7 @@ impl ChartFrameOwner {
         M: Clone + 'static,
         A: AxisMeasurer,
     {
+        view.clear();
         let id = input.series;
         // Validate before detaching commands or modifying dimensions.
         allocate_chart_layout(input.bounds, AxisSizeRequests::default(), input.pixel_ratio)
@@ -245,7 +246,6 @@ impl ChartFrameOwner {
         {
             return Err(ChartFrameError::Plot(view.unknown_series(id)));
         }
-        view.clear();
         // Old dimensions provide a provisional request, not final geometry.
         let axes = model
             .prepare_axis_snapshots(0)

@@ -534,11 +534,14 @@ where
                 let w = r.width / f64::from(ratio.horizontal);
                 let h = r.height / f64::from(ratio.vertical);
                 // Canvas2D fills negative extents in the opposite direction.
-                Ok(CanvasRectangle {
-                    origin: iced::Point::new(x.min(x + w) as f32, y.min(y + h) as f32),
-                    size: Size::new(w.abs() as f32, h.abs() as f32),
-                    color: color(&r.color)?,
-                })
+                let rectangle=CanvasRectangle {
+                    origin: iced::Point::new(x.min(x+w) as f32,y.min(y+h) as f32),
+                    size: Size::new(w.abs() as f32,h.abs() as f32),color:color(&r.color)?,
+                };
+                if [rectangle.origin.x,rectangle.origin.y,rectangle.size.width,rectangle.size.height].iter().any(|v|!v.is_finite()) {
+                    return Err(FrameError::CandleGeometry(crate::renderers::candlesticks_renderer::CandlestickRenderError::InvalidData));
+                }
+                Ok(rectangle)
             })
             .collect::<Result<_, FrameError>>()?;
     }
