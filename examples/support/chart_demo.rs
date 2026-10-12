@@ -40,7 +40,13 @@ use feather_charts::{
     },
     ui::{
         chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer, IcedChartFrame},
-        chart_input::{ChartInput, ChartInteraction, Navigation},
+        chart_input::{
+            ChartInput, ChartInteraction, MultiPaneInput, MultiPaneInteraction, Navigation,
+        },
+        multi_pane_frame::{
+            IcedMultiPaneChartFrame, MultiPaneChartFrameInput, MultiPaneChartFrameOwner,
+            SeriesPaneView,
+        },
         price_axis::AxisFontResolver,
     },
     views::time_scale_animation::TimeScaleAnimationController,
@@ -57,70 +63,17 @@ use std::time::{Duration, Instant};
 
 const ID: SeriesId = SeriesId::new(1);
 const LEFT_ID: SeriesId = SeriesId::new(2);
-fn options(kind: LineType, style: LineStyle, markers: bool) -> SeriesOptionsMap {
-    SeriesOptionsMap::Line(SeriesOptions {
-        common: SeriesOptionsCommon {
-            last_value_visible: false,
-            title: "Demo".into(),
-            price_scale_id: None,
-            series_last_value_mode: None,
-            visible: true,
-            hit_test_tolerance: 3.,
-            price_line_visible: false,
-            price_line_source: PriceLineSource::LastBar,
-            price_line_width: LineWidth::One,
-            price_line_color: String::new(),
-            price_line_style: LineStyle::Solid,
-            price_format: PriceFormat::BuiltIn(PriceFormatBuiltIn {
-                kind: PriceFormatBuiltInType::Price,
-                precision: 2,
-                min_move: 0.01,
-                base: Some(100.),
-            }),
-            base_line_visible: false,
-            base_line_color: String::new(),
-            base_line_width: LineWidth::One,
-            base_line_style: LineStyle::Solid,
-            autoscale_info_provider: None,
-            conflation_threshold_factor: None,
-        },
-        style: LineStyleOptions {
-            color: "#2196f3".into(),
-            line_style: style,
-            line_width: LineWidth::Three,
-            line_type: kind,
-            line_visible: true,
-            point_markers_visible: markers,
-            point_markers_radius: None,
-            crosshair_marker_visible: true,
-            crosshair_marker_radius: 4.,
-            crosshair_marker_border_color: String::new(),
-            crosshair_marker_background_color: String::new(),
-            crosshair_marker_border_width: 2.,
-            last_price_animation: LastPriceAnimationMode::Disabled,
-        },
-    })
-}
-fn bar(config: &DisplayConfig, index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
-    let value = config.value(index, adjustment);
-    BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
-        time: Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.)),
-        value,
-        color: Some(
-            if (index / 20).is_multiple_of(2) {
-                "#2196f3"
-            } else {
-                "#f59e0b"
-            }
-            .into(),
-        ),
-        custom_values: None,
-    }))
-}
+const VOLUME_ID: SeriesId = SeriesId::new(3);
+#[path = "chart_demo/series.rs"]
+mod series;
+use series::{SeriesKind, bar, options};
 struct Demo {
     config: DisplayConfig,
-    candlesticks: bool,
-    histogram: bool,
+    series_kind: SeriesKind,
+    volume_registered: bool,
+    multi_frame: Option<IcedMultiPaneChartFrame>,
+    multi_owner: MultiPaneChartFrameOwner,
+    multi_views: Vec<SeriesPaneView>,
     histogram_view: HistogramPaneView,
     candle_view: CandlesticksPaneView,
     layer: DataLayer<HorzScaleBehaviorTime>,
@@ -136,6 +89,7 @@ struct Demo {
     size: Size,
     scale: f32,
     count: usize,
+    history_start: i64,
     registered: bool,
     error: Option<String>,
     kind: LineType,
@@ -146,6 +100,7 @@ struct Demo {
 enum Message {
     CrosshairMode,
     Interaction(ChartInteraction),
+    PaneInteraction(MultiPaneInteraction),
     Bounds(Size),
     Tick(Instant),
     Window(iced::window::Id, iced::window::Event),
@@ -154,6 +109,8 @@ enum Message {
     Append,
     Replace,
     Older,
+    Prepend,
+    Clear,
     Latest,
     Remove,
     Reload,
@@ -175,6 +132,18 @@ impl Demo {
         Self::new_series(config, candlesticks, false)
     }
     fn new_series(config: DisplayConfig, candlesticks: bool, histogram: bool) -> Self {
+        Self::new_chart(
+            config,
+            if histogram {
+                SeriesKind::Histogram
+            } else if candlesticks {
+                SeriesKind::Candlesticks
+            } else {
+                SeriesKind::Line
+            },
+        )
+    }
+    fn new_chart(config: DisplayConfig, series_kind: SeriesKind) -> Self {
         let model = ChartModel::new(
             TimeScale::new(
                 HorzScaleBehaviorTime::default(),
@@ -197,9 +166,9 @@ impl Demo {
                     font_size: config.font_size,
                     font_family: config.font_family.clone(),
                     panes: LayoutPanesOptions {
-                        enable_resize: false,
-                        separator_color: String::new(),
-                        separator_hover_color: String::new(),
+                        enable_resize: series_kind.volume(),
+                        separator_color: "#36536a".into(),
+                        separator_hover_color: "#758696".into(),
                     },
                     attribution_logo: false,
                     color_space: ColorSpace::Srgb,
@@ -218,8 +187,11 @@ impl Demo {
         );
         let mut demo = Self {
             config,
-            candlesticks,
-            histogram,
+            series_kind,
+            volume_registered: false,
+            multi_frame: None,
+            multi_owner: MultiPaneChartFrameOwner::default(),
+            multi_views: vec![],
             histogram_view: HistogramPaneView::default(),
             candle_view: CandlesticksPaneView::default(),
             layer: DataLayer::new(HorzScaleBehaviorTime::default()),
@@ -235,6 +207,7 @@ impl Demo {
             size: Size::ZERO,
             scale: 1.,
             count: 0,
+            history_start: 0,
             registered: false,
             error: None,
             kind: LineType::Simple,
@@ -298,6 +271,7 @@ impl Demo {
             self.registered = true;
         }
         self.count = 120;
+        self.history_start = 0;
         let response = self
             .layer
             .set_series_data(
@@ -307,6 +281,7 @@ impl Demo {
             )
             .unwrap();
         self.model.apply_data_update(response).unwrap();
+        self.sync_volume();
         self.model.fit_content();
         self.sync_left();
     }
@@ -357,6 +332,10 @@ impl Demo {
             },
             background: "#101820".into(),
         };
+        if self.series_kind.volume() {
+            self.prepare_multi(&input, now);
+            return;
+        }
         let result = self
             .prepare_snapshot(&input, now)
             .and_then(|snapshot| IcedChartFrame::from_snapshot(snapshot, &self.fonts));
@@ -372,6 +351,58 @@ impl Demo {
             }
         }
     }
+    fn prepare_multi(&mut self, input: &ChartFrameInput, now: Instant) {
+        let series = (0..self.model.panes().len())
+            .map(|pane| {
+                [ID, VOLUME_ID]
+                    .into_iter()
+                    .find(|id| self.model.pane_for_series(*id) == Some(pane))
+            })
+            .collect::<Vec<_>>();
+        if self.multi_views.len() != series.len() {
+            self.multi_views = series
+                .iter()
+                .map(|id| {
+                    if *id == Some(VOLUME_ID) {
+                        SeriesPaneView::Histogram(Default::default())
+                    } else {
+                        SeriesPaneView::Candlesticks(Default::default())
+                    }
+                })
+                .collect();
+        }
+        let result = self
+            .multi_owner
+            .prepare(
+                &mut self.model,
+                &mut self.controller,
+                &mut self.multi_views,
+                &MultiPaneChartFrameInput {
+                    series,
+                    bounds: input.bounds,
+                    pixel_ratio: input.pixel_ratio,
+                    background: input.background.clone(),
+                },
+                &mut IcedAxisMeasurer { fonts: &self.fonts },
+                now,
+            )
+            .and_then(|snapshot| {
+                IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, "#36536a")
+            });
+        match result {
+            Ok(frame) => {
+                self.frame = frame.panes.first().cloned().unwrap_or_default();
+                self.multi_frame = Some(frame);
+                self.error = None;
+            }
+            Err(error) => {
+                self.multi_frame = None;
+                self.frame = IcedChartFrame::default();
+                self.frame.layout.available = input.bounds;
+                self.error = Some(format!("{error:?}"));
+            }
+        }
+    }
     fn prepare_snapshot(
         &mut self,
         input: &ChartFrameInput,
@@ -381,7 +412,7 @@ impl Demo {
         feather_charts::ui::chart_frame::ChartFrameError,
     > {
         let mut measurer = IcedAxisMeasurer { fonts: &self.fonts };
-        if self.histogram {
+        if self.series_kind.histogram() {
             self.frame_owner.prepare_histogram(
                 &mut self.model,
                 &mut self.controller,
@@ -390,7 +421,7 @@ impl Demo {
                 &mut measurer,
                 now,
             )
-        } else if self.candlesticks {
+        } else if self.series_kind.candlesticks() {
             self.frame_owner.prepare_candlesticks(
                 &mut self.model,
                 &mut self.controller,
@@ -410,107 +441,8 @@ impl Demo {
             )
         }
     }
-    fn series_type(&self) -> SeriesType {
-        if self.histogram {
-            SeriesType::Histogram
-        } else if self.candlesticks {
-            SeriesType::Candlestick
-        } else {
-            SeriesType::Line
-        }
-    }
-    fn series_options(&self) -> SeriesOptionsMap {
-        let line = options(self.kind, self.style, self.markers);
-        if self.histogram {
-            let SeriesOptionsMap::Line(line) = line else {
-                unreachable!()
-            };
-            return SeriesOptionsMap::Histogram(SeriesOptions {
-                common: line.common,
-                style: HistogramStyleOptions {
-                    color: "#2196f3".into(),
-                    base: 0.,
-                },
-            });
-        }
-        if !self.candlesticks {
-            return line;
-        }
-        let SeriesOptionsMap::Line(line) = line else {
-            unreachable!()
-        };
-        let (up, down) = if self.markers {
-            ("rgba(38,166,154,0.35)", "rgba(239,83,80,0.35)")
-        } else {
-            ("#26a69a", "#ef5350")
-        };
-        SeriesOptionsMap::Candlestick(SeriesOptions {
-            common: line.common,
-            style: CandlestickStyleOptions {
-                up_color: up.into(),
-                down_color: down.into(),
-                wick_visible: self.kind == LineType::Simple,
-                border_visible: self.style == LineStyle::Solid,
-                border_color: "#378658".into(),
-                border_up_color: up.into(),
-                border_down_color: down.into(),
-                wick_color: "#737375".into(),
-                wick_up_color: up.into(),
-                wick_down_color: down.into(),
-            },
-        })
-    }
-    fn bar(&self, index: usize, adjustment: f64) -> BuiltInSeriesDataItem<Time> {
-        if self.histogram {
-            let time = Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.));
-            return BuiltInSeriesDataItem::Histogram(if index % 13 == 5 {
-                HistogramDataItem::Whitespace(WhitespaceData {
-                    time,
-                    custom_values: None,
-                })
-            } else {
-                HistogramDataItem::Data(HistogramData {
-                    time,
-                    value: self.config.value(index, adjustment),
-                    color: index.is_multiple_of(19).then(|| "#f59e0b".into()),
-                    custom_values: None,
-                })
-            });
-        }
-        if !self.candlesticks {
-            return bar(&self.config, index, adjustment);
-        }
-        let time = Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.));
-        if index % 13 == 5 {
-            return BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Whitespace(
-                WhitespaceData {
-                    time,
-                    custom_values: None,
-                },
-            ));
-        }
-        let close = self.config.value(index, adjustment);
-        let span = 2. * self.config.multiplier;
-        let open = close
-            + match index % 3 {
-                0 => -span,
-                1 => span,
-                _ => 0.,
-            };
-        BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(CandlestickData {
-            time,
-            open,
-            high: open.max(close) + span,
-            low: open.min(close) - span,
-            close,
-            color: index.is_multiple_of(19).then(|| "#2196f3".into()),
-            border_color: index.is_multiple_of(19).then(|| "#f59e0b".into()),
-            wick_color: index.is_multiple_of(19).then(|| "#ddd".into()),
-            custom_values: None,
-        }))
-    }
     fn has_series_geometry(&self) -> bool {
-        if self.candlesticks || self.histogram {
+        if self.series_kind.candlesticks() || self.series_kind.histogram() {
             !self.frame.plot.candles.is_empty()
         } else {
             !self.frame.plot.lines.is_empty()
@@ -524,45 +456,42 @@ impl Demo {
                 let mut options = self.model.crosshair().options().clone();
                 options.mode = match options.mode {
                     CrosshairMode::Magnet => CrosshairMode::Normal,
-                    CrosshairMode::Normal if self.candlesticks => CrosshairMode::MagnetOhlc,
+                    CrosshairMode::Normal if self.series_kind.candlesticks() => {
+                        CrosshairMode::MagnetOhlc
+                    }
                     CrosshairMode::Normal | CrosshairMode::MagnetOhlc => CrosshairMode::Hidden,
                     _ => CrosshairMode::Magnet,
                 };
                 self.model.set_crosshair_options(options).unwrap();
             }
-            Message::Interaction(input) => {
-                use feather_charts::model::coordinate::Coordinate;
-                match input.navigation {
-                    Some(Navigation::Wheel { x, zoom, scroll }) => {
-                        self.model.end_scroll_time();
-                        self.model.zoom_time(Coordinate::new(x), zoom);
-                        if scroll != 0. {
-                            self.model.start_scroll_time(Coordinate::new(0.));
-                            self.model.scroll_time_to(Coordinate::new(scroll));
-                            self.model.end_scroll_time();
-                        }
-                    }
-                    Some(Navigation::Scroll { start, x }) => {
-                        if let Some(start) = start {
-                            self.model.start_scroll_time(Coordinate::new(start));
-                        }
-                        self.model.scroll_time_to(Coordinate::new(x));
-                    }
-                    Some(Navigation::EndScroll) => self.model.end_scroll_time(),
-                    None => {}
+            Message::Interaction(input) => self.apply_interaction(0, input),
+            Message::PaneInteraction(action) => match action {
+                MultiPaneInteraction::Plot { pane, interaction } => {
+                    self.apply_interaction(pane, interaction)
                 }
-                self.model
-                    .set_crosshair_position(
-                        0,
-                        input.position.map(|point| {
-                            feather_charts::renderers::line_renderer::Point {
-                                x: f64::from(point.x),
-                                y: f64::from(point.y),
-                            }
-                        }),
-                    )
-                    .unwrap();
-            }
+                MultiPaneInteraction::Resize {
+                    top,
+                    upper_stretch,
+                    lower_stretch,
+                } => {
+                    self.model.end_scroll_time();
+                    self.model.set_crosshair_position(0, None).unwrap();
+                    self.model
+                        .set_pane_stretch_factor(top, upper_stretch)
+                        .unwrap();
+                    self.model
+                        .set_pane_stretch_factor(top + 1, lower_stretch)
+                        .unwrap();
+                }
+                MultiPaneInteraction::Cancel => self.apply_interaction(
+                    0,
+                    ChartInteraction {
+                        position: None,
+                        navigation: Some(Navigation::EndScroll),
+                        capture: false,
+                    },
+                ),
+            },
             Message::Bounds(size) => {
                 let startup = self.size.width == 0. && size.width > 0.;
                 self.size = size;
@@ -585,6 +514,13 @@ impl Demo {
                     .update_series_data(ID, self.bar(self.count, 0.), false)
                     .unwrap();
                 self.model.apply_data_update(response).unwrap();
+                if self.volume_registered {
+                    let response = self
+                        .layer
+                        .update_series_data(VOLUME_ID, self.volume_bar(self.count, 0.), false)
+                        .unwrap();
+                    self.model.apply_data_update(response).unwrap();
+                }
                 self.count += 1;
                 self.sync_left();
             }
@@ -594,6 +530,44 @@ impl Demo {
                     .update_series_data(ID, self.bar(self.count - 1, 3.), false)
                     .unwrap();
                 self.model.apply_data_update(response).unwrap();
+                if self.volume_registered {
+                    let response = self
+                        .layer
+                        .update_series_data(VOLUME_ID, self.volume_bar(self.count - 1, 3.), false)
+                        .unwrap();
+                    self.model.apply_data_update(response).unwrap();
+                }
+            }
+            Message::Prepend if self.registered => {
+                self.history_start -= 20;
+                let data = (self.history_start..self.count as i64)
+                    .map(|i| self.history_bar(i, false))
+                    .collect();
+                let update = self
+                    .layer
+                    .set_series_data(ID, self.series_type(), data)
+                    .unwrap();
+                self.model.apply_data_update(update).unwrap();
+                if self.volume_registered {
+                    self.sync_volume();
+                }
+            }
+            Message::Clear if self.registered => {
+                let update = self
+                    .layer
+                    .set_series_data(ID, self.series_type(), vec![])
+                    .unwrap();
+                self.model.apply_data_update(update).unwrap();
+                if self.volume_registered {
+                    let update = self
+                        .layer
+                        .set_series_data(VOLUME_ID, SeriesType::Histogram, vec![])
+                        .unwrap();
+                    self.model.apply_data_update(update).unwrap();
+                }
+                self.count = 0;
+                self.history_start = 0;
+                self.sync_left();
             }
             Message::Older => self.model.set_logical_range(LogicalRange {
                 from: Logical::new(10.),
@@ -601,6 +575,11 @@ impl Demo {
             }),
             Message::Latest => self.model.set_right_offset(0.),
             Message::Remove if self.registered => {
+                if self.volume_registered {
+                    let update = self.layer.remove_series(VOLUME_ID).unwrap();
+                    self.model.remove_series(VOLUME_ID, update).unwrap();
+                    self.volume_registered = false;
+                }
                 let response = self.layer.remove_series(ID).unwrap();
                 self.model.remove_series(ID, response).unwrap();
                 self.registered = false;
@@ -613,7 +592,7 @@ impl Demo {
                 .scroll_to_offset_animated(-40., Duration::from_secs(2)),
             Message::Stop => self.model.stop_time_scale_animation(),
             Message::Kind => {
-                self.kind = if self.candlesticks {
+                self.kind = if self.series_kind.candlesticks() {
                     if self.kind == LineType::Simple {
                         LineType::WithSteps
                     } else {
@@ -680,6 +659,39 @@ impl Demo {
         self.prepare(now);
         iced::Task::none()
     }
+    fn apply_interaction(&mut self, pane: usize, input: ChartInteraction) {
+        use feather_charts::model::coordinate::Coordinate;
+        match input.navigation {
+            Some(Navigation::Wheel { x, zoom, scroll }) => {
+                self.model.end_scroll_time();
+                self.model.zoom_time(Coordinate::new(x), zoom);
+                if scroll != 0. {
+                    self.model.start_scroll_time(Coordinate::new(0.));
+                    self.model.scroll_time_to(Coordinate::new(scroll));
+                    self.model.end_scroll_time();
+                }
+            }
+            Some(Navigation::Scroll { start, x }) => {
+                if let Some(start) = start {
+                    self.model.start_scroll_time(Coordinate::new(start));
+                }
+                self.model.scroll_time_to(Coordinate::new(x));
+            }
+            Some(Navigation::EndScroll) => self.model.end_scroll_time(),
+            None => {}
+        }
+        self.model
+            .set_crosshair_position(
+                pane,
+                input
+                    .position
+                    .map(|point| feather_charts::renderers::line_renderer::Point {
+                        x: f64::from(point.x),
+                        y: f64::from(point.y),
+                    }),
+            )
+            .unwrap();
+    }
     fn apply_style(&mut self) {
         if self.registered {
             self.model
@@ -696,25 +708,27 @@ impl Demo {
             button("Append").on_press(Message::Append),
             button("Replace").on_press(Message::Replace),
             button("Older").on_press(Message::Older),
+            button("Prepend").on_press(Message::Prepend),
+            button("Clear").on_press(Message::Clear),
             button("Latest").on_press(Message::Latest),
             button("Remove").on_press(Message::Remove),
             button("Reload").on_press(Message::Reload)
         ]
         .spacing(5);
         let styles = row![
-            button(text(if self.candlesticks {
+            button(text(if self.series_kind.candlesticks() {
                 format!("Wicks: {}", self.kind == LineType::Simple)
             } else {
                 format!("{:?}", self.kind)
             }))
             .on_press(Message::Kind),
-            button(text(if self.candlesticks {
+            button(text(if self.series_kind.candlesticks() {
                 format!("Borders: {}", self.style == LineStyle::Solid)
             } else {
                 format!("{:?}", self.style)
             }))
             .on_press(Message::Style),
-            button(if self.candlesticks {
+            button(if self.series_kind.candlesticks() {
                 "Transparency"
             } else {
                 "Markers"
@@ -733,6 +747,13 @@ impl Demo {
         .spacing(5);
         let chart = Canvas::new(Chart {
             snapshot: &self.frame,
+            multi: self.multi_frame.as_ref(),
+            stretches: self
+                .model
+                .panes()
+                .iter()
+                .map(|p| p.stretch_factor())
+                .collect(),
             animate: self.controller.is_active(),
             enabled: !self.model.time_scale().is_empty(),
         })
@@ -765,12 +786,16 @@ impl Demo {
 }
 struct Chart<'a> {
     snapshot: &'a IcedChartFrame,
+    multi: Option<&'a IcedMultiPaneChartFrame>,
+    stretches: Vec<f64>,
     animate: bool,
     enabled: bool,
 }
 #[derive(Default)]
 struct ChartState {
     input: ChartInput,
+    multi_input: MultiPaneInput,
+    pane_series: Vec<Option<SeriesId>>,
     last_redraw: Option<Instant>,
 }
 impl canvas::Program<Message> for Chart<'_> {
@@ -782,20 +807,51 @@ impl canvas::Program<Message> for Chart<'_> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
-        if let Some(action) = state.input.update(
-            event,
-            cursor
-                .position()
-                .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
-            self.snapshot.layout.plot,
-            self.enabled,
-        ) {
-            let publish = canvas::Action::publish(Message::Interaction(action));
-            return Some(if action.capture {
-                publish.and_capture()
-            } else {
-                publish
-            });
+        if let Some(multi) = self.multi {
+            if state.pane_series != multi.series {
+                let replacing = !state.pane_series.is_empty();
+                state.pane_series = multi.series.clone();
+                state.multi_input = MultiPaneInput::default();
+                if replacing {
+                    return Some(canvas::Action::publish(Message::PaneInteraction(
+                        MultiPaneInteraction::Cancel,
+                    )));
+                }
+            }
+            if let Some(action) = state.multi_input.update(
+                event,
+                cursor
+                    .position()
+                    .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+                &multi.layout,
+                &self.stretches,
+                self.enabled,
+                true,
+            ) {
+                let capture = action.capture();
+                let publish = canvas::Action::publish(Message::PaneInteraction(action));
+                return Some(if capture {
+                    publish.and_capture()
+                } else {
+                    publish
+                });
+            }
+        } else {
+            if let Some(action) = state.input.update(
+                event,
+                cursor
+                    .position()
+                    .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+                self.snapshot.layout.plot,
+                self.enabled,
+            ) {
+                let publish = canvas::Action::publish(Message::Interaction(action));
+                return Some(if action.capture {
+                    publish.and_capture()
+                } else {
+                    publish
+                });
+            }
         }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
             if bounds.size()
@@ -830,7 +886,26 @@ impl canvas::Program<Message> for Chart<'_> {
         _cursor: iced::mouse::Cursor,
     ) -> Vec<Geometry> {
         let mut frame = Frame::new(renderer, bounds.size());
-        self.snapshot.draw(&mut frame);
+        if let Some(multi) = self.multi {
+            multi.draw(&mut frame);
+            if let Some(top) = _state.multi_input.hovered_divider
+                && let Some(region) = multi.layout.separators.get(top)
+            {
+                let hover = iced::Rectangle::new(
+                    iced::Point::new(0., region.origin.y as f32 - 4.),
+                    Size::new(region.size.width as f32, 9.),
+                );
+                frame.with_clip(hover, |frame| {
+                    frame.fill_rectangle(
+                        hover.position(),
+                        hover.size(),
+                        iced::Color::from_rgba8(117, 134, 150, 0.35),
+                    )
+                });
+            }
+        } else {
+            self.snapshot.draw(&mut frame);
+        }
         vec![frame.into_geometry()]
     }
 }
@@ -886,13 +961,58 @@ fn smoke_series(config: DisplayConfig, candlesticks: bool, histogram: bool) {
         "Chart demo smoke test passed: load, fit, resize, append, replace, styles, animation, remove/reload."
     );
 }
+fn smoke_volume(config: DisplayConfig) {
+    let mut demo = Demo::new_chart(config, SeriesKind::PriceVolume);
+    let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
+    assert!(demo.error.is_none(), "{:?}", demo.error);
+    assert_eq!(demo.multi_frame.as_ref().unwrap().panes.len(), 2);
+    for message in [
+        Message::Append,
+        Message::Replace,
+        Message::Older,
+        Message::Prepend,
+        Message::Latest,
+        Message::Fit,
+        Message::Clear,
+        Message::Remove,
+        Message::Reload,
+    ] {
+        let _ = demo.update(message);
+        assert!(demo.error.is_none(), "{:?}", demo.error);
+    }
+    let frame = demo.multi_frame.as_ref().unwrap();
+    assert!(!frame.panes[0].plot.candles.is_empty());
+    assert!(!frame.panes[1].plot.candles.is_empty());
+    assert_eq!(
+        frame.panes[0].plot.size.width,
+        frame.panes[1].plot.size.width
+    );
+    println!(
+        "Price/volume smoke passed: aligned panes, paired updates, history, removal and reload."
+    );
+}
 pub fn run(candlesticks: bool) -> iced::Result {
     run_series(candlesticks, false)
 }
 pub fn run_histogram() -> iced::Result {
     run_series(false, true)
 }
+pub fn run_price_volume() -> iced::Result {
+    run_chart(SeriesKind::PriceVolume)
+}
 fn run_series(candlesticks: bool, histogram: bool) -> iced::Result {
+    run_chart(if histogram {
+        SeriesKind::Histogram
+    } else if candlesticks {
+        SeriesKind::Candlesticks
+    } else {
+        SeriesKind::Line
+    })
+}
+fn run_chart(series_kind: SeriesKind) -> iced::Result {
+    let candlesticks = series_kind.candlesticks();
+    let histogram = series_kind.histogram();
+    let volume = series_kind.volume();
     let args = std::env::args().collect::<Vec<_>>();
     let scenario = args
         .windows(2)
@@ -911,7 +1031,11 @@ fn run_series(candlesticks: bool, histogram: bool) -> iced::Result {
     config.ticks |= args.iter().any(|a| a == "--ticks");
     config.fixed_edges |= args.iter().any(|a| a == "--fixed-edges");
     if std::env::args().any(|arg| arg == "--smoke") {
-        smoke_series(config, candlesticks, histogram);
+        if volume {
+            smoke_volume(config);
+        } else {
+            smoke_series(config, candlesticks, histogram);
+        }
         return Ok(());
     }
     if let Some(directory) = args.windows(2).find(|a| a[0] == "--capture-dir") {
@@ -920,20 +1044,23 @@ fn run_series(candlesticks: bool, histogram: bool) -> iced::Result {
             args.iter().any(|a| a == "--wgpu"),
             candlesticks,
             histogram,
+            volume,
         );
         return Ok(());
     }
     let size = Size::new(config.width + 24., config.height + 145.);
     iced::application(
         move || {
-            let mut demo = Demo::new_series(config.clone(), candlesticks, histogram);
+            let mut demo = Demo::new_chart(config.clone(), series_kind);
             demo.apply_scenario(Instant::now());
             demo
         },
         Demo::update,
         Demo::view,
     )
-    .title(if histogram {
+    .title(if volume {
+        "Feather Charts — price and volume"
+    } else if histogram {
         "Feather Charts — histogram"
     } else if candlesticks {
         "Feather Charts — candlesticks"

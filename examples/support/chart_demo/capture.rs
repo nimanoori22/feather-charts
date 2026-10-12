@@ -7,6 +7,7 @@ pub(super) fn capture_display(
     wgpu: bool,
     candlesticks: bool,
     histogram: bool,
+    volume: bool,
 ) {
     use iced::advanced::{
         graphics::geometry::Renderer as _,
@@ -31,10 +32,17 @@ pub(super) fn capture_display(
                 continue;
             }
             for ratio in [1., 1.25, 1.5, 2.] {
-                let mut demo = Demo::new_series(
+                let mut demo = Demo::new_chart(
                     DisplayConfig::for_scenario(scenario),
-                    candlesticks,
-                    histogram,
+                    if volume {
+                        SeriesKind::PriceVolume
+                    } else if histogram {
+                        SeriesKind::Histogram
+                    } else if candlesticks {
+                        SeriesKind::Candlesticks
+                    } else {
+                        SeriesKind::Line
+                    },
                 );
                 demo.scale = ratio;
                 if style_index > 0 {
@@ -84,7 +92,11 @@ pub(super) fn capture_display(
                 for _ in 0..2 {
                     renderer.reset(iced::Rectangle::with_size(demo.size));
                     let mut frame = Frame::new(&renderer, demo.size);
-                    demo.frame.draw(&mut frame);
+                    if let Some(multi) = &demo.multi_frame {
+                        multi.draw(&mut frame);
+                    } else {
+                        demo.frame.draw(&mut frame);
+                    }
                     renderer.draw_geometry(frame.into_geometry());
                     let rgba =
                         renderer.screenshot(size, ratio, iced::Color::from_rgb8(255, 0, 255));
