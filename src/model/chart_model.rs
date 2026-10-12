@@ -1,5 +1,7 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
+mod price_lines;
+
 use crate::model::{
     axis_snapshots::{
         self, AxisSnapshotError, AxisSnapshots, PriceAxisOptionsError, PriceAxisSide,
@@ -48,6 +50,9 @@ pub struct ChartModelOptions {
 #[derive(Debug, Eq, PartialEq)]
 pub enum ChartModelError {
     InvalidCrosshairOptions,
+    InvalidPriceLineOptions,
+    UnknownPriceLine(crate::model::price_line::PriceLineId),
+    PriceLineIdExhausted,
     DuplicateSeries(SeriesId),
     UnknownSeries(SeriesId),
     InvalidPane(usize),
@@ -414,6 +419,7 @@ where
         if pane >= self.panes.len() {
             return Err(AxisSnapshotError::InvalidPane(pane));
         }
+        let decorations = self.price_decorations(pane)?;
         let layout = &self.options.layout;
         let pane_state = &mut self.panes[pane];
         let has_width = pane_state.width() > 0.;
@@ -432,6 +438,24 @@ where
             has_width,
             &mut provider,
         );
+        left.labels = decorations.left;
+        right.labels = decorations.right;
+        left.label_center = decorations.left_center;
+        right.label_center = decorations.right_center;
+        for axis in [&mut left, &mut right] {
+            if axis.align_labels {
+                crate::renderers::price_axis_labels::align_labels(
+                    &mut axis.labels,
+                    axis.label_center.unwrap_or(pane_state.height() / 2.),
+                    pane_state.height(),
+                    f64::from(
+                        axis.renderer_options.font_size
+                            + axis.renderer_options.padding_top
+                            + axis.renderer_options.padding_bottom,
+                    ),
+                );
+            }
+        }
         let marks = self
             .time_scale
             .marks(TimeScaleLayoutContext {

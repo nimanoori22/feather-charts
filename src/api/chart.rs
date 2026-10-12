@@ -233,6 +233,30 @@ impl Chart {
         self.model.replace_series_options(id, options)?;
         Ok(())
     }
+    pub fn add_price_line(
+        &mut self,
+        series: SeriesId,
+        options: super::PriceLineOptions,
+    ) -> Result<super::PriceLineId, ChartError> {
+        self.kind(series)?;
+        Ok(self.model.add_price_line(series, options)?)
+    }
+    pub fn price_line_options(
+        &self,
+        line: super::PriceLineId,
+    ) -> Result<super::PriceLineOptions, ChartError> {
+        Ok(self.model.price_line_options(line)?)
+    }
+    pub fn replace_price_line_options(
+        &mut self,
+        line: super::PriceLineId,
+        options: super::PriceLineOptions,
+    ) -> Result<(), ChartError> {
+        Ok(self.model.replace_price_line_options(line, options)?)
+    }
+    pub fn remove_price_line(&mut self, line: super::PriceLineId) -> Result<(), ChartError> {
+        Ok(self.model.remove_price_line(line)?)
+    }
     pub fn add_pane(&mut self) -> usize {
         self.cancel_interaction();
         self.views.push(vec![]);

@@ -329,7 +329,16 @@ fn assert_frame(
             })
             .collect::<Vec<_>>();
         if axis.visible && prepared.bounds.width > 0. && prepared.bounds.height > 0. {
-            assert_eq!(texts.len(), axis.marks.len());
+            let labels = axis
+                .labels
+                .iter()
+                .filter(|l| !l.axis.text.is_empty())
+                .collect::<Vec<_>>();
+            assert_eq!(texts.len(), axis.marks.len() + labels.len());
+            for ((text, position), label) in texts[axis.marks.len()..].iter().zip(labels) {
+                assert_eq!(*text, &label.axis.text);
+                assert!(position.y.is_finite());
+            }
             for ((label, p), mark) in texts.into_iter().zip(axis.marks.iter().rev()) {
                 assert_eq!(label, &mark.label);
                 close(p.y, mark.coord.value());

@@ -53,8 +53,20 @@ fn assert_axis_grid_and_model(model: &mut Model) -> Vec<(String, f64)> {
             _ => None,
         })
         .collect::<Vec<_>>();
+    let ordinary = text[..axes.right.marks.len()].to_vec();
+    let expected_labels = axes
+        .right
+        .labels
+        .iter()
+        .filter(|l| !l.axis.text.is_empty())
+        .collect::<Vec<_>>();
+    assert_eq!(text.len(), axes.right.marks.len() + expected_labels.len());
+    for ((text, y), label) in text[axes.right.marks.len()..].iter().zip(expected_labels) {
+        assert_eq!(text, &label.axis.text);
+        assert!(y.is_finite());
+    }
     assert_eq!(
-        text,
+        ordinary,
         axes.right
             .marks
             .iter()
@@ -62,7 +74,7 @@ fn assert_axis_grid_and_model(model: &mut Model) -> Vec<(String, f64)> {
             .map(|mark| (mark.label.clone(), mark.coord.value()))
             .collect::<Vec<_>>()
     );
-    text
+    ordinary
 }
 
 #[test]
