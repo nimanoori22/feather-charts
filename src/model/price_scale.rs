@@ -1073,8 +1073,10 @@ mod tests {
     #[test]
     fn rejects_scale_interactions_for_special_modes_and_empty_ranges() {
         for mode in [PriceScaleMode::Percentage, PriceScaleMode::IndexedTo100] {
-            let mut options = PriceScaleOptions::default();
-            options.mode = mode;
+            let options = PriceScaleOptions {
+                mode,
+                ..Default::default()
+            };
             let mut scale = PriceScale::new("right", options, &layout());
             scale.set_height(100.0);
             scale.set_price_range(Some(PriceRangeImpl::new(0.0, 100.0)));
@@ -1102,8 +1104,10 @@ mod tests {
         assert!((normal_range.max_value() - (70.0 + delta)).abs() < 1e-9);
         assert!(normal.end_scroll());
 
-        let mut inverted_options = PriceScaleOptions::default();
-        inverted_options.invert_scale = true;
+        let inverted_options = PriceScaleOptions {
+            invert_scale: true,
+            ..Default::default()
+        };
         let mut inverted = PriceScale::new("right", inverted_options, &layout());
         inverted.set_height(100.0);
         inverted.set_price_range(Some(PriceRangeImpl::new(0.0, 70.0)));

@@ -18,29 +18,6 @@ impl UtcDateTime {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn formats_leap_day_in_english_and_french() {
-        let value = UtcDateTime::from_unix_timestamp(1_582_934_400.0).unwrap();
-        assert_eq!(
-            format_date(&value, "yyyy-MM-dd MMMM", "en-US"),
-            "2020-02-29 February"
-        );
-        assert_eq!(format_date(&value, "dd MMM yyyy", "fr-FR"), "29 févr. 2020");
-    }
-    #[test]
-    fn preserves_negative_fractional_timestamps() {
-        assert_eq!(
-            UtcDateTime::from_unix_timestamp(-0.5)
-                .unwrap()
-                .inner()
-                .timestamp(),
-            -1
-        );
-    }
-}
 fn locale(value: &str) -> Locale {
     let normalized = match value {
         "default" | "en" => "en_US".into(),
@@ -67,4 +44,28 @@ pub fn format_date(date: &UtcDateTime, format: &str, requested_locale: &str) -> 
         )
         .replace("MM", &value.format("%m").to_string())
         .replace("dd", &value.format("%d").to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn formats_leap_day_in_english_and_french() {
+        let value = UtcDateTime::from_unix_timestamp(1_582_934_400.0).unwrap();
+        assert_eq!(
+            format_date(&value, "yyyy-MM-dd MMMM", "en-US"),
+            "2020-02-29 February"
+        );
+        assert_eq!(format_date(&value, "dd MMM yyyy", "fr-FR"), "29 févr. 2020");
+    }
+    #[test]
+    fn preserves_negative_fractional_timestamps() {
+        assert_eq!(
+            UtcDateTime::from_unix_timestamp(-0.5)
+                .unwrap()
+                .inner()
+                .timestamp(),
+            -1
+        );
+    }
 }

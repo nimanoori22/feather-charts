@@ -264,7 +264,7 @@ mod tests {
     use crate::model::{
         data_consumer::WhitespaceData,
         horz_scale_behavior_time::{
-            time_based_chart_options::{TimeBehaviorOptions, TimeScaleOptions},
+            time_based_chart_options::TimeBehaviorOptions,
             types::{BusinessDay, TickMarkWeight, Time, UtcTimestamp},
         },
         ihorz_scale_behavior::{HorzScaleBehavior, TimeMark},
@@ -304,7 +304,6 @@ mod tests {
     #[test]
     fn switches_item_formatting_when_time_visibility_changes() {
         let mut options = TimeBehaviorOptions::default();
-        options.time_scale = TimeScaleOptions::default();
         options.time_scale.base.time_visible = true;
         options.time_scale.base.seconds_visible = false;
         let behavior = HorzScaleBehaviorTime::new(options);

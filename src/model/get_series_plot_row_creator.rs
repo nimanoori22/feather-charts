@@ -370,7 +370,7 @@ mod tests {
         };
         assert_eq!(row.base.value, [4.0; 4]);
         assert_eq!(row.color.as_deref(), Some("#f00"));
-        assert_eq!(row.base.custom_values.as_deref(), Some("note"));
+        assert_eq!(row.base.custom_values, Some("note"));
         let whitespace = create_area_row(
             30,
             4.0.into(),
