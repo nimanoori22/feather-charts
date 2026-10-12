@@ -104,9 +104,10 @@ impl ChartInput {
         };
         match event {
             Event::Mouse(mouse::Event::WheelScrolled { delta }) if position.is_some() => {
-                let (x, y, factor) = match delta {
-                    mouse::ScrollDelta::Lines { x, y } => (*x, *y, 32.),
-                    mouse::ScrollDelta::Pixels { x, y } => (*x, *y, 1.),
+                // Native line units represent wheel steps; pixels retain source sensitivity.
+                let (x, y, zoom_factor, scroll_factor) = match delta {
+                    mouse::ScrollDelta::Lines { x, y } => (*x, *y, 100., 32.),
+                    mouse::ScrollDelta::Pixels { x, y } => (*x, *y, 1., 1.),
                 };
                 if !x.is_finite() || !y.is_finite() || (x == 0. && y == 0.) {
                     return None;
@@ -121,12 +122,12 @@ impl ChartInput {
                 action.navigation = Some(Navigation::Wheel {
                     x: f64::from(position.unwrap().x),
                     zoom: if self.options.wheel_zoom {
-                        (f64::from(y) * factor / 100.).clamp(-1., 1.)
+                        (f64::from(y) * zoom_factor / 100.).clamp(-1., 1.)
                     } else {
                         0.
                     },
                     scroll: if self.options.wheel_scroll {
-                        f64::from(x) * factor * 0.8
+                        f64::from(x) * scroll_factor * 0.8
                     } else {
                         0.
                     },
@@ -402,8 +403,37 @@ mod tests {
             .unwrap();
         assert_eq!(action.position, Some(Point::new(100., 50.)));
         assert!(
-            matches!(action.navigation, Some(Navigation::Wheel { zoom, .. }) if (zoom-0.32).abs()<1e-6)
+            matches!(action.navigation, Some(Navigation::Wheel { zoom, .. }) if (zoom-1.).abs()<1e-6)
         );
+    }
+    #[test]
+    fn wheel_zoom_preserves_fractional_input_pixels_and_horizontal_scroll() {
+        for (delta, expected_zoom, expected_scroll) in [
+            (mouse::ScrollDelta::Lines { x: 1., y: 1. }, 1., 25.6),
+            (mouse::ScrollDelta::Lines { x: -1., y: -1. }, -1., -25.6),
+            (mouse::ScrollDelta::Lines { x: 0., y: 0.125 }, 0.125, 0.),
+            (mouse::ScrollDelta::Lines { x: 0., y: 4. }, 1., 0.),
+            (mouse::ScrollDelta::Pixels { x: 10., y: 5. }, 0.05, 8.),
+            (mouse::ScrollDelta::Pixels { x: 0., y: -5. }, -0.05, 0.),
+        ] {
+            let mut state = ChartInput::default();
+            let action = state
+                .update(
+                    &event(mouse::Event::WheelScrolled { delta }),
+                    Some(Point::new(180., 50.)),
+                    plot(),
+                    true,
+                )
+                .unwrap();
+            let Some(Navigation::Wheel { zoom, scroll, .. }) = action.navigation else {
+                panic!("wheel must navigate");
+            };
+            assert!((zoom - expected_zoom).abs() < 1e-6, "{delta:?}: {zoom}");
+            assert!(
+                (scroll - expected_scroll).abs() < 1e-6,
+                "{delta:?}: {scroll}"
+            );
+        }
     }
     #[test]
     fn empty_redraws_do_not_publish_forever() {

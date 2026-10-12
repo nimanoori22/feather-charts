@@ -133,3 +133,33 @@ horizontal behavior, price lines, touch/kinetic input and full upstream API pari
 remain future milestones. No new dependency or async engine machinery was added.
 Physical mouse/touchpad feel after this migration requires a fresh check; the
 user's successful mouse check applies to the preceding interaction milestone.
+
+## Native wheel zoom calibration (2026-10-12)
+
+A user reported needing more wheel steps to zoom than on the TradingView web app.
+The engine already preserves `TimeScale.zoom`: bar spacing changes by scale/10
+and the point beneath the cursor remains anchored. `ChartWidget._onMousewheel`
+normalizes browser deltas and caps scale at one; its DOM line coefficient is 32.
+Iced/winit forwards native line deltas directly, so a one-unit native wheel event
+previously became scale 0.32 (a 3.2% spacing change). Browser and native event units
+are not interchangeable; this is an input calibration change, not an engine
+algorithm change or a claim of measured equality with every browser/device.
+
+Two small alternatives were considered: multiply all wheel zoom deltas, or adjust
+only native line-unit zoom. The latter preserves pixel-based touchpad behavior
+and horizontal panning while giving a full line-unit step scale one (10% zoom in,
+9/10 spacing on zoom out). Fractional line deltas remain proportional; large
+batches keep the upstream one-step cap. Price-axis scaling retains its existing
+mapping. Ownership and public method signatures are unchanged; both single- and
+multi-pane widgets use the same ChartInput path.
+
+Changed `src/ui/chart_input.rs` and `tests/chart_api.rs`. The input regression checks
+both directions, fractional lines, clamping, pixel deltas, axis exclusion and
+unchanged horizontal scroll. A native Canvas-to-Chart test checks actual bar
+spacing after wheel input. Both new regressions failed with the previous mapping.
+Physical mouse/touchpad comparison still requires the user's hardware check.
+Validation after calibration: all 401 test executions pass (329 library, eight
+API and sixteen per demo), formatting and strict all-target Clippy pass, all
+examples build, and the public example's headless smoke check passes. No renderer
+algorithm or data mutation path changed; raster/source-oracle checks were not
+repeated for this input-only calibration.

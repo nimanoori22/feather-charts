@@ -355,3 +355,39 @@ fn malformed_public_messages_do_not_partially_resize_or_pan() {
         assert!(!chart.is_panning());
     }
 }
+
+#[test]
+fn native_wheel_detent_changes_time_spacing_by_ten_percent() {
+    use feather_charts::api::ChartState;
+    use iced::{
+        Point, Rectangle, mouse,
+        widget::canvas::{Event, Program},
+    };
+    let mut chart = Chart::default();
+    let id = add(&mut chart);
+    chart
+        .set_data(id, (0..100).map(|i| row(i as f64, 100.)).collect())
+        .unwrap();
+    let size = iced::Size::new(800., 500.);
+    chart.prepare(size, 1., std::time::Instant::now()).unwrap();
+    let mut state = ChartState::default();
+    for (delta, factor) in [
+        (mouse::ScrollDelta::Lines { x: 0., y: 1. }, 1.1),
+        (mouse::ScrollDelta::Lines { x: 0., y: -1. }, 0.9),
+        (mouse::ScrollDelta::Pixels { x: 0., y: 5. }, 1.005),
+    ] {
+        let before = chart.model().time_scale().bar_spacing();
+        let message = chart
+            .program(std::convert::identity)
+            .update(
+                &mut state,
+                &Event::Mouse(mouse::Event::WheelScrolled { delta }),
+                Rectangle::with_size(size),
+                mouse::Cursor::Available(Point::new(200., 100.)),
+            )
+            .and_then(|a| a.into_inner().0)
+            .unwrap();
+        chart.update(message).unwrap();
+        assert!((chart.model().time_scale().bar_spacing() / before - factor).abs() < 1e-9);
+    }
+}
