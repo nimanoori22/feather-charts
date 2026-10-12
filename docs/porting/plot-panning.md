@@ -100,7 +100,7 @@ Original PriceRangeImpl metadata was stale in the graph; its complete current
 source was read directly and the oracle transpiles that source at run time.
 Native ChartInput now emits the additional Pan variant; downstream exhaustive
 navigation matches must handle it. The existing Scroll variant remains usable.
- Physical acceptance remains pending: hold the left button
-in either plot and drag diagonally/up/down; time navigation is shared and only
-the origin pane's default price scale moves. Double-click that axis to restore
-autoscale. Touch and kinetic scrolling remain subsequent work.
+On 2026-10-12 the user reported that physical mouse smoothness checks felt fine.
+Touchpad acceptance has not been separately reported. Time navigation is shared
+and only the origin pane's default price scale moves; double-click that axis to
+restore autoscale. Touch and kinetic scrolling remain subsequent work.

@@ -209,5 +209,7 @@ events and native startup remain distinct from physical device acceptance.
   Also check price-axis wheel/drag scaling and double-click reset as described
   in [price-axis interaction](../docs/porting/price-axis-interaction.md), and
   free diagonal/vertical plot dragging in [plot panning](../docs/porting/plot-panning.md).
+  On 2026-10-12 the user reported physical mouse smoothness checks felt fine;
+  touchpad and the remaining controls have not been separately confirmed.
 - [x] Report pending hardware checks honestly and identify public chart/widget API
   as subsequent work, without treating it as part of this milestone.

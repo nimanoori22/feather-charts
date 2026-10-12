@@ -97,7 +97,8 @@ input and an upward drag narrow the range. Double-click the axis to restore
 autoscale. Manual scaling persists through time navigation and data updates
 until reset. Percentage/indexed scales remain non-interactive like the source.
 
-Physical mouse/touchpad feel and sensitivity remain unverified on real devices;
-confirm both gestures and reset in the updated demos. Free dragging inside the plot is now implemented; see
+On 2026-10-12 the user reported that physical mouse smoothness checks felt fine.
+Touchpad sensitivity and explicit coverage of both axis gestures/reset have not
+been separately reported. Free dragging inside the plot is now implemented; see
 [plot panning](plot-panning.md). Touch/kinetic input and the general public
 chart/widget facade remain subsequent capabilities. Earlier raster/performance reports are unchanged.
