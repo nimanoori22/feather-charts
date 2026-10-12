@@ -29,12 +29,12 @@ impl TextMeasurer for Metrics {
         }
     }
 }
-struct Fake {
+pub(super) struct Fake {
     widths: Vec<f32>,
     calls: usize,
 }
 impl Fake {
-    fn new(widths: &[f32]) -> Self {
+    pub(super) fn new(widths: &[f32]) -> Self {
         Self {
             widths: widths.to_vec(),
             calls: 0,
@@ -256,9 +256,9 @@ fn replay_preserves_command_order_and_does_not_accumulate_duplicate_spacing_comm
 }
 
 #[derive(Debug)]
-struct CountingAnimation {
-    calls: Rc<Cell<usize>>,
-    start: Instant,
+pub(super) struct CountingAnimation {
+    pub(super) calls: Rc<Cell<usize>>,
+    pub(super) start: Instant,
 }
 impl TimeScaleAnimation for CountingAnimation {
     fn sample(&self, now: Instant) -> (f64, bool) {

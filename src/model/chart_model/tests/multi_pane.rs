@@ -98,6 +98,7 @@ fn multi_pane_frames_share_time_and_keep_price_labels_local() {
                 let axes = pane.plot.axes.as_ref().unwrap();
                 assert_eq!(axes.right.crosshair_label.is_some(), i == active);
                 assert!(axes.time.crosshair_label.is_some());
+                assert_eq!(pane.plot.crosshair_markers.is_empty(), i == 1);
             }
             assert!(!frame.panes[0].plot.lines.is_empty());
             assert!(!frame.panes[1].plot.candles.is_empty());
@@ -122,6 +123,118 @@ fn multi_pane_frames_share_time_and_keep_price_labels_local() {
         .unwrap();
     assert_eq!(frame.panes.len(), 1);
     assert!(frame.panes[0].plot.crosshair.is_empty());
+}
+
+#[test]
+fn multi_pane_animation_samples_once_across_layout_passes_and_failure_clears_views() {
+    use super::chart_layout::{CountingAnimation, Fake};
+    use crate::model::invalidate_mask::AnimationRequest;
+    use std::{cell::Cell, rc::Rc};
+    let (mut layer, mut model, id) = fixture();
+    let volume = SeriesId::new(2);
+    model.add_pane();
+    model
+        .register_series(
+            volume,
+            SeriesType::Histogram,
+            histogram_options(),
+            1,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    volume,
+                    SeriesType::Histogram,
+                    (1..=20)
+                        .map(|i| histogram(i as f64, 0., 1000. + i as f64))
+                        .collect(),
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    let start = Instant::now();
+    let calls = Rc::new(Cell::new(0));
+    model.set_time_scale_animation(AnimationRequest::new(CountingAnimation {
+        calls: calls.clone(),
+        start,
+    }));
+    let mut controller = TimeScaleAnimationController::default();
+    let mut views = vec![
+        SeriesPaneView::Line(Default::default()),
+        SeriesPaneView::Histogram(Default::default()),
+    ];
+    let mut owner = MultiPaneChartFrameOwner::default();
+    let input = MultiPaneChartFrameInput {
+        series: vec![Some(id), Some(volume)],
+        bounds: AxisBounds {
+            width: 800.,
+            height: 500.,
+        },
+        pixel_ratio: PixelRatio {
+            horizontal: 1.25,
+            vertical: 1.25,
+        },
+        background: "white".into(),
+    };
+    let first = owner
+        .prepare(
+            &mut model,
+            &mut controller,
+            &mut views,
+            &input,
+            &mut Fake::new(&[10., 10., 100., 100., 100., 100.]),
+            start + Duration::from_millis(500),
+        )
+        .unwrap();
+    assert_eq!(first.panes[0].passes, 2);
+    assert_eq!(calls.get(), 1);
+    assert_eq!(model.time_scale().right_offset(), -5.);
+    assert!(controller.is_active());
+    assert!(model.take_invalidation().is_some());
+    let mut invalid = histogram_options();
+    if let SeriesOptionsMap::Histogram(options) = &mut invalid {
+        options.style.color = "invalid-css-color".into();
+    }
+    model.replace_series_options(volume, invalid).unwrap();
+    model.fit_content();
+    assert!(
+        owner
+            .prepare(
+                &mut model,
+                &mut controller,
+                &mut views,
+                &input,
+                &mut Fake::new(&[100.]),
+                start + Duration::from_millis(750)
+            )
+            .is_err()
+    );
+    for view in &views {
+        match view {
+            SeriesPaneView::Line(v) => assert!(v.data().is_none()),
+            SeriesPaneView::Histogram(v) => assert!(v.data().is_none()),
+            _ => unreachable!(),
+        }
+    }
+    model
+        .replace_series_options(volume, histogram_options())
+        .unwrap();
+    let mut limited = MultiPaneChartFrameOwner::with_pass_limit(1).unwrap();
+    assert!(matches!(
+        limited.prepare(
+            &mut model,
+            &mut controller,
+            &mut views,
+            &input,
+            &mut Fake::new(&[10., 10., 100., 100.]),
+            Instant::now()
+        ),
+        Err(crate::ui::chart_frame::ChartFrameError::LayoutDidNotConverge { passes: 1 })
+    ));
+    assert!(MultiPaneChartFrameOwner::with_pass_limit(0).is_err());
 }
 
 #[test]

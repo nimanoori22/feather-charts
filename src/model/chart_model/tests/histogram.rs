@@ -183,3 +183,126 @@ fn histogram_refresh_clears_stale_output_and_rejects_wrong_types() {
         Err(HistogramPreparationError::NotHistogramSeries(id))
     );
 }
+
+#[test]
+fn histogram_frame_failure_conflation_empty_and_history_refresh() {
+    use crate::{
+        model::time_scale_options::HorzScaleOptionsPatch,
+        renderers::{grid_renderer::PixelRatio, price_axis_renderer::AxisBounds},
+        ui::{
+            chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer},
+            price_axis::AxisFontResolver,
+        },
+    };
+    let (mut layer, mut model, id) = histogram_fixture(PriceScaleMode::Normal);
+    let old = model.prepare_histogram(id).unwrap().unwrap();
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Histogram,
+                    (-5..20)
+                        .map(|i| histogram(i as f64, 0., 102. + i as f64))
+                        .collect(),
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    flush(&mut model);
+    let next = model.prepare_histogram(id).unwrap().unwrap();
+    assert_eq!(
+        old.items
+            .iter()
+            .map(|p| (&p.color, p.x, p.y))
+            .collect::<Vec<_>>(),
+        next.items
+            .iter()
+            .map(|p| (&p.color, p.x, p.y))
+            .collect::<Vec<_>>()
+    );
+    let mut pane = HistogramPaneView::default();
+    pane.refresh(&mut model, id).unwrap();
+    let fonts = AxisFontResolver::default();
+    let mut owner = ChartFrameOwner::default();
+    let mut input = ChartFrameInput {
+        series: Some(id),
+        bounds: AxisBounds {
+            width: f64::NAN,
+            height: 500.,
+        },
+        pixel_ratio: PixelRatio {
+            horizontal: 1.,
+            vertical: 1.,
+        },
+        background: "white".into(),
+    };
+    assert!(
+        owner
+            .prepare_histogram(
+                &mut model,
+                &mut TimeScaleAnimationController::default(),
+                &mut pane,
+                &input,
+                &mut IcedAxisMeasurer { fonts: &fonts },
+                Instant::now()
+            )
+            .is_err()
+    );
+    assert!(pane.data().is_none());
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(true),
+            ..Default::default()
+        },
+    );
+    flush(&mut model);
+    assert_eq!(
+        pane.refresh(&mut model, id),
+        Err(HistogramPreparationError::UnsupportedConflation)
+    );
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(false),
+            ..Default::default()
+        },
+    );
+    flush(&mut model);
+    input.bounds = AxisBounds::default();
+    let frame = owner
+        .prepare_histogram(
+            &mut model,
+            &mut TimeScaleAnimationController::default(),
+            &mut pane,
+            &input,
+            &mut IcedAxisMeasurer { fonts: &fonts },
+            Instant::now(),
+        )
+        .unwrap();
+    assert!(frame.plot.candles.is_empty());
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Histogram,
+                    vec![BuiltInSeriesDataItem::Histogram(
+                        HistogramDataItem::Whitespace(WhitespaceData {
+                            time: Time::from(UtcTimestamp::new(0.)),
+                            custom_values: None,
+                        }),
+                    )],
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    model.set_width(600.).unwrap();
+    model.set_pane_height(0, 300.).unwrap();
+    model.fit_content();
+    flush(&mut model);
+    pane.refresh(&mut model, id).unwrap();
+    assert!(pane.data().is_none());
+    assert!(!old.items.is_empty());
+}

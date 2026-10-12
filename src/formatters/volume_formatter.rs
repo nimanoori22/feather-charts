@@ -58,12 +58,12 @@ mod tests {
     }
     #[test]
     fn preserves_integer_zeroes_and_zero_in_axis_labels() {
-        for precision in [0,2] {
-            let formatter=VolumeFormatter::new(precision);
-            assert_eq!(formatter.format(0.),"0");
-            assert_eq!(formatter.format(100.),"100");
-            assert_eq!(formatter.format(40_000.),"40K");
-            assert_eq!(formatter.format(-30_000_000.),"-30M");
+        for precision in [0, 2] {
+            let formatter = VolumeFormatter::new(precision);
+            assert_eq!(formatter.format(0.), "0");
+            assert_eq!(formatter.format(100.), "100");
+            assert_eq!(formatter.format(40_000.), "40K");
+            assert_eq!(formatter.format(-30_000_000.), "-30M");
         }
     }
 }

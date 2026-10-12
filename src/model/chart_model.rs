@@ -140,11 +140,14 @@ where
     ) -> Vec<crate::model::crosshair::CrosshairMarker> {
         use crate::model::crosshair::CrosshairMarker;
         use crate::renderers::line_renderer::Point;
-        let Some(position) = self.crosshair.position.filter(|p| p.pane == pane) else {
+        let Some(position) = self.crosshair.position else {
             return vec![];
         };
         let visible = self.time_scale.visible_strict_range();
-        let ids = self.panes[pane].ordered_source_ids().to_vec();
+        let Some(state) = self.panes.get_mut(pane) else {
+            return vec![];
+        };
+        let ids = state.ordered_source_ids().to_vec();
         let mut markers = vec![];
         let mut parser = crate::model::colors::ColorParser::default();
         for id in ids {
