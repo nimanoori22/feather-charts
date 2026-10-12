@@ -6,7 +6,7 @@ use crate::{
         data_layer::SeriesId,
         ihorz_scale_behavior::HorzScaleBehavior,
         invalidate_mask::{InvalidateMask, InvalidationLevel},
-        series::line_pane_view::{LinePaneView, LinePreparationError},
+        series::{candlesticks_pane_view::CandlesticksPaneView, line_pane_view::LinePaneView},
     },
     renderers::{
         grid_renderer::PixelRatio,
@@ -22,7 +22,7 @@ use crate::{
     },
     ui::{
         chart_layout::{AxisSizeRequests, ChartLayout, ChartLayoutError, allocate_chart_layout},
-        line_chart::{FrameError, FrameLayout, PlotSnapshot, prepare_settled_plot},
+        line_chart::{FrameError, FrameLayout, PaneView, PlotSnapshot, prepare_series_plot},
         price_axis::{
             AxisFontResolver, IcedAxisTextMeasurer, IcedPriceAxes, IcedPriceAxis, PriceAxisUiError,
         },
@@ -176,6 +176,60 @@ impl ChartFrameOwner {
         M: Clone + 'static,
         A: AxisMeasurer,
     {
+        self.prepare_series(
+            model,
+            controller,
+            PaneView::Line(view),
+            input,
+            measurer,
+            now,
+        )
+    }
+    pub fn prepare_candlesticks<B, M, A>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        view: &mut CandlesticksPaneView,
+        input: &ChartFrameInput,
+        measurer: &mut A,
+        now: Instant,
+    ) -> Result<ChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+    {
+        self.prepare_series(
+            model,
+            controller,
+            PaneView::Candlesticks(view),
+            input,
+            measurer,
+            now,
+        )
+    }
+    fn prepare_series<B, M, A>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        mut view: PaneView<'_>,
+        input: &ChartFrameInput,
+        measurer: &mut A,
+        now: Instant,
+    ) -> Result<ChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+    {
         let id = input.series;
         // Validate before detaching commands or modifying dimensions.
         allocate_chart_layout(input.bounds, AxisSizeRequests::default(), input.pixel_ratio)
@@ -189,9 +243,7 @@ impl ChartFrameOwner {
         if let Some(id) = id
             && model.pane_for_series(id) != Some(0)
         {
-            return Err(ChartFrameError::Plot(FrameError::Line(
-                LinePreparationError::UnknownSeries(id),
-            )));
+            return Err(ChartFrameError::Plot(view.unknown_series(id)));
         }
         view.clear();
         // Old dimensions provide a provisional request, not final geometry.
@@ -272,7 +324,7 @@ impl ChartFrameOwner {
                 pixel_ratio: input.pixel_ratio,
                 background: input.background.clone(),
             };
-            let plot = prepare_settled_plot(model, view, id, &plot_layout)
+            let plot = prepare_series_plot(model, &mut view, id, &plot_layout)
                 .map_err(ChartFrameError::Plot)?;
             let left = prepare_price_axis(&measured.left, layout.left_axis.size, input.pixel_ratio)
                 .map_err(ChartFrameError::Price)?;

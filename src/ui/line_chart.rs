@@ -6,7 +6,10 @@ use crate::{
         data_layer::SeriesId,
         ihorz_scale_behavior::HorzScaleBehavior,
         invalidate_mask::InvalidateMask,
-        series::line_pane_view::{LinePaneView, LinePreparationError},
+        series::{
+            candlesticks_pane_view::{CandlestickPreparationError, CandlesticksPaneView},
+            line_pane_view::{LinePaneView, LinePreparationError},
+        },
     },
     renderers::{
         draw_line::dash_pattern,
@@ -26,9 +29,37 @@ pub enum FrameError {
     Axes(AxisSnapshotError),
     Model(ChartModelError),
     Line(LinePreparationError),
+    Candlesticks(CandlestickPreparationError),
+    CandleGeometry(crate::renderers::candlesticks_renderer::CandlestickRenderError),
     InvalidPixelRatio,
     InvalidColor(String),
     SeriesPaneMismatch { series: SeriesId, pane: usize },
+}
+pub(crate) enum PaneView<'a> {
+    Line(&'a mut LinePaneView),
+    Candlesticks(&'a mut CandlesticksPaneView),
+}
+impl PaneView<'_> {
+    pub(crate) fn clear(&mut self) {
+        match self {
+            Self::Line(v) => v.clear(),
+            Self::Candlesticks(v) => v.clear(),
+        }
+    }
+    pub(crate) fn unknown_series(&self, id: SeriesId) -> FrameError {
+        match self {
+            Self::Line(_) => FrameError::Line(LinePreparationError::UnknownSeries(id)),
+            Self::Candlesticks(_) => {
+                FrameError::Candlesticks(CandlestickPreparationError::UnknownSeries(id))
+            }
+        }
+    }
+}
+#[derive(Clone, Debug)]
+pub struct CanvasRectangle {
+    pub origin: iced::Point,
+    pub size: Size,
+    pub color: Color,
 }
 pub struct FrameLayout {
     pub pane: usize,
@@ -59,6 +90,7 @@ pub struct PlotSnapshot {
     pub grid: Vec<CanvasStroke>,
     pub lines: Vec<CanvasStroke>,
     pub markers: Vec<CanvasMarker>,
+    pub candles: Vec<CanvasRectangle>,
     pub crosshair: Vec<CanvasStroke>,
     pub crosshair_markers: Vec<CanvasMarker>,
 }
@@ -72,6 +104,7 @@ impl Default for PlotSnapshot {
             grid: vec![],
             lines: vec![],
             markers: vec![],
+            candles: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         }
@@ -229,6 +262,7 @@ impl PlotSnapshot {
             grid: grid_strokes,
             lines,
             markers,
+            candles: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
         })
@@ -272,7 +306,27 @@ impl PlotSnapshot {
         } else {
             frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
         }
-        for stroke in self.grid.iter().chain(&self.lines).chain(&self.crosshair) {
+        self.draw_strokes(frame, self.grid.iter().chain(&self.lines));
+        for rect in &self.candles {
+            frame.fill_rectangle(rect.origin, rect.size, rect.color);
+        }
+        self.draw_strokes(frame, self.crosshair.iter());
+        // One fill per source style run avoids double alpha blending where
+        // adjacent same-color markers overlap.
+        for group in self.markers.chunk_by(|a, b| a.color_key == b.color_key) {
+            let path = Path::new(|builder| {
+                for marker in group {
+                    builder.circle(marker.center, marker.radius);
+                }
+            });
+            frame.fill(&path, group[0].color);
+        }
+        for marker in &self.crosshair_markers {
+            frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
+        }
+    }
+    fn draw_strokes<'a>(&self, frame: &mut Frame, strokes: impl Iterator<Item = &'a CanvasStroke>) {
+        for stroke in strokes {
             let path = Path::new(|builder| {
                 for op in &stroke.path {
                     let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
@@ -299,19 +353,6 @@ impl PlotSnapshot {
                     .with_line_cap(LineCap::Butt)
                     .with_line_join(LineJoin::Round),
             );
-        }
-        // One fill per source style run avoids double alpha blending where
-        // adjacent same-color markers overlap.
-        for group in self.markers.chunk_by(|a, b| a.color_key == b.color_key) {
-            let path = Path::new(|builder| {
-                for marker in group {
-                    builder.circle(marker.center, marker.radius);
-                }
-            });
-            frame.fill(&path, group[0].color);
-        }
-        for marker in &self.crosshair_markers {
-            frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
         }
     }
 }
@@ -398,6 +439,23 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    prepare_series_plot(model, &mut PaneView::Line(view), id, layout)
+}
+
+pub(crate) fn prepare_series_plot<B, M>(
+    model: &mut ChartModel<B, M>,
+    view: &mut PaneView<'_>,
+    id: Option<SeriesId>,
+    layout: &FrameLayout,
+) -> Result<PlotSnapshot, FrameError>
+where
+    B: HorzScaleBehavior,
+    B::Item: 'static,
+    B::InternalItem: 'static,
+    B::Key: PartialOrd,
+    B::CacheKey: Eq + Hash,
+    M: Clone + 'static,
+{
     view.clear();
     let pane = model
         .panes()
@@ -420,7 +478,7 @@ where
     }
     if let Some(id) = id {
         match model.pane_for_series(id) {
-            None => return Err(FrameError::Line(LinePreparationError::UnknownSeries(id))),
+            None => return Err(view.unknown_series(id)),
             Some(pane) if pane != layout.pane => {
                 return Err(FrameError::SeriesPaneMismatch {
                     series: id,
@@ -434,7 +492,12 @@ where
         .prepare_axis_snapshots(layout.pane)
         .map_err(FrameError::Axes)?;
     if let Some(id) = id {
-        view.refresh(model, id).map_err(FrameError::Line)?;
+        match view {
+            PaneView::Line(view) => view.refresh(model, id).map_err(FrameError::Line)?,
+            PaneView::Candlesticks(view) => {
+                view.refresh(model, id).map_err(FrameError::Candlesticks)?
+            }
+        }
     } else {
         view.clear();
     }
@@ -450,11 +513,35 @@ where
             },
             ratio,
         );
-    let line = view
-        .data()
-        .map(|data| data.draw_commands(ratio))
-        .unwrap_or_default();
+    let line = match view {
+        PaneView::Line(view) => view
+            .data()
+            .map(|data| data.draw_commands(ratio))
+            .unwrap_or_default(),
+        PaneView::Candlesticks(_) => LineDrawCommands::default(),
+    };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    if let PaneView::Candlesticks(view) = view
+        && let Some(data) = view.data()
+    {
+        snapshot.candles = data
+            .draw_commands(ratio)
+            .map_err(FrameError::CandleGeometry)?
+            .into_iter()
+            .map(|r| {
+                let x = r.x / f64::from(ratio.horizontal);
+                let y = r.y / f64::from(ratio.vertical);
+                let w = r.width / f64::from(ratio.horizontal);
+                let h = r.height / f64::from(ratio.vertical);
+                // Canvas2D fills negative extents in the opposite direction.
+                Ok(CanvasRectangle {
+                    origin: iced::Point::new(x.min(x + w) as f32, y.min(y + h) as f32),
+                    size: Size::new(w.abs() as f32, h.abs() as f32),
+                    color: color(&r.color)?,
+                })
+            })
+            .collect::<Result<_, FrameError>>()?;
+    }
     if let Some(position) = model
         .crosshair()
         .position()

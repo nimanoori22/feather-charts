@@ -240,3 +240,132 @@ fn candle_magnet_uses_close_or_ohlc_and_never_line_markers() {
     assert!(model.crosshair().position().is_none());
     assert!(model.prepare_candlesticks(id).unwrap().is_none());
 }
+
+#[test]
+fn candle_frames_settle_and_remain_owned_across_navigation_and_lifecycle() {
+    use crate::{
+        renderers::{grid_renderer::PixelRatio, price_axis_renderer::AxisBounds},
+        ui::{
+            chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer},
+            price_axis::AxisFontResolver,
+        },
+    };
+    let (mut layer, mut model, id) = candle_fixture(PriceScaleMode::Normal);
+    let mut owner = ChartFrameOwner::default();
+    let mut pane = CandlesticksPaneView::default();
+    let mut controller = TimeScaleAnimationController::default();
+    let fonts = AxisFontResolver::default();
+    let mut input = ChartFrameInput {
+        series: Some(id),
+        bounds: AxisBounds {
+            width: 800.,
+            height: 500.,
+        },
+        pixel_ratio: PixelRatio {
+            horizontal: 1.25,
+            vertical: 1.25,
+        },
+        background: "white".into(),
+    };
+    let first = owner
+        .prepare_candlesticks(
+            &mut model,
+            &mut controller,
+            &mut pane,
+            &input,
+            &mut IcedAxisMeasurer { fonts: &fonts },
+            Instant::now(),
+        )
+        .unwrap();
+    assert!(!first.plot.candles.is_empty());
+    assert!(first.plot.lines.is_empty());
+    assert_eq!(first.layout.plot.size.width, model.time_scale().width());
+    assert_eq!(first.layout.plot.size.height, model.panes()[0].height());
+    let retained = format!("{:?}", first);
+    for ratio in [1., 1.25, 1.5, 2.] {
+        input.pixel_ratio = PixelRatio {
+            horizontal: ratio,
+            vertical: ratio,
+        };
+        input.bounds = AxisBounds {
+            width: 280.,
+            height: 190.,
+        };
+        model.zoom_time(100.0.into(), 0.32);
+        model.start_scroll_time(50.0.into());
+        model.scroll_time_to(70.0.into());
+        model.end_scroll_time();
+        let next = owner
+            .prepare_candlesticks(
+                &mut model,
+                &mut controller,
+                &mut pane,
+                &input,
+                &mut IcedAxisMeasurer { fonts: &fonts },
+                Instant::now(),
+            )
+            .unwrap();
+        assert!(next.passes <= 8);
+        assert_eq!(next.time.bounds.width, next.layout.plot.size.width);
+        assert!(next.plot.candles.iter().all(|r| {
+            [r.origin.x, r.origin.y, r.size.width, r.size.height]
+                .iter()
+                .all(|v| v.is_finite())
+        }));
+    }
+    model
+        .apply_data_update(
+            layer
+                .update_series_data(id, candle(20., 140., 150.), false)
+                .unwrap(),
+        )
+        .unwrap();
+    model.scroll_to_offset_animated(-4., Duration::from_secs(1));
+    let _ = owner
+        .prepare_candlesticks(
+            &mut model,
+            &mut controller,
+            &mut pane,
+            &input,
+            &mut IcedAxisMeasurer { fonts: &fonts },
+            Instant::now(),
+        )
+        .unwrap();
+    model.zoom_time(100.0.into(), 0.32);
+    input.bounds = AxisBounds {
+        width: 0.,
+        height: 0.,
+    };
+    let zero = owner
+        .prepare_candlesticks(
+            &mut model,
+            &mut controller,
+            &mut pane,
+            &input,
+            &mut IcedAxisMeasurer { fonts: &fonts },
+            Instant::now(),
+        )
+        .unwrap();
+    assert!(zero.plot.candles.is_empty());
+    model
+        .remove_series(id, layer.remove_series(id).unwrap())
+        .unwrap();
+    input.series = None;
+    input.bounds = AxisBounds {
+        width: 800.,
+        height: 500.,
+    };
+    let empty = owner
+        .prepare_candlesticks(
+            &mut model,
+            &mut controller,
+            &mut pane,
+            &input,
+            &mut IcedAxisMeasurer { fonts: &fonts },
+            Instant::now(),
+        )
+        .unwrap();
+    assert!(empty.plot.candles.is_empty());
+    assert!(pane.data().is_none());
+    assert_eq!(retained, format!("{:?}", first));
+}
