@@ -140,8 +140,9 @@ without suppressions in `src/formatters/format_date.rs`, `src/model/get_series_p
 
 Physical mouse/touchpad zoom, scrolling, divider dragging and window resizing
 remain unchecked on real devices; native startup and synthetic events do not
-establish this acceptance. Public chart/widget facade, arbitrary multi-series
-composition/reordering, source touch/kinetic gestures remain subsequent work. Histogram conflation is explicitly unsupported.
+establish this acceptance. Public chart/widget ownership and multi-series composition are now implemented;
+see [public chart API](public-chart-api.md). Arbitrary pane reordering and source
+touch/kinetic gestures remain subsequent work. Histogram conflation is explicitly unsupported.
 
 Price-axis wheel/drag scaling and double-click reset are now implemented; see
 [price-axis interaction](price-axis-interaction.md) for the follow-up contract,

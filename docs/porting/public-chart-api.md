@@ -62,3 +62,74 @@ invalid replacement without losing old data, removed/foreign IDs, update before
 first set_data, historical updates, pane lifecycle, multiple series composition,
 exact-index events/whitespace, click versus drag, and existing gestures. Run fmt,
 all-target tests/check/Clippy, source oracles and TinySkia/WGPU captures.
+
+## Implemented result
+
+`src/api/{chart,defaults,interaction,widget,mod}.rs` provide the synchronous owner,
+validated data/options/navigation operations, typed owned events and borrowing
+Canvas integration. `src/model/time_scale.rs` exposes original time for exact-index
+events. `src/ui/{multi_pane_frame,line_chart}.rs` compose multiple series in creation
+order while retaining shared grids, axes and crosshair. The legacy one-series frame
+entry point still validates its complete input length.
+
+All four demos now use this owner/widget through `examples/support/chart_demo.rs`;
+its `series.rs`, `capture.rs` and `tests.rs` retain controls, captures and input
+regressions. `examples/public_chart.rs` is an independent public-API application.
+`README.md` documents embedding, host DPI forwarding and supported scope.
+
+Source consumers constrain the design: ChartApi/DataLayer coordinate shared time
+indexes and removal; SeriesApi validators require rejected replacement to preserve
+old data; pane/model consumers require independent price scales and synchronized
+time; ChartWidget/PaneWidget events require exact-index rows across all series,
+raw click coordinates independent of magnet snapping, and settled crosshair data.
+Source series/layout defaults were inspected alongside their public definitions.
+Represented defaults use a hidden left scale, source series styles and separator
+colors. Rust uses a supported generic sans-serif family; attribution remains off
+because its rendering is not implemented. Represented options do not promise
+unimplemented visual features such as price lines.
+
+JavaScript subscription identity, DOM ownership/manual destroy, class wrappers and
+nullable shared callback references are discarded. Hosts consume owned event
+vectors synchronously. Canvas owns recognition state, Chart owns engine/frame
+state, and immutable drawing cannot mutate either data owner. Native state checks
+series membership so replacing a Chart cancels an active gesture even when pane
+counts match. Idle data changes do not swallow the next wheel event. Nonempty live
+data replacement preserves active axis gestures; removal/empty data cancels them.
+
+## Behavioral tests and validation
+
+Seven public integration tests cover data lifecycle, foreign/removed IDs,
+transactional replacement validation, duplicate/invalid times and values,
+historical updates, composed rendering, pane preservation/removal, exact-index
+click/crosshair events and whitespace, native click versus drag, and malformed
+messages without partial mutation. Existing sixteen shared demo regressions run
+for all four demos. Temporarily allowing equal replacement timestamps made the
+validation regression fail, confirming it protects the ordering contract.
+
+Final validation: 399 test executions pass (328 library, seven API, and sixteen
+for each of four demos); formatting, all-target checking, strict Clippy and example
+builds pass. The independent example also passes its headless `--smoke` check.
+Source comparison scripts pass 19,233 cases across line/candlestick/histogram,
+price/time axes, chart/corner layout, multi-pane layout/input and general input.
+
+Twenty-eight price/volume captures pass on each of TinySkia and WGPU (56
+combined), covering seven scenarios at scales 1, 1.25, 1.5 and 2 with input
+replay. The fractional-scale WGPU frame was visually inspected. A bounded
+ten-second native startup of the standalone application completed without an
+error and was terminated by the timeout as intended.
+
+Capture acceptance uses deterministic output and complete offscreen coverage at
+fractional scales and during interactions. The former purple-color heuristic
+falsely flagged a legitimate line/candle blend; comparing the entire image rendered
+over two distinct clear colors proves coverage directly. Native double-click
+regressions recognize the timed input sequence before expensive font/frame work,
+then apply the same typed actions and assert autoscale restoration; this avoids
+scheduler-induced timing failures without extending the recognition threshold.
+
+## Remaining dependencies
+
+Area/bar/baseline/custom rendering, arbitrary pane reordering/movement, custom
+horizontal behavior, price lines, touch/kinetic input and full upstream API parity
+remain future milestones. No new dependency or async engine machinery was added.
+Physical mouse/touchpad feel after this migration requires a fresh check; the
+user's successful mouse check applies to the preceding interaction milestone.

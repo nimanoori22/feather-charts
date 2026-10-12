@@ -1,0 +1,46 @@
+# Feather Charts
+
+An in-progress Rust port of TradingView Lightweight Charts, using Iced 0.14.
+The reusable component currently renders line, candlestick and histogram series,
+including multiple series per pane and synchronized price/volume panes.
+
+Run the minimal application built with the public API:
+
+```sh
+cargo run --example public_chart
+```
+
+The existing interactive demos remain available: `line_chart`,
+`candlestick_chart`, `histogram_chart`, and `price_volume_chart`.
+
+## Embedding in an Iced application
+
+Keep `feather_charts::api::Chart` in application state. Create series with
+`add_series(options, pane, PriceScalePosition::Right)` and retain the returned
+`SeriesId`. Use `set_data` to replace an ordered data set, or `update_data` to
+append/replace the latest bar (`historical: true` updates an existing time).
+Use `add_pane` and pane stretch factors for a second panel. Removing a pane's
+last series also removes an unpreserved empty pane, retaining the final pane.
+
+In `view`, embed `chart.element().map(Message::Chart)`. In `update`, pass the
+received `ChartMessage` to `chart.update(message)` and handle the returned
+`ChartEvent::Click` / `ChartEvent::CrosshairMoved` payloads. They contain optional
+pane/point/logical/time/price and exact-index series data; whitespace has no value
+row. The widget reports bounds and requests animation frames automatically.
+Forward window scale-factor changes to `chart.prepare(size, ratio, now)`;
+[public_chart.rs](examples/public_chart.rs) shows the complete host wiring.
+After a batch of direct data/options/navigation changes, call `prepare` once.
+Drawing borrows an immutable frame and never updates the model.
+
+Hold the left mouse button in a plot to pan in both directions; wheel over a plot
+to zoom. Wheel/drag on a price axis scales it; double-click restores autoscale.
+Vertical plot movement explicitly enters manual price mode. Panes share time
+navigation and keep independent price ranges.
+
+This API covers the currently rendered built-in series and the default `Time`
+behavior. Area/bar/baseline/custom rendering, arbitrary pane reordering, price
+lines, touch/kinetic input and full TradingView API parity remain future work.
+Options already represented by the engine do not imply every visual feature is
+rendered. Read-only `model()` inspection remains available for advanced hosts.
+
+Implementation contract and verification: [public chart API report](docs/porting/public-chart-api.md).

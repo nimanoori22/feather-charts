@@ -52,8 +52,8 @@ Public model API:
 The start method explicitly enters manual price mode for supported nonempty
 scales. All methods validate pane/finite input and reuse existing pane effects,
 source price-scroll geometry and crosshair refresh. Current demos select the
-pane's default visible price axis, matching source consumers; arbitrary overlay
-composition belongs to the subsequent widget/API milestone.
+pane's default visible price axis, matching source consumers; multi-series
+composition is now supplied by the [public chart API](public-chart-api.md).
 
 ## Implementation and verification
 

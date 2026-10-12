@@ -62,8 +62,8 @@ pub(super) fn capture_display(
                 demo.apply_scenario(Instant::now());
                 if std::env::args().any(|arg| arg == "--capture-interactions") && demo.registered {
                     let point = iced::Point::new(
-                        demo.frame.plot.size.width * 0.5,
-                        demo.frame.plot.size.height * 0.4,
+                        demo.chart.frame().plot.size.width * 0.5,
+                        demo.chart.frame().plot.size.height * 0.4,
                     );
                     let _ = demo.update(Message::Interaction(ChartInteraction {
                         position: Some(point),
@@ -74,16 +74,16 @@ pub(super) fn capture_display(
                         }),
                         capture: true,
                     }));
-                    assert!(!demo.frame.plot.crosshair.is_empty());
+                    assert!(!demo.chart.frame().plot.crosshair.is_empty());
                     assert_eq!(
-                        demo.frame.plot.crosshair_markers.is_empty(),
+                        demo.chart.frame().plot.crosshair_markers.is_empty(),
                         (candlesticks || histogram) && !demo.left_registered
                     );
                 }
                 assert!(demo.error.is_none(), "{:?}", demo.error);
-                let before = format!("{:?}", demo.frame);
-                let offset = demo.model.time_scale().right_offset();
-                let active = demo.controller.is_active();
+                let before = format!("{:?}", demo.chart.frame());
+                let offset = demo.chart.model().time_scale().right_offset();
+                let active = demo.chart.is_animating();
                 let size = Size::new(
                     (demo.size.width * ratio).round() as u32,
                     (demo.size.height * ratio).round() as u32,
@@ -92,10 +92,10 @@ pub(super) fn capture_display(
                 for _ in 0..2 {
                     renderer.reset(iced::Rectangle::with_size(demo.size));
                     let mut frame = Frame::new(&renderer, demo.size);
-                    if let Some(multi) = &demo.multi_frame {
+                    if let Some(multi) = demo.chart.multi_frame() {
                         multi.draw(&mut frame);
                     } else {
-                        demo.frame.draw(&mut frame);
+                        demo.chart.frame().draw(&mut frame);
                     }
                     renderer.draw_geometry(frame.into_geometry());
                     let rgba =
@@ -106,9 +106,9 @@ pub(super) fn capture_display(
                     }
                     last = Some(rgba);
                 }
-                assert_eq!(before, format!("{:?}", demo.frame));
-                assert_eq!(offset, demo.model.time_scale().right_offset());
-                assert_eq!(active, demo.controller.is_active());
+                assert_eq!(before, format!("{:?}", demo.chart.frame()));
+                assert_eq!(offset, demo.chart.model().time_scale().right_offset());
+                assert_eq!(active, demo.chart.is_animating());
                 let name = if style_index == 0 {
                     format!("{}-{backend}-{ratio}", scenario.name())
                 } else {
@@ -126,15 +126,14 @@ pub(super) fn capture_display(
                     });
                     assert!(painted, "prepared series must remain visible in {name}");
                 }
-                // Magenta is the offscreen clear color, never a chart color. An
-                // exposed interior pixel indicates a hole between region clips.
-                for pixel in rgba.as_chunks::<4>().0 {
-                    assert!(
-                        !(pixel[0] > pixel[1].saturating_add(30)
-                            && pixel[2] > pixel[1].saturating_add(30)),
-                        "unpainted chart seam in {name}: {pixel:?}"
-                    );
-                }
+                // Identical output over two clear colors proves complete coverage,
+                // including antialiased seams, without mistaking series blends for holes.
+                let alternate_clear =
+                    renderer.screenshot(size, ratio, iced::Color::from_rgb8(0, 255, 0));
+                assert_eq!(
+                    rgba, alternate_clear,
+                    "chart must cover the offscreen clear color in {name}"
+                );
                 let mut ppm = format!("P6\n{} {}\n255\n", size.width, size.height).into_bytes();
                 for pixel in rgba.as_chunks::<4>().0 {
                     ppm.extend_from_slice(&pixel[..3]);
@@ -143,9 +142,9 @@ pub(super) fn capture_display(
                 std::fs::write(directory.join(format!("{name}.json")), format!(
                 "{{\"scenario\":\"{}\",\"backend\":\"{}\",\"font\":\"sans-serif\",\"fontSize\":12,\"logicalWidth\":{},\"logicalHeight\":{},\"physicalWidth\":{},\"physicalHeight\":{},\"scaleFactor\":{},\"plotWidth\":{},\"plotHeight\":{},\"leftWidth\":{},\"rightWidth\":{},\"timeHeight\":{},\"passes\":{}}}\n",
                 scenario.name(), renderer.name(), demo.size.width, demo.size.height, size.width, size.height,
-                ratio, demo.frame.layout.plot.size.width, demo.frame.layout.plot.size.height,
-                demo.frame.layout.left_axis.size.width, demo.frame.layout.right_axis.size.width,
-                demo.frame.layout.time_axis.size.height, demo.frame.passes)).unwrap();
+                ratio, demo.chart.frame().layout.plot.size.width, demo.chart.frame().layout.plot.size.height,
+                demo.chart.frame().layout.left_axis.size.width, demo.chart.frame().layout.right_axis.size.width,
+                demo.chart.frame().layout.time_axis.size.height, demo.chart.frame().passes)).unwrap();
             }
         }
     }

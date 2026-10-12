@@ -100,5 +100,5 @@ until reset. Percentage/indexed scales remain non-interactive like the source.
 On 2026-10-12 the user reported that physical mouse smoothness checks felt fine.
 Touchpad sensitivity and explicit coverage of both axis gestures/reset have not
 been separately reported. Free dragging inside the plot is now implemented; see
-[plot panning](plot-panning.md). Touch/kinetic input and the general public
-chart/widget facade remain subsequent capabilities. Earlier raster/performance reports are unchanged.
+[plot panning](plot-panning.md). The general public chart/widget facade is now implemented; see
+[public chart API](public-chart-api.md). Touch/kinetic input remains subsequent work. Earlier raster/performance reports are unchanged.

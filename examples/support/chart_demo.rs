@@ -2,95 +2,67 @@
 #[path = "display_scenario.rs"]
 mod display_scenario;
 use display_scenario::{DisplayConfig, DisplayScenario};
+#[cfg(test)]
 use feather_charts::{
+    api::ChartState,
+    renderers::grid_renderer::PixelRatio,
+    ui::{
+        chart_frame::{ChartFrameInput, IcedChartFrame},
+        price_axis::AxisFontResolver,
+    },
+};
+use feather_charts::{
+    api::{Chart, ChartMessage},
     model::{
         axis_snapshots::PriceAxisSide,
-        chart_model::{ChartModel, ChartModelOptions},
+        chart_model::ChartModelOptions,
         data_consumer::{
             BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, HistogramData,
             HistogramDataItem, LineData, LineDataItem, WhitespaceData,
         },
-        data_layer::{DataLayer, SeriesId},
+        data_layer::SeriesId,
         grid::GridOptions,
-        horz_scale_behavior_time::{
-            horz_scale_behavior_time::HorzScaleBehaviorTime,
-            types::{Time, UtcTimestamp},
-        },
+        horz_scale_behavior_time::types::{Time, UtcTimestamp},
         layout_options::{Background, ColorSpace, LayoutOptions, LayoutPanesOptions},
-        localization_options::LocalizationOptions,
         pane::{PaneOptions, PriceScalePosition},
         price_scale::PriceScaleOptionsPatch,
-        series::{
-            candlesticks_pane_view::CandlesticksPaneView, histogram_pane_view::HistogramPaneView,
-            line_pane_view::LinePaneView,
-        },
         series_options::{
             CandlestickStyleOptions, HistogramStyleOptions, LastPriceAnimationMode,
             LineStyleOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
             PriceLineSource, SeriesOptions, SeriesOptionsCommon, SeriesOptionsMap, SeriesType,
         },
         time_data::{Logical, LogicalRange},
-        time_scale::TimeScale,
-        time_scale_options::{HorzScaleOptions, HorzScaleOptionsPatch},
+        time_scale_options::HorzScaleOptionsPatch,
     },
     renderers::{
         draw_line::{LineStyle, LineType, LineWidth},
-        grid_renderer::PixelRatio,
         price_axis_renderer::AxisBounds,
     },
     ui::{
-        chart_frame::{ChartFrameInput, ChartFrameOwner, IcedAxisMeasurer, IcedChartFrame},
-        chart_input::{
-            ChartInput, ChartInteraction, MultiPaneInput, MultiPaneInteraction, Navigation,
-        },
-        multi_pane_frame::{
-            IcedMultiPaneChartFrame, MultiPaneChartFrameInput, MultiPaneChartFrameOwner,
-            SeriesPaneView,
-        },
-        price_axis::AxisFontResolver,
-        price_axis_input::{PriceAxisAction, PriceAxisInput, PriceAxisInteraction},
+        chart_input::{ChartInteraction, MultiPaneInteraction, Navigation},
+        price_axis_input::PriceAxisInteraction,
     },
-    views::time_scale_animation::TimeScaleAnimationController,
 };
+#[cfg(test)]
+use iced::widget::canvas;
 use iced::{
     Element, Size, Subscription, Theme,
-    widget::{
-        button,
-        canvas::{self, Canvas, Frame, Geometry},
-        column, container, row, text,
-    },
+    widget::{button, canvas::Frame, column, container, row, text},
 };
 use std::time::{Duration, Instant};
 
-const ID: SeriesId = SeriesId::new(1);
-const LEFT_ID: SeriesId = SeriesId::new(2);
-const VOLUME_ID: SeriesId = SeriesId::new(3);
 #[path = "chart_demo/series.rs"]
 mod series;
 use series::{SeriesKind, bar, options};
-struct PlotPan {
-    pane: usize,
-    side: PriceAxisSide,
-    anchor_y: f32,
-    price_started: bool,
-}
 struct Demo {
     config: DisplayConfig,
     series_kind: SeriesKind,
     volume_registered: bool,
-    plot_pan: Option<PlotPan>,
-    active_price_axis: Option<(usize, feather_charts::model::axis_snapshots::PriceAxisSide)>,
-    multi_frame: Option<IcedMultiPaneChartFrame>,
-    multi_owner: MultiPaneChartFrameOwner,
-    multi_views: Vec<SeriesPaneView>,
-    histogram_view: HistogramPaneView,
-    candle_view: CandlesticksPaneView,
-    layer: DataLayer<HorzScaleBehaviorTime>,
-    model: ChartModel<HorzScaleBehaviorTime>,
-    controller: TimeScaleAnimationController,
-    view: LinePaneView,
-    frame: IcedChartFrame,
-    frame_owner: ChartFrameOwner,
+    chart: Chart,
+    id: SeriesId,
+    left_id: SeriesId,
+    volume_id: SeriesId,
+    #[cfg(test)]
     fonts: AxisFontResolver,
     left_enabled: bool,
     left_registered: bool,
@@ -107,6 +79,7 @@ struct Demo {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Click { pane: usize, position: iced::Point },
     CrosshairMode,
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
@@ -154,64 +127,49 @@ impl Demo {
         )
     }
     fn new_chart(config: DisplayConfig, series_kind: SeriesKind) -> Self {
-        let model = ChartModel::new(
-            TimeScale::new(
-                HorzScaleBehaviorTime::default(),
-                HorzScaleOptions::default(),
-                LocalizationOptions::new("en-US", "dd MMM 'yy"),
-            ),
-            ChartModelOptions {
-                layout: LayoutOptions {
-                    background: if config.gradient {
-                        Background::VerticalGradient {
-                            top_color: "#101820".into(),
-                            bottom_color: "#36536a".into(),
-                        }
-                    } else {
-                        Background::Solid {
-                            color: "#101820".into(),
-                        }
-                    },
-                    text_color: "#eee".into(),
-                    font_size: config.font_size,
-                    font_family: config.font_family.clone(),
-                    panes: LayoutPanesOptions {
-                        enable_resize: series_kind.volume(),
-                        separator_color: "#36536a".into(),
-                        separator_hover_color: "#758696".into(),
-                    },
-                    attribution_logo: false,
-                    color_space: ColorSpace::Srgb,
-                    color_parsers: vec![],
+        let chart = Chart::new(ChartModelOptions {
+            layout: LayoutOptions {
+                background: if config.gradient {
+                    Background::VerticalGradient {
+                        top_color: "#101820".into(),
+                        bottom_color: "#36536a".into(),
+                    }
+                } else {
+                    Background::Solid {
+                        color: "#101820".into(),
+                    }
                 },
-                pane: PaneOptions {
-                    left_price_scale: feather_charts::model::price_scale::PriceScaleOptions {
-                        visible: false,
-                        ..Default::default()
-                    },
+                text_color: "#eee".into(),
+                font_size: config.font_size,
+                font_family: config.font_family.clone(),
+                panes: LayoutPanesOptions {
+                    enable_resize: series_kind.volume(),
+                    separator_color: "#36536a".into(),
+                    separator_hover_color: "#758696".into(),
+                },
+                attribution_logo: false,
+                color_space: ColorSpace::Srgb,
+                color_parsers: vec![],
+            },
+            pane: PaneOptions {
+                left_price_scale: feather_charts::model::price_scale::PriceScaleOptions {
+                    visible: false,
                     ..Default::default()
                 },
-                grid: GridOptions::default(),
-                add_default_pane: true,
+                ..Default::default()
             },
-        );
+            grid: GridOptions::default(),
+            add_default_pane: true,
+        });
         let mut demo = Self {
             config,
             series_kind,
             volume_registered: false,
-            plot_pan: None,
-            active_price_axis: None,
-            multi_frame: None,
-            multi_owner: MultiPaneChartFrameOwner::default(),
-            multi_views: vec![],
-            histogram_view: HistogramPaneView::default(),
-            candle_view: CandlesticksPaneView::default(),
-            layer: DataLayer::new(HorzScaleBehaviorTime::default()),
-            model,
-            controller: TimeScaleAnimationController::default(),
-            view: LinePaneView::default(),
-            frame: IcedChartFrame::default(),
-            frame_owner: ChartFrameOwner::default(),
+            chart,
+            id: SeriesId::new(0),
+            left_id: SeriesId::new(0),
+            volume_id: SeriesId::new(0),
+            #[cfg(test)]
             fonts: AxisFontResolver::default(),
             left_enabled: false,
             left_registered: false,
@@ -226,15 +184,12 @@ impl Demo {
             style: LineStyle::Solid,
             markers: false,
         };
-        demo.model.apply_time_scale_options(
-            &mut demo.layer,
-            HorzScaleOptionsPatch {
-                time_visible: Some(true),
-                fix_left_edge: Some(demo.config.fixed_edges),
-                fix_right_edge: Some(demo.config.fixed_edges),
-                ..Default::default()
-            },
-        );
+        demo.chart.apply_time_scale_options(HorzScaleOptionsPatch {
+            time_visible: Some(true),
+            fix_left_edge: Some(demo.config.fixed_edges),
+            fix_right_edge: Some(demo.config.fixed_edges),
+            ..Default::default()
+        });
         demo.load();
         if demo.config.left_axis {
             let _ = demo.update(Message::LeftAxis);
@@ -248,7 +203,7 @@ impl Demo {
 impl Demo {
     fn apply_scenario(&mut self, now: Instant) {
         self.size = Size::new(self.config.width, self.config.height);
-        self.model.fit_content();
+        self.chart.fit_content();
         match self.config.scenario {
             DisplayScenario::Historical => {
                 let _ = self.update(Message::Older);
@@ -258,7 +213,7 @@ impl Demo {
                 let _ = self.update(Message::Remove);
             }
             DisplayScenario::Animation => {
-                self.model
+                self.chart
                     .scroll_to_offset_animated(-40., Duration::from_secs(2));
                 self.prepare(now);
                 self.size = Size::new(620., 360.);
@@ -271,39 +226,26 @@ impl Demo {
     }
     fn load(&mut self) {
         if !self.registered {
-            self.model
-                .register_series(
-                    ID,
-                    self.series_type(),
-                    self.series_options(),
-                    0,
-                    PriceScalePosition::Right,
-                )
+            self.id = self
+                .chart
+                .add_series(self.series_options(), 0, PriceScalePosition::Right)
                 .unwrap();
             self.registered = true;
         }
         self.count = 120;
         self.history_start = 0;
-        let response = self
-            .layer
-            .set_series_data(
-                ID,
-                self.series_type(),
-                (0..self.count).map(|i| self.bar(i, 0.)).collect(),
-            )
-            .unwrap();
-        self.model.apply_data_update(response).unwrap();
+        let data = (0..self.count).map(|i| self.bar(i, 0.)).collect();
+        self.chart.set_data(self.id, data).unwrap();
         self.sync_volume();
-        self.model.fit_content();
+        self.chart.fit_content();
         self.sync_left();
     }
     fn sync_left(&mut self) {
         if self.left_enabled && self.registered {
             if !self.left_registered {
-                self.model
-                    .register_series(
-                        LEFT_ID,
-                        SeriesType::Line,
+                self.left_id = self
+                    .chart
+                    .add_series(
                         options(self.kind, self.style, false),
                         0,
                         PriceScalePosition::Left,
@@ -320,170 +262,42 @@ impl Demo {
                     item
                 })
                 .collect();
-            let update = self
-                .layer
-                .set_series_data(LEFT_ID, SeriesType::Line, data)
-                .unwrap();
-            self.model.apply_data_update(update).unwrap();
+            self.chart.set_data(self.left_id, data).unwrap();
         } else if self.left_registered {
-            let response = self.layer.remove_series(LEFT_ID).unwrap();
-            self.model.remove_series(LEFT_ID, response).unwrap();
+            self.chart.remove_series(self.left_id).unwrap();
             self.left_registered = false;
         }
     }
     fn prepare(&mut self, now: Instant) {
-        let input = ChartFrameInput {
-            series: self.registered.then_some(ID),
-            bounds: AxisBounds {
-                width: f64::from(self.size.width),
-                height: f64::from(self.size.height),
-            },
-            pixel_ratio: PixelRatio {
-                horizontal: self.scale,
-                vertical: self.scale,
-            },
-            background: "#101820".into(),
-        };
-        if self.series_kind.volume() {
-            self.prepare_multi(&input, now);
-            return;
-        }
-        let result = self
-            .prepare_snapshot(&input, now)
-            .and_then(|snapshot| IcedChartFrame::from_snapshot(snapshot, &self.fonts));
-        match result {
-            Ok(frame) => {
-                self.frame = frame;
-                self.error = None;
-            }
-            Err(error) => {
-                self.frame = IcedChartFrame::default();
-                self.frame.layout.available = input.bounds;
-                self.error = Some(format!("{error:?}"));
-            }
-        }
+        self.error = self
+            .chart
+            .prepare(self.size, self.scale, now)
+            .err()
+            .map(|e| format!("{e:?}"));
     }
-    fn prepare_multi(&mut self, input: &ChartFrameInput, now: Instant) {
-        let series = (0..self.model.panes().len())
-            .map(|pane| {
-                [ID, VOLUME_ID]
-                    .into_iter()
-                    .find(|id| self.model.pane_for_series(*id) == Some(pane))
-            })
-            .collect::<Vec<_>>();
-        if self.multi_views.len() != series.len() {
-            self.multi_views = series
-                .iter()
-                .map(|id| {
-                    if *id == Some(VOLUME_ID) {
-                        SeriesPaneView::Histogram(Default::default())
-                    } else {
-                        SeriesPaneView::Candlesticks(Default::default())
-                    }
-                })
-                .collect();
-        }
-        let result = self
-            .multi_owner
-            .prepare(
-                &mut self.model,
-                &mut self.controller,
-                &mut self.multi_views,
-                &MultiPaneChartFrameInput {
-                    series,
-                    bounds: input.bounds,
-                    pixel_ratio: input.pixel_ratio,
-                    background: input.background.clone(),
-                },
-                &mut IcedAxisMeasurer { fonts: &self.fonts },
-                now,
-            )
-            .and_then(|snapshot| {
-                IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, "#36536a")
-            });
-        match result {
-            Ok(frame) => {
-                self.frame = frame.panes.first().cloned().unwrap_or_default();
-                self.multi_frame = Some(frame);
-                self.error = None;
-            }
-            Err(error) => {
-                self.multi_frame = None;
-                self.frame = IcedChartFrame::default();
-                self.frame.layout.available = input.bounds;
-                self.error = Some(format!("{error:?}"));
-            }
-        }
-    }
+    #[cfg(test)]
     fn prepare_snapshot(
         &mut self,
         input: &ChartFrameInput,
         now: Instant,
-    ) -> Result<
-        feather_charts::ui::chart_frame::ChartFrameSnapshot,
-        feather_charts::ui::chart_frame::ChartFrameError,
-    > {
-        let mut measurer = IcedAxisMeasurer { fonts: &self.fonts };
-        if self.series_kind.histogram() {
-            self.frame_owner.prepare_histogram(
-                &mut self.model,
-                &mut self.controller,
-                &mut self.histogram_view,
-                input,
-                &mut measurer,
+    ) -> Result<feather_charts::ui::chart_frame::ChartFrameSnapshot, feather_charts::api::ChartError>
+    {
+        Ok(self
+            .chart
+            .prepare_snapshot(
+                Size::new(input.bounds.width as f32, input.bounds.height as f32),
+                input.pixel_ratio.horizontal,
                 now,
-            )
-        } else if self.series_kind.candlesticks() {
-            self.frame_owner.prepare_candlesticks(
-                &mut self.model,
-                &mut self.controller,
-                &mut self.candle_view,
-                input,
-                &mut measurer,
-                now,
-            )
-        } else {
-            self.frame_owner.prepare(
-                &mut self.model,
-                &mut self.controller,
-                &mut self.view,
-                input,
-                &mut measurer,
-                now,
-            )
-        }
+            )?
+            .panes
+            .remove(0))
     }
     fn has_series_geometry(&self) -> bool {
         if self.series_kind.candlesticks() || self.series_kind.histogram() {
-            !self.frame.plot.candles.is_empty()
+            !self.chart.frame().plot.candles.is_empty()
         } else {
-            !self.frame.plot.lines.is_empty()
+            !self.chart.frame().plot.lines.is_empty()
         }
-    }
-    fn cancel_plot_pan(&mut self) {
-        self.model.end_scroll_time();
-        if let Some(pan) = self.plot_pan.take() {
-            let _ = self.model.end_scroll_price(pan.pane, pan.side);
-        }
-    }
-    fn cancel_price_axis(&mut self) {
-        if let Some((pane, side)) = self.active_price_axis.take() {
-            let _ = self.model.end_scale_price(pane, side);
-        }
-    }
-    fn axis_scaling(&self) -> Vec<[bool; 2]> {
-        self.model
-            .panes()
-            .iter()
-            .map(|pane| {
-                [pane.left_price_scale(), pane.right_price_scale()].map(|scale| {
-                    scale.options().visible
-                        && !scale.is_empty()
-                        && !scale.is_percentage()
-                        && !scale.is_indexed_to_100()
-                })
-            })
-            .collect()
     }
     fn update(&mut self, message: Message) -> iced::Task<Message> {
         let mut now = Instant::now();
@@ -496,45 +310,28 @@ impl Demo {
                 | Message::Clear
                 | Message::LeftAxis
         ) {
-            self.cancel_price_axis();
-            self.cancel_plot_pan();
+            self.chart.cancel_interaction();
         }
         match message {
             Message::PriceAxis(input) => {
-                self.cancel_plot_pan();
-                self.model.set_crosshair_position(0, None).unwrap();
-                let result = match input.action {
-                    PriceAxisAction::Start { y } => {
-                        self.cancel_price_axis();
-                        self.active_price_axis = Some((input.pane, input.side));
-                        self.model.start_scale_price(input.pane, input.side, y)
-                    }
-                    PriceAxisAction::Move { y } => {
-                        if self.active_price_axis == Some((input.pane, input.side)) {
-                            self.model.scale_price_to(input.pane, input.side, y)
-                        } else {
-                            Ok(())
-                        }
-                    }
-                    PriceAxisAction::End => {
-                        self.cancel_price_axis();
-                        Ok(())
-                    }
-                    PriceAxisAction::Wheel { delta } => {
-                        self.model.zoom_price_scale(input.pane, input.side, delta)
-                    }
-                    PriceAxisAction::Reset => {
-                        self.cancel_price_axis();
-                        self.model.reset_price_scale(input.pane, input.side)
-                    }
-                };
-                if let Err(error) = result {
-                    self.error = Some(format!("{error:?}"));
-                }
+                self.error = self
+                    .chart
+                    .update(ChartMessage::PriceAxis(input))
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
+            }
+            Message::Click { pane, position } => {
+                self.error = self
+                    .chart
+                    .update(ChartMessage::Click { pane, position })
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
             }
             Message::CrosshairMode => {
                 use feather_charts::model::crosshair::CrosshairMode;
-                let mut options = self.model.crosshair().options().clone();
+                let mut options = self.chart.model().crosshair().options().clone();
                 options.mode = match options.mode {
                     CrosshairMode::Magnet => CrosshairMode::Normal,
                     CrosshairMode::Normal if self.series_kind.candlesticks() => {
@@ -543,41 +340,29 @@ impl Demo {
                     CrosshairMode::Normal | CrosshairMode::MagnetOhlc => CrosshairMode::Hidden,
                     _ => CrosshairMode::Magnet,
                 };
-                self.model.set_crosshair_options(options).unwrap();
+                self.chart.set_crosshair_options(options).unwrap();
             }
-            Message::Interaction(input) => self.apply_interaction(0, input),
-            Message::PaneInteraction(action) => match action {
-                MultiPaneInteraction::Plot { pane, interaction } => {
-                    self.apply_interaction(pane, interaction)
-                }
-                MultiPaneInteraction::Resize {
-                    top,
-                    upper_stretch,
-                    lower_stretch,
-                } => {
-                    self.cancel_plot_pan();
-                    self.model.set_crosshair_position(0, None).unwrap();
-                    self.model
-                        .set_pane_stretch_factor(top, upper_stretch)
-                        .unwrap();
-                    self.model
-                        .set_pane_stretch_factor(top + 1, lower_stretch)
-                        .unwrap();
-                }
-                MultiPaneInteraction::Cancel => self.apply_interaction(
-                    0,
-                    ChartInteraction {
-                        position: None,
-                        navigation: Some(Navigation::EndScroll),
-                        capture: false,
-                    },
-                ),
-            },
+            Message::Interaction(input) => {
+                self.error = self
+                    .chart
+                    .update(ChartMessage::Interaction(input))
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
+            }
+            Message::PaneInteraction(input) => {
+                self.error = self
+                    .chart
+                    .update(ChartMessage::PaneInteraction(input))
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
+            }
             Message::Bounds(size) => {
                 let startup = self.size.width == 0. && size.width > 0.;
                 self.size = size;
                 if startup && self.registered {
-                    self.model.fit_content();
+                    self.chart.fit_content();
                 }
             }
             Message::Tick(time) => now = time,
@@ -588,35 +373,27 @@ impl Demo {
                 self.scale = scale
             }
             Message::Window(_, _) => return iced::Task::none(),
-            Message::Fit => self.model.fit_content(),
+            Message::Fit => self.chart.fit_content(),
             Message::Append if self.registered => {
-                let response = self
-                    .layer
-                    .update_series_data(ID, self.bar(self.count, 0.), false)
+                self.chart
+                    .update_data(self.id, self.bar(self.count, 0.), false)
                     .unwrap();
-                self.model.apply_data_update(response).unwrap();
                 if self.volume_registered {
-                    let response = self
-                        .layer
-                        .update_series_data(VOLUME_ID, self.volume_bar(self.count, 0.), false)
+                    self.chart
+                        .update_data(self.volume_id, self.volume_bar(self.count, 0.), false)
                         .unwrap();
-                    self.model.apply_data_update(response).unwrap();
                 }
                 self.count += 1;
                 self.sync_left();
             }
             Message::Replace if self.registered && self.count > 0 => {
-                let response = self
-                    .layer
-                    .update_series_data(ID, self.bar(self.count - 1, 3.), false)
+                self.chart
+                    .update_data(self.id, self.bar(self.count - 1, 3.), false)
                     .unwrap();
-                self.model.apply_data_update(response).unwrap();
                 if self.volume_registered {
-                    let response = self
-                        .layer
-                        .update_series_data(VOLUME_ID, self.volume_bar(self.count - 1, 3.), false)
+                    self.chart
+                        .update_data(self.volume_id, self.volume_bar(self.count - 1, 3.), false)
                         .unwrap();
-                    self.model.apply_data_update(response).unwrap();
                 }
             }
             Message::Prepend if self.registered => {
@@ -624,54 +401,40 @@ impl Demo {
                 let data = (self.history_start..self.count as i64)
                     .map(|i| self.history_bar(i, false))
                     .collect();
-                let update = self
-                    .layer
-                    .set_series_data(ID, self.series_type(), data)
-                    .unwrap();
-                self.model.apply_data_update(update).unwrap();
+                self.chart.set_data(self.id, data).unwrap();
                 if self.volume_registered {
                     self.sync_volume();
                 }
             }
             Message::Clear if self.registered => {
-                let update = self
-                    .layer
-                    .set_series_data(ID, self.series_type(), vec![])
-                    .unwrap();
-                self.model.apply_data_update(update).unwrap();
+                self.chart.set_data(self.id, vec![]).unwrap();
                 if self.volume_registered {
-                    let update = self
-                        .layer
-                        .set_series_data(VOLUME_ID, SeriesType::Histogram, vec![])
-                        .unwrap();
-                    self.model.apply_data_update(update).unwrap();
+                    self.chart.set_data(self.volume_id, vec![]).unwrap();
                 }
                 self.count = 0;
                 self.history_start = 0;
                 self.sync_left();
             }
-            Message::Older => self.model.set_logical_range(LogicalRange {
+            Message::Older => self.chart.set_logical_range(LogicalRange {
                 from: Logical::new(10.),
                 to: Logical::new(50.),
             }),
-            Message::Latest => self.model.set_right_offset(0.),
+            Message::Latest => self.chart.set_right_offset(0.),
             Message::Remove if self.registered => {
                 if self.volume_registered {
-                    let update = self.layer.remove_series(VOLUME_ID).unwrap();
-                    self.model.remove_series(VOLUME_ID, update).unwrap();
+                    self.chart.remove_series(self.volume_id).unwrap();
                     self.volume_registered = false;
                 }
-                let response = self.layer.remove_series(ID).unwrap();
-                self.model.remove_series(ID, response).unwrap();
+                self.chart.remove_series(self.id).unwrap();
                 self.registered = false;
                 self.count = 0;
                 self.sync_left();
             }
             Message::Reload => self.load(),
             Message::Animate => self
-                .model
+                .chart
                 .scroll_to_offset_animated(-40., Duration::from_secs(2)),
-            Message::Stop => self.model.stop_time_scale_animation(),
+            Message::Stop => self.chart.stop_time_scale_animation(),
             Message::Kind => {
                 self.kind = if self.series_kind.candlesticks() {
                     if self.kind == LineType::Simple {
@@ -701,7 +464,7 @@ impl Demo {
             }
             Message::LeftAxis => {
                 self.left_enabled = !self.left_enabled;
-                self.model
+                self.chart
                     .apply_price_axis_options(
                         0,
                         PriceAxisSide::Left,
@@ -715,15 +478,12 @@ impl Demo {
             }
             Message::Ticks => {
                 self.ticks = !self.ticks;
-                self.model.apply_time_scale_options(
-                    &mut self.layer,
-                    HorzScaleOptionsPatch {
-                        ticks_visible: Some(self.ticks),
-                        ..Default::default()
-                    },
-                );
+                self.chart.apply_time_scale_options(HorzScaleOptionsPatch {
+                    ticks_visible: Some(self.ticks),
+                    ..Default::default()
+                });
                 for side in [PriceAxisSide::Left, PriceAxisSide::Right] {
-                    self.model
+                    self.chart
                         .apply_price_axis_options(
                             0,
                             side,
@@ -740,77 +500,10 @@ impl Demo {
         self.prepare(now);
         iced::Task::none()
     }
-    fn apply_interaction(&mut self, pane: usize, input: ChartInteraction) {
-        use feather_charts::model::coordinate::Coordinate;
-        match input.navigation {
-            Some(Navigation::Wheel { x, zoom, scroll }) => {
-                self.cancel_plot_pan();
-                self.model.zoom_time(Coordinate::new(x), zoom);
-                if scroll != 0. {
-                    self.model.start_scroll_time(Coordinate::new(0.));
-                    self.model.scroll_time_to(Coordinate::new(scroll));
-                    self.model.end_scroll_time();
-                }
-            }
-            Some(Navigation::Pan { start, position }) => {
-                if let Some(start) = start {
-                    self.cancel_plot_pan();
-                    let side = if self.model.panes()[pane].default_price_scale().id() == "left" {
-                        PriceAxisSide::Left
-                    } else {
-                        PriceAxisSide::Right
-                    };
-                    self.plot_pan = Some(PlotPan {
-                        pane,
-                        side,
-                        anchor_y: start.y,
-                        price_started: false,
-                    });
-                    self.model
-                        .start_scroll_time(Coordinate::new(f64::from(start.x)));
-                }
-                if let Some(pan) = &mut self.plot_pan {
-                    if !pan.price_started && position.y != pan.anchor_y {
-                        self.model
-                            .start_scroll_price(pan.pane, pan.side, f64::from(pan.anchor_y))
-                            .unwrap();
-                        pan.price_started = true;
-                    }
-                    if pan.price_started {
-                        self.model
-                            .scroll_price_to(pan.pane, pan.side, f64::from(position.y))
-                            .unwrap();
-                    }
-                    self.model
-                        .scroll_time_to(Coordinate::new(f64::from(position.x)));
-                }
-            }
-            Some(Navigation::Scroll { start, x }) => {
-                if let Some(start) = start {
-                    self.cancel_plot_pan();
-                    self.model.start_scroll_time(Coordinate::new(start));
-                }
-                self.model.scroll_time_to(Coordinate::new(x));
-            }
-            Some(Navigation::EndScroll) => self.cancel_plot_pan(),
-            None => {}
-        }
-        self.model
-            .set_crosshair_position(
-                pane,
-                input
-                    .position
-                    .map(|point| feather_charts::renderers::line_renderer::Point {
-                        x: f64::from(point.x),
-                        y: f64::from(point.y),
-                    }),
-            )
-            .unwrap();
-    }
     fn apply_style(&mut self) {
         if self.registered {
-            self.model
-                .replace_series_options(ID, self.series_options())
+            self.chart
+                .replace_series_options(self.id, self.series_options())
                 .unwrap();
         }
     }
@@ -855,27 +548,12 @@ impl Demo {
             button("Ticks").on_press(Message::Ticks),
             button(text(format!(
                 "Crosshair: {:?}",
-                self.model.crosshair().options().mode
+                self.chart.model().crosshair().options().mode
             )))
             .on_press(Message::CrosshairMode)
         ]
         .spacing(5);
-        let chart = Canvas::new(Chart {
-            snapshot: &self.frame,
-            multi: self.multi_frame.as_ref(),
-            stretches: self
-                .model
-                .panes()
-                .iter()
-                .map(|p| p.stretch_factor())
-                .collect(),
-            axis_scaling: self.axis_scaling(),
-            active_price_axis: self.active_price_axis,
-            animate: self.controller.is_active(),
-            enabled: !self.model.time_scale().is_empty(),
-        })
-        .width(iced::Fill)
-        .height(iced::Fill);
+        let chart = self.chart.element().map(Message::from);
         container(
             column![
                 controls,
@@ -883,16 +561,16 @@ impl Demo {
                 text(self.error.clone().unwrap_or_else(|| format!(
                     "{} bars · axes L {:.0} / R {:.0} / T {:.0} px · plot {:.0} × {:.0} · {} passes",
                     self.count,
-                    self.frame.layout.left_axis.size.width,
-                    self.frame.layout.right_axis.size.width,
-                    self.frame.layout.time_axis.size.height,
-                    self.frame.layout.plot.size.width,
-                    self.frame.layout.plot.size.height,
-                    self.frame.passes
+                    self.chart.frame().layout.left_axis.size.width,
+                    self.chart.frame().layout.right_axis.size.width,
+                    self.chart.frame().layout.time_axis.size.height,
+                    self.chart.frame().layout.plot.size.width,
+                    self.chart.frame().layout.plot.size.height,
+                    self.chart.frame().passes
                 ))),
                 text(format!("{} · chart {:.0} × {:.0} · ratio {} · requested {:.0}/{:.0}/{:.0}",
                     self.config.scenario.name(), self.size.width, self.size.height, self.scale,
-                    self.frame.requests.left_width, self.frame.requests.right_width, self.frame.requests.time_height)),
+                    self.chart.frame().requests.left_width, self.chart.frame().requests.right_width, self.chart.frame().requests.time_height)),
                 chart
             ]
             .spacing(8),
@@ -901,222 +579,16 @@ impl Demo {
         .into()
     }
 }
-struct Chart<'a> {
-    snapshot: &'a IcedChartFrame,
-    multi: Option<&'a IcedMultiPaneChartFrame>,
-    stretches: Vec<f64>,
-    axis_scaling: Vec<[bool; 2]>,
-    active_price_axis: Option<(usize, feather_charts::model::axis_snapshots::PriceAxisSide)>,
-    animate: bool,
-    enabled: bool,
-}
-#[derive(Default)]
-struct ChartState {
-    input: ChartInput,
-    multi_input: MultiPaneInput,
-    axis_input: PriceAxisInput,
-    pane_series: Vec<Option<SeriesId>>,
-    last_redraw: Option<Instant>,
-    available: Option<AxisBounds>,
-}
-impl Chart<'_> {
-    fn axis_layouts(&self) -> &[feather_charts::ui::chart_layout::ChartLayout] {
-        self.multi
-            .map_or(std::slice::from_ref(&self.snapshot.layout), |multi| {
-                multi.layout.panes.as_slice()
-            })
-    }
-}
-impl canvas::Program<Message> for Chart<'_> {
-    type State = ChartState;
-    fn update(
-        &self,
-        state: &mut ChartState,
-        event: &canvas::Event,
-        bounds: iced::Rectangle,
-        cursor: iced::mouse::Cursor,
-    ) -> Option<canvas::Action<Message>> {
-        if state
-            .available
-            .replace(self.snapshot.layout.available)
-            .is_some_and(|old| old != self.snapshot.layout.available)
-        {
-            state.input = ChartInput::default();
-            state.multi_input = MultiPaneInput::default();
-            if let Some(end) = state.axis_input.cancel() {
-                return Some(canvas::Action::publish(Message::PriceAxis(end)));
-            }
-            return Some(canvas::Action::publish(Message::PaneInteraction(
-                MultiPaneInteraction::Cancel,
-            )));
+impl From<ChartMessage> for Message {
+    fn from(message: ChartMessage) -> Self {
+        match message {
+            ChartMessage::Interaction(input) => Self::Interaction(input),
+            ChartMessage::PaneInteraction(input) => Self::PaneInteraction(input),
+            ChartMessage::PriceAxis(input) => Self::PriceAxis(input),
+            ChartMessage::Bounds(size) => Self::Bounds(size),
+            ChartMessage::Tick(now) => Self::Tick(now),
+            ChartMessage::Click { pane, position } => Self::Click { pane, position },
         }
-        if let Some(multi) = self.multi
-            && state.pane_series != multi.series
-        {
-            let replacing = !state.pane_series.is_empty();
-            state.pane_series = multi.series.clone();
-            state.multi_input = MultiPaneInput::default();
-            if replacing {
-                if let Some(end) = state.axis_input.cancel() {
-                    return Some(canvas::Action::publish(Message::PriceAxis(end)));
-                }
-                return Some(canvas::Action::publish(Message::PaneInteraction(
-                    MultiPaneInteraction::Cancel,
-                )));
-            }
-        }
-        if state.axis_input.is_dragging()
-            && state.axis_input.target() != self.active_price_axis
-            && let Some(end) = state.axis_input.cancel()
-        {
-            return Some(canvas::Action::publish(Message::PriceAxis(end)));
-        }
-        let local = cursor
-            .position()
-            .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y));
-        let over_divider = self.multi.is_some_and(|multi| {
-            local.is_some_and(|p| {
-                multi.layout.separators.iter().any(|r| {
-                    f64::from(p.y) >= r.origin.y - 4.
-                        && f64::from(p.y) < r.origin.y + 5.
-                        && p.x >= 0.
-                        && f64::from(p.x) < r.size.width
-                })
-            })
-        });
-        let plot_dragging = if self.multi.is_some() {
-            state.multi_input.is_dragging()
-        } else {
-            state.input.is_dragging()
-        };
-        if !plot_dragging && (!over_divider || state.axis_input.is_dragging()) {
-            if let Some(action) =
-                state
-                    .axis_input
-                    .update(event, local, self.axis_layouts(), &self.axis_scaling)
-            {
-                return Some(canvas::Action::publish(Message::PriceAxis(action)).and_capture());
-            }
-            if state.axis_input.is_dragging() && matches!(event, canvas::Event::Mouse(_)) {
-                return None;
-            }
-        }
-        if !state.axis_input.is_dragging() {
-            if let Some(multi) = self.multi {
-                if let Some(action) = state.multi_input.update(
-                    event,
-                    cursor
-                        .position()
-                        .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
-                    &multi.layout,
-                    &self.stretches,
-                    self.enabled,
-                    true,
-                ) {
-                    let capture = action.capture();
-                    let publish = canvas::Action::publish(Message::PaneInteraction(action));
-                    return Some(if capture {
-                        publish.and_capture()
-                    } else {
-                        publish
-                    });
-                }
-            } else {
-                if let Some(action) = state.input.update(
-                    event,
-                    cursor
-                        .position()
-                        .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
-                    self.snapshot.layout.plot,
-                    self.enabled,
-                ) {
-                    let publish = canvas::Action::publish(Message::Interaction(action));
-                    return Some(if action.capture {
-                        publish.and_capture()
-                    } else {
-                        publish
-                    });
-                }
-            }
-        }
-        if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
-            if bounds.size()
-                != Size::new(
-                    self.snapshot.layout.available.width as f32,
-                    self.snapshot.layout.available.height as f32,
-                )
-            {
-                return Some(canvas::Action::publish(Message::Bounds(bounds.size())));
-            }
-            if self.animate {
-                let next = state
-                    .last_redraw
-                    .map(|last| last + Duration::from_millis(16))
-                    .unwrap_or(*now);
-                if *now < next {
-                    return Some(canvas::Action::request_redraw_at(next));
-                }
-                state.last_redraw = Some(*now);
-                return Some(canvas::Action::publish(Message::Tick(*now)));
-            }
-            state.last_redraw = None;
-        }
-        None
-    }
-    fn mouse_interaction(
-        &self,
-        state: &ChartState,
-        bounds: iced::Rectangle,
-        cursor: iced::mouse::Cursor,
-    ) -> iced::mouse::Interaction {
-        if state.input.is_dragging() || state.multi_input.is_dragging() {
-            return iced::mouse::Interaction::Grabbing;
-        }
-        if state.axis_input.is_dragging()
-            || cursor.position().is_some_and(|p| {
-                PriceAxisInput::hit_test(
-                    iced::Point::new(p.x - bounds.x, p.y - bounds.y),
-                    self.axis_layouts(),
-                    &self.axis_scaling,
-                )
-                .is_some()
-            })
-        {
-            iced::mouse::Interaction::ResizingVertically
-        } else {
-            iced::mouse::Interaction::default()
-        }
-    }
-    fn draw(
-        &self,
-        _state: &ChartState,
-        renderer: &iced::Renderer,
-        _theme: &Theme,
-        bounds: iced::Rectangle,
-        _cursor: iced::mouse::Cursor,
-    ) -> Vec<Geometry> {
-        let mut frame = Frame::new(renderer, bounds.size());
-        if let Some(multi) = self.multi {
-            multi.draw(&mut frame);
-            if let Some(top) = _state.multi_input.hovered_divider
-                && let Some(region) = multi.layout.separators.get(top)
-            {
-                let hover = iced::Rectangle::new(
-                    iced::Point::new(0., region.origin.y as f32 - 4.),
-                    Size::new(region.size.width as f32, 9.),
-                );
-                frame.with_clip(hover, |frame| {
-                    frame.fill_rectangle(
-                        hover.position(),
-                        hover.size(),
-                        iced::Color::from_rgba8(117, 134, 150, 0.35),
-                    )
-                });
-            }
-        } else {
-            self.snapshot.draw(&mut frame);
-        }
-        vec![frame.into_geometry()]
     }
 }
 fn smoke(config: DisplayConfig, candlesticks: bool) {
@@ -1126,24 +598,27 @@ fn smoke_series(config: DisplayConfig, candlesticks: bool, histogram: bool) {
     let mut demo = Demo::new_series(config, candlesticks, histogram);
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
     assert!(demo.has_series_geometry());
-    assert!(demo.frame.prices.right.required_width > 0.);
+    assert!(demo.chart.frame().prices.right.required_width > 0.);
     assert_eq!(
-        demo.frame.prices.right.size.height,
-        demo.frame.plot.size.height
+        demo.chart.frame().prices.right.size.height,
+        demo.chart.frame().plot.size.height
     );
-    assert!(demo.frame.time.required_height > 0.);
-    assert_eq!(demo.frame.time.size.width, demo.frame.plot.size.width);
+    assert!(demo.chart.frame().time.required_height > 0.);
+    assert_eq!(
+        demo.chart.frame().time.size.width,
+        demo.chart.frame().plot.size.width
+    );
     if !demo.left_enabled {
         let _ = demo.update(Message::LeftAxis);
     }
     if !demo.ticks {
         let _ = demo.update(Message::Ticks);
     }
-    assert!(demo.frame.prices.left.required_width > 0.);
+    assert!(demo.chart.frame().prices.left.required_width > 0.);
     let _ = demo.update(Message::Older);
-    let before = demo.model.time_scale().right_offset();
+    let before = demo.chart.model().time_scale().right_offset();
     let _ = demo.update(Message::Append);
-    assert_eq!(demo.model.time_scale().right_offset(), before - 1.);
+    assert_eq!(demo.chart.model().time_scale().right_offset(), before - 1.);
     let _ = demo.update(Message::Replace);
     let _ = demo.update(Message::Kind);
     let _ = demo.update(Message::Kind);
@@ -1151,20 +626,33 @@ fn smoke_series(config: DisplayConfig, candlesticks: bool, histogram: bool) {
     let _ = demo.update(Message::Markers);
     let _ = demo.update(Message::Bounds(Size::new(500., 300.)));
     assert_eq!(
-        demo.frame.layout.available,
+        demo.chart.frame().layout.available,
         AxisBounds {
             width: 500.,
             height: 300.
         }
     );
-    assert_eq!(demo.frame.time.size.width, demo.frame.plot.size.width);
+    assert_eq!(
+        demo.chart.frame().time.size.width,
+        demo.chart.frame().plot.size.width
+    );
     let _ = demo.update(Message::Animate);
-    assert!(demo.controller.is_active());
+    assert!(demo.chart.is_animating());
     let _ = demo.update(Message::Stop);
-    assert!(!demo.controller.is_active());
+    assert!(!demo.chart.is_animating());
     let _ = demo.update(Message::Remove);
     assert!(!demo.has_series_geometry());
-    assert!(demo.frame.plot.axes.as_ref().unwrap().time.ticks.is_empty());
+    assert!(
+        demo.chart
+            .frame()
+            .plot
+            .axes
+            .as_ref()
+            .unwrap()
+            .time
+            .ticks
+            .is_empty()
+    );
     let _ = demo.update(Message::Reload);
     assert!(demo.has_series_geometry());
     println!(
@@ -1175,7 +663,7 @@ fn smoke_volume(config: DisplayConfig) {
     let mut demo = Demo::new_chart(config, SeriesKind::PriceVolume);
     let _ = demo.update(Message::Bounds(Size::new(800., 500.)));
     assert!(demo.error.is_none(), "{:?}", demo.error);
-    assert_eq!(demo.multi_frame.as_ref().unwrap().panes.len(), 2);
+    assert_eq!(demo.chart.multi_frame().unwrap().panes.len(), 2);
     for message in [
         Message::Append,
         Message::Replace,
@@ -1190,7 +678,7 @@ fn smoke_volume(config: DisplayConfig) {
         let _ = demo.update(message);
         assert!(demo.error.is_none(), "{:?}", demo.error);
     }
-    let frame = demo.multi_frame.as_ref().unwrap();
+    let frame = demo.chart.multi_frame().unwrap();
     assert!(!frame.panes[0].plot.candles.is_empty());
     assert!(!frame.panes[1].plot.candles.is_empty());
     assert_eq!(

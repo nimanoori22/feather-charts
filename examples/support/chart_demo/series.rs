@@ -126,7 +126,7 @@ impl Demo {
         }
         if self.registered {
             if !self.volume_registered {
-                let pane = self.model.add_pane();
+                let pane = self.chart.add_pane();
                 let SeriesOptionsMap::Line(mut line) = options(self.kind, self.style, false) else {
                     unreachable!()
                 };
@@ -136,10 +136,9 @@ impl Demo {
                     min_move: 1.,
                     base: None,
                 });
-                self.model
-                    .register_series(
-                        VOLUME_ID,
-                        SeriesType::Histogram,
+                self.volume_id = self
+                    .chart
+                    .add_series(
                         SeriesOptionsMap::Histogram(SeriesOptions {
                             common: line.common,
                             style: HistogramStyleOptions {
@@ -151,21 +150,16 @@ impl Demo {
                         PriceScalePosition::Right,
                     )
                     .unwrap();
-                self.model.set_pane_stretch_factor(0, 2.).unwrap();
-                self.model.set_pane_stretch_factor(pane, 1.).unwrap();
+                self.chart.set_pane_stretch_factor(0, 2.).unwrap();
+                self.chart.set_pane_stretch_factor(pane, 1.).unwrap();
                 self.volume_registered = true;
             }
             let data = (self.history_start..self.count as i64)
                 .map(|i| self.history_bar(i, true))
                 .collect();
-            let update = self
-                .layer
-                .set_series_data(VOLUME_ID, SeriesType::Histogram, data)
-                .unwrap();
-            self.model.apply_data_update(update).unwrap();
+            self.chart.set_data(self.volume_id, data).unwrap();
         } else if self.volume_registered {
-            let update = self.layer.remove_series(VOLUME_ID).unwrap();
-            self.model.remove_series(VOLUME_ID, update).unwrap();
+            self.chart.remove_series(self.volume_id).unwrap();
             self.volume_registered = false;
         }
     }
