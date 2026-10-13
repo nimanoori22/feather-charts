@@ -55,10 +55,45 @@ fn prepare(chart: &mut Chart) {
         .prepare(iced::Size::new(917., 870.80005), 1.25, Instant::now())
         .unwrap();
 }
+#[derive(Debug)]
+struct ProfilePrimitive(f32);
+impl feather_charts::api::DrawingPrimitive for ProfilePrimitive {
+    fn prepare(
+        &self,
+        c: &feather_charts::api::PrimitiveContext<'_>,
+    ) -> feather_charts::api::PreparedPrimitive {
+        use feather_charts::api::{PreparedPrimitive, PrimitiveLayer, PrimitiveView};
+        PreparedPrimitive {
+            views: vec![PrimitiveView::new(
+                PrimitiveLayer::Normal,
+                ProfilePrimitive(self.0.min(c.size.width)),
+            )],
+            ..Default::default()
+        }
+    }
+}
+impl feather_charts::api::PrimitiveRenderer for ProfilePrimitive {
+    fn draw(&self, f: &mut iced::widget::canvas::Frame) {
+        f.fill_rectangle(
+            iced::Point::new(self.0, 10.),
+            iced::Size::new(20., 20.),
+            iced::Color::from_rgba(0., 0., 1., 0.2),
+        );
+    }
+    fn hit_test(&self, p: iced::Point) -> Option<feather_charts::api::PrimitiveHitCandidate> {
+        (p.x >= self.0 && p.x < self.0 + 20. && p.y >= 10. && p.y < 30.)
+            .then(|| feather_charts::api::PrimitiveHitCandidate::new("profile"))
+    }
+}
 fn main() {
     let args = std::env::args().collect::<Vec<_>>();
+    let primitive_count = args
+        .iter()
+        .position(|s| s == "--primitive-count")
+        .map(|i| args[i + 1].parse::<usize>().unwrap())
+        .unwrap_or(0);
     if args.iter().any(|s| s == "--selection-profile") {
-        selection_profile();
+        selection_profile(primitive_count);
         return;
     }
     if args.iter().any(|s| s == "--empty-profile") {
@@ -112,6 +147,12 @@ fn main() {
                     .unwrap();
             }
             c.fit_content();
+            let primitives: Vec<_> = (0..primitive_count)
+                .map(|i| {
+                    c.add_series_primitive(id, ProfilePrimitive(i as f32 * 10.))
+                        .unwrap()
+                })
+                .collect();
             prepare(&mut c);
             if marker_count > 0 {
                 use feather_charts::api::{
@@ -151,6 +192,10 @@ fn main() {
                 let start = Instant::now();
                 if updates {
                     c.update_data(id, row(kind, row_count + i), false).unwrap();
+                    if let Some(&id) = primitives.first() {
+                        c.replace_primitive(id, ProfilePrimitive((i % 30) as f32))
+                            .unwrap();
+                    }
                     prepare(&mut c);
                 } else {
                     c.update(ChartMessage::Interaction(ChartInteraction {
@@ -186,7 +231,7 @@ fn main() {
     }
 }
 
-fn selection_profile() {
+fn selection_profile(primitive_count: usize) {
     use feather_charts::ui::hit_testing::HitGeometry;
     for (name, count, rows, visible) in [
         ("empty", 0, 0, 0),
@@ -196,6 +241,7 @@ fn selection_profile() {
         ("crowded", 64, 1200, 200),
     ] {
         let mut chart = Chart::default();
+        let mut ids = vec![];
         for _ in 0..count {
             let mut options = LineSeriesOptions::default();
             options.common.price_line_visible = false;
@@ -209,6 +255,18 @@ fn selection_profile() {
             chart
                 .set_data(id, (0..rows).map(|i| row(SeriesType::Line, i)).collect())
                 .unwrap();
+            ids.push(id);
+        }
+        for i in 0..primitive_count {
+            if ids.is_empty() {
+                chart
+                    .add_pane_primitive(0, ProfilePrimitive(i as f32 * 10.))
+                    .unwrap();
+            } else {
+                chart
+                    .add_series_primitive(ids[i % ids.len()], ProfilePrimitive(i as f32 * 10.))
+                    .unwrap();
+            }
         }
         chart.fit_content();
         if rows > visible {
@@ -236,7 +294,7 @@ fn selection_profile() {
                     0,
                     iced::Point::new(
                         40. + ((i * 37 + batch * 7) % 750) as f32,
-                        40. + ((i * 13) % 650) as f32,
+                        (if primitive_count == 0 { 40. } else { 20. }) + ((i * 13) % 650) as f32,
                     ),
                 ));
             }

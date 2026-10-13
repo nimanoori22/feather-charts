@@ -29,12 +29,15 @@ use std::time::Instant;
 mod hover_demo;
 #[path = "public_chart/markers.rs"]
 mod marker_demo;
+#[path = "public_chart/primitives.rs"]
+mod primitive_demo;
 #[cfg(test)]
 #[path = "public_chart/tests.rs"]
 mod tests;
 use marker_demo::sample_markers;
 
 struct App {
+    primitive_scene: Option<primitive_demo::Scene>,
     annotations: Option<MarkerCollectionId>,
     marker_step: usize,
     chart: Chart,
@@ -51,6 +54,9 @@ struct App {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    TogglePrimitive,
+    MovePrimitive,
+    PrimitiveLayer,
     ToggleHoverOrder,
     ToggleMarkers,
     MarkerLayer,
@@ -124,13 +130,13 @@ impl App {
                     .collect(),
             )
             .unwrap();
-        if std::env::args().any(|a| a == "--hover-selection") {
+        if std::env::args().any(|a| a == "--hover-selection" || a == "--primitives") {
             hover_demo::add_overlays(&mut chart);
         }
         chart.fit_content();
         let levels = add_levels(&mut chart, price);
         let annotations = std::env::args()
-            .any(|a| a == "--series-markers" || a == "--hover-selection")
+            .any(|a| a == "--series-markers" || a == "--hover-selection" || a == "--primitives")
             .then(|| {
                 chart
                     .add_series_markers(
@@ -147,7 +153,11 @@ impl App {
                     )
                     .unwrap()
             });
+        let primitive_scene = std::env::args()
+            .any(|a| a == "--primitives")
+            .then(|| primitive_demo::Scene::new(&mut chart, price));
         Self {
+            primitive_scene,
             annotations,
             marker_step: 0,
             chart,
@@ -168,6 +178,16 @@ impl App {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::TogglePrimitive | Message::MovePrimitive | Message::PrimitiveLayer => {
+                if let Some(scene) = &mut self.primitive_scene {
+                    match message {
+                        Message::TogglePrimitive => scene.toggle(&mut self.chart),
+                        Message::MovePrimitive => scene.shift(&mut self.chart),
+                        _ => scene.layer(&mut self.chart),
+                    }
+                }
+                self.prepare();
+            }
             Message::ToggleHoverOrder => {
                 self.chart
                     .set_hovered_series_on_top(!self.chart.hovered_series_on_top());
@@ -225,12 +245,13 @@ impl App {
                                 ChartEvent::CrosshairMoved(data) => ("Crosshair", data),
                             };
                             self.status = format!(
-                                "{kind}: time {:?}, price {:?}, {} series, marker {:?}, target {:?}",
+                                "{kind}: time {:?}, price {:?}, {} series, marker {:?}, target {:?}, primitive {:?}",
                                 data.time,
                                 data.price,
                                 data.series_data.len(),
                                 data.marker,
-                                data.hit
+                                data.hit,
+                                data.primitive
                             );
                         }
                     }
@@ -370,7 +391,7 @@ impl App {
         }
     }
     fn view(&self) -> Element<'_, Message> {
-        column![
+        let content = column![
             // Hover details must not resize the chart when the window is narrow.
             text(&self.status)
                 .width(iced::Length::Fill)
@@ -395,10 +416,23 @@ impl App {
                 .on_press(Message::ToggleHoverOrder)
             ]
             .spacing(8),
-            self.chart.element().map(Message::Chart)
         ]
-        .spacing(4)
-        .into()
+        .spacing(4);
+        let content = if self.primitive_scene.is_some() {
+            content.push(
+                row![
+                    button("Add/remove region").on_press(Message::TogglePrimitive),
+                    button("Move region").on_press(Message::MovePrimitive),
+                    button("Primitive layer").on_press(Message::PrimitiveLayer)
+                ]
+                .spacing(8),
+            )
+        } else {
+            content
+        };
+        content
+            .push(self.chart.element().map(Message::Chart))
+            .into()
     }
     fn subscription(&self) -> Subscription<Message> {
         iced::window::events().map(|(id, event)| Message::Window(id, event))
@@ -592,6 +626,20 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     if std::env::args().any(|a| a == "--hover-captures-only") {
         scenarios.retain(|s| s.starts_with("hover-"));
     }
+    if std::env::args().any(|a| a == "--primitives") {
+        scenarios.extend([
+            "primitive-normal",
+            "primitive-top",
+            "primitive-bottom",
+            "primitive-hover",
+            "primitive-updated",
+            "primitive-removed",
+            "primitive-narrow",
+        ]);
+    }
+    if std::env::args().any(|a| a == "--primitive-captures-only") {
+        scenarios.retain(|s| s.starts_with("primitive-"));
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -604,6 +652,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                 app.prepare();
             }
             match scenario {
+                scenario if scenario.starts_with("primitive-") => {
+                    primitive_demo::setup_capture(&mut app, scenario)
+                }
                 scenario if scenario.starts_with("hover-") => {
                     hover_demo::setup_capture(&mut app, scenario)
                 }
@@ -832,6 +883,7 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             );
             let rgba = renderer.screenshot(physical, ratio, iced::Color::from_rgb8(255, 0, 255));
             hover_demo::verify_pixels(&app, scenario, &rgba, physical.width as usize);
+            primitive_demo::verify_pixels(&app, scenario, &rgba, physical.width as usize);
             if scenario == "annotation-line-overlap" {
                 let marker = &app.chart.frame().plot.annotations[0].items[0];
                 let plot = app.chart.frame().layout.plot;

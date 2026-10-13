@@ -60,3 +60,49 @@ fn hover_status_keeps_chart_bounds_stable_in_narrow_windows() {
         }
     }
 }
+
+#[test]
+fn primitive_controls_and_hover_keep_narrow_chart_bounds_stable() {
+    let renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
+        iced::Font::DEFAULT,
+        iced::Pixels(16.),
+        Some("tiny-skia"),
+    ))
+    .unwrap();
+    for width in [640., 480., 360.] {
+        let mut app = App::new(SeriesType::Candlestick);
+        app.primitive_scene = Some(primitive_demo::Scene::new(&mut app.chart, app.price));
+        let mut tree = Tree::new(app.view().as_widget());
+        let mut expected = None;
+        for action in [
+            Message::PrimitiveLayer,
+            Message::MovePrimitive,
+            Message::TogglePrimitive,
+            Message::TogglePrimitive,
+        ] {
+            let _ = app.update(action);
+            for status in [
+                "No selection",
+                "primitive Some(PrimitiveHit { owner: Series, external_id: region boundary, cursor: Pointer })",
+            ] {
+                app.status = status.into();
+                let mut view = app.view();
+                tree.diff(view.as_widget());
+                let layout = view.as_widget_mut().layout(
+                    &mut tree,
+                    &renderer,
+                    &Limits::new(Size::ZERO, Size::new(width, 480.)),
+                );
+                let bounds = layout.children().last().unwrap().bounds();
+                if let Some(expected) = expected {
+                    assert_eq!(
+                        bounds, expected,
+                        "primitive status changed plot bounds at {width}"
+                    );
+                } else {
+                    expected = Some(bounds);
+                }
+            }
+        }
+    }
+}

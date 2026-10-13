@@ -162,3 +162,46 @@ Automated source, widget and renderer checks are recorded in the
 [checklist](tasks/hover-selection-todo.md). Fresh physical mouse/touchpad acceptance
 is pending. Custom primitives/series, editable annotations and touch/kinetic input
 remain outside this milestone.
+
+## Custom drawing primitives
+
+Attach application graphics to a series or a pane with
+`add_series_primitive(series, value)` or `add_pane_primitive(pane, value)`.
+Keep the returned `PrimitiveId` for `replace_primitive` and `remove_primitive`;
+call `prepare` after direct changes. Pane ownership survives pane index shifts.
+Removal and owner destruction notify `detached` once; retained frames keep their
+prepared geometry.
+
+Implement `DrawingPrimitive::prepare(&PrimitiveContext)` to return owned
+`PreparedPrimitive` views. The context supplies logical/time/price conversion,
+pane bounds, pixel ratio and read-only model access. `PrimitiveRenderer` draws
+copied geometry through Iced Canvas on TinySkia or WGPU, with optional background
+drawing and hit testing. Keep prepared renderers independent of mutable live
+application state. Coordinates use logical pixels and views are clipped to their
+plot or axis area. All three layers are supported.
+
+Series attachments can also contribute autoscale ranges/margins, price/time
+labels and separate graphics inside either axis. Pane attachments only contribute
+plot graphics and hits. Fixed price coordinates bypass collision adjustment;
+the upstream time-label renderer ignores fixed coordinates. Generic primitive
+visibility is controlled by its prepared output, including on hidden series.
+
+Click/crosshair payloads include `primitive: Option<PrimitiveHit>` with typed
+attachment and series/pane ownership, external object ID and optional Iced cursor.
+`chart.primitive_hit(pane, point)` queries the same winner using raw plot
+coordinates. Primitive and built-in hits share source ordering, layer, background,
+distance and priority rules. Strings may repeat without losing owner identity.
+
+```sh
+cargo run --example public_chart -- --primitives
+```
+
+Use **Add/remove region**, **Move region** and **Primitive layer** to exercise a
+shaded price/time region, selectable boundary, autoscale, labels and axis graphics.
+The volume pane also has an independent graphic. This scene mixes filled series,
+price levels and markers, and keeps chart bounds stable when status changes.
+
+See the [primitive port report](docs/porting/primitive-support.md) and
+[checklist](tasks/primitive-support-todo.md) for source comparisons and validation.
+Physical mouse/touchpad acceptance is pending. Custom data-series rendering,
+editable annotations and JavaScript plugin compatibility remain future work.
