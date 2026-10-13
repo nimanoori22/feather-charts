@@ -33,6 +33,7 @@ pub enum SeriesPaneView {
     Line(LinePaneView),
     Area(crate::model::series::area_pane_view::AreaPaneView),
     Bars(crate::model::series::bars_pane_view::BarsPaneView),
+    Baseline(crate::model::series::baseline_pane_view::BaselinePaneView),
     Candlesticks(CandlesticksPaneView),
     Histogram(HistogramPaneView),
 }
@@ -42,6 +43,7 @@ impl SeriesPaneView {
             Self::Line(v) => PaneView::Line(v),
             Self::Area(v) => PaneView::Area(v),
             Self::Bars(v) => PaneView::Bars(v),
+            Self::Baseline(v) => PaneView::Baseline(v),
             Self::Candlesticks(v) => PaneView::Candlesticks(v),
             Self::Histogram(v) => PaneView::Histogram(v),
         }
@@ -308,6 +310,8 @@ impl MultiPaneChartFrameOwner {
                             .push(super::line_chart::CanvasSeriesGeometry {
                                 lines: series_plot.lines,
                                 fills: series_plot.fills,
+                                gradient_lines: series_plot.gradient_lines,
+                                gradient_markers: series_plot.gradient_markers,
                                 candles: series_plot.candles,
                                 markers: series_plot.markers,
                             });

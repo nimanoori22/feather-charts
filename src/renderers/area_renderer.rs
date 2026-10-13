@@ -27,7 +27,9 @@ pub struct AreaRendererData {
 }
 impl AreaRendererData {
     pub fn draw_commands(&self, ratio: PixelRatio) -> (Vec<FilledPath>, LineDrawCommands) {
-        let strokes = self.line.draw_commands(ratio);
+        (self.fill_commands(ratio), self.line.draw_commands(ratio))
+    }
+    pub fn fill_commands(&self, ratio: PixelRatio) -> Vec<FilledPath> {
         let range = self.line.visible_range;
         if !ratio.horizontal.is_finite()
             || !ratio.vertical.is_finite()
@@ -39,7 +41,7 @@ impl AreaRendererData {
             || !self.top.is_finite()
             || !self.height.is_finite()
         {
-            return (vec![], strokes);
+            return vec![];
         }
         let items = self
             .line
@@ -52,7 +54,7 @@ impl AreaRendererData {
             })
             .collect::<Vec<_>>();
         if items.iter().any(|p| !p.x.is_finite() || !p.y.is_finite()) {
-            return (vec![], strokes);
+            return vec![];
         }
         let base = if self.inverted {
             0.
@@ -64,7 +66,7 @@ impl AreaRendererData {
         } else {
             self.top
         };
-        let fills = super::walk_line::walk_segments(
+        super::walk_line::walk_segments(
             &items,
             range,
             self.fill_type,
@@ -101,8 +103,7 @@ impl AreaRendererData {
                 },
             }
         })
-        .collect();
-        (fills, strokes)
+        .collect()
     }
 }
 

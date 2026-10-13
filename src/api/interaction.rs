@@ -297,6 +297,7 @@ impl Chart {
     ) -> PointerEvent {
         use crate::model::{
             data_consumer::{
+                AreaData, AreaDataItem, BarData, BarDataItem, BaselineData, BaselineDataItem,
                 CandlestickData, CandlestickDataItem, HistogramData, HistogramDataItem, LineData,
                 LineDataItem,
             },
@@ -324,7 +325,42 @@ impl Chart {
                             time: row.original_time().clone(),
                             value: PlotRowLike::values(row)[3],
                             color: row.color.clone(),
-                            custom_values: None,
+                            custom_values: row.base.custom_values,
+                        }))
+                    }
+                    SeriesPlotRow::Area(row) => {
+                        BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
+                            time: row.original_time().clone(),
+                            value: PlotRowLike::values(row)[3],
+                            line_color: row.line_color.clone(),
+                            top_color: row.top_color.clone(),
+                            bottom_color: row.bottom_color.clone(),
+                            custom_values: row.base.custom_values,
+                        }))
+                    }
+                    SeriesPlotRow::Bar(row) => {
+                        let v = PlotRowLike::values(row);
+                        BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
+                            time: row.original_time().clone(),
+                            open: v[0],
+                            high: v[1],
+                            low: v[2],
+                            close: v[3],
+                            color: row.color.clone(),
+                            custom_values: row.base.custom_values,
+                        }))
+                    }
+                    SeriesPlotRow::Baseline(row) => {
+                        BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(BaselineData {
+                            time: row.original_time().clone(),
+                            value: PlotRowLike::values(row)[3],
+                            top_line_color: row.top_line_color.clone(),
+                            bottom_line_color: row.bottom_line_color.clone(),
+                            top_fill_color1: row.top_fill_color1.clone(),
+                            top_fill_color2: row.top_fill_color2.clone(),
+                            bottom_fill_color1: row.bottom_fill_color1.clone(),
+                            bottom_fill_color2: row.bottom_fill_color2.clone(),
+                            custom_values: row.base.custom_values,
                         }))
                     }
                     SeriesPlotRow::Histogram(row) => {
@@ -332,7 +368,7 @@ impl Chart {
                             time: row.original_time().clone(),
                             value: PlotRowLike::values(row)[3],
                             color: row.color.clone(),
-                            custom_values: None,
+                            custom_values: row.base.custom_values,
                         }))
                     }
                     SeriesPlotRow::Candlestick(row) => {
@@ -347,7 +383,7 @@ impl Chart {
                                 color: row.color.clone(),
                                 border_color: row.border_color.clone(),
                                 wick_color: row.wick_color.clone(),
-                                custom_values: None,
+                                custom_values: row.base.custom_values,
                             },
                         ))
                     }

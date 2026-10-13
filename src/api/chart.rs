@@ -146,6 +146,7 @@ impl Chart {
             SeriesOptionsMap::Line(_) => SeriesType::Line,
             SeriesOptionsMap::Area(_) => SeriesType::Area,
             SeriesOptionsMap::Bar(_) => SeriesType::Bar,
+            SeriesOptionsMap::Baseline(_) => SeriesType::Baseline,
             SeriesOptionsMap::Candlestick(_) => SeriesType::Candlestick,
             SeriesOptionsMap::Histogram(_) => SeriesType::Histogram,
             _ => return Err(ChartError::UnsupportedSeries),
@@ -161,6 +162,7 @@ impl Chart {
             SeriesType::Line => SeriesPaneView::Line(Default::default()),
             SeriesType::Area => SeriesPaneView::Area(Default::default()),
             SeriesType::Bar => SeriesPaneView::Bars(Default::default()),
+            SeriesType::Baseline => SeriesPaneView::Baseline(Default::default()),
             SeriesType::Candlestick => SeriesPaneView::Candlesticks(Default::default()),
             SeriesType::Histogram => SeriesPaneView::Histogram(Default::default()),
             _ => unreachable!(),
@@ -454,6 +456,26 @@ fn validate_data(
                 .color
                 .as_ref()
                 .is_some_and(|c| parser.parse_color(c).is_err())
+            {
+                return Err(ChartError::InvalidData { index });
+            }
+        }
+        if let crate::model::series_data::SeriesDataRow::Value(
+            crate::model::series_data::SeriesPlotRow::Baseline(r),
+        ) = &row
+        {
+            let mut parser = crate::model::colors::ColorParser::default();
+            if [
+                &r.top_fill_color1,
+                &r.top_fill_color2,
+                &r.bottom_fill_color1,
+                &r.bottom_fill_color2,
+                &r.top_line_color,
+                &r.bottom_line_color,
+            ]
+            .into_iter()
+            .flatten()
+            .any(|c| parser.parse_color(c).is_err())
             {
                 return Err(ChartError::InvalidData { index });
             }

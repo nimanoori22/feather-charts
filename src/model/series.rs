@@ -982,12 +982,7 @@ mod tests {
     fn bar_options() -> SeriesOptionsMap {
         SeriesOptionsMap::Bar(SeriesOptions {
             common: common_options(),
-            style: BarStyleOptions {
-                up_color: String::new(),
-                down_color: String::new(),
-                open_visible: true,
-                thin_bars: true,
-            },
+            style: BarStyleOptions::default(),
         })
     }
 

@@ -121,8 +121,7 @@ impl BaselineRendererData {
                 colors[1].clone(),
             ])
         };
-        let mut commands = BaselineDrawCommands::default();
-        commands.fills = super::walk_line::walk_segments(
+        let fills = super::walk_line::walk_segments(
             &items,
             range,
             self.fill_type,
@@ -157,6 +156,10 @@ impl BaselineRendererData {
             }
         })
         .collect();
+        let mut commands = BaselineDrawCommands {
+            fills,
+            ..Default::default()
+        };
         if let Some(kind) = self.line.line_type {
             let width = f64::from(self.line.line_width.pixels()) * v;
             let pattern = super::draw_line::dash_pattern(self.line.line_style, width as f32)
