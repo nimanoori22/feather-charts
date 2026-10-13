@@ -446,3 +446,229 @@ fn primitive_labels_settle_axis_width_and_axis_views_are_clipped_and_drawn() {
         ["bg:price", "fg:price", "bg:time", "fg:time"]
     );
 }
+
+#[derive(Debug)]
+struct Selectable {
+    layer: PrimitiveLayer,
+    background: bool,
+}
+impl DrawingPrimitive for Selectable {
+    fn prepare(&self, _: &PrimitiveContext<'_>) -> PreparedPrimitive {
+        PreparedPrimitive {
+            views: vec![PrimitiveView::new(
+                self.layer,
+                Selectable {
+                    layer: self.layer,
+                    background: self.background,
+                },
+            )],
+            ..Default::default()
+        }
+    }
+}
+impl PrimitiveRenderer for Selectable {
+    fn draw(&self, _: &mut Frame) {}
+    fn hit_test(&self, point: Point) -> Option<feather_charts::api::PrimitiveHitCandidate> {
+        (point.x >= 20. && point.x <= 1000. && point.y >= 20. && point.y <= 1000.).then(|| {
+            let mut h = feather_charts::api::PrimitiveHitCandidate::new("same external ID");
+            h.layer = self.layer;
+            h.is_background = self.background;
+            h.cursor = Some(iced::mouse::Interaction::Pointer);
+            h
+        })
+    }
+}
+#[test]
+fn pane_hit_has_owned_identity_and_removal_reconciles_once() {
+    use feather_charts::api::{ChartEvent, ChartMessage};
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    let id = chart
+        .add_pane_primitive(
+            0,
+            Selectable {
+                layer: PrimitiveLayer::Top,
+                background: false,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    let point = Point::new(50., 50.);
+    let h = chart.primitive_hit(0, point).unwrap();
+    assert_eq!(h.primitive, id);
+    assert!(matches!(h.owner, PrimitiveOwner::Pane(_)));
+    assert_eq!(chart.hit_test(0, point), None);
+    let events = chart
+        .update(ChartMessage::Click {
+            pane: 0,
+            position: point,
+        })
+        .unwrap();
+    assert!(events.iter().any(
+        |e| matches!(e,ChartEvent::Click(e) if e.primitive.as_ref()==Some(&h) && e.hit.is_none())
+    ));
+    chart.remove_primitive(id).unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    assert!(chart.is_animating());
+    let events = chart.update(ChartMessage::Tick(Instant::now())).unwrap();
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e,ChartEvent::CrosshairMoved(e) if e.primitive.is_none()))
+    );
+    assert!(!chart.is_animating());
+}
+
+#[test]
+fn foreground_and_background_primitive_hits_follow_source_order() {
+    use feather_charts::renderers::line_renderer::PathOperation;
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    let p = chart
+        .frame()
+        .plot
+        .lines
+        .iter()
+        .flat_map(|l| l.path.iter())
+        .find_map(|p| match p {
+            PathOperation::MoveTo(p) | PathOperation::LineTo(p) if p.x >= 20. && p.y >= 20. => {
+                Some(Point::new(p.x as f32, p.y as f32))
+            }
+            _ => None,
+        })
+        .unwrap();
+    let id = chart
+        .add_series_primitive(
+            s,
+            Selectable {
+                layer: PrimitiveLayer::Normal,
+                background: true,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(chart.hit_test(0, p).unwrap().series, s);
+    assert!(chart.primitive_hit(0, p).is_none());
+    chart
+        .replace_primitive(
+            id,
+            Selectable {
+                layer: PrimitiveLayer::Normal,
+                background: false,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(chart.primitive_hit(0, p).unwrap().primitive, id);
+    chart
+        .replace_primitive(
+            id,
+            Selectable {
+                layer: PrimitiveLayer::Bottom,
+                background: false,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(chart.hit_test(0, p).unwrap().series, s);
+    // A top pane attachment overrides every built-in source.
+    let pane = chart
+        .add_pane_primitive(
+            0,
+            Selectable {
+                layer: PrimitiveLayer::Top,
+                background: true,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(chart.primitive_hit(0, p).unwrap().primitive, pane);
+}
+#[test]
+fn primitive_cursor_is_available_before_draw_and_resets_outside_the_plot() {
+    use iced::widget::canvas::Program;
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    chart
+        .add_series_primitive(
+            s,
+            Selectable {
+                layer: PrimitiveLayer::Top,
+                background: false,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    let program = chart.program(std::convert::identity);
+    let bounds = iced::Rectangle::with_size(Size::new(640., 480.));
+    let origin = chart.frame().layout.plot.origin;
+    let cursor =
+        iced::mouse::Cursor::Available(Point::new(origin.x as f32 + 50., origin.y as f32 + 50.));
+    assert_eq!(
+        program.mouse_interaction(&Default::default(), bounds, cursor),
+        iced::mouse::Interaction::Pointer
+    );
+    assert_eq!(
+        program.mouse_interaction(
+            &Default::default(),
+            bounds,
+            iced::mouse::Cursor::Unavailable
+        ),
+        iced::mouse::Interaction::default()
+    );
+}
+#[test]
+fn invalid_extension_output_cannot_poison_autoscale_or_create_hits() {
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    chart
+        .add_series_primitive(
+            s,
+            ScaleRegion {
+                min: f64::NAN,
+                max: 200.,
+                margin: -1.,
+            },
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    let raw = chart
+        .model()
+        .series(s)
+        .unwrap()
+        .autoscale_info(TimePointIndex::new(0.), TimePointIndex::new(9.))
+        .unwrap()
+        .to_raw();
+    assert_eq!(
+        raw.price_range.unwrap(),
+        PriceRange {
+            min_value: 100.,
+            max_value: 109.
+        }
+    );
+    assert!(chart.primitive_hit(0, Point::new(f32::NAN, 0.)).is_none());
+    assert!(chart.primitive_hit(0, Point::new(-1., 50.)).is_none());
+}

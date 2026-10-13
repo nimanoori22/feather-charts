@@ -70,6 +70,9 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    pub(crate) extension_order: u64,
+    pub(crate) marker_orders: BTreeMap<super::MarkerCollectionId, u64>,
+    pub(super) last_primitive: Option<super::PrimitiveHit>,
     empty_frame: IcedChartFrame,
     pub(crate) primitives: Vec<super::primitives::Attachment>,
     pub(crate) primitive_panes: Vec<super::PrimitivePaneId>,
@@ -111,6 +114,9 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            extension_order: 0,
+            marker_orders: BTreeMap::new(),
+            last_primitive: None,
             empty_frame: Default::default(),
             primitives: vec![],
             primitive_panes: (0..usize::from(options.add_default_pane))
@@ -234,6 +240,8 @@ impl Chart {
         self.cancel_interaction();
         let update = self.layer.remove_series(id)?;
         self.model.remove_series(id, update)?;
+        self.marker_orders
+            .retain(|key, _| self.model.marker_collection(*key).is_some());
         self.kinds.remove(&id);
         self.primitives
             .retain(|a| a.owner != super::PrimitiveOwner::Series(id));
@@ -351,6 +359,7 @@ impl Chart {
                     .cloned()
                     .collect::<Vec<_>>();
                 for (index, pane) in snapshot.panes.iter_mut().enumerate() {
+                    pane.plot.marker_orders = self.marker_orders.clone();
                     pane.plot.primitives = primitive_output.get(index).cloned().unwrap_or_default();
                     if index == 0 {
                         pane.plot.time_primitives = time_primitives.clone();
@@ -403,6 +412,7 @@ impl Chart {
             }
             Err(error) => {
                 self.last_hit = None;
+                self.last_primitive = None;
                 self.frame = Default::default();
                 let mut pane = IcedChartFrame::default();
                 pane.layout.available = AxisBounds {
@@ -413,6 +423,9 @@ impl Chart {
                 Err(error)
             }
         }
+    }
+    pub(crate) fn frame_for_pane(&self, pane: usize) -> Option<&IcedChartFrame> {
+        self.frame.panes.get(pane)
     }
     pub fn frame(&self) -> &IcedChartFrame {
         self.frame.panes.first().unwrap_or(&self.empty_frame)
@@ -438,11 +451,22 @@ impl Chart {
         (self.frame.panes.len() > 1).then_some(&self.frame)
     }
     pub fn is_animating(&self) -> bool {
-        self.controller.is_active()
-            || self.last_hit
-                != self.model.crosshair().origin().and_then(|o| {
-                    self.hit_test(o.pane, iced::Point::new(o.point.x as f32, o.point.y as f32))
-                })
+        use crate::ui::primitive_hit_testing::PaneHit;
+        let selection = self.model.crosshair().origin().and_then(|o| {
+            self.frame_for_pane(o.pane)?
+                .plot
+                .selection(iced::Point::new(o.point.x as f32, o.point.y as f32))
+        });
+        let changed = match selection {
+            Some(PaneHit::BuiltIn(h)) => {
+                self.last_hit.as_ref() != Some(&h) || self.last_primitive.is_some()
+            }
+            Some(PaneHit::Primitive(h)) => {
+                self.last_primitive.as_ref() != Some(&h) || self.last_hit.is_some()
+            }
+            None => self.last_hit.is_some() || self.last_primitive.is_some(),
+        };
+        self.controller.is_active() || changed
     }
     pub fn fit_content(&mut self) {
         self.model.fit_content();

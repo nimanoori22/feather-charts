@@ -69,7 +69,7 @@ impl PreparedSeriesHit {
             },
         }
     }
-    fn hit(&self, x: f64, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
+    pub(crate) fn hit(&self, x: f64, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
         let (distance, priority) = match &self.geometry {
             HitGeometry::Line { data, kind } => line_hit(
                 &data.items,
@@ -215,7 +215,7 @@ pub struct PreparedPriceLineHit {
     pub external_id: Option<String>,
 }
 impl PreparedPriceLineHit {
-    fn hit(&self, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
+    pub(crate) fn hit(&self, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
         let distance = (y - self.y).abs();
         (distance <= self.width + 7.).then(|| {
             (
@@ -239,9 +239,11 @@ impl PreparedPriceLineHit {
 impl PlotSnapshot {
     pub(crate) fn prepare_hover(&mut self, point: Option<iced::Point>, enabled: bool) {
         self.hovered_series_on_top = enabled;
-        self.hovered_series = point.and_then(|p| self.hit_test(p)).map(|h| h.series);
+        self.hovered_series = point
+            .and_then(|p| self.selection(p))
+            .and_then(|h| h.series());
     }
-    pub fn hit_test(&self, point: iced::Point) -> Option<ChartHit> {
+    pub(crate) fn builtin_hit_test(&self, point: iced::Point) -> Option<ChartHit> {
         if !point.x.is_finite()
             || !point.y.is_finite()
             || point.x < 0.

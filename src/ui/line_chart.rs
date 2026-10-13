@@ -131,6 +131,8 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub marker_orders:
+        std::collections::BTreeMap<crate::model::series_markers::MarkerCollectionId, u64>,
     pub primitives: Vec<crate::api::primitives::PreparedAttachment>,
     pub time_primitives: Vec<crate::api::primitives::PreparedAttachment>,
     pub hovered_series: Option<SeriesId>,
@@ -165,6 +167,7 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            marker_orders: Default::default(),
             primitives: vec![],
             time_primitives: vec![],
             hovered_series: None,
@@ -386,6 +389,7 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            marker_orders: Default::default(),
             primitives: vec![],
             time_primitives: vec![],
             hovered_series: None,

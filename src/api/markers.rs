@@ -48,6 +48,8 @@ impl Chart {
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map(MarkerCollectionId)
             .map_err(|_| ChartError::IdExhausted)?;
+        let order = self.next_extension_order();
+        self.marker_orders.insert(id, order);
         self.model
             .insert_marker_collection(series, MarkerCollection::new(id, markers, options));
         Ok(id)
@@ -99,6 +101,7 @@ impl Chart {
     pub fn remove_series_markers(&mut self, id: MarkerCollectionId) -> Result<(), ChartError> {
         self.series_marker_options(id)?;
         self.model.remove_marker_collection(id);
+        self.marker_orders.remove(&id);
         Ok(())
     }
 }

@@ -18,6 +18,7 @@ pub use crate::model::hit_test::{ChartHit, HitTarget, PriceLineKind};
 
 pub(crate) mod primitives;
 pub use primitives::{
-    DrawingPrimitive, PreparedPrimitive, PrimitiveAxisLabel, PrimitiveContext, PrimitiveId,
-    PrimitiveLayer, PrimitiveOwner, PrimitivePaneId, PrimitiveRenderer, PrimitiveView,
+    DrawingPrimitive, PreparedPrimitive, PrimitiveAxisLabel, PrimitiveContext, PrimitiveHit,
+    PrimitiveHitCandidate, PrimitiveHitTester, PrimitiveId, PrimitiveLayer, PrimitiveOwner,
+    PrimitivePaneId, PrimitiveRenderer, PrimitiveView,
 };

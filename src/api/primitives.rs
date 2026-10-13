@@ -5,7 +5,7 @@ use crate::model::{
     horz_scale_behavior_time::horz_scale_behavior_time::HorzScaleBehaviorTime,
     ipane_primitive::PrimitivePaneViewZOrder, time_data::TimePointIndex,
 };
-use iced::{Size, widget::canvas::Frame};
+use iced::{Point, Size, widget::canvas::Frame};
 use std::{
     rc::Rc,
     sync::atomic::{AtomicU64, Ordering},
@@ -80,10 +80,45 @@ pub trait DrawingPrimitive: std::fmt::Debug + 'static {
     fn attached(&self, _owner: PrimitiveOwner) {}
     fn detached(&self) {}
 }
+#[derive(Clone, Debug, PartialEq)]
+pub struct PrimitiveHitCandidate {
+    pub external_id: String,
+    pub distance: f64,
+    pub priority: crate::model::internal_hit_test::HitTestPriority,
+    pub layer: PrimitiveLayer,
+    pub is_background: bool,
+    pub cursor: Option<iced::mouse::Interaction>,
+}
+impl PrimitiveHitCandidate {
+    pub fn new(external_id: impl Into<String>) -> Self {
+        Self {
+            external_id: external_id.into(),
+            distance: 0.,
+            priority: Default::default(),
+            layer: PrimitiveLayer::Normal,
+            is_background: false,
+            cursor: None,
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct PrimitiveHit {
+    pub primitive: PrimitiveId,
+    pub owner: PrimitiveOwner,
+    pub external_id: String,
+    pub cursor: Option<iced::mouse::Interaction>,
+}
+/// Optional independent hit geometry, owned by the same preparation revision.
+pub trait PrimitiveHitTester: std::fmt::Debug + 'static {
+    fn hit_test(&self, point: Point) -> Option<PrimitiveHitCandidate>;
+}
 /// Iced is the adapter boundary; the same snapshot renders on TinySkia and WGPU.
 pub trait PrimitiveRenderer: std::fmt::Debug + 'static {
     fn draw(&self, target: &mut Frame);
     fn draw_background(&self, _target: &mut Frame) {}
+    fn hit_test(&self, _point: Point) -> Option<PrimitiveHitCandidate> {
+        None
+    }
 }
 #[derive(Clone, Debug)]
 pub struct PrimitiveView {
@@ -100,6 +135,7 @@ impl PrimitiveView {
 }
 #[derive(Clone, Debug, Default)]
 pub struct PreparedPrimitive {
+    pub hit_tester: Option<Rc<dyn PrimitiveHitTester>>,
     pub price_labels: Vec<PrimitiveAxisLabel>,
     pub time_labels: Vec<PrimitiveAxisLabel>,
     pub price_views: Vec<PrimitiveView>,
@@ -108,12 +144,14 @@ pub struct PreparedPrimitive {
 }
 #[derive(Clone, Debug)]
 pub struct PreparedAttachment {
+    pub order: u64,
     pub id: PrimitiveId,
     pub owner: PrimitiveOwner,
     pub output: PreparedPrimitive,
     pub price_side: Option<crate::model::axis_snapshots::PriceAxisSide>,
 }
 pub(crate) struct Attachment {
+    pub order: u64,
     pub id: PrimitiveId,
     pub owner: PrimitiveOwner,
     pub primitive: Rc<dyn DrawingPrimitive>,
@@ -124,6 +162,17 @@ impl Drop for Attachment {
     }
 }
 impl Chart {
+    pub(crate) fn next_extension_order(&mut self) -> u64 {
+        let order = self.extension_order;
+        self.extension_order = self
+            .extension_order
+            .checked_add(1)
+            .expect("extension order exhausted");
+        order
+    }
+    pub fn primitive_hit(&self, pane: usize, point: Point) -> Option<PrimitiveHit> {
+        self.frame_for_pane(pane)?.plot.primitive_hit(point)
+    }
     fn sync_primitive_autoscale(&mut self, id: PrimitiveId) {
         let attachment = self
             .primitives
@@ -161,14 +210,15 @@ impl Chart {
             .map(PrimitiveId)
             .map_err(|_| ChartError::IdExhausted)?;
         primitive.attached(owner);
+        let order = self.next_extension_order();
         self.primitives.push(Attachment {
+            order,
             id,
             owner,
             primitive: Rc::new(primitive),
         });
         self.sync_primitive_autoscale(id);
         self.model.full_update();
-        self.revision = self.revision.wrapping_add(1);
         Ok(id)
     }
     pub fn add_series_primitive(
@@ -203,15 +253,16 @@ impl Chart {
             .find(|a| a.id == id)
             .ok_or(ChartError::UnknownPrimitive(id))?;
         let owner = attachment.owner;
+        let order = attachment.order;
         primitive.attached(owner);
         *attachment = Attachment {
+            order,
             id,
             owner,
             primitive: Rc::new(primitive),
         };
         self.sync_primitive_autoscale(id);
         self.model.full_update();
-        self.revision = self.revision.wrapping_add(1);
         Ok(())
     }
     pub fn remove_primitive(&mut self, id: PrimitiveId) -> Result<(), ChartError> {
@@ -226,7 +277,6 @@ impl Chart {
         }
         self.primitives.remove(index);
         self.model.full_update();
-        self.revision = self.revision.wrapping_add(1);
         Ok(())
     }
     pub fn primitive_owner(&self, id: PrimitiveId) -> Result<PrimitiveOwner, ChartError> {
@@ -383,6 +433,7 @@ pub(crate) fn prepare_axes(
                 axis.primitive_graphics |= !prepared.price_views.is_empty();
             }
             output[pane].push(PreparedAttachment {
+                order: a.order,
                 id: a.id,
                 owner: a.owner,
                 output: prepared,

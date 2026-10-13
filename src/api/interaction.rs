@@ -21,6 +21,7 @@ pub enum ChartMessage {
 }
 #[derive(Clone, Debug)]
 pub struct PointerEvent {
+    pub primitive: Option<super::PrimitiveHit>,
     pub hit: Option<super::ChartHit>,
     pub marker: Option<super::MarkerHit>,
     pub pane: Option<usize>,
@@ -269,7 +270,8 @@ impl Chart {
             ));
         }
         let pointer = self.pointer_event();
-        if self.last_hit != pointer.hit
+        if self.last_primitive != pointer.primitive
+            || self.last_hit != pointer.hit
             || previous
                 != (
                     self.model.crosshair().position(),
@@ -277,6 +279,7 @@ impl Chart {
                 )
         {
             self.last_hit = pointer.hit.clone();
+            self.last_primitive = pointer.primitive.clone();
             events.push(ChartEvent::CrosshairMoved(pointer));
         }
         Ok(events)
@@ -403,14 +406,20 @@ impl Chart {
             let first = scale.first_value()?;
             Some(scale.coordinate_to_price(y?.into(), first))
         });
-        let hit = pane
+        let selection = pane
             .zip(point)
-            .and_then(|(pane, point)| self.hit_test(pane, point));
+            .and_then(|(pane, point)| self.frame_for_pane(pane)?.plot.selection(point));
+        let (hit, primitive) = match selection {
+            Some(crate::ui::primitive_hit_testing::PaneHit::BuiltIn(h)) => (Some(h), None),
+            Some(crate::ui::primitive_hit_testing::PaneHit::Primitive(h)) => (None, Some(h)),
+            None => (None, None),
+        };
         let marker = hit.as_ref().and_then(|h| match &h.target {
             super::HitTarget::Marker(m) => Some(m.clone()),
             _ => None,
         });
         PointerEvent {
+            primitive,
             hit,
             marker,
             pane,

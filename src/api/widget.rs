@@ -303,7 +303,15 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         {
             iced::mouse::Interaction::ResizingVertically
         } else {
-            iced::mouse::Interaction::default()
+            local_primitive_cursor(
+                self.axis_layouts(),
+                self.multi,
+                self.snapshot,
+                cursor
+                    .position()
+                    .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y)),
+            )
+            .unwrap_or_default()
         }
     }
     fn draw(
@@ -339,4 +347,21 @@ impl ChartState {
     pub(super) fn axis_dragging(&self) -> bool {
         self.axis_input.is_dragging()
     }
+}
+
+fn local_primitive_cursor(
+    layouts: &[crate::ui::chart_layout::ChartLayout],
+    multi: Option<&IcedMultiPaneChartFrame>,
+    snapshot: &IcedChartFrame,
+    point: Option<iced::Point>,
+) -> Option<iced::mouse::Interaction> {
+    let point = point?;
+    layouts.iter().enumerate().find_map(|(index, l)| {
+        let local = iced::Point::new(
+            point.x - l.plot.origin.x as f32,
+            point.y - l.plot.origin.y as f32,
+        );
+        let plot = multi.and_then(|m| m.panes.get(index)).unwrap_or(snapshot);
+        plot.plot.primitive_hit(local)?.cursor
+    })
 }
