@@ -19,3 +19,7 @@ pub mod price_axis_labels;
 pub mod bars_renderer;
 
 pub mod baseline_renderer;
+
+pub mod line_hit_test;
+
+pub mod range_hit_test;

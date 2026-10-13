@@ -47,3 +47,5 @@ pub mod time_scale;
 pub mod time_scale_host;
 pub mod time_scale_options;
 pub mod time_scale_visible_range;
+
+pub mod hit_test;

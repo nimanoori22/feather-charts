@@ -13,3 +13,5 @@ pub use crate::model::series_markers::{
     MarkerCollectionId, MarkerHit, MarkerPosition, MarkerShape, MarkerZOrder, SeriesMarker,
     SeriesMarkersOptions,
 };
+
+pub use crate::model::hit_test::{ChartHit, HitTarget, PriceLineKind};

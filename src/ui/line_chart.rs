@@ -129,6 +129,7 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub hit_series: Vec<super::hit_testing::PreparedSeriesHit>,
     pub series_id: Option<SeriesId>,
     pub price_line_series: Vec<SeriesId>,
     pub annotation_ratio: f64,
@@ -156,6 +157,7 @@ impl Default for PlotSnapshot {
         Self {
             series_id: None,
             price_line_series: vec![],
+            hit_series: vec![],
             annotation_ratio: 1.,
             annotations: vec![],
             annotation_geometry: vec![],
@@ -370,6 +372,7 @@ impl PlotSnapshot {
         Ok(Self {
             series_id: None,
             price_line_series: vec![],
+            hit_series: vec![],
             annotation_ratio: f64::from(ratio.horizontal),
             annotations: vec![],
             annotation_geometry: vec![],
@@ -723,6 +726,22 @@ where
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
     snapshot.series_id = id;
+    if let Some(id) = id
+        && let PaneView::Line(view) = view
+        && let Some(data) = view.data()
+        && let Some(series) = model.series(id)
+        && let crate::model::series_options::SeriesOptionsMap::Line(options) = series.options()
+    {
+        snapshot
+            .hit_series
+            .push(super::hit_testing::PreparedSeriesHit::line(
+                id,
+                data,
+                options.style.line_type,
+                options.common.hit_test_tolerance,
+            ));
+    }
+
     if let Some(id) = id {
         snapshot.annotations = model.prepare_series_markers(id);
     }

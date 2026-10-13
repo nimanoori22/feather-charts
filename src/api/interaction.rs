@@ -21,6 +21,7 @@ pub enum ChartMessage {
 }
 #[derive(Clone, Debug)]
 pub struct PointerEvent {
+    pub hit: Option<super::ChartHit>,
     pub marker: Option<super::MarkerHit>,
     pub pane: Option<usize>,
     pub point: Option<iced::Point>,
@@ -268,14 +269,14 @@ impl Chart {
             ));
         }
         let pointer = self.pointer_event();
-        if self.last_marker_hit != pointer.marker
+        if self.last_hit != pointer.hit
             || previous
                 != (
                     self.model.crosshair().position(),
                     self.model.crosshair().origin(),
                 )
         {
-            self.last_marker_hit = pointer.marker.clone();
+            self.last_hit = pointer.hit.clone();
             events.push(ChartEvent::CrosshairMoved(pointer));
         }
         Ok(events)
@@ -403,9 +404,16 @@ impl Chart {
             Some(scale.coordinate_to_price(y?.into(), first))
         });
         PointerEvent {
+            hit: pane
+                .zip(point)
+                .and_then(|(pane, point)| self.hit_test(pane, point)),
             marker: pane
                 .zip(point)
-                .and_then(|(pane, point)| self.marker_hit(pane, point)),
+                .and_then(|(pane, point)| self.hit_test(pane, point))
+                .and_then(|h| match h.target {
+                    super::HitTarget::Marker(m) => Some(m),
+                    _ => None,
+                }),
             pane,
             point,
             logical,

@@ -9,3 +9,5 @@ pub mod price_axis;
 pub mod price_axis_input;
 pub mod series_annotations;
 pub mod time_axis;
+
+pub mod hit_testing;
