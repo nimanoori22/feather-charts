@@ -15,3 +15,9 @@ pub use crate::model::series_markers::{
 };
 
 pub use crate::model::hit_test::{ChartHit, HitTarget, PriceLineKind};
+
+pub(crate) mod primitives;
+pub use primitives::{
+    DrawingPrimitive, PreparedPrimitive, PrimitiveContext, PrimitiveId, PrimitiveLayer,
+    PrimitiveOwner, PrimitivePaneId, PrimitiveRenderer, PrimitiveView,
+};

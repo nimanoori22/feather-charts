@@ -34,6 +34,7 @@ use std::{
 
 #[derive(Debug)]
 pub enum ChartError {
+    UnknownPrimitive(super::PrimitiveId),
     Model(ChartModelError),
     Frame(ChartFrameError),
     PriceAxis(crate::model::axis_snapshots::PriceAxisOptionsError),
@@ -69,6 +70,9 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    empty_frame: IcedChartFrame,
+    pub(crate) primitives: Vec<super::primitives::Attachment>,
+    pub(crate) primitive_panes: Vec<super::PrimitivePaneId>,
     hovered_series_on_top: bool,
     pub(super) last_hit: Option<super::ChartHit>,
     pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
@@ -107,6 +111,11 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            empty_frame: Default::default(),
+            primitives: vec![],
+            primitive_panes: (0..usize::from(options.add_default_pane))
+                .map(|_| super::primitives::pane_id())
+                .collect(),
             hovered_series_on_top: true,
             last_hit: None,
             size: iced::Size::ZERO,
@@ -226,12 +235,17 @@ impl Chart {
         let update = self.layer.remove_series(id)?;
         self.model.remove_series(id, update)?;
         self.kinds.remove(&id);
+        self.primitives
+            .retain(|a| a.owner != super::PrimitiveOwner::Series(id));
         for views in &mut self.views {
             views.retain(|(other, _)| *other != id);
         }
         if self.views.len() != self.model.panes().len() {
             // Model removes an unpreserved pane when its final series is removed.
             self.views.remove(pane);
+            let removed = self.primitive_panes.remove(pane);
+            self.primitives
+                .retain(|a| a.owner != super::PrimitiveOwner::Pane(removed));
         }
         self.revision += 1;
         Ok(())
@@ -272,6 +286,7 @@ impl Chart {
     pub fn add_pane(&mut self) -> usize {
         self.cancel_interaction();
         self.views.push(vec![]);
+        self.primitive_panes.push(super::primitives::pane_id());
         self.revision += 1;
         self.model.add_pane()
     }
@@ -317,6 +332,7 @@ impl Chart {
             .map(|mut snapshot| {
                 let origin = self.model.crosshair().origin();
                 for (index, pane) in snapshot.panes.iter_mut().enumerate() {
+                    pane.plot.primitives = self.prepare_primitives(index, pane.plot.size, ratio);
                     pane.plot.prepare_hover(
                         origin
                             .filter(|o| o.pane == index)
@@ -377,7 +393,7 @@ impl Chart {
         }
     }
     pub fn frame(&self) -> &IcedChartFrame {
-        self.frame.panes.first().unwrap_or(&EMPTY_FRAME)
+        self.frame.panes.first().unwrap_or(&self.empty_frame)
     }
     /// Source default is enabled. Changes drawing order without changing selection order.
     pub fn set_hovered_series_on_top(&mut self, enabled: bool) {
@@ -454,8 +470,6 @@ impl Chart {
             .map_err(Into::into)
     }
 }
-static EMPTY_FRAME: std::sync::LazyLock<IcedChartFrame> =
-    std::sync::LazyLock::new(IcedChartFrame::default);
 
 // Validate the entire replacement before DataLayer removes previous memberships.
 fn validate_data(

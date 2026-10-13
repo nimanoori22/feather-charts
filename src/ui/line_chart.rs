@@ -131,6 +131,7 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub primitives: Vec<crate::api::primitives::PreparedAttachment>,
     pub hovered_series: Option<SeriesId>,
     pub hovered_series_on_top: bool,
     /// Visible hit geometry in stable source order, independent of raised drawing.
@@ -163,6 +164,7 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            primitives: vec![],
             hovered_series: None,
             hovered_series_on_top: true,
             series_id: None,
@@ -382,6 +384,7 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            primitives: vec![],
             hovered_series: None,
             hovered_series_on_top: true,
             series_id: None,
@@ -454,6 +457,7 @@ impl PlotSnapshot {
             frame.with_clip(clip, |frame| {
                 frame.translate(iced::Vector::new(clip.x, clip.y));
                 self.draw_crosshair(frame);
+                self.draw_primitive_layer(frame, crate::api::PrimitiveLayer::Top);
             });
         }
     }
@@ -472,6 +476,7 @@ impl PlotSnapshot {
         } else {
             frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
         }
+        self.draw_primitive_layer(frame, crate::api::PrimitiveLayer::Bottom);
         self.draw_strokes(frame, self.grid.iter());
         self.draw_series(frame);
         // Low-level hosts can append strokes without an owning series.
@@ -481,6 +486,7 @@ impl PlotSnapshot {
         );
         if crosshair {
             self.draw_crosshair(frame);
+            self.draw_primitive_layer(frame, crate::api::PrimitiveLayer::Top);
         }
     }
     fn draw_crosshair(&self, frame: &mut Frame) {

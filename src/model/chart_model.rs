@@ -2,6 +2,7 @@
 
 mod markers;
 mod price_lines;
+mod primitives;
 
 use crate::model::{
     axis_snapshots::{

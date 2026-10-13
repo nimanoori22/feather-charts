@@ -47,51 +47,71 @@ impl PlotSnapshot {
             }))
     }
     pub(super) fn draw_series(&self, frame: &mut Frame) {
-        for pass in self.series_draw_passes() {
-            let (id, fills, lines, gradient_lines, candles, markers, gradient_markers) =
-                if pass.layer == 0 {
-                    (
-                        self.series_id,
-                        &self.fills,
-                        &self.lines,
-                        &self.gradient_lines,
-                        &self.candles,
-                        &self.markers,
-                        &self.gradient_markers,
-                    )
-                } else {
-                    let l = &self.series_layers[pass.layer - 1];
-                    (
-                        l.series_id,
-                        &l.fills,
-                        &l.lines,
-                        &l.gradient_lines,
-                        &l.candles,
-                        &l.markers,
-                        &l.gradient_markers,
-                    )
-                };
-            if pass.kind != SeriesPassKind::Foreground {
-                self.draw_series_price_lines(frame, id, true);
-                self.draw_fills(frame, fills);
+        for background in [true, false] {
+            self.draw_primitives(frame, crate::api::PrimitiveLayer::Normal, None, background);
+            for pass in self
+                .series_draw_passes()
+                .filter(|p| p.kind != SeriesPassKind::Foreground)
+            {
+                self.draw_series_pass(frame, pass, background);
             }
-            if pass.kind != SeriesPassKind::Background {
-                self.draw_strokes(frame, lines.iter());
-                self.draw_gradient_strokes(frame, gradient_lines);
-                for rect in candles {
-                    frame.fill_rectangle(rect.origin, rect.size, rect.color);
-                }
-                self.draw_markers(frame, markers);
-                self.draw_gradient_markers(frame, gradient_markers);
-                self.draw_series_price_lines(frame, id, false);
+        }
+        for pass in self
+            .series_draw_passes()
+            .filter(|p| p.kind == SeriesPassKind::Foreground)
+        {
+            for background in [true, false] {
+                self.draw_series_pass(frame, pass, background);
             }
-            if pass.kind != SeriesPassKind::Foreground {
-                self.draw_annotations(
-                    frame,
-                    crate::model::series_markers::MarkerZOrder::Normal,
-                    Some(pass.layer),
-                );
+        }
+    }
+    fn draw_series_pass(&self, frame: &mut Frame, pass: SeriesDrawPass, background: bool) {
+        let (id, fills, lines, gradient_lines, candles, markers, gradient_markers) =
+            if pass.layer == 0 {
+                (
+                    self.series_id,
+                    &self.fills,
+                    &self.lines,
+                    &self.gradient_lines,
+                    &self.candles,
+                    &self.markers,
+                    &self.gradient_markers,
+                )
+            } else {
+                let l = &self.series_layers[pass.layer - 1];
+                (
+                    l.series_id,
+                    &l.fills,
+                    &l.lines,
+                    &l.gradient_lines,
+                    &l.candles,
+                    &l.markers,
+                    &l.gradient_markers,
+                )
+            };
+        if background && pass.kind != SeriesPassKind::Foreground {
+            self.draw_series_price_lines(frame, id, true);
+            self.draw_fills(frame, fills);
+        }
+        if !background && pass.kind != SeriesPassKind::Background {
+            self.draw_strokes(frame, lines.iter());
+            self.draw_gradient_strokes(frame, gradient_lines);
+            for rect in candles {
+                frame.fill_rectangle(rect.origin, rect.size, rect.color);
             }
+            self.draw_markers(frame, markers);
+            self.draw_gradient_markers(frame, gradient_markers);
+            self.draw_series_price_lines(frame, id, false);
+        }
+        if !background && pass.kind != SeriesPassKind::Foreground {
+            self.draw_annotations(
+                frame,
+                crate::model::series_markers::MarkerZOrder::Normal,
+                Some(pass.layer),
+            );
+        }
+        if pass.kind != SeriesPassKind::Foreground {
+            self.draw_primitives(frame, crate::api::PrimitiveLayer::Normal, id, background);
         }
     }
 }

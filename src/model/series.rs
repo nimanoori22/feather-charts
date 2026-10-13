@@ -219,6 +219,7 @@ pub struct Series<I, O, M = ()> {
     last_update_info: Option<SeriesUpdateInfo>,
     pub(crate) marker_collections: Vec<super::series_markers::MarkerCollection<O>>,
     pub(crate) marker_spacing: Cell<f64>,
+    pub(crate) primitive_autoscale: Vec<(u64, super::ipane_primitive::PrimitiveAutoscaleProvider)>,
     pub(crate) price_lines: Vec<(
         crate::model::price_line::PriceLineId,
         crate::model::price_line::PriceLineOptions,
@@ -266,6 +267,7 @@ where
             last_update_info: None,
             marker_collections: vec![],
             marker_spacing: Cell::new(6.),
+            primitive_autoscale: vec![],
             price_lines: vec![],
         })
     }
@@ -423,11 +425,22 @@ where
             });
         }
 
-        let margins = self
+        let mut margins = self
             .marker_collections
             .iter()
             .filter_map(|c| c.margins(self.marker_spacing.get()))
             .next_back();
+        for (_, provider) in &self.primitive_autoscale {
+            if let Some(info) = provider(start, end) {
+                if let Some(raw) = info.price_range {
+                    let value = PriceRangeImpl::new(raw.min_value, raw.max_value);
+                    range = Some(range.map_or(value, |r| r.merge(Some(&value))));
+                }
+                if info.margins.is_some() {
+                    margins = info.margins;
+                }
+            }
+        }
         Some(AutoscaleInfoImpl::new(range, margins))
     }
     /// Returns the price range for an integer logical interval.

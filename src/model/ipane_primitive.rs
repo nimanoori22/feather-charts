@@ -20,3 +20,11 @@ pub trait PrimitiveHitTestSource {
         Vec::new()
     }
 }
+
+/// Read-only synchronous contribution; no chart/renderer ownership in the engine.
+pub(crate) type PrimitiveAutoscaleProvider = std::rc::Rc<
+    dyn Fn(
+        crate::model::time_data::TimePointIndex,
+        crate::model::time_data::TimePointIndex,
+    ) -> Option<crate::model::autoscale_info_impl::AutoscaleInfo>,
+>;
