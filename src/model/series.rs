@@ -2,6 +2,7 @@
 
 pub mod area_pane_view;
 pub mod bars_pane_view;
+pub mod baseline_pane_view;
 pub mod candlesticks_pane_view;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
@@ -90,6 +91,41 @@ fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
 }
 
 fn validate_visual_options(options: &SeriesOptionsMap) -> Result<(), SeriesConstructionError> {
+    if let SeriesOptionsMap::Baseline(o) = options {
+        let mut parser = crate::model::colors::ColorParser::default();
+        let v = &o.style;
+        let crate::model::series_options::BaseValueType::Price(base) = &v.base_value;
+        if !base.price.is_finite()
+            || base.price.abs() > 90_071_992_547_409.9
+            || [
+                &v.top_fill_color1,
+                &v.top_fill_color2,
+                &v.bottom_fill_color1,
+                &v.bottom_fill_color2,
+                &v.top_line_color,
+                &v.bottom_line_color,
+            ]
+            .into_iter()
+            .any(|c| parser.parse_color(c).is_err())
+            || [
+                &v.crosshair_marker_border_color,
+                &v.crosshair_marker_background_color,
+                &o.common.price_line_color,
+            ]
+            .into_iter()
+            .any(|c| !c.is_empty() && parser.parse_color(c).is_err())
+            || [
+                Some(v.crosshair_marker_radius),
+                Some(v.crosshair_marker_border_width),
+                v.point_markers_radius,
+            ]
+            .into_iter()
+            .flatten()
+            .any(|r| !r.is_finite() || r < 0. || r > f64::from(f32::MAX))
+        {
+            return Err(SeriesConstructionError::InvalidVisualOptions);
+        }
+    }
     if let SeriesOptionsMap::Bar(o) = options {
         let mut parser = crate::model::colors::ColorParser::default();
         if [&o.style.up_color, &o.style.down_color]
@@ -267,6 +303,14 @@ where
             }
             (SeriesPlotRow::Histogram(r), SeriesOptionsMap::Histogram(o)) => {
                 r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Baseline(_), SeriesOptionsMap::Baseline(o)) => {
+                let crate::model::series_options::BaseValueType::Price(base) = &o.style.base_value;
+                if price >= base.price {
+                    &o.style.top_line_color
+                } else {
+                    &o.style.bottom_line_color
+                }
             }
             (SeriesPlotRow::Bar(r), SeriesOptionsMap::Bar(o)) => {
                 r.color.as_ref().unwrap_or(if value[0] <= price {

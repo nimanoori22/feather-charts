@@ -319,6 +319,32 @@ pub struct BaselineStyleOptions {
     pub crosshair_marker_border_width: f64,
     pub last_price_animation: LastPriceAnimationMode,
 }
+impl Default for BaselineStyleOptions {
+    fn default() -> Self {
+        Self {
+            base_value: BaseValueType::Price(BaseValuePrice { price: 0. }),
+            top_fill_color1: "rgba(38, 166, 154, 0.28)".into(),
+            top_fill_color2: "rgba(38, 166, 154, 0.05)".into(),
+            top_line_color: "rgba(38, 166, 154, 1)".into(),
+            bottom_fill_color1: "rgba(239, 83, 80, 0.05)".into(),
+            bottom_fill_color2: "rgba(239, 83, 80, 0.28)".into(),
+            bottom_line_color: "rgba(239, 83, 80, 1)".into(),
+            relative_gradient: false,
+            line_style: LineStyle::Solid,
+            line_width: LineWidth::Three,
+            line_type: LineType::Simple,
+            line_visible: true,
+            point_markers_visible: false,
+            point_markers_radius: None,
+            crosshair_marker_visible: true,
+            crosshair_marker_radius: 4.,
+            crosshair_marker_border_color: String::new(),
+            crosshair_marker_background_color: String::new(),
+            crosshair_marker_border_width: 2.,
+            last_price_animation: LastPriceAnimationMode::Disabled,
+        }
+    }
+}
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct BaselineStyleOptionsPatch {
     pub base_value: Option<BaseValueType>,

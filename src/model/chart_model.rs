@@ -176,6 +176,7 @@ where
             let (enabled, radius, border_width, background, border) = match series.options() {
                 SeriesOptionsMap::Line(o) => marker_options!(o),
                 SeriesOptionsMap::Area(o) => marker_options!(o),
+                SeriesOptionsMap::Baseline(o) => marker_options!(o),
                 _ => continue,
             };
             if !series.visible() || !enabled {
@@ -782,6 +783,29 @@ where
             .price_scale_for_source(id)
             .ok_or(LinePreparationError::MissingPriceScale(id))?;
         line_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
+    pub fn prepare_baseline(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::baseline_renderer::BaselineRendererData>,
+        crate::model::series::baseline_pane_view::BaselinePreparationError,
+    > {
+        use crate::model::series::baseline_pane_view::{self, BaselinePreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(BaselinePreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(BaselinePreparationError::NotBaselineSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(BaselinePreparationError::MissingPriceScale(id))?;
+        baseline_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
     }
 
     pub fn prepare_area(
