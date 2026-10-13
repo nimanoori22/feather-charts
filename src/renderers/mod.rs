@@ -11,5 +11,6 @@ pub mod price_axis_renderer_options_provider;
 pub mod time_axis_renderer;
 pub mod walk_line;
 
+pub mod area_renderer;
 pub mod horizontal_line_renderer;
 pub mod price_axis_labels;

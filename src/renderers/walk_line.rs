@@ -35,6 +35,23 @@ pub fn walk_line(
     width: f64,
     pattern: &[f64],
 ) -> Vec<StyledStroke> {
+    walk_segments(items, range, kind, bar_width, width, pattern, |a, b| {
+        items[a].color == items[b].color
+    })
+    .into_iter()
+    .map(|(_, stroke)| stroke)
+    .collect()
+}
+
+pub(crate) fn walk_segments(
+    items: &[LinePoint],
+    range: SeriesItemsIndexesRange,
+    kind: LineType,
+    bar_width: f64,
+    width: f64,
+    pattern: &[f64],
+    same_style: impl Fn(usize, usize) -> bool,
+) -> Vec<(usize, StyledStroke)> {
     if range.from >= range.to || range.to > items.len() {
         return vec![];
     }
@@ -58,7 +75,7 @@ pub fn walk_line(
                 y: first.y,
             }),
         ];
-        return vec![current];
+        return vec![(range.from, current)];
     }
     current.path.push(PathOperation::MoveTo(point(first)));
     let mut result = vec![];
@@ -90,8 +107,8 @@ pub fn walk_line(
                 };
                 current.path.push(PathOperation::LineTo(corner));
                 distance += (end.x - prev.x).abs();
-                if items[i].color != current.color {
-                    result.push(current);
+                if !same_style(i, style_first) {
+                    result.push((style_first, current));
                     if period > 0.0 {
                         distance %= period;
                     }
@@ -105,8 +122,8 @@ pub fn walk_line(
                 distance += (end.y - prev.y).abs();
             }
         }
-        if kind != LineType::WithSteps && items[i].color != current.color {
-            result.push(current);
+        if kind != LineType::WithSteps && !same_style(i, style_first) {
+            result.push((style_first, current));
             if period > 0.0 {
                 distance %= period;
             }
@@ -116,7 +133,7 @@ pub fn walk_line(
         }
     }
     if style_first != range.to - 1 || kind == LineType::WithSteps {
-        result.push(current);
+        result.push((style_first, current));
     }
     result
 }
