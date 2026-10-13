@@ -215,6 +215,7 @@ pub enum DataLayerError<E> {
     Behavior(E),
     UnknownSeries(SeriesId),
     OutOfOrderUpdate,
+    UnorderedCustomData { index: usize },
     HistoricalUpdateMissingPoint,
     PlotRow(PlotRowCreationError),
 }
@@ -325,7 +326,8 @@ where
             .iter()
             .map(|item| item.time().clone())
             .collect::<Vec<_>>();
-        let mut prepared = Vec::with_capacity(data.len());
+        let mut prepared: Vec<SeriesDataRow<B::InternalItem, B::Item, D, M>> =
+            Vec::with_capacity(data.len());
         if !data.is_empty() {
             self.behavior
                 .preprocess_data(&mut data)
@@ -338,6 +340,13 @@ where
                 let internal_time = converter
                     .convert(item.time())
                     .map_err(DataLayerError::Behavior)?;
+                if prepared.last().is_some_and(|previous| {
+                    self.compare_time(previous.time(), &internal_time) != Ordering::Less
+                }) {
+                    return Err(DataLayerError::UnorderedCustomData {
+                        index: prepared.len(),
+                    });
+                }
                 let row = create_custom_plot_row(
                     internal_time,
                     TimePointIndex::default(),
@@ -1277,6 +1286,30 @@ mod tests {
         );
         assert_eq!(layer.points, points);
         assert_eq!(layer.last_time_by_series, last_times);
+    }
+
+    #[test]
+    fn unordered_custom_replacement_keeps_the_previous_series() {
+        let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
+        let adapter = CustomDataLayerAdapter::new(SeriesId::new(30), CustomBuilder);
+        adapter
+            .set_data(&mut layer, vec![custom(1., vec![1.], "original")])
+            .unwrap();
+        let points = layer.points.clone();
+        for times in [[3., 2.], [2., 2.]] {
+            assert!(
+                adapter
+                    .set_data(
+                        &mut layer,
+                        times
+                            .into_iter()
+                            .map(|time| custom(time, vec![time], "unordered"))
+                            .collect(),
+                    )
+                    .is_err()
+            );
+            assert_eq!(layer.points, points);
+        }
     }
 
     #[test]

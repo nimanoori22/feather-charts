@@ -294,3 +294,14 @@ registration state and once-per-input builder calls. All 344 library tests,
 library cargo check/strict Clippy and formatting pass. Public rendering, complete
 validation/options, retained-frame lifecycle and decorations are subsequent
 slices; this foundation alone does not complete custom-series acceptance.
+
+The next foundation slice validates strictly increasing converted times, row
+colors and every builder value before min/max reduction. f64 min/max can hide a
+NaN intermediate value, so checking only the resulting OHLC projection is
+insufficient. Price values use the existing public built-in API's finite/safe
+price bound. Ordering failures identify the original input index and leave
+shared membership untouched. Changes are in `src/model/data_layer.rs` and
+`src/model/get_series_plot_row_creator.rs`; three behavioral regressions fail
+before the guards and pass afterward. All 347 library tests, library cargo check,
+all-target strict Clippy, formatting and diff checks pass. Whitespace still skips
+the price builder and does not acquire an invented price/color.

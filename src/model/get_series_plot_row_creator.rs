@@ -21,6 +21,8 @@ pub enum PlotRowCreationError {
         actual: SeriesType,
     },
     EmptyCustomValues,
+    InvalidCustomValues,
+    InvalidCustomColor,
 }
 
 pub trait CustomPlotRowBuilder<Data, Item, Metadata> {
@@ -303,9 +305,22 @@ where
             let Some(&last) = values.last() else {
                 return Err(PlotRowCreationError::EmptyCustomValues);
             };
+            if values
+                .iter()
+                .any(|value| !value.is_finite() || value.abs() > 90_071_992_547_409.9)
+            {
+                return Err(PlotRowCreationError::InvalidCustomValues);
+            }
+            let color = data.color().map(str::to_owned);
+            if color.as_ref().is_some_and(|color| {
+                crate::model::colors::ColorParser::default()
+                    .parse_color(color)
+                    .is_err()
+            }) {
+                return Err(PlotRowCreationError::InvalidCustomColor);
+            }
             let high = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
             let low = values.iter().copied().fold(f64::INFINITY, f64::min);
-            let color = data.color().map(str::to_owned);
             Ok(SeriesDataRow::Value(SeriesPlotRow::Custom(CustomPlotRow {
                 base: base(time, index, original_time, None, [last, high, low, last]),
                 data,
@@ -331,6 +346,7 @@ mod tests {
     struct Datum {
         time: u64,
         values: Vec<f64>,
+        color: Option<String>,
     }
     impl crate::model::data_consumer::TimedData for Datum {
         type Item = u64;
@@ -341,7 +357,11 @@ mod tests {
             &mut self.time
         }
     }
-    impl CustomData for Datum {}
+    impl CustomData for Datum {
+        fn color(&self) -> Option<&str> {
+            self.color.as_deref()
+        }
+    }
     struct Builder;
     impl CustomPlotRowBuilder<Datum, u64, String> for Builder {
         fn values(&self, data: &Datum) -> Vec<f64> {
@@ -501,6 +521,7 @@ mod tests {
             CustomSeriesDataItem::Data(Datum {
                 time: 1,
                 values: vec![3., 7., 2.],
+                color: None,
             }),
             1,
             &Builder,
@@ -516,10 +537,45 @@ mod tests {
             CustomSeriesDataItem::Data(Datum {
                 time: 1,
                 values: vec![],
+                color: None,
             }),
             1,
             &Builder,
         );
         assert_eq!(empty, Err(PlotRowCreationError::EmptyCustomValues));
+    }
+
+    #[test]
+    fn custom_projection_rejects_invalid_builder_values_before_reducing_them() {
+        for invalid in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY, 1e20] {
+            let row = create_custom_plot_row(
+                10,
+                2.0.into(),
+                CustomSeriesDataItem::Data(Datum {
+                    time: 1,
+                    values: vec![invalid, 2.],
+                    color: None,
+                }),
+                1,
+                &Builder,
+            );
+            assert!(row.is_err(), "accepted invalid builder value {invalid}");
+        }
+    }
+
+    #[test]
+    fn custom_projection_rejects_invalid_row_color() {
+        let row = create_custom_plot_row(
+            10,
+            2.0.into(),
+            CustomSeriesDataItem::Data(Datum {
+                time: 1,
+                values: vec![1.],
+                color: Some("not-a-color".into()),
+            }),
+            1,
+            &Builder,
+        );
+        assert!(row.is_err());
     }
 }
