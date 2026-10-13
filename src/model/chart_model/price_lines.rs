@@ -41,25 +41,25 @@ where
         let handle = self
             .series
             .get(&series)
-            .and_then(|s| s.built_in())
+            .map(|s| &s.projection)
             .ok_or(ChartModelError::UnknownSeries(series))?;
         let id = NEXT_LINE
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map(PriceLineId)
             .map_err(|_| ChartModelError::PriceLineIdExhausted)?;
-        handle.borrow_mut().price_lines.push((id, options));
+        handle.borrow_mut().price_lines_mut().push((id, options));
         self.light_update();
         self.flush_effects();
         Ok(id)
     }
     pub fn price_line_options(&self, id: PriceLineId) -> Result<PriceLineOptions, ChartModelError> {
         for entry in self.series.values() {
-            if let Some(series) = entry.built_in()
-                && let Some((_, options)) = series
-                    .borrow()
-                    .price_lines
-                    .iter()
-                    .find(|(key, _)| *key == id)
+            if let Some((_, options)) = entry
+                .projection
+                .borrow()
+                .price_lines()
+                .iter()
+                .find(|(key, _)| *key == id)
             {
                 return Ok(options.clone());
             }
@@ -75,30 +75,32 @@ where
             return Err(ChartModelError::InvalidPriceLineOptions);
         }
         for entry in self.series.values() {
-            if let Some(handle) = entry.built_in() {
-                let mut series = handle.borrow_mut();
-                if let Some((_, old)) = series.price_lines.iter_mut().find(|(key, _)| *key == id) {
-                    *old = options;
-                    drop(series);
-                    self.light_update();
-                    self.flush_effects();
-                    return Ok(());
-                }
+            let handle = &entry.projection;
+            let mut series = handle.borrow_mut();
+            if let Some((_, old)) = series
+                .price_lines_mut()
+                .iter_mut()
+                .find(|(key, _)| *key == id)
+            {
+                *old = options;
+                drop(series);
+                self.light_update();
+                self.flush_effects();
+                return Ok(());
             }
         }
         Err(ChartModelError::UnknownPriceLine(id))
     }
     pub fn remove_price_line(&mut self, id: PriceLineId) -> Result<(), ChartModelError> {
         for entry in self.series.values() {
-            if let Some(handle) = entry.built_in() {
-                let mut series = handle.borrow_mut();
-                if let Some(index) = series.price_lines.iter().position(|(key, _)| *key == id) {
-                    series.price_lines.remove(index);
-                    drop(series);
-                    self.light_update();
-                    self.flush_effects();
-                    return Ok(());
-                }
+            let handle = &entry.projection;
+            let mut series = handle.borrow_mut();
+            if let Some(index) = series.price_lines().iter().position(|(key, _)| *key == id) {
+                series.price_lines_mut().remove(index);
+                drop(series);
+                self.light_update();
+                self.flush_effects();
+                return Ok(());
             }
         }
         Err(ChartModelError::UnknownPriceLine(id))
@@ -132,7 +134,7 @@ where
         let mut left_overlay = vec![];
         let mut right_overlay = vec![];
         for id in ids {
-            let Some(handle) = self.series.get(&id).and_then(|s| s.built_in()) else {
+            let Some(handle) = self.series.get(&id).map(|s| &s.projection) else {
                 continue;
             };
             let series = handle.borrow();
@@ -249,7 +251,7 @@ where
                     });
                 }
             }
-            for (line_id, options) in &series.price_lines {
+            for (line_id, options) in series.price_lines() {
                 let y = scale
                     .price_to_coordinate(options.price, first.value)
                     .value();

@@ -29,16 +29,20 @@ where
         id: u64,
         provider: Option<PrimitiveAutoscaleProvider>,
     ) {
-        if let Some(handle) = self.series.get(&owner).and_then(|s| s.built_in()) {
+        if let Some(handle) = self.series.get(&owner).map(|s| &s.projection) {
             let mut s = handle.borrow_mut();
-            if let Some(index) = s.primitive_autoscale.iter().position(|(key, _)| *key == id) {
+            if let Some(index) = s
+                .primitive_autoscale_mut()
+                .iter()
+                .position(|(key, _)| *key == id)
+            {
                 if let Some(provider) = provider {
-                    s.primitive_autoscale[index].1 = provider;
+                    s.primitive_autoscale_mut()[index].1 = provider;
                 } else {
-                    s.primitive_autoscale.remove(index);
+                    s.primitive_autoscale_mut().remove(index);
                 }
             } else if let Some(provider) = provider {
-                s.primitive_autoscale.push((id, provider));
+                s.primitive_autoscale_mut().push((id, provider));
             }
         }
         self.recalculate_requested = true;

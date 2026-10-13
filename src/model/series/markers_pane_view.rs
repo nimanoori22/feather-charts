@@ -4,7 +4,7 @@ use crate::{
         plot_data::PlotRowLike,
         plot_list::MismatchDirection,
         price_scale::PriceScale,
-        series::Series,
+        series::projection::SeriesProjection,
         series_markers::{MarkerHit, MarkerPosition, shape_height, shape_margin},
         series_options::SeriesType,
         time_scale::TimeScale,
@@ -16,8 +16,8 @@ use crate::{
 };
 use std::hash::Hash;
 
-pub(crate) fn prepare<B, M>(
-    series: &Series<B::InternalItem, B::Item, M>,
+pub(crate) fn prepare<B>(
+    series: &dyn SeriesProjection<B::Item>,
     time: &mut TimeScale<B>,
     scale: &PriceScale,
     font_size: f64,
@@ -27,9 +27,8 @@ where
     B: HorzScaleBehavior,
     B::Key: PartialOrd,
     B::CacheKey: Eq + Hash,
-    M: Clone,
 {
-    if series.marker_collections.is_empty()
+    if series.marker_collections().is_empty()
         || !series.common_options().visible
         || time.is_empty()
         || scale.is_empty()
@@ -42,7 +41,7 @@ where
     let Some(first) = series.first_value(Some(&visible)) else {
         return vec![];
     };
-    let Some(first_row) = series.bars().rows().first() else {
+    let Some(first_row) = series.first_row() else {
         return vec![];
     };
     let spacing = time.bar_spacing();
@@ -52,7 +51,7 @@ where
         SeriesType::Bar | SeriesType::Candlestick
     );
     let mut collections = vec![];
-    for collection in &series.marker_collections {
+    for collection in series.marker_collections() {
         let range = scale.price_range().unwrap();
         let generation = (series.pane_data_generation(), time.data_generation());
         let key = crate::model::series_markers::MarkerProjectionKey {
@@ -103,7 +102,7 @@ where
                     } else {
                         MismatchDirection::NearestLeft
                     };
-                    Some((i, series.bars().search(index, mode)?.index()))
+                    Some((i, series.row(index, mode)?.index()))
                 })
                 .collect();
             cache.generation = Some(generation);
@@ -120,7 +119,7 @@ where
         for (i, index) in &indexed[from..to] {
             let marker = &collection.markers[*i];
             let index = *index;
-            let Some(row) = series.bars().search(index, MismatchDirection::None) else {
+            let Some(row) = series.row(index, MismatchDirection::None) else {
                 continue;
             };
             if previous != Some(index) {

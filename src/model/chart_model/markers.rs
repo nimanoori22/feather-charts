@@ -15,10 +15,9 @@ where
         collection: MarkerCollection<B::Item>,
     ) {
         self.series[&series]
-            .built_in()
-            .unwrap()
+            .projection
             .borrow_mut()
-            .marker_collections
+            .marker_collections_mut()
             .push(collection);
         self.markers_changed();
     }
@@ -26,16 +25,13 @@ where
         &self,
         id: MarkerCollectionId,
     ) -> Option<MarkerCollection<B::Item>> {
-        self.series
-            .values()
-            .filter_map(|e| e.built_in())
-            .find_map(|s| {
-                s.borrow()
-                    .marker_collections
-                    .iter()
-                    .find(|c| c.id == id)
-                    .cloned()
-            })
+        self.series.values().map(|e| &e.projection).find_map(|s| {
+            s.borrow()
+                .marker_collections()
+                .iter()
+                .find(|c| c.id == id)
+                .cloned()
+        })
     }
     pub(crate) fn edit_marker_collection(
         &mut self,
@@ -43,26 +39,28 @@ where
         edit: impl FnOnce(&mut MarkerCollection<B::Item>),
     ) {
         for entry in self.series.values() {
-            if let Some(handle) = entry.built_in() {
-                let mut series = handle.borrow_mut();
-                if let Some(c) = series.marker_collections.iter_mut().find(|c| c.id == id) {
-                    edit(c);
-                    c.invalidate();
-                    drop(series);
-                    self.markers_changed();
-                    return;
-                }
+            let handle = &entry.projection;
+            let mut series = handle.borrow_mut();
+            if let Some(c) = series
+                .marker_collections_mut()
+                .iter_mut()
+                .find(|c| c.id == id)
+            {
+                edit(c);
+                c.invalidate();
+                drop(series);
+                self.markers_changed();
+                return;
             }
         }
     }
     pub(crate) fn remove_marker_collection(&mut self, id: MarkerCollectionId) {
         for entry in self.series.values() {
-            if let Some(handle) = entry.built_in() {
-                handle
-                    .borrow_mut()
-                    .marker_collections
-                    .retain(|c| c.id != id);
-            }
+            let handle = &entry.projection;
+            handle
+                .borrow_mut()
+                .marker_collections_mut()
+                .retain(|c| c.id != id);
         }
         self.markers_changed();
     }
@@ -78,15 +76,13 @@ where
         let Some(entry) = self.series.get(&id) else {
             return vec![];
         };
-        let Some(handle) = entry.built_in() else {
-            return vec![];
-        };
+        let handle = &entry.projection;
         let series = handle.borrow();
         let Some(scale) = self.panes[entry.pane].price_scale_for_source(id) else {
             return vec![];
         };
         crate::model::series::markers_pane_view::prepare(
-            &series,
+            &*series,
             &mut self.time_scale,
             scale,
             self.options.layout.font_size,

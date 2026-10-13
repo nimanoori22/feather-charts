@@ -7,6 +7,7 @@ pub mod candlesticks_pane_view;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
 pub mod markers_pane_view;
+pub(crate) mod projection;
 
 use crate::{
     formatters::{
@@ -623,6 +624,13 @@ where
 
 /// Typed custom-series data retained by the Series rather than DataLayer.
 pub struct CustomSeries<I, O, D, M = ()> {
+    pub(crate) marker_collections: Vec<super::series_markers::MarkerCollection<O>>,
+    pub(crate) marker_spacing: Cell<f64>,
+    pub(crate) primitive_autoscale: Vec<(u64, super::ipane_primitive::PrimitiveAutoscaleProvider)>,
+    pub(crate) price_lines: Vec<(
+        super::price_line::PriceLineId,
+        super::price_line::PriceLineOptions,
+    )>,
     id: SeriesId,
     options: CustomSeriesOptions,
     data: Vec<CustomPlotRow<I, O, D, M>>,
@@ -636,6 +644,10 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     pub fn new(id: SeriesId, options: CustomSeriesOptions) -> Self {
         let formatter = formatter_for(&options.common.price_format);
         Self {
+            marker_collections: vec![],
+            marker_spacing: Cell::new(6.),
+            primitive_autoscale: vec![],
+            price_lines: vec![],
             id,
             options,
             data: vec![],
@@ -762,7 +774,23 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
             }
         }
 
-        Some(AutoscaleInfoImpl::new(range, None))
+        let mut margins = self
+            .marker_collections
+            .iter()
+            .filter_map(|c| c.margins(self.marker_spacing.get()))
+            .next_back();
+        for (_, provider) in &self.primitive_autoscale {
+            if let Some(info) = provider(start, end) {
+                if let Some(raw) = info.price_range {
+                    let value = PriceRangeImpl::new(raw.min_value, raw.max_value);
+                    range = Some(range.map_or(value, |r| r.merge(Some(&value))));
+                }
+                if info.margins.is_some() {
+                    margins = info.margins;
+                }
+            }
+        }
+        Some(AutoscaleInfoImpl::new(range, margins))
     }
     pub fn autoscale_info(
         &self,

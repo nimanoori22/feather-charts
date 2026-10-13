@@ -72,6 +72,7 @@ pub enum ChartModelError {
 struct RegisteredSeries<I, O, M> {
     pane: usize,
     state: RegisteredSeriesState<I, O, M>,
+    projection: Rc<RefCell<dyn crate::model::series::projection::SeriesProjection<O>>>,
 }
 enum RegisteredSeriesState<I, O, M> {
     BuiltIn(SeriesHandle<I, O, M>),
@@ -317,21 +318,19 @@ where
             let mut left: Option<TimePointIndex> = None;
             let mut right: Option<TimePointIndex> = None;
             for entry in self.series.values() {
-                let Some(handle) = entry.built_in() else {
-                    continue;
-                };
+                let handle = &entry.projection;
                 let series = handle.borrow();
                 if !series.visible() {
                     continue;
                 }
-                if let Some(row) = series.bars().search(index, MismatchDirection::NearestLeft) {
+                if let Some(row) = series.row(index, MismatchDirection::NearestLeft) {
                     use crate::model::plot_data::PlotRowLike;
                     let at = row.index();
                     if left.is_none_or(|old| at > old) {
                         left = Some(at);
                     }
                 }
-                if let Some(row) = series.bars().search(index, MismatchDirection::NearestRight) {
+                if let Some(row) = series.row(index, MismatchDirection::NearestRight) {
                     use crate::model::plot_data::PlotRowLike;
                     let at = row.index();
                     if right.is_none_or(|old| at < old) {
@@ -360,9 +359,7 @@ where
             use crate::model::plot_data::PlotRowLike;
             let mut candidates = vec![];
             for id in ordered_ids {
-                let Some(handle) = self.series.get(&id).and_then(|entry| entry.built_in()) else {
-                    continue;
-                };
+                let handle = &self.series[&id].projection;
                 let series = handle.borrow();
                 let Some(price_scale) = pane.price_scale_for_source(id) else {
                     continue;
@@ -374,7 +371,7 @@ where
                     continue;
                 }
                 if let (Some(row), Some(first)) = (
-                    series.bars().value_at(index),
+                    series.row(index, crate::model::plot_list::MismatchDirection::None),
                     series.first_value(visible.as_ref()),
                 ) {
                     let keys: &[usize] = if self.crosshair.options.mode == CrosshairMode::MagnetOhlc
@@ -422,6 +419,12 @@ where
             .get(&id)?
             .built_in()
             .map(|handle| handle.borrow())
+    }
+    pub(crate) fn projection(
+        &self,
+        id: SeriesId,
+    ) -> Option<Ref<'_, dyn crate::model::series::projection::SeriesProjection<B::Item>>> {
+        Some(self.series.get(&id)?.projection.borrow())
     }
     pub fn pane_for_series(&self, id: SeriesId) -> Option<usize> {
         self.series.get(&id).map(|entry| entry.pane)
@@ -925,6 +928,14 @@ where
         Ok(())
     }
 
+    pub(crate) fn custom_options_changed(&mut self, id: SeriesId) {
+        let pane = self.series[&id].pane;
+        self.panes[pane].refresh_formatter_sources();
+        self.recalculate_requested = true;
+        self.full_update();
+        self.flush_effects();
+    }
+
     pub fn add_pane(&mut self) -> usize {
         let index = self.panes.len();
         let mut pane = Pane::new(index, self.options.pane.clone(), &self.options.layout);
@@ -968,7 +979,8 @@ where
             id,
             RegisteredSeries {
                 pane,
-                state: RegisteredSeriesState::BuiltIn(handle),
+                state: RegisteredSeriesState::BuiltIn(handle.clone()),
+                projection: handle,
             },
         );
         self.finish_registration(effects);
@@ -992,7 +1004,8 @@ where
             id,
             RegisteredSeries {
                 pane,
-                state: RegisteredSeriesState::Custom(handle),
+                state: RegisteredSeriesState::Custom(handle.clone()),
+                projection: handle,
             },
         );
         self.finish_registration(effects);
@@ -1415,12 +1428,11 @@ where
     }
     fn flush_effects(&mut self) {
         for entry in self.series.values() {
-            if let Some(handle) = entry.built_in() {
-                handle
-                    .borrow()
-                    .marker_spacing
-                    .set(self.time_scale.bar_spacing());
-            }
+            entry
+                .projection
+                .borrow()
+                .marker_spacing()
+                .set(self.time_scale.bar_spacing());
         }
         if !std::mem::take(&mut self.recalculate_requested) {
             self.refresh_crosshair();

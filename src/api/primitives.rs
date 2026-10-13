@@ -76,7 +76,7 @@ impl PrimitiveContext<'_> {
                 .price_scale_for_source(id)?
                 .coordinate_transform(
                     self.model
-                        .series(id)?
+                        .projection(id)?
                         .first_value(self.visible_range.as_ref())?
                         .value,
                 )
@@ -113,7 +113,7 @@ impl PrimitiveContext<'_> {
             .price_scale_for_source(id)?;
         let first = self
             .model
-            .series(id)?
+            .projection(id)?
             .first_value(self.visible_range.as_ref())?;
         let price = scale.coordinate_to_price(y.into(), first.value);
         (y.is_finite() && price.is_finite()).then_some(price)
@@ -150,7 +150,7 @@ impl PrimitiveContext<'_> {
         let scale = pane.price_scale_for_source(id)?;
         let first = self
             .model
-            .series(id)?
+            .projection(id)?
             .first_value(self.visible_range.as_ref())?;
         let y = scale.price_to_coordinate(price, first.value).value();
         y.is_finite().then_some(y)
@@ -348,7 +348,7 @@ impl Chart {
         series: SeriesId,
         primitive: impl DrawingPrimitive,
     ) -> Result<PrimitiveId, ChartError> {
-        if self.model.series(series).is_none() {
+        if self.model.projection(series).is_none() {
             return Err(ChartError::UnknownSeries(series));
         }
         self.attach_primitive(PrimitiveOwner::Series(series), primitive)
