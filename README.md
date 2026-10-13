@@ -38,13 +38,41 @@ to zoom. Wheel/drag on a price axis scales it; double-click restores autoscale.
 Vertical plot movement explicitly enters manual price mode. Panes share time
 navigation and keep independent price ranges.
 
-This API covers the currently rendered built-in series and the default `Time`
-behavior. Custom-series rendering, arbitrary pane reordering,
+This API covers built-in and typed custom series and the default `Time`
+behavior. Arbitrary pane reordering,
 touch/kinetic input and full TradingView API parity remain future work.
 Options already represented by the engine do not imply every visual feature is
 rendered. Read-only `model()` inspection remains available for advanced hosts.
 
 Implementation contract and verification: [public chart API report](docs/porting/public-chart-api.md).
+
+## Typed custom series
+
+Implement `CustomSeriesPaneView<iced::widget::canvas::Frame>` and supply an owned,
+cloneable renderer. `Chart::add_custom_series` returns a typed handle; use
+`set_custom_data`, `update_custom_data`, `replace_custom_view_options` and
+`replace_custom_series_options` with that handle. The price builder supplies
+autoscale extrema and its final value supplies the current price. Explicit
+whitespace participates in shared time indexing without acquiring a price.
+
+```sh
+cargo run --example custom_series
+```
+
+The box-and-whisker example includes a built-in median line and controls for
+replacement, append, historical updates, whitespace, styles, clear/reload and
+removal. Existing marker, price-line and primitive APIs accept the handle's
+`id()`. Pointer events offer `custom_data(&handle)` and
+`custom_hit_data(&handle)` for checked typed lookup. Custom data stays with its
+typed owner; preparation copies only visible payloads and adjacent join rows.
+
+Renderer clones must own immutable geometry. Sharing mutable live geometry
+between clones violates retained-frame behavior. Removed handles remain readable
+but cannot mutate the chart; view cleanup runs once on detachment. The public
+adapter uses `Time` and unit common metadata; additional metadata belongs in
+the application's datum. Full conflation rendering remains separate work.
+See the [custom-series contract](docs/porting/custom-series-design.md) and
+[acceptance checklist](tasks/custom-series-todo.md).
 
 ## Built-in series
 

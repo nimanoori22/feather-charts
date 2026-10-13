@@ -1,7 +1,7 @@
 # Public custom series: implementation contract
 
-Status: source contract and initial API design recorded; production implementation waits for
-the preparation-performance checkpoint in `tasks/custom-series-plan.md`.
+Status: typed public API, frozen renderer composition, decorations and typed
+events implemented. Source-plugin, capture and performance acceptance is in progress.
 
 ## Source and consumers
 
@@ -35,8 +35,8 @@ the builder and passes typed payloads through normalization without storing
 them in the heterogeneous data layer. ChartModel registration already retains
 the same typed handle in the coordinator and price-scale source adapter.
 
-The public Chart currently registers only built-in views. Price decorations,
-markers and primitive conversion currently inspect built-in Series directly.
+The previous public Chart registered only built-in views. Price decorations,
+markers and primitive conversion inspected built-in Series directly.
 Extending only the drawing path would leave those integrations disconnected.
 The existing custom renderer/view traits remain the extension contract.
 
@@ -321,3 +321,38 @@ callbacks apply rows before aggregate membership refresh. A genuine new shared
 time still sends the complete reindex handoff to all owners. No callback or
 borrow survives application. Custom first-value and autoscale lookup use the
 same sorted logical-index invariant and inspect only the requested row slice.
+
+## Public rendering slice and review
+
+The typed adapter now registers the existing owner, prepares only visible
+payloads and neighbors, and clones its renderer after synchronous view update.
+Prepared drawing retains that renderer and a copied actual-owner price transform.
+Common projection reads the same owner for magnet snapping, labels, price lines,
+markers and primitive converters/autoscale. No duplicate built-in model or
+history-sized projected buffer is introduced.
+
+Optional renderer hits join existing source-order/point/range/line arbitration.
+The winning payload is retained separately from identity equality and downcast
+only through its checked typed handle. Snapshot conversion originally repeated
+hover arbitration; a behavioral test failed with two callbacks and now passes
+with one. Drawing a retained frame after removal runs no hit callback.
+
+The first four public integration tests pass: transactional errors/whitespace,
+cleanup and retained snapshots, owner-scale decorations, and typed pointer/hit
+ownership. The complete Rust all-target test suite, strict all-target Clippy,
+formatting and diff checks passed for that slice. Review covered correctness,
+ownership/error paths, input validation, bounded rendering cost and API fit.
+An intentional inversion of the membership guard made all four public tests
+fail; restoring it returned all four to green. This mutation was temporary and
+is not part of the implementation.
+
+Additional mixed-type, primitive-converter and 100,000-row copy-budget tests,
+the box-whisker demo, source comparison, captures and custom release profile
+are subsequent acceptance work. They are not counted as passed until run.
+
+The example preserves the source plugin's high/low/median builder and ignores
+outliers for autoscale. Its bitmap geometry preserves JavaScript rounding,
+one-pixel inclusive extents, draw order, candle width parity and bitmap outlier
+radius. A native converter failure skips that shape rather than painting at
+the source plugin's `null ?? 0` fallback. This only guards unavailable or invalid
+coordinates; finite supported converter cases are compared directly with source.
