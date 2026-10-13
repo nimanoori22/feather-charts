@@ -1,6 +1,6 @@
 # Implementation roadmap: Area, Bar and Baseline
 
-Date: 2026-10-12. Status: in progress; Area delivered, Bar next.
+Date: 2026-10-12. Status: implemented and automatically verified; fresh physical acceptance pending.
 Execution checklist: [built-in-series-todo.md](built-in-series-todo.md).
 Foundation: [public Chart API](../docs/porting/public-chart-api.md) and
 [price lines/labels](../docs/porting/price-lines.md), delivered through `706a695`.

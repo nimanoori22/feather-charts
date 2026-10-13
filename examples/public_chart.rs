@@ -3,13 +3,15 @@ use feather_charts::{
     api::{Chart, ChartEvent, ChartMessage, PriceLineId, PriceLineOptions},
     model::{
         data_consumer::{
-            AreaData, AreaDataItem, BarData, BarDataItem, BuiltInSeriesDataItem, CandlestickData,
-            CandlestickDataItem, HistogramData, HistogramDataItem, LineData, LineDataItem,
+            AreaData, AreaDataItem, BarData, BarDataItem, BaselineData, BaselineDataItem,
+            BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, HistogramData,
+            HistogramDataItem, LineData, LineDataItem,
         },
         horz_scale_behavior_time::types::{Time, UtcTimestamp},
         pane::PriceScalePosition,
         series_options::{
-            AreaSeriesOptions, BarSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions,
+            AreaSeriesOptions, BarSeriesOptions, BaseValuePrice, BaseValueType,
+            BaselineSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions,
             LineSeriesOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
             SeriesOptionsMap, SeriesType,
         },
@@ -237,6 +239,17 @@ impl App {
                             _ => LineType::Simple,
                         };
                     }
+                    SeriesOptionsMap::Baseline(o) => {
+                        o.style.base_value = BaseValueType::Price(BaseValuePrice {
+                            price: 100. + (f64::from(self.style_step) - 3.) * 3.,
+                        });
+                        o.style.relative_gradient = !self.style_step.is_multiple_of(2);
+                        o.style.line_type = match self.style_step % 3 {
+                            1 => LineType::WithSteps,
+                            2 => LineType::Curved,
+                            _ => LineType::Simple,
+                        };
+                    }
                     SeriesOptionsMap::Bar(o) => {
                         o.style.open_visible = self.style_step.is_multiple_of(2);
                         o.style.thin_bars = self.style_step.is_multiple_of(3);
@@ -293,6 +306,12 @@ impl App {
 }
 fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
     match kind {
+        SeriesType::Baseline => {
+            let mut o = BaselineSeriesOptions::default();
+            o.common.last_value_visible = last;
+            o.style.base_value = BaseValueType::Price(BaseValuePrice { price: 100. });
+            SeriesOptionsMap::Baseline(o)
+        }
         SeriesType::Bar => {
             let mut o = BarSeriesOptions::default();
             o.common.last_value_visible = last;
@@ -323,6 +342,19 @@ fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
 }
 fn sample_row(kind: SeriesType, time: Time, close: f64) -> BuiltInSeriesDataItem<Time> {
     match kind {
+        SeriesType::Baseline => {
+            BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(BaselineData {
+                time,
+                value: close,
+                top_fill_color1: None,
+                top_fill_color2: None,
+                bottom_fill_color1: None,
+                bottom_fill_color2: None,
+                top_line_color: None,
+                bottom_line_color: None,
+                custom_values: None,
+            }))
+        }
         SeriesType::Bar => BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
             time,
             open: close - 1.,
@@ -389,6 +421,9 @@ fn add_levels(
     .collect()
 }
 fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide, price_scale::PriceScaleOptionsPatch,
+    };
     use iced::advanced::{
         graphics::geometry::Renderer as _,
         renderer::{Headless, Renderer as _},
@@ -410,6 +445,19 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     if kind == SeriesType::Bar {
         scenarios.extend(["fat", "no-open", "compressed", "styles", "single"]);
     }
+    if kind == SeriesType::Baseline {
+        scenarios.extend([
+            "inverted",
+            "relative",
+            "curved",
+            "steps",
+            "styles",
+            "single",
+            "base-above",
+            "base-below",
+            "markers",
+        ]);
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -418,6 +466,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                 ratio,
                 ..App::new(kind)
             };
+            if matches!(scenario, "compressed" | "fat") {
+                app.prepare();
+            }
             match scenario {
                 "cluster" => {
                     let _ = app.update(Message::Cluster);
@@ -485,18 +536,50 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                     level.title = "Long left-side entry title".into();
                     app.chart.add_price_line(left, level).unwrap();
                 }
-                "inverted" | "relative" | "curved" | "steps" => {
-                    let mut options = AreaSeriesOptions::default();
-                    options.style.invert_filled_area = scenario == "inverted";
-                    options.style.relative_gradient = scenario == "relative";
+                "inverted" | "relative" | "curved" | "steps" | "base-above" | "base-below"
+                | "markers" => {
                     use feather_charts::renderers::draw_line::LineType;
-                    options.style.line_type = match scenario {
+                    let line_type = match scenario {
                         "curved" => LineType::Curved,
                         "steps" => LineType::WithSteps,
                         _ => LineType::Simple,
                     };
+                    let mut options = sample_options(kind, true);
+                    match &mut options {
+                        SeriesOptionsMap::Area(o) => {
+                            o.style.invert_filled_area = scenario == "inverted";
+                            o.style.relative_gradient = scenario == "relative";
+                            o.style.line_type = line_type;
+                        }
+                        SeriesOptionsMap::Baseline(o) => {
+                            o.style.relative_gradient = scenario == "relative";
+                            o.style.line_type = line_type;
+                            if scenario == "base-above" || scenario == "base-below" {
+                                o.style.base_value = BaseValueType::Price(BaseValuePrice {
+                                    price: if scenario == "base-above" { 150. } else { 50. },
+                                });
+                            }
+                            if scenario == "markers" {
+                                o.style.line_visible = false;
+                                o.style.point_markers_visible = true;
+                            }
+                            if scenario == "inverted" {
+                                app.chart
+                                    .apply_price_axis_options(
+                                        0,
+                                        PriceAxisSide::Right,
+                                        PriceScaleOptionsPatch {
+                                            invert_scale: Some(true),
+                                            ..Default::default()
+                                        },
+                                    )
+                                    .unwrap();
+                            }
+                        }
+                        _ => unreachable!(),
+                    }
                     app.chart
-                        .replace_series_options(app.price, SeriesOptionsMap::Area(options))
+                        .replace_series_options(app.price, options)
                         .unwrap();
                 }
                 "fat" | "no-open" | "compressed" => {
@@ -506,43 +589,63 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                     app.chart
                         .replace_series_options(app.price, SeriesOptionsMap::Bar(o))
                         .unwrap();
-                    if scenario == "compressed" {
+                    if matches!(scenario, "compressed" | "fat") {
                         app.chart.apply_time_scale_options(
                             feather_charts::model::time_scale_options::HorzScaleOptionsPatch {
-                                bar_spacing: Some(0.5),
+                                bar_spacing: Some(if scenario == "compressed" { 0.5 } else { 20. }),
                                 ..Default::default()
                             },
                         );
                     }
                 }
                 "styles" => {
-                    let data = (0..120)
-                        .map(|i| {
-                            let mut row = sample_row(
-                                kind,
-                                Time::from(UtcTimestamp::new(1_700_000_000. + i as f64 * 60.)),
-                                100. + (i as f64 * 0.1).sin() * 8.,
-                            );
-                            if i % 10 > 4
-                                && let BuiltInSeriesDataItem::Area(AreaDataItem::Data(data)) =
-                                    &mut row
-                            {
-                                data.line_color = Some("yellow".into());
-                                data.top_color = Some("rgba(0,0,0,0.6)".into());
-                                data.bottom_color = Some("rgba(0,0,255,0.2)".into());
-                            }
-                            if i % 10 > 4
-                                && let BuiltInSeriesDataItem::Bar(BarDataItem::Data(data)) =
-                                    &mut row
-                            {
-                                data.color = Some("yellow".into());
-                            }
-                            row
-                        })
-                        .collect();
+                    let data =
+                        (0..120)
+                            .map(|i| {
+                                let mut row = sample_row(
+                                    kind,
+                                    Time::from(UtcTimestamp::new(1_700_000_000. + i as f64 * 60.)),
+                                    100. + (i as f64 * 0.1).sin() * 8.,
+                                );
+                                if i % 10 > 4
+                                    && let BuiltInSeriesDataItem::Area(AreaDataItem::Data(data)) =
+                                        &mut row
+                                {
+                                    data.line_color = Some("yellow".into());
+                                    data.top_color = Some("rgba(0,0,0,0.6)".into());
+                                    data.bottom_color = Some("rgba(0,0,255,0.2)".into());
+                                }
+                                if i % 10 > 4
+                                    && let BuiltInSeriesDataItem::Bar(BarDataItem::Data(data)) =
+                                        &mut row
+                                {
+                                    data.color = Some("yellow".into());
+                                }
+                                if i % 10 > 4
+                                    && let BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(
+                                        data,
+                                    )) = &mut row
+                                {
+                                    data.top_fill_color1 = Some("rgba(0,0,255,0.6)".into());
+                                    data.bottom_fill_color2 = Some("rgba(255,255,0,0.6)".into());
+                                    data.top_line_color = Some("blue".into());
+                                    data.bottom_line_color = Some("yellow".into());
+                                }
+                                row
+                            })
+                            .collect();
                     app.chart.set_data(app.price, data).unwrap();
                 }
                 "single" => {
+                    if kind == SeriesType::Baseline {
+                        let mut o = BaselineSeriesOptions::default();
+                        o.style.base_value = BaseValueType::Price(BaseValuePrice { price: 100. });
+                        o.style.relative_gradient = true;
+                        app.chart
+                            .replace_series_options(app.price, SeriesOptionsMap::Baseline(o))
+                            .unwrap();
+                    }
+
                     app.chart
                         .set_data(
                             app.price,
@@ -562,6 +665,18 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                 _ => {}
             }
             app.prepare();
+            if scenario == "compressed" {
+                assert!(
+                    app.chart.model().time_scale().bar_spacing() < 1.,
+                    "capture must actually use compressed spacing"
+                );
+            }
+            if scenario == "fat" {
+                assert!(
+                    app.chart.frame().plot.candles[0].size.width > 1.5,
+                    "capture must show thick stems"
+                );
+            }
             renderer.reset(iced::Rectangle::with_size(app.size));
             let mut frame = iced::widget::canvas::Frame::new(&renderer, app.size);
             app.chart.multi_frame().unwrap().draw(&mut frame);
@@ -595,6 +710,8 @@ fn main() -> iced::Result {
     let args = std::env::args().collect::<Vec<_>>();
     let kind = if args.iter().any(|a| a == "--area") {
         SeriesType::Area
+    } else if args.iter().any(|a| a == "--baseline") {
+        SeriesType::Baseline
     } else if args.iter().any(|a| a == "--bar") {
         SeriesType::Bar
     } else if args.iter().any(|a| a == "--line") {
@@ -626,6 +743,7 @@ fn main() -> iced::Result {
         app.ratio = 1.25;
         for message in [
             Message::Append,
+            Message::Style,
             Message::MoveStop,
             Message::Cluster,
             Message::ToggleLast,

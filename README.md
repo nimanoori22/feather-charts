@@ -1,7 +1,8 @@
 # Feather Charts
 
 An in-progress Rust port of TradingView Lightweight Charts, using Iced 0.14.
-The reusable component currently renders line, candlestick and histogram series,
+The reusable component renders all six built-in series: Line, Candlestick,
+Histogram, Area, Bar and Baseline,
 including multiple series per pane and synchronized price/volume panes.
 
 Run the minimal application built with the public API:
@@ -38,12 +39,40 @@ Vertical plot movement explicitly enters manual price mode. Panes share time
 navigation and keep independent price ranges.
 
 This API covers the currently rendered built-in series and the default `Time`
-behavior. Area/bar/baseline/custom rendering, arbitrary pane reordering,
+behavior. Custom-series rendering, arbitrary pane reordering,
 touch/kinetic input and full TradingView API parity remain future work.
 Options already represented by the engine do not imply every visual feature is
 rendered. Read-only `model()` inspection remains available for advanced hosts.
 
 Implementation contract and verification: [public chart API report](docs/porting/public-chart-api.md).
+
+## Built-in series
+
+All six built-in families render through the public API: Line, Candlestick,
+Histogram, Area, Bar and Baseline. Area supports independent fill/outline row
+colors, relative gradients and inverted fills. Bar supports open ticks and thin
+or thick stems. Baseline supports a projected base price, separate above/below
+fill and line colors, relative gradients, and row overrides. Filled series support
+simple, stepped and curved paths and point/crosshair markers.
+
+Try the new families:
+
+```sh
+cargo run --example public_chart -- --area
+cargo run --example public_chart -- --bar
+cargo run --example public_chart -- --baseline
+```
+
+The same example also accepts `--line` and `--histogram`; its default is
+Candlestick. Use **Change style** to exercise styles and Baseline base changes.
+All families share data updates, price decorations, zoom/pan and scale controls.
+Conflation, last-price animation and hovered-series hit testing remain outside
+this milestone. Iced gradients differ slightly from browser Canvas interpolation,
+especially on WGPU; paths and gradient stops are checked against source.
+
+Contracts and validation: [Area](docs/porting/area-rendering.md),
+[Bar](docs/porting/bar-rendering.md), [Baseline](docs/porting/baseline-rendering.md).
+Fresh physical mouse/touchpad acceptance for these new families remains pending.
 
 ## Price lines and labels
 

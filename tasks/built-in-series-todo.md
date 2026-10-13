@@ -1,6 +1,6 @@
 # Area, Bar and Baseline: implementation checklist
 
-Status: in progress; Area and Bar delivered, Baseline next. Design: [built-in-series-plan.md](built-in-series-plan.md).
+Status: implementation and automated verification complete; fresh physical acceptance pending. Design: [built-in-series-plan.md](built-in-series-plan.md).
 Execute in order; keep each slice buildable and split beyond roughly five production
 files. Paths below are likely targets, not permission to rewrite adjacent systems.
 Existing price-line and interaction hardware acceptance remains separately pending.
@@ -120,9 +120,9 @@ Verify: focused public/frame tests and affected existing source comparisons.
 
 Dependencies: checkpoint B; Area fill infrastructure. Scope: medium investigation.
 
-- [ ] Read/trace Baseline area/line/gradient/colorer/model consumers and original tests.
-- [ ] Record base projection/autoscale, gradient discontinuities, relative bounds, equality/offscreen cases and row overrides.
-- [ ] Compare gradient strokes with any viable clipping/splitting design against curves/steps and exact Iced support; record ownership/API before coding.
+- [x] Read/trace Baseline area/line/gradient/colorer/model consumers and original tests.
+- [x] Record base projection/autoscale, gradient discontinuities, relative bounds, equality/offscreen cases and row overrides.
+- [x] Compare gradient strokes with any viable clipping/splitting design against curves/steps and exact Iced support; record ownership/API before coding.
 
 Files: new `docs/porting/baseline-rendering.md`; relevant source/Iced files read-only.
 Verify: selected design handles crossings without assigning a whole segment one endpoint's color.
@@ -131,9 +131,9 @@ Verify: selected design handles crossings without assigning a whole segment one 
 
 Dependencies: 8. Scope: medium.
 
-- [ ] Reuse proven fill/path commands for closure at the projected base and source top/bottom fill gradients.
-- [ ] Preserve line-gradient discontinuity at the base, row overrides, dash continuity and supported markers.
-- [ ] Add actual-source oracles for crossings, equality, base outside pane, relative/degenerate ranges and fractional ratios.
+- [x] Reuse proven fill/path commands for closure at the projected base and source top/bottom fill gradients.
+- [x] Preserve line-gradient discontinuity at the base, row overrides, dash continuity and supported markers.
+- [x] Add actual-source oracles for crossings, equality, base outside pane, relative/degenerate ranges and fractional ratios.
 
 Files: new Baseline renderer module(s), minimal shared gradient/path changes,
 new `examples/baseline_reference.rs`, `scripts/check_baseline_reference.cjs`.
@@ -143,9 +143,9 @@ Verify: focused renderer tests/oracle; existing Area/line comparisons still pass
 
 Dependencies: 9. Scope: medium.
 
-- [ ] Project existing Baseline data/base through the associated scale and visible first-value rules.
-- [ ] Preserve source autoscale participation, gradient bounds, colors and invalidation on data/base/options changes.
-- [ ] Test normal/log/percentage/indexed/inverted/manual projection and hidden/empty/reload states.
+- [x] Project existing Baseline data/base through the associated scale and visible first-value rules.
+- [x] Preserve source autoscale participation, gradient bounds, colors and invalidation on data/base/options changes.
+- [x] Test normal/log/percentage/indexed/inverted/manual projection and hidden/empty/reload states.
 
 Files: new `src/model/series/baseline_pane_view.rs`, `src/model/series.rs`,
 `src/model/chart_model.rs`, focused model tests.
@@ -155,9 +155,9 @@ Verify: source projection/autoscale fixtures and focused tests/all-target check.
 
 Dependencies: 10. Scope: two medium slices, frame adaptation then public behavior.
 
-- [ ] Integrate prepared Baseline fills/strokes in single/multi-pane frames with correct layering/clipping.
-- [ ] Enable public lifecycle/options and correct last-value colors, labels, levels, crosshair/magnet/events.
-- [ ] Test live/history/base changes, multiple scales, clear/hidden/removal and repeated immutable frames.
+- [x] Integrate prepared Baseline fills/strokes in single/multi-pane frames with correct layering/clipping.
+- [x] Enable public lifecycle/options and correct last-value colors, labels, levels, crosshair/magnet/events.
+- [x] Test live/history/base changes, multiple scales, clear/hidden/removal and repeated immutable frames.
 
 Frame files: existing `src/ui/line_chart.rs`, `src/ui/multi_pane_frame.rs`, tests.
 Public files: `src/api/chart.rs`, `src/model/series.rs`, affected decoration/input
@@ -166,17 +166,17 @@ Verify: focused API/frame tests and affected source comparisons.
 
 ## Checkpoint C: usable Baseline
 
-- [ ] Public Baseline demo shows above/below styles and base changes with working interaction/decorations.
-- [ ] Formatting/check, focused tests/oracles, both-backend fractional captures and native startup pass.
-- [ ] Baseline report records results/limits; Area, Bar and previous series remain green.
+- [x] Public Baseline demo shows above/below styles and base changes with working interaction/decorations.
+- [x] Formatting/check, focused tests/oracles, both-backend fractional captures and native startup pass.
+- [x] Baseline report records results/limits; Area, Bar and previous series remain green.
 
 ## 12. Public demonstration and documentation
 
 Dependencies: checkpoint C. Scope: medium.
 
-- [ ] Extend a public example to exercise all six built-in families and live/options/visibility/level controls.
-- [ ] Provide reproducible mixed-pane, row-style, inversion, compressed-Bar and Baseline-crossing capture scenarios.
-- [ ] Update README supported scope and finish each family report with exact files, contracts, ownership, alternatives and evidence.
+- [x] Extend a public example to exercise all six built-in families and live/options/visibility/level controls.
+- [x] Provide reproducible mixed-pane, row-style, inversion, compressed-Bar and Baseline-crossing capture scenarios.
+- [x] Update README supported scope and finish each family report with exact files, contracts, ownership, alternatives and evidence.
 
 Files: `examples/public_chart.rs` or a focused public example using Chart,
 existing capture support where suitable, `README.md`, family reports.
@@ -186,17 +186,17 @@ Verify: headless smoke plus bounded native startup; host controls stay outside t
 
 Dependencies: 12. Scope: medium verification/report slice.
 
-- [ ] Run full formatting/tests/check/strict Clippy/example builds/diff checks and all new/affected source oracles.
-- [ ] Inspect TinySkia/WGPU captures at ratios 1/1.25/1.5/2 for gradients, alpha, crossings, ticks, clipping, layers and repeatability.
-- [ ] Compare identical pre/post navigation/data-update workloads and glyph preparation; investigate regressions and record limits.
+- [x] Run full formatting/tests/check/strict Clippy/example builds/diff checks and all new/affected source oracles.
+- [x] Inspect TinySkia/WGPU captures at ratios 1/1.25/1.5/2 for gradients, alpha, crossings, ticks, clipping, layers and repeatability.
+- [x] Compare identical pre/post navigation/data-update workloads and glyph preparation; investigate regressions and record limits.
 
 Files: focused fixtures if gaps emerge, family reports and this checklist.
 Verify: commands in the plan pass with recorded results; no skipped assertions or weakened existing checks.
 
 ## Final checkpoint
 
-- [ ] Area, Bar and Baseline each work through the public API with all in-scope behaviors.
-- [ ] Automated/native evidence and reports are complete; implementation saved in buildable local commits.
+- [x] Area, Bar and Baseline each work through the public API with all in-scope behaviors.
+- [x] Automated/native evidence and reports are complete; implementation saved in buildable local commits.
 - [ ] Complete fresh physical mouse/touchpad checks: zoom/pan/axis scaling, crosshair, live updates, changing styles/base and crowded labels.
 
 Automated completion and physical acceptance are reported separately. Unavailable

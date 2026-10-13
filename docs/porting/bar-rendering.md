@@ -59,3 +59,11 @@ src/ui/line_chart.rs, src/ui/multi_pane_frame.rs, tests/bar_chart.rs,
 examples/bar_reference.rs, scripts/check_bar_reference.cjs,
 examples/public_chart.rs. No dependencies added. Baseline is the next family;
 conflation and series-specific hit testing remain outside this rendering milestone.
+
+Reference source revision: `8a7c94ff8ddffde68955db61ef8b58098f239de0` in the local
+Lightweight Charts checkout. Integrated results: [built-in series verification](built-in-series-verification.md).
+
+Final integration extends the shared click/crosshair converter with exact typed
+rows, original times, optional styles and unit custom values. Mixed-series and
+whitespace tests cover these event payloads. Gradient paint adaptation lives in
+`src/ui/line_chart/series_paint.rs`; `src/api/interaction.rs` is also changed.

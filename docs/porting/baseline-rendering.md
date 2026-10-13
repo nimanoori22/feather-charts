@@ -55,4 +55,34 @@ Baseline types; registration and row/style validation activate them. Existing
 magnet/event consumers read typed rows and close values; marker options extend
 the Line/Area branch. No base autoscale merge is introduced.
 
-Validation and exact changed files will be recorded after implementation.
+Checkpoint C: two renderer tests and four public tests cover crossings, independent
+marker/line visibility, non-destructive invalid replacements, live/history/clear/
+reload/removal, normal/log/percentage/indexed and manual projection and inversion, autoscale
+excluding the base, source decoration-color precedence, exact click/crosshair
+rows and retained mixed-series frames, plus whitespace event exclusion. Two adapter tests cover equal-offset stops,
+degenerate transparent paint and invalid backend geometry. Actual upstream renders
+match 1,656 command cases. Both backends pass 60 repeatable captures at ratios
+1/1.25/1.5/2, including relative/curved/stepped/row styles, base outside pane,
+inversion and marker-only lines. Representative captures inspected. Native startup
+runs ten seconds without error and ends by timeout. Physical acceptance pending.
+
+Degenerate relative bounds at a base equal to those bounds give upstream a NaN
+stop offset, which browser Canvas rejects. The Rust adapter intentionally paints
+that zero-length gradient transparently with finite stops instead of crashing.
+All nondegenerate oracle cases and finite degenerate ratios preserve source stops.
+
+Files: src/renderers/baseline_renderer.rs, src/renderers/mod.rs,
+src/model/series/baseline_pane_view.rs, src/model/series.rs,
+src/model/series_options.rs, src/model/chart_model.rs, src/api/chart.rs,
+src/api/interaction.rs, src/ui/line_chart.rs, src/ui/line_chart/series_paint.rs,
+src/ui/multi_pane_frame.rs, tests/baseline_chart.rs,
+examples/baseline_reference.rs, scripts/check_baseline_reference.cjs,
+examples/public_chart.rs. Shared Area fill commands avoid preparing outlines twice.
+No new dependency, async engine state or shared lifecycle machinery.
+
+Remaining dependencies: conflation, animated last prices and series-specific
+hover/hit-test behavior; arbitrary custom-series rendering and full API parity
+are later milestones. Integrated verification and timings are linked below.
+
+Reference source revision: `8a7c94ff8ddffde68955db61ef8b58098f239de0` in the local
+Lightweight Charts checkout. Integrated results: [built-in series verification](built-in-series-verification.md).
