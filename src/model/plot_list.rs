@@ -71,6 +71,25 @@ impl<Row: PlotRowLike + Clone> PlotList<Row> {
         self.indices = rows.iter().map(PlotRowLike::index).collect();
         self.items = rows;
     }
+    /// Applies one already-normalized row without cloning unchanged history.
+    /// Returns whether fulfilled membership changed.
+    pub fn update_row(&mut self, index: TimePointIndex, row: Option<Row>) -> bool {
+        let position = self.indices.partition_point(|candidate| *candidate < index);
+        let exists = self.indices.get(position) == Some(&index);
+        match (exists, row) {
+            (true, Some(row)) => self.items[position] = row,
+            (false, Some(row)) => {
+                self.indices.insert(position, index);
+                self.items.insert(position, row);
+            }
+            (true, None) => {
+                self.indices.remove(position);
+                self.items.remove(position);
+            }
+            (false, None) => return false,
+        }
+        !exists || self.indices.get(position) != Some(&index)
+    }
     pub fn min_max_on_range_cached(
         &self,
         start: TimePointIndex,
@@ -129,6 +148,20 @@ mod tests {
             original_data_count: None,
         }
     }
+    #[test]
+    fn incremental_rows_preserve_neighbors_and_report_membership_changes() {
+        let mut list = PlotList::new();
+        list.set_data(vec![row(0., [1.; 4]), row(2., [2.; 4])]);
+        assert!(!list.update_row(2.0.into(), Some(row(2., [9.; 4]))));
+        assert_eq!(list.value_at(2.0.into()).unwrap().value, [9.; 4]);
+        assert!(list.update_row(1.0.into(), Some(row(1., [5.; 4]))));
+        assert_eq!(list.indices(), &[0.0.into(), 1.0.into(), 2.0.into()]);
+        assert!(list.update_row(1.0.into(), None));
+        assert!(!list.update_row(1.0.into(), None));
+        assert_eq!(list.indices(), &[0.0.into(), 2.0.into()]);
+        assert_eq!(list.value_at(0.0.into()).unwrap().value, [1.; 4]);
+    }
+
     #[test]
     fn searches_exact_and_neighbors_and_skips_nan() {
         let mut list = PlotList::new();

@@ -26,6 +26,65 @@ fn add(chart: &mut Chart) -> feather_charts::model::data_layer::SeriesId {
         .unwrap()
 }
 #[test]
+fn incremental_whitespace_transitions_keep_other_rows_and_shared_indexes() {
+    use feather_charts::model::time_scale_host::TimeScaleHost;
+    use feather_charts::model::{data_consumer::WhitespaceData, plot_data::MutablePlotRow};
+    let mut chart = Chart::default();
+    let id = add(&mut chart);
+    let other = add(&mut chart);
+    chart
+        .set_data(id, vec![row(10., 100.), row(20., 120.), row(30., 130.)])
+        .unwrap();
+    chart
+        .set_data(other, vec![row(10., 200.), row(20., 220.), row(30., 230.)])
+        .unwrap();
+    chart
+        .update_data(
+            id,
+            BuiltInSeriesDataItem::Line(LineDataItem::Whitespace(WhitespaceData {
+                time: Time::from(UtcTimestamp::new(20.)),
+                custom_values: None,
+            })),
+            true,
+        )
+        .unwrap();
+    let indices = |chart: &Chart, id| {
+        chart
+            .model()
+            .series(id)
+            .unwrap()
+            .bars()
+            .rows()
+            .iter()
+            .map(MutablePlotRow::index)
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(indices(&chart, id), vec![0.0.into(), 2.0.into()]);
+    assert_eq!(
+        indices(&chart, other),
+        vec![0.0.into(), 1.0.into(), 2.0.into()]
+    );
+    assert_eq!(chart.model().fulfilled_time_indices().len(), 3);
+    chart.update_data(id, row(20., 125.), true).unwrap();
+    assert_eq!(
+        indices(&chart, id),
+        vec![0.0.into(), 1.0.into(), 2.0.into()]
+    );
+    assert_eq!(
+        chart.model().series(id).unwrap().bars().rows()[0]
+            .values()
+            .unwrap()[3],
+        100.
+    );
+    assert_eq!(
+        chart.model().series(id).unwrap().bars().rows()[2]
+            .values()
+            .unwrap()[3],
+        130.
+    );
+}
+
+#[test]
 fn public_data_lifecycle_and_foreign_ids() {
     let mut chart = Chart::default();
     let id = add(&mut chart);

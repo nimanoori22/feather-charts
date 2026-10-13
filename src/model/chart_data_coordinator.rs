@@ -152,9 +152,15 @@ where
         }
         time_scale.set_base_index(update.time_scale.base_index);
 
+        let mut membership_changed = !update.custom.is_empty()
+            || update
+                .series
+                .values()
+                .any(|changes| changes.changed_index.is_none());
         for (id, changes) in update.series {
             if let Some(target) = self.targets.get_mut(&id) {
-                target.apply_built_in_rows(changes.rows, changes.info);
+                membership_changed |=
+                    target.apply_built_in_rows(changes.rows, changes.info, changes.changed_index);
             }
         }
         apply_custom_rows();
@@ -164,7 +170,9 @@ where
             }
         }
 
-        self.refresh_fulfilled_indices(time_scale);
+        if membership_changed {
+            self.refresh_fulfilled_indices(time_scale);
+        }
 
         vec![
             ChartDataEffect::RecalculateAllPanes,
@@ -201,8 +209,10 @@ mod tests {
             &mut self,
             _rows: Vec<crate::model::series_data::SeriesPlotRow<TimePoint, Time>>,
             _info: Option<SeriesUpdateInfo>,
-        ) {
+            _changed_index: Option<TimePointIndex>,
+        ) -> bool {
             self.calls.borrow_mut().push("rows");
+            true
         }
         fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
             self.indexes.clone()
@@ -236,6 +246,7 @@ mod tests {
                 SeriesChanges {
                     rows: vec![],
                     info: None,
+                    changed_index: None,
                 },
             )]),
             custom: BTreeMap::new(),

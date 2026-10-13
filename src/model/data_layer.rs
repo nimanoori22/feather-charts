@@ -40,6 +40,8 @@ pub struct SeriesUpdateInfo {
 pub struct SeriesChanges<I, O, D = (), M = ()> {
     pub rows: Vec<SeriesPlotRow<I, O, D, M>>,
     pub info: Option<SeriesUpdateInfo>,
+    /// None replaces all rows; Some replaces/removes only this logical index.
+    pub changed_index: Option<TimePointIndex>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -513,18 +515,18 @@ where
         {
             return Err(DataLayerError::OutOfOrderUpdate);
         }
-        let old_keys = self.keys();
         let point_index = self.find_point(&internal_time);
         if historical_update && point_index.is_none() {
             return Err(DataLayerError::HistoricalUpdateMissingPoint);
         }
         let affects_time_scale = point_index.is_none();
+        let old_keys = affects_time_scale.then(|| self.keys());
         let point_index = point_index
             .unwrap_or_else(|| self.ensure_point(internal_time.clone(), original_time.clone()));
         let row = create_builtin_plot_row(
             series_type,
             internal_time.clone(),
-            TimePointIndex::default(),
+            self.points[point_index].index,
             item,
             original_time,
         )
@@ -539,10 +541,29 @@ where
             last_bar_updated_or_new_bars_added_to_the_right: fulfilled,
         };
         if affects_time_scale {
-            self.finish_mutation(old_keys, series, Some(info))
+            self.finish_mutation(old_keys.unwrap(), series, Some(info))
         } else {
-            self.reindex();
-            Ok(self.response_for(series, None, Some(info)))
+            let point = &self.points[point_index];
+            let rows = match &point.rows[&series] {
+                SeriesDataRow::Value(row) => vec![row.clone()],
+                SeriesDataRow::Whitespace(_) => vec![],
+            };
+            Ok(DataUpdateResponse {
+                series: BTreeMap::from([(
+                    series,
+                    SeriesChanges {
+                        rows,
+                        info: Some(info),
+                        changed_index: Some(point.index),
+                    },
+                )]),
+                custom: BTreeMap::new(),
+                time_scale: TimeScaleChanges {
+                    points: None,
+                    first_changed_point_index: None,
+                    base_index: self.base_index(),
+                },
+            })
         }
     }
 
@@ -745,11 +766,19 @@ where
                 SeriesChanges {
                     rows: self.fulfilled_rows(id),
                     info: (id == updated).then_some(info).flatten(),
+                    changed_index: None,
                 },
             );
         }
         if !self.series_types.contains_key(&updated) && !self.custom_series.contains(&updated) {
-            series.insert(updated, SeriesChanges { rows: vec![], info });
+            series.insert(
+                updated,
+                SeriesChanges {
+                    rows: vec![],
+                    info,
+                    changed_index: None,
+                },
+            );
         }
         let affected_custom: Vec<SeriesId> = if first_changed.is_some() {
             self.custom_series.iter().copied().collect()
@@ -1081,6 +1110,7 @@ mod tests {
             .unwrap();
         let inserted = layer.update_series_data(id, line(1., 1.), true).unwrap();
         assert!(inserted.time_scale.points.is_none());
+        assert_eq!(inserted.series[&id].changed_index, Some(0.0.into()));
         assert_eq!(
             inserted.series[&id]
                 .rows
@@ -1088,7 +1118,7 @@ mod tests {
                 .map(MutablePlotRow::index)
                 .map(TimePointIndex::value)
                 .collect::<Vec<_>>(),
-            vec![0., 1., 2.]
+            vec![0.]
         );
     }
 

@@ -234,7 +234,9 @@ pub trait SeriesUpdateTarget<I, O, M = ()> {
         &mut self,
         _rows: Vec<SeriesPlotRow<I, O, (), M>>,
         _info: Option<SeriesUpdateInfo>,
-    ) {
+        _changed_index: Option<TimePointIndex>,
+    ) -> bool {
+        true
     }
     fn apply_custom_indices(&mut self, _changes: &CustomSeriesChanges<I, O>) {}
     fn fulfilled_indices(&self) -> Vec<TimePointIndex>;
@@ -386,6 +388,22 @@ where
         self.last_update_info = info;
         self.invalidate_pane_data();
     }
+    fn apply_rows(
+        &mut self,
+        mut rows: Vec<SeriesPlotRow<I, O, (), M>>,
+        info: Option<SeriesUpdateInfo>,
+        changed_index: Option<TimePointIndex>,
+    ) -> bool {
+        if let Some(index) = changed_index {
+            let changed = self.data.update_row(index, rows.pop());
+            self.last_update_info = info;
+            self.invalidate_pane_data();
+            changed
+        } else {
+            self.set_data(rows, info);
+            true
+        }
+    }
     pub fn first_bar(
         &self,
         visible: Option<&RangeImpl<TimePointIndex>>,
@@ -508,8 +526,9 @@ where
         &mut self,
         rows: Vec<SeriesPlotRow<I, O, (), M>>,
         info: Option<SeriesUpdateInfo>,
-    ) {
-        self.set_data(rows, info);
+        changed_index: Option<TimePointIndex>,
+    ) -> bool {
+        self.apply_rows(rows, info, changed_index)
     }
     fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
         self.fulfilled_indices().to_vec()
@@ -533,8 +552,11 @@ impl<I: Clone, O: Clone, M: Clone> SeriesUpdateTarget<I, O, M> for BuiltInSeries
         &mut self,
         rows: Vec<SeriesPlotRow<I, O, (), M>>,
         info: Option<SeriesUpdateInfo>,
-    ) {
-        self.handle.borrow_mut().set_data(rows, info);
+        changed_index: Option<TimePointIndex>,
+    ) -> bool {
+        self.handle
+            .borrow_mut()
+            .apply_rows(rows, info, changed_index)
     }
     fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
         self.handle.borrow().fulfilled_indices().to_vec()
