@@ -540,16 +540,18 @@ where
             let visible = self.visible_strict_range()?;
             let max_chars = self.options.tick_mark_max_character_length.unwrap_or(8) as f64;
             let max_width = (layout.font_size + 4.0) * 5.0 / 8.0 * max_chars;
-            let selected = self
-                .tick_marks
-                .build(
-                    self.bar_spacing,
-                    max_width,
-                    self.options.ignore_whitespace_indices,
-                    &self.indices_with_data,
-                    self.indices_with_data_version,
-                )
-                .to_vec();
+            let selected = self.tick_marks.build(
+                self.bar_spacing,
+                max_width,
+                self.options.ignore_whitespace_indices,
+                &self.indices_with_data,
+                self.indices_with_data_version,
+            );
+            // Selection is global and ordered; formatting needs only its visible
+            // subset. Avoid cloning offscreen time payloads on every pan tick.
+            let first = selected.partition_point(|mark| mark.index < visible.left());
+            let end = selected.partition_point(|mark| mark.index <= visible.right());
+            let selected = selected[first..end].to_vec();
             let mut result = Vec::new();
             let index_per_label = (max_width / self.bar_spacing).round();
             let earliest_second = index_per_label;

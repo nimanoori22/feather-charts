@@ -1,0 +1,134 @@
+use feather_charts::model::{
+    data_consumer::TimedData,
+    ihorz_scale_behavior::{HorzScaleBehavior, TimeMark},
+    localization_options::LocalizationOptions,
+    tick_marks::TickMark,
+    time_data::{LogicalRange, TickMarkWeightValue, TimePointIndex, TimeScalePoint},
+    time_scale::{TimeScale, TimeScaleUpdate},
+    time_scale_host::TimeScaleLayoutContext,
+    time_scale_options::HorzScaleOptions,
+};
+use std::{cell::Cell, convert::Infallible, rc::Rc};
+
+struct CountedTime {
+    value: f64,
+    clones: Rc<Cell<usize>>,
+}
+impl Clone for CountedTime {
+    fn clone(&self) -> Self {
+        self.clones.set(self.clones.get() + 1);
+        Self {
+            value: self.value,
+            clones: self.clones.clone(),
+        }
+    }
+}
+struct Behavior;
+impl HorzScaleBehavior for Behavior {
+    type Item = CountedTime;
+    type InternalItem = CountedTime;
+    type Key = f64;
+    type CacheKey = u64;
+    type Options = ();
+    type Converter = fn(&CountedTime) -> CountedTime;
+    type Error = Infallible;
+    fn options(&self) -> &() {
+        &()
+    }
+    fn set_options(&mut self, _: ()) {}
+    fn preprocess_data<D: TimedData<Item = CountedTime>>(
+        &mut self,
+        _: &mut [D],
+    ) -> Result<(), Infallible> {
+        Ok(())
+    }
+    fn to_internal(&self, item: &CountedTime) -> Result<CountedTime, Infallible> {
+        Ok(item.clone())
+    }
+    fn create_converter_to_internal<D: TimedData<Item = CountedTime>>(
+        &mut self,
+        _: &[D],
+    ) -> Result<Self::Converter, Infallible> {
+        Ok(Clone::clone)
+    }
+    fn key(&self, item: &CountedTime) -> f64 {
+        item.value
+    }
+    fn cache_key(&self, item: &CountedTime) -> u64 {
+        item.value.to_bits()
+    }
+    fn update_formatter(&mut self, _: &LocalizationOptions<CountedTime>) {}
+    fn format_item(&self, item: &CountedTime) -> String {
+        item.value.to_string()
+    }
+    fn format_tickmark(
+        &self,
+        item: &TickMark<CountedTime, CountedTime>,
+        _: &LocalizationOptions<CountedTime>,
+    ) -> String {
+        item.time.value.to_string()
+    }
+    fn max_tick_mark_weight(&self, marks: &[TimeMark]) -> TickMarkWeightValue {
+        marks.iter().map(|m| m.weight).max().unwrap_or_default()
+    }
+    fn fill_weights_for_points(
+        &mut self,
+        points: &mut [TimeScalePoint<CountedTime, CountedTime>],
+        _: usize,
+    ) {
+        for p in points {
+            p.time_weight = TickMarkWeightValue::new(1);
+        }
+    }
+}
+
+#[test]
+fn moving_viewport_clones_only_visible_cached_time_marks() {
+    for count in [1_200, 100_000] {
+        let clones = Rc::new(Cell::new(0));
+        let mut scale = TimeScale::new(
+            Behavior,
+            HorzScaleOptions::default(),
+            LocalizationOptions::new("en-US", ""),
+        );
+        scale.update(TimeScaleUpdate {
+            points: (0..count)
+                .map(|index| {
+                    let item = || CountedTime {
+                        value: index as f64,
+                        clones: clones.clone(),
+                    };
+                    TimeScalePoint {
+                        time_weight: TickMarkWeightValue::new(1),
+                        time: item(),
+                        original_time: item(),
+                    }
+                })
+                .collect(),
+            first_changed_point_index: 0,
+        });
+        scale.set_width(640.);
+        scale.set_base_index(Some(TimePointIndex::new((count - 1) as f64)));
+        scale.set_logical_range(LogicalRange {
+            from: 20.0.into(),
+            to: 100.0.into(),
+        });
+        let layout = TimeScaleLayoutContext { font_size: 12. };
+        assert!(!scale.marks(layout).unwrap().is_empty());
+        for shift in 1..=3 {
+            scale.set_right_offset(100. + shift as f64 - (count - 1) as f64);
+            assert_eq!(
+                scale.visible_strict_range().unwrap().right().value(),
+                100. + shift as f64
+            );
+            clones.set(0);
+            let labels = scale.marks(layout).unwrap();
+            assert!(!labels.is_empty());
+            assert!(
+                clones.get() <= 40,
+                "{count} rows: viewport preparation copied {} time payloads",
+                clones.get()
+            );
+        }
+    }
+}
