@@ -669,6 +669,9 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         self.invalidate_pane_data();
     }
     pub fn apply_indices(&mut self, changes: &CustomSeriesChanges<I, O>) {
+        if changes.indices_unchanged {
+            return;
+        }
         for (row, index) in self.data.iter_mut().zip(&changes.indices) {
             row.base.index = *index;
         }
@@ -699,11 +702,18 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         if is_full_replacement {
             self.data = custom_rows;
         } else if let Some(index) = changed_index {
-            self.data.retain(|row| row.base.index != index);
-            self.data.extend(custom_rows);
-            self.data
-                .sort_by(|left, right| left.base.index.partial_cmp(&right.base.index).unwrap());
+            let at = self.data.partition_point(|row| row.base.index < index);
+            let exists = self.data.get(at).is_some_and(|row| row.base.index == index);
+            match (exists, custom_rows.into_iter().next()) {
+                (true, Some(row)) => self.data[at] = row,
+                (true, None) => {
+                    self.data.remove(at);
+                }
+                (false, Some(row)) => self.data.insert(at, row),
+                (false, None) => {}
+            }
         }
+        self.invalidate_pane_data();
         if let Some(changes) = custom.get(&self.id) {
             self.apply_indices(changes);
             self.last_update_info = changes.info;
@@ -714,10 +724,10 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     }
     pub fn first_value(&self, visible: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue> {
         let visible = visible?;
-        let row = self
+        let at = self
             .data
-            .iter()
-            .find(|row| row.base.index >= visible.left())?;
+            .partition_point(|row| row.base.index < visible.left());
+        let row = self.data.get(at)?;
         Some(FirstValue {
             value: row.base.value[PlotRowValueIndex::Close as usize],
             time_point: row.base.index,
@@ -735,10 +745,9 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         }
 
         let mut range: Option<PriceRangeImpl> = None;
-        for row in &self.data {
-            if row.base.index < start || row.base.index > end {
-                continue;
-            }
+        let from = self.data.partition_point(|row| row.base.index < start);
+        let to = self.data.partition_point(|row| row.base.index <= end);
+        for row in &self.data[from..to.max(from)] {
             for value in [
                 row.base.value[PlotRowValueIndex::Low as usize],
                 row.base.value[PlotRowValueIndex::High as usize],

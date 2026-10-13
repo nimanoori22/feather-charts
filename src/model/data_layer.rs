@@ -63,6 +63,10 @@ pub struct CustomSeriesChanges<I, O> {
     /// Fulfilled custom-row indexes in time order. The typed custom Series
     /// applies these to the rows it owns after a shared time-scale reindex.
     pub indices: Vec<TimePointIndex>,
+    /// True carries no indexes because the shared logical mapping is unchanged.
+    pub indices_unchanged: bool,
+    /// Whether aggregate fulfilled-time membership needs refreshing.
+    pub membership_changed: bool,
     pub info: Option<SeriesUpdateInfo>,
     marker: PhantomData<fn() -> (I, O)>,
 }
@@ -71,6 +75,18 @@ impl<I, O> CustomSeriesChanges<I, O> {
     pub fn new(indices: Vec<TimePointIndex>, info: Option<SeriesUpdateInfo>) -> Self {
         Self {
             indices,
+            indices_unchanged: false,
+            membership_changed: true,
+            info,
+            marker: PhantomData,
+        }
+    }
+
+    pub fn unchanged(info: Option<SeriesUpdateInfo>, membership_changed: bool) -> Self {
+        Self {
+            indices: vec![],
+            indices_unchanged: true,
+            membership_changed,
             info,
             marker: PhantomData,
         }
@@ -428,12 +444,12 @@ where
         {
             return Err(DataLayerError::OutOfOrderUpdate);
         }
-        let old_keys = self.keys();
         let point_index = self.find_point(&internal_time);
         if historical_update && point_index.is_none() {
             return Err(DataLayerError::HistoricalUpdateMissingPoint);
         }
         let affects_time_scale = point_index.is_none();
+        let old_keys = affects_time_scale.then(|| self.keys());
         let row = create_custom_plot_row(
             internal_time.clone(),
             TimePointIndex::default(),
@@ -445,7 +461,13 @@ where
         let point_index = point_index.unwrap_or_else(|| {
             self.ensure_point(internal_time.clone(), row.original_time().clone())
         });
-        let membership = custom_membership_from_row(&row);
+        let mut membership = custom_membership_from_row(&row);
+        membership.index = self.points[point_index].index;
+        let membership_changed = self.points[point_index]
+            .custom_rows
+            .get(&series)
+            .is_some_and(|old| old.fulfilled)
+            != membership.fulfilled;
         let fulfilled = membership.fulfilled;
         let mut custom_rows = match row {
             SeriesDataRow::Value(SeriesPlotRow::Custom(row)) => vec![row],
@@ -463,10 +485,20 @@ where
             last_bar_updated_or_new_bars_added_to_the_right: fulfilled,
         });
         let response = if affects_time_scale {
-            self.finish_mutation(old_keys, series, info)?
+            self.finish_mutation(old_keys.unwrap(), series, info)?
         } else {
-            self.reindex();
-            self.response_for(series, None, info)
+            DataUpdateResponse {
+                series: BTreeMap::new(),
+                custom: BTreeMap::from([(
+                    series,
+                    CustomSeriesChanges::unchanged(info, membership_changed),
+                )]),
+                time_scale: TimeScaleChanges {
+                    points: None,
+                    first_changed_point_index: None,
+                    base_index: self.base_index(),
+                },
+            }
         };
         self.sync_custom_row_indexes(&mut custom_rows);
         Ok(CustomDataUpdateResponse {
@@ -1200,6 +1232,36 @@ mod tests {
     }
 
     #[test]
+    fn existing_custom_point_updates_handoff_only_the_changed_row() {
+        let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
+        let id = SeriesId::new(40);
+        let adapter = CustomDataLayerAdapter::new(id, CustomBuilder);
+        adapter
+            .set_data(
+                &mut layer,
+                (1..=5000)
+                    .map(|time| custom(time as f64, vec![time as f64], "history"))
+                    .collect(),
+            )
+            .unwrap();
+        for item in [
+            custom(5000., vec![42.], "replacement"),
+            custom_whitespace(5000.),
+            custom(5000., vec![43.], "restored"),
+        ] {
+            let update = adapter.update_data(&mut layer, item, false).unwrap();
+            assert!(update.time_scale.points.is_none());
+            assert!(update.series.is_empty());
+            assert!(
+                update.custom[&id].indices.is_empty(),
+                "unchanged mapping must not copy historical indexes"
+            );
+            assert!(update.custom_rows.len() <= 1);
+            assert_eq!(update.changed_index, Some(4999.0.into()));
+        }
+    }
+
+    #[test]
     fn custom_updates_validate_history_and_pop_without_storing_custom_payloads() {
         let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
         let id = SeriesId::new(20);
@@ -1220,10 +1282,7 @@ mod tests {
             .unwrap();
         assert!(historic.time_scale.points.is_none());
         assert_eq!(historic.custom_rows[0].base.value, [8., 8., 2., 8.]);
-        assert_eq!(
-            historic.custom[&id].indices,
-            vec![0.0.into(), 1.0.into(), 2.0.into()]
-        );
+        assert_eq!(historic.custom[&id].indices, vec![]);
         assert!(matches!(
             adapter.update_data(&mut layer, custom(4., vec![4.], "four"), true),
             Err(DataLayerError::HistoricalUpdateMissingPoint)

@@ -305,3 +305,19 @@ shared membership untouched. Changes are in `src/model/data_layer.rs` and
 before the guards and pass afterward. All 347 library tests, library cargo check,
 all-target strict Clippy, formatting and diff checks pass. Whitespace still skips
 the price builder and does not acquire an invented price/color.
+
+## Existing-point custom update handoff
+
+Use an explicit `indices_unchanged` discriminator alongside the existing index
+vector, with a `membership_changed` flag for aggregate fulfilled-time refresh.
+An empty full replacement still means clear; an unchanged mapping carries no
+historical indexes. This extends the existing typed handoff and avoids replacing
+all public consumers with a new enum. Inferring unchanged from an empty vector
+would confuse clearing data with an existing-point whitespace update.
+
+The DataLayer owns membership and reports whether fulfilled status changed.
+The typed model moves a single payload into a binary-searched slot; coordinator
+callbacks apply rows before aggregate membership refresh. A genuine new shared
+time still sends the complete reindex handoff to all owners. No callback or
+borrow survives application. Custom first-value and autoscale lookup use the
+same sorted logical-index invariant and inspect only the requested row slice.

@@ -152,7 +152,10 @@ where
         }
         time_scale.set_base_index(update.time_scale.base_index);
 
-        let mut membership_changed = !update.custom.is_empty()
+        let mut membership_changed = update
+            .custom
+            .values()
+            .any(|changes| changes.membership_changed)
             || update
                 .series
                 .values()
@@ -217,6 +220,46 @@ mod tests {
         fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
             self.indexes.clone()
         }
+    }
+
+    #[test]
+    fn stable_custom_membership_does_not_rescan_fulfilled_history() {
+        struct CountingTarget(Rc<std::cell::Cell<usize>>);
+        impl SeriesUpdateTarget<TimePoint, Time, ()> for CountingTarget {
+            fn invalidate_pane_data(&mut self) {}
+            fn fulfilled_indices(&self) -> Vec<TimePointIndex> {
+                self.0.set(self.0.get() + 1);
+                vec![0.0.into()]
+            }
+        }
+        let scans = Rc::new(std::cell::Cell::new(0));
+        let id = SeriesId::new(1);
+        let mut coordinator = ChartDataCoordinator::new();
+        coordinator.insert_target(id, CountingTarget(scans.clone()));
+        let mut time_scale = TimeScale::new(
+            HorzScaleBehaviorTime::default(),
+            HorzScaleOptions::default(),
+            LocalizationOptions::new("en-US", "dd MMM 'yy"),
+        );
+        for membership_changed in [false, true, false] {
+            let update = DataUpdateResponse {
+                series: BTreeMap::new(),
+                custom: BTreeMap::from([(
+                    id,
+                    crate::model::data_layer::CustomSeriesChanges::unchanged(
+                        None,
+                        membership_changed,
+                    ),
+                )]),
+                time_scale: TimeScaleChanges {
+                    points: None,
+                    first_changed_point_index: None,
+                    base_index: Some(0.0.into()),
+                },
+            };
+            coordinator.apply_with_rows(&mut time_scale, update, || {});
+        }
+        assert_eq!(scans.get(), 1);
     }
 
     #[test]
