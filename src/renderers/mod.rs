@@ -14,3 +14,5 @@ pub mod walk_line;
 pub mod area_renderer;
 pub mod horizontal_line_renderer;
 pub mod price_axis_labels;
+
+pub mod bars_renderer;
