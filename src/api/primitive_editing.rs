@@ -51,6 +51,8 @@ pub struct PrimitiveEditEvent {
 struct EditViewport {
     pane: usize,
     size: Size,
+    plot_size: Size,
+    stretches: Vec<f64>,
     ratio: f32,
     x_origin: f64,
     spacing: f64,
@@ -68,6 +70,12 @@ impl Chart {
         let revision = self.revision;
         let size = self.size;
         let ratio = self.ratio;
+        let stretches = self
+            .model
+            .panes()
+            .iter()
+            .map(|p| p.stretch_factor())
+            .collect();
         let c = self.primitive_context(id).ok()?;
         let (first, scale) = match c.owner {
             PrimitiveOwner::Series(series) => {
@@ -94,6 +102,8 @@ impl Chart {
         Some(EditViewport {
             pane: c.pane,
             size,
+            plot_size: c.size,
+            stretches,
             ratio,
             x_origin: c.continuous_logical_to_coordinate(0.)?,
             spacing: c.model.time_scale().bar_spacing(),

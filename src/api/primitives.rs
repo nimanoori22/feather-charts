@@ -41,7 +41,54 @@ pub struct PrimitiveContext<'a> {
     pub model: &'a ChartModel<HorzScaleBehaviorTime>,
     pub visible_range: Option<crate::model::range_impl::RangeImpl<TimePointIndex>>,
 }
+/// Copyable, start-of-gesture conversions; contains no live Chart references.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PrimitiveCoordinateTransform {
+    x_origin: f64,
+    spacing: f64,
+    price: Option<crate::model::price_scale::PriceCoordinateTransform>,
+}
+impl PrimitiveCoordinateTransform {
+    pub fn logical_to_coordinate(&self, logical: f64) -> Option<f64> {
+        let x = self.x_origin + logical * self.spacing;
+        (logical.is_finite() && x.is_finite()).then_some(x)
+    }
+    pub fn coordinate_to_logical(&self, x: f64) -> Option<f64> {
+        let logical = (x - self.x_origin) / self.spacing;
+        (x.is_finite() && logical.is_finite()).then_some(logical)
+    }
+    pub fn price_to_coordinate(&self, price: f64) -> Option<f64> {
+        let y = self.price?.price_to_coordinate(price).value();
+        (price.is_finite() && y.is_finite()).then_some(y)
+    }
+    pub fn coordinate_to_price(&self, y: f64) -> Option<f64> {
+        let price = self.price?.coordinate_to_price(y.into());
+        (y.is_finite() && price.is_finite()).then_some(price)
+    }
+}
 impl PrimitiveContext<'_> {
+    pub fn coordinate_transform(&self) -> Option<PrimitiveCoordinateTransform> {
+        let price = match self.owner {
+            PrimitiveOwner::Series(id) => self
+                .model
+                .panes()
+                .get(self.pane)?
+                .price_scale_for_source(id)?
+                .coordinate_transform(
+                    self.model
+                        .series(id)?
+                        .first_value(self.visible_range.as_ref())?
+                        .value,
+                )
+                .into(),
+            PrimitiveOwner::Pane(_) => None,
+        };
+        Some(PrimitiveCoordinateTransform {
+            x_origin: self.logical_to_coordinate(0.)?,
+            spacing: self.model.time_scale().bar_spacing(),
+            price,
+        })
+    }
     /// Continuous drawing positions; unlike the source index API, no rounding.
     pub fn continuous_logical_to_coordinate(&self, logical: f64) -> Option<f64> {
         let scale = self.model.time_scale();

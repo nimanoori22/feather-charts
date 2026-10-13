@@ -20,6 +20,66 @@ pub enum PriceScaleMode {
     IndexedTo100,
 }
 
+/// Owned conversion coefficients for a gesture, without sources or listeners.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PriceCoordinateTransform {
+    mode: PriceScaleMode,
+    log_formula: LogFormula,
+    range: Option<PriceRangeImpl>,
+    height: f64,
+    internal_height: f64,
+    bottom_margin: f64,
+    inverted: bool,
+    base: f64,
+}
+impl PriceCoordinateTransform {
+    fn logical(&self, price: f64) -> f64 {
+        match self.mode {
+            PriceScaleMode::Normal => price,
+            PriceScaleMode::Logarithmic => to_log(price, self.log_formula),
+            PriceScaleMode::Percentage => to_percent(price, self.base),
+            PriceScaleMode::IndexedTo100 => to_indexed_to_100(price, self.base),
+        }
+    }
+    fn unlogical(&self, value: f64) -> f64 {
+        match self.mode {
+            PriceScaleMode::Normal => value,
+            PriceScaleMode::Logarithmic => from_log(value, self.log_formula),
+            PriceScaleMode::Percentage => from_percent(value, self.base),
+            PriceScaleMode::IndexedTo100 => from_indexed_to_100(value, self.base),
+        }
+    }
+    pub fn price_to_coordinate(&self, price: f64) -> Coordinate {
+        let Some(range) = self.range else {
+            return f64::NAN.into();
+        };
+        let h = self.internal_height - 1.;
+        if h <= 0. || range.length() == 0. {
+            return f64::NAN.into();
+        }
+        let ratio = (self.logical(price) - range.min_value()) / range.length();
+        let y = self.bottom_margin + ratio * h;
+        (if self.inverted {
+            y
+        } else {
+            self.height - 1. - y
+        })
+        .into()
+    }
+    pub fn coordinate_to_price(&self, coord: Coordinate) -> f64 {
+        let Some(range) = self.range else {
+            return f64::NAN;
+        };
+        let y = if self.inverted {
+            coord.value()
+        } else {
+            self.height - 1. - coord.value()
+        };
+        let ratio = (y - self.bottom_margin) / (self.internal_height - 1.);
+        self.unlogical(range.min_value() + ratio * range.length())
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct PriceScaleState {
     pub auto_scale: bool,
@@ -647,49 +707,28 @@ impl PriceScale {
         true
     }
     fn logical(&self, price: f64, base: f64) -> f64 {
-        match self.options.mode {
-            PriceScaleMode::Normal => price,
-            PriceScaleMode::Logarithmic => to_log(price, self.log_formula),
-            PriceScaleMode::Percentage => to_percent(price, base),
-            PriceScaleMode::IndexedTo100 => to_indexed_to_100(price, base),
-        }
+        self.coordinate_transform(base).logical(price)
     }
     fn unlogical(&self, value: f64, base: f64) -> f64 {
-        match self.options.mode {
-            PriceScaleMode::Normal => value,
-            PriceScaleMode::Logarithmic => from_log(value, self.log_formula),
-            PriceScaleMode::Percentage => from_percent(value, base),
-            PriceScaleMode::IndexedTo100 => from_indexed_to_100(value, base),
+        self.coordinate_transform(base).unlogical(value)
+    }
+    pub fn coordinate_transform(&self, base: f64) -> PriceCoordinateTransform {
+        PriceCoordinateTransform {
+            mode: self.options.mode,
+            log_formula: self.log_formula,
+            range: self.range,
+            height: self.height,
+            internal_height: self.internal_height(),
+            bottom_margin: self.bottom_margin_px(),
+            inverted: self.options.invert_scale,
+            base,
         }
     }
     pub fn price_to_coordinate(&self, price: f64, base: f64) -> Coordinate {
-        let Some(range) = self.range else {
-            return Coordinate::new(f64::NAN);
-        };
-        let h = self.internal_height() - 1.;
-        if h <= 0. || range.length() == 0. {
-            return Coordinate::new(f64::NAN);
-        }
-        let ratio = (self.logical(price, base) - range.min_value()) / range.length();
-        let y = self.bottom_margin_px() + ratio * h;
-        Coordinate::new(if self.options.invert_scale {
-            y
-        } else {
-            self.height - 1. - y
-        })
+        self.coordinate_transform(base).price_to_coordinate(price)
     }
     pub fn coordinate_to_price(&self, coord: Coordinate, base: f64) -> f64 {
-        let Some(range) = self.range else {
-            return f64::NAN;
-        };
-        let h = self.internal_height() - 1.;
-        let y = if self.options.invert_scale {
-            coord.value()
-        } else {
-            self.height - 1. - coord.value()
-        };
-        let ratio = (y - self.bottom_margin_px()) / h;
-        self.unlogical(range.min_value() + ratio * range.length(), base)
+        self.coordinate_transform(base).coordinate_to_price(coord)
     }
     fn bottom_margin_px(&self) -> f64 {
         if self.options.invert_scale {

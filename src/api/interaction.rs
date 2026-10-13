@@ -171,11 +171,16 @@ impl Chart {
     pub fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent>, ChartError> {
         self.validate_message(&message)?;
         self.check_primitive_edit(self.size, self.ratio);
+        let edit_message = matches!(message, ChartMessage::PrimitiveEdit(_));
         let previous = (
             self.model.crosshair().position(),
             self.model.crosshair().origin(),
         );
-        let mut events = Vec::new();
+        let mut events = self
+            .pending_primitive_edits
+            .drain(..)
+            .map(ChartEvent::PrimitiveEdit)
+            .collect::<Vec<_>>();
         let mut clicked = None;
         let mut now = Instant::now();
         match message {
@@ -267,6 +272,15 @@ impl Chart {
                 )?;
                 clicked = Some((pane, position));
             }
+        }
+        if edit_message {
+            // The host applies geometry before preparing once; avoid a discarded preview frame.
+            events.extend(
+                self.pending_primitive_edits
+                    .drain(..)
+                    .map(ChartEvent::PrimitiveEdit),
+            );
+            return Ok(events);
         }
         self.prepare(self.size, self.ratio, now)?;
         events.extend(

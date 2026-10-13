@@ -242,10 +242,27 @@ impl App {
                         for event in events {
                             let (kind, data) = match event {
                                 ChartEvent::PrimitiveEdit(edit) => {
-                                    self.status = format!("Primitive edit: {:?}", edit.phase);
+                                    let result = self
+                                        .primitive_scene
+                                        .as_mut()
+                                        .map_or(Ok(()), |scene| scene.edit(&mut self.chart, &edit));
+                                    self.prepare();
+                                    self.status = result.err().map_or_else(
+                                        || format!("Primitive edit: {:?}", edit.phase),
+                                        |error| error.to_string(),
+                                    );
                                     continue;
                                 }
-                                ChartEvent::Click(data) => ("Click", data),
+                                ChartEvent::Click(data) => {
+                                    if let Some(scene) = &mut self.primitive_scene
+                                        && data.primitive.as_ref().map(|h| h.primitive)
+                                            != scene.region
+                                    {
+                                        scene.deselect(&mut self.chart);
+                                    }
+                                    self.prepare();
+                                    ("Click", data)
+                                }
                                 ChartEvent::CrosshairMoved(data) => ("Crosshair", data),
                             };
                             self.status = format!(

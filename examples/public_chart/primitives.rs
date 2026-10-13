@@ -2,8 +2,12 @@
 use super::*;
 use feather_charts::api::{
     DrawingPrimitive, PreparedPrimitive, PrimitiveAxisLabel, PrimitiveContext,
-    PrimitiveHitCandidate, PrimitiveId, PrimitiveLayer, PrimitiveRenderer, PrimitiveView,
+    PrimitiveCoordinateTransform, PrimitiveEditEvent, PrimitiveEditPhase, PrimitiveHitCandidate,
+    PrimitiveId, PrimitiveLayer, PrimitiveRenderer, PrimitiveView,
 };
+use std::{cell::RefCell, rc::Rc};
+#[path = "primitive_editing.rs"]
+mod editing;
 use feather_charts::model::{
     autoscale_info_impl::{AutoScaleMargins, AutoscaleInfo},
     internal_hit_test::HitTestPriority,
@@ -18,8 +22,8 @@ use iced::{
 pub struct Scene {
     pub region: Option<PrimitiveId>,
     series: feather_charts::model::data_layer::SeriesId,
-    step: usize,
-    layer: PrimitiveLayer,
+    value: Rc<RefCell<Region>>,
+    edit: Option<editing::BoxEdit>,
 }
 impl Scene {
     pub fn new(chart: &mut Chart, series: feather_charts::model::data_layer::SeriesId) -> Self {
@@ -27,47 +31,124 @@ impl Scene {
         let mut scene = Self {
             region: None,
             series,
-            step: 0,
-            layer: PrimitiveLayer::Normal,
+            value: Rc::new(RefCell::new(Region {
+                from: 20.,
+                to: 65.,
+                low: 88.,
+                high: 115.,
+                layer: PrimitiveLayer::Normal,
+                selected: false,
+            })),
+            edit: None,
         };
         scene.toggle(chart);
         scene
     }
     fn value(&self) -> Region {
-        Region {
-            from: 20. + (self.step % 3) as f64 * 10.,
-            to: 65. + (self.step % 3) as f64 * 10.,
-            low: 88. + (self.step % 3) as f64,
-            high: 115. + (self.step % 3) as f64,
-            layer: self.layer,
-        }
+        self.value.borrow().clone()
     }
     pub fn toggle(&mut self, chart: &mut Chart) {
+        self.edit = None;
+        self.value.borrow_mut().selected = false;
         if let Some(id) = self.region.take() {
             chart.remove_primitive(id).unwrap();
         } else {
             self.region = Some(
                 chart
-                    .add_series_primitive(self.series, self.value())
+                    .add_series_primitive(self.series, RegionSource(self.value.clone()))
                     .unwrap(),
             );
         }
     }
     pub fn shift(&mut self, chart: &mut Chart) {
-        self.step += 1;
+        self.edit = None;
+        let mut value = self.value.borrow_mut();
+        value.from += 10.;
+        value.to += 10.;
+        value.low += 1.;
+        value.high += 1.;
+        drop(value);
         if let Some(id) = self.region {
-            chart.replace_primitive(id, self.value()).unwrap();
+            chart.request_primitive_update(id).unwrap();
         }
     }
     pub fn layer(&mut self, chart: &mut Chart) {
-        self.layer = match self.layer {
+        self.edit = None;
+        let mut value = self.value.borrow_mut();
+        value.layer = match value.layer {
             PrimitiveLayer::Bottom => PrimitiveLayer::Normal,
             PrimitiveLayer::Normal => PrimitiveLayer::Top,
             PrimitiveLayer::Top => PrimitiveLayer::Bottom,
         };
+        drop(value);
         if let Some(id) = self.region {
-            chart.replace_primitive(id, self.value()).unwrap();
+            chart.request_primitive_update(id).unwrap();
         }
+    }
+    pub fn deselect(&mut self, chart: &mut Chart) {
+        if self.value.borrow().selected {
+            self.value.borrow_mut().selected = false;
+            if let Some(id) = self.region {
+                chart.request_primitive_update(id).unwrap();
+            }
+        }
+    }
+    pub fn edit(
+        &mut self,
+        chart: &mut Chart,
+        event: &PrimitiveEditEvent,
+    ) -> Result<(), feather_charts::api::ChartError> {
+        if self.region != Some(event.hit.primitive) {
+            return Ok(());
+        }
+        match event.phase {
+            PrimitiveEditPhase::Begin => {
+                let Some(transform) = chart
+                    .primitive_context(event.hit.primitive)?
+                    .coordinate_transform()
+                else {
+                    return Ok(());
+                };
+                let mut value = self.value();
+                value.selected = true;
+                self.edit = editing::BoxEdit::new(event, value.clone(), transform);
+                *self.value.borrow_mut() = value;
+                chart.preview_primitive_update(event.id)?;
+            }
+            PrimitiveEditPhase::Update | PrimitiveEditPhase::Commit => {
+                if let Some(edit) = &self.edit
+                    && edit.id == event.id
+                    && let Some(value) = edit.preview(event.position)
+                {
+                    *self.value.borrow_mut() = value;
+                    if event.phase == PrimitiveEditPhase::Update {
+                        chart.preview_primitive_update(event.id)?;
+                    } else {
+                        self.edit = None;
+                        chart.request_primitive_update(event.hit.primitive)?;
+                    }
+                }
+                if event.phase == PrimitiveEditPhase::Commit {
+                    self.edit = None;
+                }
+            }
+            PrimitiveEditPhase::Cancel(reason) => {
+                if self.edit.as_ref().is_some_and(|e| e.id == event.id)
+                    && let Some(edit) = self.edit.take()
+                    && edit.id == event.id
+                    && reason.restores_bounds()
+                    && chart.primitive_owner(event.hit.primitive).is_ok()
+                {
+                    *self.value.borrow_mut() = edit.original;
+                    chart.request_primitive_update(event.hit.primitive)?;
+                }
+                if chart.primitive_owner(event.hit.primitive).is_err() {
+                    self.region = None;
+                    self.value.borrow_mut().selected = false;
+                }
+            }
+        }
+        Ok(())
     }
 }
 #[derive(Clone, Debug)]
@@ -77,12 +158,23 @@ struct Region {
     low: f64,
     high: f64,
     layer: PrimitiveLayer,
+    selected: bool,
+}
+#[derive(Debug)]
+struct RegionSource(Rc<RefCell<Region>>);
+impl DrawingPrimitive for RegionSource {
+    fn prepare(&self, c: &PrimitiveContext<'_>) -> PreparedPrimitive {
+        self.0.borrow().prepare(c)
+    }
+    fn autoscale_info(&self, start: TimePointIndex, end: TimePointIndex) -> Option<AutoscaleInfo> {
+        self.0.borrow().autoscale_info(start, end)
+    }
 }
 impl DrawingPrimitive for Region {
     fn prepare(&self, c: &PrimitiveContext<'_>) -> PreparedPrimitive {
         let Some((x1, x2, y1, y2)) = c
-            .logical_to_coordinate(self.from)
-            .zip(c.logical_to_coordinate(self.to))
+            .continuous_logical_to_coordinate(self.from)
+            .zip(c.continuous_logical_to_coordinate(self.to))
             .zip(
                 c.price_to_coordinate(self.low)
                     .zip(c.price_to_coordinate(self.high)),
@@ -99,8 +191,19 @@ impl DrawingPrimitive for Region {
             rect,
             layer: self.layer,
         };
+        let mut views = vec![PrimitiveView::new(self.layer, region)];
+        if self.selected {
+            views.push(PrimitiveView::new(
+                PrimitiveLayer::Top,
+                editing::SelectionDrawing { rect },
+            ));
+        }
         PreparedPrimitive {
-            views: vec![PrimitiveView::new(self.layer, region)],
+            hit_tester: self.selected.then(|| {
+                Rc::new(editing::SelectionDrawing { rect })
+                    as Rc<dyn feather_charts::api::PrimitiveHitTester>
+            }),
+            views,
             price_labels: vec![
                 PrimitiveAxisLabel::new(
                     f64::from(y1),
@@ -135,7 +238,6 @@ impl DrawingPrimitive for Region {
                     vertical: false,
                 },
             )],
-            ..Default::default()
         }
     }
     fn autoscale_info(&self, start: TimePointIndex, end: TimePointIndex) -> Option<AutoscaleInfo> {
@@ -218,6 +320,7 @@ impl PrimitiveRenderer for RegionDrawing {
             0.
         };
         h.cursor = Some(iced::mouse::Interaction::Pointer);
+        h.editable = true;
         Some(h)
     }
 }
@@ -357,5 +460,150 @@ pub fn verify_pixels(app: &App, scenario: &str, rgba: &[u8], width: usize) {
             actual.abs_diff(expected) <= 2,
             "{scenario}: prepared time-axis band must be visible: {pixel:?}"
         );
+    }
+}
+
+#[cfg(test)]
+mod editing_tests {
+    use super::*;
+    use iced::{
+        mouse,
+        widget::canvas::{Event, Program},
+    };
+    fn dispatch(
+        app: &mut App,
+        state: &mut feather_charts::api::ChartState,
+        event: &Event,
+        p: Point,
+    ) {
+        let plot = app.chart.frame().layout.plot;
+        let message = app
+            .chart
+            .program(std::convert::identity)
+            .update(
+                state,
+                event,
+                Rectangle::new(Point::ORIGIN, app.size),
+                mouse::Cursor::Available(Point::new(
+                    p.x + plot.origin.x as f32,
+                    p.y + plot.origin.y as f32,
+                )),
+            )
+            .and_then(|a| a.into_inner().0);
+        if let Some(message) = message {
+            let _ = app.update(Message::Chart(message));
+        }
+    }
+    fn setup() -> App {
+        let mut app = App::new(SeriesType::Line);
+        app.primitive_scene = Some(Scene::new(&mut app.chart, app.price));
+        app.size = Size::new(800., 500.);
+        app.prepare();
+        app
+    }
+    #[test]
+    fn box_selection_exposes_handles_and_native_drag_moves_fractional_bounds() {
+        let mut app = setup();
+        let id = app.primitive_scene.as_ref().unwrap().region.unwrap();
+        let original = app.primitive_scene.as_ref().unwrap().value();
+        let c = app.chart.primitive_context(id).unwrap();
+        let x = c.continuous_logical_to_coordinate(30.).unwrap() as f32;
+        let y = c.price_to_coordinate(114.).unwrap() as f32;
+        let mut state = Default::default();
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+            Point::new(x, y),
+        );
+        assert!(app.primitive_scene.as_ref().unwrap().value().selected);
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::CursorMoved {
+                position: Point::ORIGIN,
+            }),
+            Point::new(x + 17., y + 13.),
+        );
+        let preview = app.primitive_scene.as_ref().unwrap().value();
+        assert!(preview.from > original.from);
+        assert!(((preview.to - preview.from) - (original.to - original.from)).abs() < 1e-9);
+        assert!(preview.from.fract().abs() > 0.001);
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+            Point::new(x + 17., y + 13.),
+        );
+        assert!(!app.chart.is_panning());
+        assert!(
+            app.chart.model().panes()[0]
+                .right_price_scale()
+                .is_auto_scale()
+        );
+    }
+    #[test]
+    fn focus_loss_restores_original_box_and_empty_click_deselects() {
+        let mut app = setup();
+        let original = app.primitive_scene.as_ref().unwrap().value();
+        let id = app.primitive_scene.as_ref().unwrap().region.unwrap();
+        let c = app.chart.primitive_context(id).unwrap();
+        let p = Point::new(
+            c.continuous_logical_to_coordinate(30.).unwrap() as f32,
+            c.price_to_coordinate(114.).unwrap() as f32,
+        );
+        let mut state = Default::default();
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+            p,
+        );
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::CursorMoved {
+                position: Point::ORIGIN,
+            }),
+            Point::new(p.x + 30., p.y + 20.),
+        );
+        assert_ne!(
+            app.primitive_scene.as_ref().unwrap().value().from,
+            original.from
+        );
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Window(iced::window::Event::Unfocused),
+            p,
+        );
+        let restored = app.primitive_scene.as_ref().unwrap().value();
+        assert_eq!(
+            [restored.from, restored.to, restored.low, restored.high],
+            [original.from, original.to, original.low, original.high]
+        );
+        assert!(restored.selected);
+        assert!(app.primitive_scene.as_ref().unwrap().edit.is_none());
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Window(iced::window::Event::Focused),
+            p,
+        );
+        let outside = Point::new(5., 5.);
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+            outside,
+        );
+        dispatch(
+            &mut app,
+            &mut state,
+            &Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+            outside,
+        );
+        assert!(!app.primitive_scene.as_ref().unwrap().value().selected);
+        assert!(!app.chart.is_panning());
     }
 }

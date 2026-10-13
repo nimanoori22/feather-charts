@@ -508,6 +508,7 @@ impl Chart {
         side: crate::model::axis_snapshots::PriceAxisSide,
         patch: crate::model::price_scale::PriceScaleOptionsPatch,
     ) -> Result<(), ChartError> {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ExternalChange);
         self.model
             .apply_price_axis_options(pane, side, patch)
             .map_err(ChartError::PriceAxis)

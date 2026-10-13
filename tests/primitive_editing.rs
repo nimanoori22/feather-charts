@@ -122,6 +122,50 @@ fn update_notifications_preserve_attachment_lifetime_and_validate_owner() {
     assert!(chart.primitive_context(id).is_err());
 }
 
+#[test]
+fn owned_transform_survives_scale_restoration_and_resize_in_every_mode() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide,
+        price_scale::{PriceScaleMode, PriceScaleOptionsPatch},
+    };
+    for mode in [
+        PriceScaleMode::Normal,
+        PriceScaleMode::Logarithmic,
+        PriceScaleMode::Percentage,
+        PriceScaleMode::IndexedTo100,
+    ] {
+        for inverted in [false, true] {
+            let (mut chart, id, _) = setup_edit();
+            chart
+                .apply_price_axis_options(
+                    0,
+                    PriceAxisSide::Right,
+                    PriceScaleOptionsPatch {
+                        mode: Some(mode),
+                        invert_scale: Some(inverted),
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            prepare(&mut chart);
+            let c = chart.primitive_context(id).unwrap();
+            let transform = c.coordinate_transform().unwrap();
+            for price in [90., 100., 115.] {
+                let y = c.price_to_coordinate(price).unwrap();
+                assert!((transform.coordinate_to_price(y).unwrap() - price).abs() < 1e-8);
+                assert!((transform.price_to_coordinate(price).unwrap() - y).abs() < 1e-8);
+            }
+            let x = transform.logical_to_coordinate(30.125).unwrap();
+            let y = transform.price_to_coordinate(105.).unwrap();
+            chart
+                .prepare(Size::new(400., 300.), 2., Instant::now())
+                .unwrap();
+            assert!((transform.coordinate_to_logical(x).unwrap() - 30.125).abs() < 1e-8);
+            assert!((transform.coordinate_to_price(y).unwrap() - 105.).abs() < 1e-8);
+        }
+    }
+}
+
 use feather_charts::api::{ChartEvent, ChartMessage, ChartState, PrimitiveEditPhase};
 use iced::{
     mouse,
@@ -227,4 +271,164 @@ fn editable_drag_captures_before_pan_and_commits_once_without_lifecycle_churn() 
             .any(|e| matches!(e, ChartEvent::PrimitiveEdit(_)))
     );
     assert_eq!(detached.get(), 0);
+}
+
+fn escape() -> Event {
+    use iced::keyboard::{self, key};
+    Event::Keyboard(keyboard::Event::KeyPressed {
+        key: keyboard::Key::Named(key::Named::Escape),
+        modified_key: keyboard::Key::Named(key::Named::Escape),
+        physical_key: key::Physical::Code(key::Code::Escape),
+        location: keyboard::Location::Standard,
+        modifiers: keyboard::Modifiers::default(),
+        text: None,
+        repeat: false,
+    })
+}
+#[test]
+fn cancellation_releases_capture_and_navigation_resumes_without_stuck_cursor() {
+    use feather_charts::api::{PrimitiveEditCancelReason as Cancel, PrimitiveEditPhase as Phase};
+    for (event, reason) in [
+        (escape(), Cancel::Escape),
+        (
+            Event::Window(iced::window::Event::Unfocused),
+            Cancel::FocusLost,
+        ),
+        (Event::Mouse(mouse::Event::CursorLeft), Cancel::WindowLeft),
+    ] {
+        let (mut chart, _, _) = setup_edit();
+        let mut state = ChartState::default();
+        let p = Point::new(50., 50.);
+        let begin = native(&chart, &mut state, &press(), p).unwrap();
+        chart.update(begin).unwrap();
+        let movement = native(&chart, &mut state, &moved(), Point::new(60., 60.)).unwrap();
+        chart.update(movement).unwrap();
+        let cancel = native(&chart, &mut state, &event, p).unwrap();
+        assert!(
+            matches!(&cancel, ChartMessage::PrimitiveEdit(e) if e.phase==Phase::Cancel(reason))
+        );
+        let events = chart.update(cancel).unwrap();
+        assert_eq!(
+            events
+                .iter()
+                .filter(|e| matches!(e, ChartEvent::PrimitiveEdit(_)))
+                .count(),
+            1
+        );
+        assert!(chart.model().panes()[0].right_price_scale().is_auto_scale());
+        native(
+            &chart,
+            &mut state,
+            &Event::Window(iced::window::Event::Focused),
+            p,
+        );
+        let outside = Point::new(250., 250.);
+        let msg = native(&chart, &mut state, &press(), outside).unwrap();
+        chart.update(msg).unwrap();
+        let msg = native(&chart, &mut state, &moved(), Point::new(280., 280.)).unwrap();
+        chart.update(msg).unwrap();
+        assert!(chart.is_panning());
+    }
+}
+#[test]
+fn external_updates_removal_and_resize_cancel_once_and_reject_old_preview_tokens() {
+    use feather_charts::api::{PrimitiveEditCancelReason as Cancel, PrimitiveEditPhase as Phase};
+    for mode in 0..5 {
+        let (mut chart, id, detached) = setup_edit();
+        let mut state = ChartState::default();
+        let msg = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+        let ChartMessage::PrimitiveEdit(begin) = &msg else {
+            panic!()
+        };
+        let token = begin.id;
+        chart.update(msg).unwrap();
+        let reason = match mode {
+            0 => {
+                chart.request_primitive_update(id).unwrap();
+                Cancel::ExternalChange
+            }
+            1 => {
+                chart
+                    .replace_primitive(
+                        id,
+                        Editable {
+                            detached: detached.clone(),
+                        },
+                    )
+                    .unwrap();
+                Cancel::ExternalChange
+            }
+            2 => {
+                chart.remove_primitive(id).unwrap();
+                Cancel::OwnerRemoved
+            }
+            3 => {
+                chart
+                    .prepare(Size::new(400., 300.), 2., Instant::now())
+                    .unwrap();
+                Cancel::ViewportChanged
+            }
+            _ => {
+                chart.set_right_offset(5.);
+                prepare(&mut chart);
+                Cancel::ViewportChanged
+            }
+        };
+        let events = chart.update(ChartMessage::Tick(Instant::now())).unwrap();
+        assert_eq!(
+            events
+                .iter()
+                .filter(
+                    |e| matches!(e,ChartEvent::PrimitiveEdit(e) if e.phase==Phase::Cancel(reason))
+                )
+                .count(),
+            1
+        );
+        assert!(chart.preview_primitive_update(token).is_err());
+        assert!(chart.model().panes()[0].right_price_scale().is_auto_scale());
+        assert!(
+            !chart
+                .update(ChartMessage::Tick(Instant::now()))
+                .unwrap()
+                .iter()
+                .any(|e| matches!(e, ChartEvent::PrimitiveEdit(_)))
+        );
+        assert!(!chart.is_animating());
+    }
+}
+#[test]
+fn wheel_is_suspended_during_edit_and_external_manual_policy_survives_cancellation() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide, price_scale::PriceScaleOptionsPatch,
+    };
+    let (mut chart, _, _) = setup_edit();
+    let mut state = ChartState::default();
+    let p = Point::new(50., 50.);
+    let msg = native(&chart, &mut state, &press(), p).unwrap();
+    chart.update(msg).unwrap();
+    let spacing = chart.model().time_scale().bar_spacing();
+    assert!(
+        native(
+            &chart,
+            &mut state,
+            &Event::Mouse(mouse::Event::WheelScrolled {
+                delta: mouse::ScrollDelta::Lines { x: 0., y: 4. }
+            }),
+            p
+        )
+        .is_none()
+    );
+    assert_eq!(chart.model().time_scale().bar_spacing(), spacing);
+    chart
+        .apply_price_axis_options(
+            0,
+            PriceAxisSide::Right,
+            PriceScaleOptionsPatch {
+                auto_scale: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    chart.update(ChartMessage::Tick(Instant::now())).unwrap();
+    assert!(!chart.model().panes()[0].right_price_scale().is_auto_scale());
 }
