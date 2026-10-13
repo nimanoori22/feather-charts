@@ -1,6 +1,6 @@
 # Area, Bar and Baseline: implementation checklist
 
-Status: in progress; Area delivered, Bar next. Design: [built-in-series-plan.md](built-in-series-plan.md).
+Status: in progress; Area and Bar delivered, Baseline next. Design: [built-in-series-plan.md](built-in-series-plan.md).
 Execute in order; keep each slice buildable and split beyond roughly five production
 files. Paths below are likely targets, not permission to rewrite adjacent systems.
 Existing price-line and interaction hardware acceptance remains separately pending.
@@ -76,9 +76,9 @@ Verify: focused API/interaction tests and affected source comparisons pass.
 
 Dependencies: checkpoint A for delivery order. Scope: small investigation.
 
-- [ ] Trace Bar pane/renderer/colorer/API consumers and tests, including OHLC projection and autoscale.
-- [ ] Record width/parity/tick rules, row color precedence, option validation and empty/hidden behavior.
-- [ ] Compare shared OHLC preparation versus a dedicated view; record chosen design/API/ownership before edits.
+- [x] Trace Bar pane/renderer/colorer/API consumers and tests, including OHLC projection and autoscale.
+- [x] Record width/parity/tick rules, row color precedence, option validation and empty/hidden behavior.
+- [x] Compare shared OHLC preparation versus a dedicated view; record chosen design/API/ownership before edits.
 
 Files: new `docs/porting/bar-rendering.md`; source files are read-only evidence.
 Verify: distinguish Bar geometry from candlesticks; every exposed style has a testable contract.
@@ -87,9 +87,9 @@ Verify: distinguish Bar geometry from candlesticks; every exposed style has a te
 
 Dependencies: 5. Scope: two medium slices, geometry first then model preparation.
 
-- [ ] Implement/test source Bar stem/tick geometry, width parity, open visibility and thin/compressed bars.
-- [ ] Prepare Bar OHLC/colors using existing data and scale machinery with correct lifecycle invalidation.
-- [ ] Add source comparisons for zero-height/inverted/fractional/compressed cases and overrides.
+- [x] Implement/test source Bar stem/tick geometry, width parity, open visibility and thin/compressed bars.
+- [x] Prepare Bar OHLC/colors using existing data and scale machinery with correct lifecycle invalidation.
+- [x] Add source comparisons for zero-height/inverted/fractional/compressed cases and overrides.
 
 Geometry files: new `src/renderers/bars_renderer.rs`, renderer exports,
 `examples/bar_reference.rs`, `scripts/check_bar_reference.cjs`.
@@ -101,9 +101,9 @@ Verify each slice: focused tests/oracle and all-target check.
 
 Dependencies: 6. Scope: two medium slices, frame adaptation then public behavior.
 
-- [ ] Adapt Bar rectangles through the shared immutable frame path without duplicating composed geometry.
-- [ ] Enable public Bar data/options/lifecycle and source-compatible last values, labels, levels and crosshair/magnet/events.
-- [ ] Test mixed Bar/candlestick panes, live/history/clear/hidden/removal and existing navigation.
+- [x] Adapt Bar rectangles through the shared immutable frame path without duplicating composed geometry.
+- [x] Enable public Bar data/options/lifecycle and source-compatible last values, labels, levels and crosshair/magnet/events.
+- [x] Test mixed Bar/candlestick panes, live/history/clear/hidden/removal and existing navigation.
 
 Frame files: `src/ui/line_chart.rs`, `src/ui/multi_pane_frame.rs`, focused frame tests.
 API/behavior files: `src/api/chart.rs`, `src/model/series.rs`, actual affected
@@ -112,9 +112,9 @@ Verify: focused public/frame tests and affected existing source comparisons.
 
 ## Checkpoint B: usable Bar
 
-- [ ] Public Bar example demonstrates open/thin options, color overrides, live data and price decorations.
-- [ ] Formatting/check, focused tests/oracles, fractional captures on both backends and native startup pass.
-- [ ] Bar report records contract/design/files/results and verified scope; Area remains green.
+- [x] Public Bar example demonstrates open/thin options, color overrides, live data and price decorations.
+- [x] Formatting/check, focused tests/oracles, fractional captures on both backends and native startup pass.
+- [x] Bar report records contract/design/files/results and verified scope; Area remains green.
 
 ## 8. Baseline contract
 

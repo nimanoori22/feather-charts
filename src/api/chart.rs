@@ -145,6 +145,7 @@ impl Chart {
         let kind = match &options {
             SeriesOptionsMap::Line(_) => SeriesType::Line,
             SeriesOptionsMap::Area(_) => SeriesType::Area,
+            SeriesOptionsMap::Bar(_) => SeriesType::Bar,
             SeriesOptionsMap::Candlestick(_) => SeriesType::Candlestick,
             SeriesOptionsMap::Histogram(_) => SeriesType::Histogram,
             _ => return Err(ChartError::UnsupportedSeries),
@@ -159,6 +160,7 @@ impl Chart {
         let view = match kind {
             SeriesType::Line => SeriesPaneView::Line(Default::default()),
             SeriesType::Area => SeriesPaneView::Area(Default::default()),
+            SeriesType::Bar => SeriesPaneView::Bars(Default::default()),
             SeriesType::Candlestick => SeriesPaneView::Candlesticks(Default::default()),
             SeriesType::Histogram => SeriesPaneView::Histogram(Default::default()),
             _ => unreachable!(),
@@ -439,6 +441,19 @@ fn validate_data(
                 .into_iter()
                 .flatten()
                 .any(|c| parser.parse_color(c).is_err())
+            {
+                return Err(ChartError::InvalidData { index });
+            }
+        }
+        if let crate::model::series_data::SeriesDataRow::Value(
+            crate::model::series_data::SeriesPlotRow::Bar(bar),
+        ) = &row
+        {
+            let mut parser = crate::model::colors::ColorParser::default();
+            if bar
+                .color
+                .as_ref()
+                .is_some_and(|c| parser.parse_color(c).is_err())
             {
                 return Err(ChartError::InvalidData { index });
             }

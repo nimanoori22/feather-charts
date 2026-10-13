@@ -3,14 +3,15 @@ use feather_charts::{
     api::{Chart, ChartEvent, ChartMessage, PriceLineId, PriceLineOptions},
     model::{
         data_consumer::{
-            AreaData, AreaDataItem, BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem,
-            HistogramData, HistogramDataItem, LineData, LineDataItem,
+            AreaData, AreaDataItem, BarData, BarDataItem, BuiltInSeriesDataItem, CandlestickData,
+            CandlestickDataItem, HistogramData, HistogramDataItem, LineData, LineDataItem,
         },
         horz_scale_behavior_time::types::{Time, UtcTimestamp},
         pane::PriceScalePosition,
         series_options::{
-            AreaSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions, LineSeriesOptions,
-            PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType, SeriesOptionsMap, SeriesType,
+            AreaSeriesOptions, BarSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions,
+            LineSeriesOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
+            SeriesOptionsMap, SeriesType,
         },
     },
 };
@@ -236,6 +237,10 @@ impl App {
                             _ => LineType::Simple,
                         };
                     }
+                    SeriesOptionsMap::Bar(o) => {
+                        o.style.open_visible = self.style_step.is_multiple_of(2);
+                        o.style.thin_bars = self.style_step.is_multiple_of(3);
+                    }
                     SeriesOptionsMap::Candlestick(o) => {
                         o.style.wick_visible = self.style_step.is_multiple_of(2)
                     }
@@ -288,6 +293,11 @@ impl App {
 }
 fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
     match kind {
+        SeriesType::Bar => {
+            let mut o = BarSeriesOptions::default();
+            o.common.last_value_visible = last;
+            SeriesOptionsMap::Bar(o)
+        }
         SeriesType::Area => {
             let mut o = AreaSeriesOptions::default();
             o.common.last_value_visible = last;
@@ -313,6 +323,15 @@ fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
 }
 fn sample_row(kind: SeriesType, time: Time, close: f64) -> BuiltInSeriesDataItem<Time> {
     match kind {
+        SeriesType::Bar => BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
+            time,
+            open: close - 1.,
+            high: close + 2.,
+            low: close - 2.,
+            close,
+            color: None,
+            custom_values: None,
+        })),
         SeriesType::Area => BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
             time,
             value: close,
@@ -387,6 +406,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
         scenarios.extend([
             "inverted", "relative", "curved", "steps", "styles", "single",
         ]);
+    }
+    if kind == SeriesType::Bar {
+        scenarios.extend(["fat", "no-open", "compressed", "styles", "single"]);
     }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
@@ -477,6 +499,22 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                         .replace_series_options(app.price, SeriesOptionsMap::Area(options))
                         .unwrap();
                 }
+                "fat" | "no-open" | "compressed" => {
+                    let mut o = BarSeriesOptions::default();
+                    o.style.thin_bars = scenario != "fat";
+                    o.style.open_visible = scenario != "no-open";
+                    app.chart
+                        .replace_series_options(app.price, SeriesOptionsMap::Bar(o))
+                        .unwrap();
+                    if scenario == "compressed" {
+                        app.chart.apply_time_scale_options(
+                            feather_charts::model::time_scale_options::HorzScaleOptionsPatch {
+                                bar_spacing: Some(0.5),
+                                ..Default::default()
+                            },
+                        );
+                    }
+                }
                 "styles" => {
                     let data = (0..120)
                         .map(|i| {
@@ -492,6 +530,12 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                                 data.line_color = Some("yellow".into());
                                 data.top_color = Some("rgba(0,0,0,0.6)".into());
                                 data.bottom_color = Some("rgba(0,0,255,0.2)".into());
+                            }
+                            if i % 10 > 4
+                                && let BuiltInSeriesDataItem::Bar(BarDataItem::Data(data)) =
+                                    &mut row
+                            {
+                                data.color = Some("yellow".into());
                             }
                             row
                         })
@@ -551,6 +595,8 @@ fn main() -> iced::Result {
     let args = std::env::args().collect::<Vec<_>>();
     let kind = if args.iter().any(|a| a == "--area") {
         SeriesType::Area
+    } else if args.iter().any(|a| a == "--bar") {
+        SeriesType::Bar
     } else if args.iter().any(|a| a == "--line") {
         SeriesType::Line
     } else if args.iter().any(|a| a == "--histogram") {

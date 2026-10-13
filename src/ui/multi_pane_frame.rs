@@ -32,6 +32,7 @@ use std::{hash::Hash, time::Instant};
 pub enum SeriesPaneView {
     Line(LinePaneView),
     Area(crate::model::series::area_pane_view::AreaPaneView),
+    Bars(crate::model::series::bars_pane_view::BarsPaneView),
     Candlesticks(CandlesticksPaneView),
     Histogram(HistogramPaneView),
 }
@@ -40,6 +41,7 @@ impl SeriesPaneView {
         match self {
             Self::Line(v) => PaneView::Line(v),
             Self::Area(v) => PaneView::Area(v),
+            Self::Bars(v) => PaneView::Bars(v),
             Self::Candlesticks(v) => PaneView::Candlesticks(v),
             Self::Histogram(v) => PaneView::Histogram(v),
         }

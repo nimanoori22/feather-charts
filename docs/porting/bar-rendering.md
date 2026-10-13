@@ -45,4 +45,17 @@ conflation remains explicitly unsupported, consistent with the other views.
 Graph coverage is best effort; clean paths were also read. Source series.ts had
 changed metadata; its autoscale/marker branches were read directly.
 
-Validation results will be recorded after integration.
+Checkpoint B: focused renderer and public lifecycle tests pass; 7,776 actual-source
+rectangle cases pass; strict all-target Clippy passes; 44 repeatable captures per
+backend at ratios 1/1.25/1.5/2 pass. Captures cover thick stems, hidden open ticks,
+compression, overrides and single/empty states. Bounded native startup succeeds.
+Full integrated tests and fresh physical acceptance are recorded at the final
+milestone checkpoint.
+
+Files: src/renderers/bars_renderer.rs, src/renderers/mod.rs,
+src/model/series/bars_pane_view.rs, src/model/series.rs,
+src/model/series_options.rs, src/model/chart_model.rs, src/api/chart.rs,
+src/ui/line_chart.rs, src/ui/multi_pane_frame.rs, tests/bar_chart.rs,
+examples/bar_reference.rs, scripts/check_bar_reference.cjs,
+examples/public_chart.rs. No dependencies added. Baseline is the next family;
+conflation and series-specific hit testing remain outside this rendering milestone.

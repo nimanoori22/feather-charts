@@ -8,12 +8,14 @@ use crate::{
         invalidate_mask::InvalidateMask,
         series::{
             area_pane_view::{AreaPaneView, AreaPreparationError},
+            bars_pane_view::{BarPreparationError, BarsPaneView},
             candlesticks_pane_view::{CandlestickPreparationError, CandlesticksPaneView},
             histogram_pane_view::{HistogramPaneView, HistogramPreparationError},
             line_pane_view::{LinePaneView, LinePreparationError},
         },
     },
     renderers::{
+        bars_renderer::BarRenderError,
         candlesticks_renderer::{CandleRectangle, CandlestickRenderError},
         draw_line::dash_pattern,
         grid_renderer::{BitmapSize, GridDrawCommand, PixelRatio},
@@ -34,6 +36,8 @@ pub enum FrameError {
     Model(ChartModelError),
     Line(LinePreparationError),
     Area(AreaPreparationError),
+    Bars(BarPreparationError),
+    BarGeometry(BarRenderError),
     Candlesticks(CandlestickPreparationError),
     CandleGeometry(CandlestickRenderError),
     Histogram(HistogramPreparationError),
@@ -45,6 +49,7 @@ pub enum FrameError {
 pub(crate) enum PaneView<'a> {
     Line(&'a mut LinePaneView),
     Area(&'a mut AreaPaneView),
+    Bars(&'a mut BarsPaneView),
     Candlesticks(&'a mut CandlesticksPaneView),
     Histogram(&'a mut HistogramPaneView),
 }
@@ -53,6 +58,7 @@ impl PaneView<'_> {
         match self {
             Self::Line(v) => v.clear(),
             Self::Area(v) => v.clear(),
+            Self::Bars(v) => v.clear(),
             Self::Candlesticks(v) => v.clear(),
             Self::Histogram(v) => v.clear(),
         }
@@ -64,6 +70,7 @@ impl PaneView<'_> {
             }
             Self::Line(_) => FrameError::Line(LinePreparationError::UnknownSeries(id)),
             Self::Area(_) => FrameError::Area(AreaPreparationError::UnknownSeries(id)),
+            Self::Bars(_) => FrameError::Bars(BarPreparationError::UnknownSeries(id)),
             Self::Candlesticks(_) => {
                 FrameError::Candlesticks(CandlestickPreparationError::UnknownSeries(id))
             }
@@ -610,6 +617,7 @@ where
             PaneView::Histogram(view) => view.refresh(model, id).map_err(FrameError::Histogram)?,
             PaneView::Line(view) => view.refresh(model, id).map_err(FrameError::Line)?,
             PaneView::Area(view) => view.refresh(model, id).map_err(FrameError::Area)?,
+            PaneView::Bars(view) => view.refresh(model, id).map_err(FrameError::Bars)?,
             PaneView::Candlesticks(view) => {
                 view.refresh(model, id).map_err(FrameError::Candlesticks)?
             }
@@ -638,7 +646,9 @@ where
             .data()
             .map(|data| data.line.draw_commands(ratio))
             .unwrap_or_default(),
-        PaneView::Candlesticks(_) | PaneView::Histogram(_) => LineDrawCommands::default(),
+        PaneView::Bars(_) | PaneView::Candlesticks(_) | PaneView::Histogram(_) => {
+            LineDrawCommands::default()
+        }
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
     if let PaneView::Area(view) = view
@@ -678,6 +688,16 @@ where
                 }
                 Ok(CanvasFill { path, gradient })
             })
+            .collect::<Result<_, FrameError>>()?;
+    }
+    if let PaneView::Bars(view) = view
+        && let Some(data) = view.data()
+    {
+        snapshot.candles = data
+            .draw_commands(ratio)
+            .map_err(FrameError::BarGeometry)?
+            .into_iter()
+            .map(|rectangle| canvas_rectangle(rectangle, ratio))
             .collect::<Result<_, FrameError>>()?;
     }
     if let PaneView::Candlesticks(view) = view
