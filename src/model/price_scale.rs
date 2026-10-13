@@ -140,6 +140,8 @@ pub struct PriceScale {
     scroll_start: Option<Coordinate>,
     price_range_snapshot: Option<PriceRangeImpl>,
     is_custom_price_range: bool,
+    source_margin_above: f64,
+    source_margin_below: f64,
     mode_changed: Delegate<PriceScaleModeChange>,
 }
 impl PriceScale {
@@ -170,6 +172,8 @@ impl PriceScale {
             scroll_start: None,
             price_range_snapshot: None,
             is_custom_price_range: false,
+            source_margin_above: 0.,
+            source_margin_below: 0.,
             mode_changed: Delegate::new(),
         }
     }
@@ -269,6 +273,8 @@ impl PriceScale {
     }
     pub fn internal_height(&self) -> f64 {
         self.height * (1. - self.options.scale_margins.top - self.options.scale_margins.bottom)
+            - self.source_margin_above
+            - self.source_margin_below
     }
     pub fn font_size(&self) -> f64 {
         self.layout_font_size
@@ -430,7 +436,7 @@ impl PriceScale {
             return false;
         }
         let old_range = self.range;
-        let old_margins = self.options.scale_margins;
+        let old_margins = (self.source_margin_above, self.source_margin_below);
         let mut range = None;
         let mut above: f64 = 0.0;
         let mut below: f64 = 0.0;
@@ -462,11 +468,9 @@ impl PriceScale {
             }
         }
         self.range = range;
-        if above != 0. || below != 0. {
-            self.options.scale_margins.top = above / self.height.max(1.);
-            self.options.scale_margins.bottom = below / self.height.max(1.);
-        }
-        let changed = self.range != old_range || self.options.scale_margins != old_margins;
+        self.source_margin_above = above;
+        self.source_margin_below = below;
+        let changed = self.range != old_range || (above, below) != old_margins;
         if changed {
             self.rebuild_tick_mark_builder();
             self.invalidate_marks();
@@ -668,12 +672,11 @@ impl PriceScale {
         self.unlogical(range.min_value() + ratio * range.length(), base)
     }
     fn bottom_margin_px(&self) -> f64 {
-        self.height
-            * if self.options.invert_scale {
-                self.options.scale_margins.top
-            } else {
-                self.options.scale_margins.bottom
-            }
+        if self.options.invert_scale {
+            self.height * self.options.scale_margins.top + self.source_margin_above
+        } else {
+            self.height * self.options.scale_margins.bottom + self.source_margin_below
+        }
     }
     pub fn format_price(&self, price: f64, base: f64) -> String {
         match self.options.mode {

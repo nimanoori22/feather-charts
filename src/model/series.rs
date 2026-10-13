@@ -216,6 +216,8 @@ pub struct Series<I, O, M = ()> {
     pane_data_generation: u64,
     z_order: Cell<i32>,
     last_update_info: Option<SeriesUpdateInfo>,
+    pub(crate) marker_collections: Vec<super::series_markers::MarkerCollection<O>>,
+    pub(crate) marker_spacing: Cell<f64>,
     pub(crate) price_lines: Vec<(
         crate::model::price_line::PriceLineId,
         crate::model::price_line::PriceLineOptions,
@@ -261,6 +263,8 @@ where
             pane_data_generation: 0,
             z_order: Cell::new(0),
             last_update_info: None,
+            marker_collections: vec![],
+            marker_spacing: Cell::new(6.),
             price_lines: vec![],
         })
     }
@@ -418,7 +422,12 @@ where
             });
         }
 
-        Some(AutoscaleInfoImpl::new(range, None))
+        let margins = self
+            .marker_collections
+            .iter()
+            .filter_map(|c| c.margins(self.marker_spacing.get()))
+            .next_back();
+        Some(AutoscaleInfoImpl::new(range, margins))
     }
     /// Returns the price range for an integer logical interval.
     ///

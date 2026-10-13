@@ -1,5 +1,6 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
+mod markers;
 mod price_lines;
 
 use crate::model::{
@@ -1412,6 +1413,14 @@ where
         }
     }
     fn flush_effects(&mut self) {
+        for entry in self.series.values() {
+            if let Some(handle) = entry.built_in() {
+                handle
+                    .borrow()
+                    .marker_spacing
+                    .set(self.time_scale.bar_spacing());
+            }
+        }
         if !std::mem::take(&mut self.recalculate_requested) {
             self.refresh_crosshair();
             return;
