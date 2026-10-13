@@ -95,3 +95,40 @@ example includes append/move/remove/cluster controls and supports `--capture-dir
 These levels are visual annotations; trading actions, alerts, dragging and hit
 testing are outside this milestone. Source contract and results:
 [price-line report](docs/porting/price-lines.md).
+
+## Series markers
+
+Attach time-based annotations to any built-in series:
+
+```rust
+use feather_charts::api::{MarkerPosition, MarkerShape, SeriesMarker, SeriesMarkersOptions};
+
+let mut marker = SeriesMarker::new(time, MarkerPosition::AboveBar, MarkerShape::ArrowUp, "green");
+marker.id = Some("entry".into());
+marker.text = Some("Entry".into());
+let markers = chart.add_series_markers(series, vec![marker], SeriesMarkersOptions::default())?;
+// Replace transactionally, clear while retaining the attachment, or detach it.
+chart.set_series_markers(markers, replacement)?;
+chart.set_series_markers(markers, vec![])?;
+chart.remove_series_markers(markers)?;
+```
+
+Markers support circle/square/up/down arrows, six positions (including explicit
+prices), size, optional text/IDs, autoscale padding and three drawing layers.
+Keep each `MarkerCollectionId` to inspect or replace its markers/options.
+After direct changes, call `prepare` once. Click/crosshair payloads include an
+optional `marker` identifying the series, attachment, current item index and
+external ID. External IDs can be absent or repeated. Clearing series data keeps
+attachments for reload; removing the series releases them.
+
+```sh
+cargo run --example public_chart -- --series-markers
+cargo run --example public_chart -- --series-markers --area
+```
+
+Use **Add/clear markers** and **Marker layer** to exercise replacement and layers.
+Marker margins follow source rules; arbitrary text, stacked markers and explicit
+prices are not guaranteed to fit inside autoscale. General series/price-line hit
+arbitration and editable annotations remain future work. Fresh marker mouse/
+touchpad acceptance remains pending. See the [marker port report](docs/porting/series-markers.md)
+and [implementation checklist](tasks/series-markers-todo.md).

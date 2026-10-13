@@ -83,7 +83,165 @@ and top on the top foreground pass after crosshair. Existing label layering rema
 
 ## Implementation and validation
 
-Pending; results and exact changed files are recorded as slices complete.
+Implemented on 2026-10-13; automated checks complete, fresh physical acceptance
+pending. Public annotations work on Line, Area, Baseline, Bar, Candlestick and
+Histogram in independent panes. Marker projection/index caches track shared time,
+series data and settled scale geometry; hover alone does not reindex or reproject
+unchanged collections. Text-width and glyph caches are bounded to 256 entries each.
+Drawing uses prepared paths; it performs no marker projection or text shaping.
+
+Normal annotations draw after their own series' automatic/custom price lines and
+before the next series. Above-series/top annotations use the corresponding top
+passes. The overlap fixture checks an opaque marker over its own price line on
+both backends. Low-level strokes without series metadata remain supported.
+
+Stationary-pointer marker changes request a bounded redraw to reconcile the next
+public event even when the snapped crosshair is unchanged. Native Canvas input
+checks click identification before any draw, clearing a stationary hit, and
+settlement without a continuing animation request. Full series/price-line hit
+arbitration is intentionally not represented as complete.
+
+Two source prerequisites were corrected: source pixel margins now add to configured
+fractional scale padding, and flat autoscale ranges expand by five minimum moves
+on each side (using relative-mode minimum move rules). Clearing markers restores
+padding. The existing flat-range tests now assert the source-expanded bounds.
+
+### Files
+
+New production files:
+`src/api/markers.rs`, `src/model/series_markers.rs`,
+`src/model/chart_model/markers.rs`, `src/model/series/markers_pane_view.rs`,
+`src/renderers/series_markers_renderer.rs`, `src/ui/series_annotations.rs`.
+
+Modified production files:
+`src/api/{mod,chart,interaction}.rs`,
+`src/model/{mod,chart_model,series,time_scale,price_scale,pane}.rs`,
+`src/model/chart_model/price_lines.rs`, `src/renderers/mod.rs`,
+`src/ui/{mod,chart_frame,line_chart,multi_pane_frame,price_axis}.rs`.
+
+Verification/demo files:
+`tests/series_markers.rs`, `examples/public_chart.rs`,
+`examples/public_chart/markers.rs`, `examples/public_api_profile.rs`,
+`examples/series_markers_reference.rs`,
+`scripts/check_series_markers_reference.cjs`.
+Documentation: this report, `README.md`, `tasks/series-markers-plan.md`,
+`tasks/series-markers-todo.md`.
+
+### Behavioral tests and source comparison
+
+Ten public integration tests cover empty text and alpha preservation, transactional validation and attachment
+lifecycle; additive/disabled/restored margins; nearest-time/whitespace lookup,
+shared-time insertions and historical updates; hidden/clear/reload output;
+immutable retained frames; stacked positions; all six families; independent panes;
+normal/log/percentage/indexed/inverted/manual scales at fractional ratios;
+text-only and shape hits; overlap selection; native click input; stationary hover
+clearing; and equal-total above/below margin swaps invalidating other collections.
+
+A font-cache test measures 40,000 repeated label preparations (400 visible labels
+across 100 frames): one width paragraph shape and one glyph-path shape for the
+shared style, then one additional shape of each kind after changing font size.
+These are test-only cache-miss counters, not a claim about every label in a live
+application. Distinct strings/styles beyond the cache bound can reshape.
+
+`node scripts/check_series_markers_reference.cjs` executes the actual transpiled
+source placement, sizing, bitmap geometry and hit helpers: **980 placement/bitmap
+cases and 84,700 shape-hit cases passed**, including 280 margin comparisons.
+The fixture covers all six positions, stacking, inversion, extreme/fractional
+spacing and negative/zero/fractional/large sizes. Source arrow hit orientation is
+preserved even where it differs from the rendered arrow. Text uses Iced metrics;
+public text-hit tests validate prepared bounds rather than browser font pixels.
+All 14 comparison scripts passed; existing comparisons cover **29,235** cases.
+
+The regression-test mutation experiment inverted marker autoscale enablement:
+the margin test failed at the expected assertion; restoring it returned all ten
+integration tests to green. No tests were skipped or quality thresholds lowered.
+
+### Commands and rendering evidence
+
+```sh
+cargo fmt --check
+cargo test --all-targets --quiet
+cargo check --all-targets
+cargo clippy --all-targets -- -D warnings
+cargo build --examples
+git diff --check
+node scripts/check_series_markers_reference.cjs
+cargo run --example public_chart -- --series-markers --smoke
+cargo run --example public_chart -- --series-markers --marker-captures-only --capture-dir /tmp/marker-captures
+cargo run --example public_chart -- --series-markers --marker-captures-only --capture-dir /tmp/marker-wgpu --wgpu
+```
+
+Formatting, all tests, all-target check, strict Clippy, example builds and diff
+checks pass. The complete suite contains 432 tests (337 library, 21 existing public
+API, 10 markers, and 64 native-example interaction tests). Headless public smoke
+passes for all six families. Bounded native startup with `--series-markers` ran
+without errors until its intentional ten-second timeout.
+
+The final matrix has **144 TinySkia and 144 WGPU captures**: six families × six
+marker scenarios × ratios 1/1.25/1.5/2. Scenarios cover stacking/text, explicit price,
+inversion, layers, hit after navigation, and marker-over-price-line ordering.
+Earlier broad captures also exercised the existing demo scenarios. Contact sheets
+were inspected for shapes/text/layers/clipping and fractional scaling; the final
+overlap and stacking captures were inspected on both backends. Local evidence:
+`/tmp/feather-series-markers/verified-{tiny-skia,wgpu}/`,
+`/tmp/feather-series-markers/verified-overlaps.png`.
+These temporary artifacts are not repository dependencies.
+
+### Performance
+
+Debug build, prepared model + frame + glyph paths, 917×870.80005 logical pixels,
+ratio 1.25, 20 warm-up iterations and 100 measured iterations. Alternated two
+runs of base `2718f18` and this implementation with identical 1,200-row empty-marker
+zoom/append fixtures. Values below are the range of medians; p95 is the highest
+observed across the two runs. This measures preparation, not GPU display latency.
+
+| Family/workload | Base median ms | Current median ms | Base/current max p95 ms |
+| --- | --- | --- | --- |
+| Line zoom | 6.660–6.772 | 6.592–6.942 | 7.550 / 7.905 |
+| Line append | 10.968–11.031 | 10.921–11.813 | 12.190 / 13.165 |
+| Candlestick zoom | 10.333–10.430 | 10.326–10.410 | 11.338 / 11.544 |
+| Candlestick append | 14.701–14.971 | 14.705–14.945 | 16.380 / 16.323 |
+| Histogram zoom | 7.978–8.086 | 7.935–7.999 | 8.786 / 8.777 |
+| Histogram append | 12.175–12.464 | 12.220–12.403 | 13.765 / 13.945 |
+
+No broad empty-marker slowdown was observed; Line append varied upward in one run.
+These local timings are evidence, not a hard performance guarantee.
+
+Stress fixture: 20,000 rows, 20,000 markers, a 400-row visible range, shared
+“Signal” text. Across the three families, marker hover medians were 16.157–18.908 ms
+(p95 17.115–19.732), zoom 17.095–20.145 ms (p95 18.168–21.959), and appends
+62.598–66.354 ms (p95 65.273–71.682). Appending invalidates time/series generations
+and synchronously rebuilds the marker index; ordinary hover reuses it. This debug
+stress case exceeds a 16.7 ms frame budget and is not claimed to sustain 60 fps.
+Large-scale streaming remains an optimization opportunity; no async machinery was
+introduced. Reproduce with:
+
+```sh
+cargo run --example public_api_profile
+cargo run --example public_api_profile -- --rows 20000 --marker-count 20000 --hover
+cargo run --example public_api_profile -- --rows 20000 --marker-count 20000
+cargo run --example public_api_profile -- --rows 20000 --visible-rows 400 --hover
+```
+
+For the same 20,000-row/400-visible-row workload without markers, hover medians
+were 7.888–10.593 ms (p95 8.783–11.645), zoom 8.715–11.447 ms (p95
+9.748–12.472), and appends 34.174–37.228 ms (p95 35.719–39.466). Marker
+preparation adds roughly 8 ms to hover/zoom and 28–30 ms to append in this stress
+fixture. This comparison uses the current engine for both populated and empty
+collections; only the 1,200-row comparison above uses the previous revision.
+Raw local timing log: `/tmp/feather-series-markers/profile-results.txt`.
+
+Local implementation checkpoints: `0a595a1`, `415617a`, `c13ad2e`, `4a7703e`.
+GitHub push remains a separate user action.
+
+### Physical acceptance
+
+Run `cargo run --example public_chart -- --series-markers` and repeat with another
+family flag. Check shape and text hover/click, crowded attachments, click versus
+drag, plot zoom/pan, price-axis wheel/drag scaling, live append, style/layer changes,
+marker replacement and clear. Repeat using mouse and touchpad. Record the observed
+hardware/backend/scale factor and any defects; synthetic input cannot close this
+gate. Earlier built-in-family hardware gates remain independently pending.
 
 ## Remaining dependencies
 

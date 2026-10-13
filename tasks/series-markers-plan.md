@@ -1,6 +1,6 @@
 # Implementation roadmap: series markers and pointer identification
 
-Date: 2026-10-13. Status: planned; implementation has not started.
+Date: 2026-10-13. Status: implemented and automatically verified; fresh physical acceptance pending.
 Execution checklist: [series-markers-todo.md](series-markers-todo.md).
 Foundation: all six built-in families delivered through `2718f18`.
 Existing milestone plans and pending physical checks remain separate.
