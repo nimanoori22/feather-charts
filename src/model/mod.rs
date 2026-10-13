@@ -20,6 +20,7 @@ pub mod internal_hit_test;
 pub mod invalidate_mask;
 pub mod ipane_primitive;
 pub mod iprice_data_source;
+pub mod kinetic_animation;
 pub mod layout_options;
 pub mod localization_options;
 pub mod magnet;
