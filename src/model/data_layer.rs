@@ -321,16 +321,11 @@ where
         D: CustomData<Item = B::Item>,
         Builder: CustomPlotRowBuilder<D, B::Item, M>,
     {
-        let old_keys = self.keys();
-        let previous_bounds = self.series_time_bounds(series);
         let original_times = data
             .iter()
             .map(|item| item.time().clone())
             .collect::<Vec<_>>();
-        self.remove_series_memberships(series);
-        self.cleanup_empty_points();
-        let mut custom_rows = vec![];
-        let mut last = None;
+        let mut prepared = Vec::with_capacity(data.len());
         if !data.is_empty() {
             self.behavior
                 .preprocess_data(&mut data)
@@ -343,24 +338,34 @@ where
                 let internal_time = converter
                     .convert(item.time())
                     .map_err(DataLayerError::Behavior)?;
-                let point_index = self.ensure_point(internal_time.clone(), original_time.clone());
                 let row = create_custom_plot_row(
-                    internal_time.clone(),
+                    internal_time,
                     TimePointIndex::default(),
                     item,
                     original_time,
                     builder,
                 )
                 .map_err(DataLayerError::PlotRow)?;
-                let membership = custom_membership_from_row(&row);
-                if let SeriesDataRow::Value(SeriesPlotRow::Custom(row)) = row {
-                    custom_rows.push(row);
-                }
-                self.points[point_index]
-                    .custom_rows
-                    .insert(series, membership);
-                last = Some(internal_time);
+                prepared.push(row);
             }
+        }
+        let old_keys = self.keys();
+        let previous_bounds = self.series_time_bounds(series);
+        self.remove_series_memberships(series);
+        self.cleanup_empty_points();
+        let mut custom_rows = vec![];
+        let mut last = None;
+        for row in prepared {
+            let internal_time = row.time().clone();
+            let point_index = self.ensure_point(internal_time.clone(), row.original_time().clone());
+            let membership = custom_membership_from_row(&row);
+            if let SeriesDataRow::Value(SeriesPlotRow::Custom(row)) = row {
+                custom_rows.push(row);
+            }
+            self.points[point_index]
+                .custom_rows
+                .insert(series, membership);
+            last = Some(internal_time);
         }
         self.custom_series.insert(series);
         if let Some(last) = last {
@@ -420,8 +425,6 @@ where
             return Err(DataLayerError::HistoricalUpdateMissingPoint);
         }
         let affects_time_scale = point_index.is_none();
-        let point_index = point_index
-            .unwrap_or_else(|| self.ensure_point(internal_time.clone(), original_time.clone()));
         let row = create_custom_plot_row(
             internal_time.clone(),
             TimePointIndex::default(),
@@ -430,6 +433,9 @@ where
             builder,
         )
         .map_err(DataLayerError::PlotRow)?;
+        let point_index = point_index.unwrap_or_else(|| {
+            self.ensure_point(internal_time.clone(), row.original_time().clone())
+        });
         let membership = custom_membership_from_row(&row);
         let fulfilled = membership.fulfilled;
         let mut custom_rows = match row {
@@ -1223,6 +1229,84 @@ mod tests {
         let (popped, response) = layer.pop_custom_series_data(id, 1).unwrap();
         assert_eq!(popped, vec![2.0.into()]);
         assert_eq!(response.custom[&id].indices, vec![0.0.into(), 1.0.into()]);
+    }
+
+    #[test]
+    fn rejected_custom_replacement_preserves_all_shared_memberships() {
+        let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
+        let id = SeriesId::new(30);
+        let adapter = CustomDataLayerAdapter::new(id, CustomBuilder);
+        adapter
+            .set_data(&mut layer, vec![custom(1., vec![1.], "original")])
+            .unwrap();
+        layer
+            .set_series_data(SeriesId::new(31), SeriesType::Line, vec![line(2., 2.)])
+            .unwrap();
+        let points = layer.points.clone();
+        let last_times = layer.last_time_by_series.clone();
+        let registered = layer.custom_series.clone();
+        let invalid_time = CustomSeriesDataItem::Data(CustomDatum {
+            time: Time::from("invalid-business-day"),
+            values: vec![1.],
+            name: "invalid time",
+        });
+        for replacement in [
+            vec![custom(3., vec![3.], "valid"), custom(4., vec![], "invalid")],
+            vec![invalid_time],
+        ] {
+            assert!(adapter.set_data(&mut layer, replacement).is_err());
+            assert_eq!(layer.points, points);
+            assert_eq!(layer.last_time_by_series, last_times);
+            assert_eq!(layer.custom_series, registered);
+        }
+    }
+
+    #[test]
+    fn rejected_custom_append_does_not_create_a_shared_point() {
+        let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
+        let adapter = CustomDataLayerAdapter::new(SeriesId::new(30), CustomBuilder);
+        adapter
+            .set_data(&mut layer, vec![custom(1., vec![1.], "original")])
+            .unwrap();
+        let points = layer.points.clone();
+        let last_times = layer.last_time_by_series.clone();
+        assert!(
+            adapter
+                .update_data(&mut layer, custom(2., vec![], "invalid"), false)
+                .is_err()
+        );
+        assert_eq!(layer.points, points);
+        assert_eq!(layer.last_time_by_series, last_times);
+    }
+
+    #[test]
+    fn custom_price_builder_runs_once_per_fulfilled_input() {
+        struct CountingBuilder(std::cell::Cell<usize>);
+        impl CustomPlotRowBuilder<CustomDatum, Time, ()> for CountingBuilder {
+            fn values(&self, data: &CustomDatum) -> Vec<f64> {
+                self.0.set(self.0.get() + 1);
+                data.values.clone()
+            }
+            fn is_whitespace(&self, data: &CustomSeriesDataItem<CustomDatum, Time>) -> bool {
+                matches!(data, CustomSeriesDataItem::Whitespace(_))
+            }
+        }
+        let mut layer = DataLayer::new(HorzScaleBehaviorTime::default());
+        let adapter = CustomDataLayerAdapter::new(
+            SeriesId::new(30),
+            CountingBuilder(std::cell::Cell::new(0)),
+        );
+        adapter
+            .set_data(
+                &mut layer,
+                vec![custom(1., vec![1.], "one"), custom_whitespace(2.)],
+            )
+            .unwrap();
+        assert_eq!(adapter.builder().0.get(), 1);
+        adapter
+            .update_data(&mut layer, custom(3., vec![3.], "three"), false)
+            .unwrap();
+        assert_eq!(adapter.builder().0.get(), 2);
     }
 
     #[test]
