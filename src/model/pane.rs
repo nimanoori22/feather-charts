@@ -768,7 +768,7 @@ where
         }
     }
 
-    fn price_scale_mut_existing(
+    pub(crate) fn price_scale_mut_existing(
         &mut self,
         position: &PriceScalePosition,
     ) -> Option<&mut PriceScale> {

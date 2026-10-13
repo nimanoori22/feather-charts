@@ -171,6 +171,7 @@ fn public_click_and_hover_identify_text_and_clear_stale_hits() {
         .unwrap();
     assert!(events.iter().all(|e| match e {
         ChartEvent::Click(p) | ChartEvent::CrosshairMoved(p) => p.marker.is_none(),
+        ChartEvent::PrimitiveEdit(_) => false,
     }));
 }
 #[test]

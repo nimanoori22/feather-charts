@@ -9,6 +9,17 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    pub(crate) fn primitive_scale_auto(&mut self, series: SeriesId, enabled: bool) -> Option<bool> {
+        let pane = self.pane_for_series(series)?;
+        let position = self.panes[pane].source_position(series)?.clone();
+        let scale = self.panes[pane].price_scale_mut_existing(&position)?;
+        let old = scale.is_auto_scale();
+        scale.set_auto_scale(enabled);
+        self.recalculate_requested = true;
+        self.full_update();
+        self.flush_effects();
+        Some(old)
+    }
     pub(crate) fn ordered_pane_sources(&mut self, pane: usize) -> Vec<SeriesId> {
         self.panes[pane].ordered_source_ids().to_vec()
     }

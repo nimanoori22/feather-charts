@@ -37,6 +37,7 @@ impl Chart {
             hover_color: self.hover_color,
             revision: self.revision,
             membership: self.series_ids().collect(),
+            primitive_edit: self.primitive_edit_id(),
             on_message,
         }
     }
@@ -59,10 +60,12 @@ pub struct ChartProgram<'a, Message> {
     hover_color: iced::Color,
     revision: u64,
     membership: Vec<crate::model::data_layer::SeriesId>,
+    primitive_edit: Option<super::PrimitiveEditId>,
     on_message: fn(ChartMessage) -> Message,
 }
 #[derive(Default)]
 pub struct ChartState {
+    edit_input: super::primitive_edit_input::EditInput,
     unfocused: bool,
     input: ChartInput,
     multi_input: MultiPaneInput,
@@ -109,6 +112,58 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         let membership_changed = state.revision.is_some() && state.membership != self.membership;
         if membership_changed {
             state.membership.clone_from(&self.membership);
+        }
+        let local = cursor
+            .position()
+            .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y));
+        let target = if self.enabled
+            && !state.unfocused
+            && !state.axis_input.is_dragging()
+            && !state.input.is_dragging()
+            && !state.multi_input.is_dragging()
+            && matches!(
+                event,
+                canvas::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Left))
+            ) {
+            local.and_then(|p| {
+                self.axis_layouts()
+                    .iter()
+                    .enumerate()
+                    .find_map(|(pane, layout)| {
+                        let position = iced::Point::new(
+                            p.x - layout.plot.origin.x as f32,
+                            p.y - layout.plot.origin.y as f32,
+                        );
+                        let frame = self
+                            .multi
+                            .and_then(|m| m.panes.get(pane))
+                            .unwrap_or(self.snapshot);
+                        frame
+                            .plot
+                            .primitive_hit(position)
+                            .map(|hit| (pane, layout.plot, position, hit))
+                    })
+            })
+        } else {
+            None
+        };
+        match state.edit_input.update(
+            event,
+            local,
+            target,
+            self.primitive_edit,
+            revision_changed || bounds_changed || membership_changed,
+        ) {
+            super::primitive_edit_input::EditAction::Capture(message) => {
+                state.click = None;
+                state.input = ChartInput::default();
+                state.multi_input = MultiPaneInput::default();
+                return Some(message.map_or_else(
+                    || canvas::Action::capture(),
+                    |e| self.publish(ChartMessage::PrimitiveEdit(e)).and_capture(),
+                ));
+            }
+            super::primitive_edit_input::EditAction::Pass => {}
         }
         if revision_changed || bounds_changed || membership_changed {
             let was_dragging = state.input.is_dragging()
@@ -296,6 +351,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
     ) -> iced::mouse::Interaction {
         if state.unfocused {
             return iced::mouse::Interaction::default();
+        }
+        if let Some(cursor) = state.edit_input.cursor() {
+            return cursor;
         }
         if state.input.is_dragging() || state.multi_input.is_dragging() {
             return iced::mouse::Interaction::Grabbing;

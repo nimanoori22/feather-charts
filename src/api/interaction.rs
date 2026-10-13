@@ -12,6 +12,7 @@ use crate::{
 use std::time::Instant;
 #[derive(Clone, Debug)]
 pub enum ChartMessage {
+    PrimitiveEdit(super::PrimitiveEditEvent),
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
     PriceAxis(PriceAxisInteraction),
@@ -36,6 +37,7 @@ pub struct PointerEvent {
 }
 #[derive(Clone, Debug)]
 pub enum ChartEvent {
+    PrimitiveEdit(super::PrimitiveEditEvent),
     Click(PointerEvent),
     CrosshairMoved(PointerEvent),
 }
@@ -147,11 +149,13 @@ impl Chart {
     }
     /// Cancel both model gestures before viewport or membership changes.
     pub fn cancel_interaction(&mut self) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.cancel_plot_pan();
         self.cancel_price_axis();
         self.revision += 1;
     }
     pub(crate) fn cancel_viewport_interaction(&mut self) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         if self.plot_pan.is_some() || self.active_price_axis.is_some() {
             self.revision += 1;
         }
@@ -166,6 +170,7 @@ impl Chart {
     }
     pub fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent>, ChartError> {
         self.validate_message(&message)?;
+        self.check_primitive_edit(self.size, self.ratio);
         let previous = (
             self.model.crosshair().position(),
             self.model.crosshair().origin(),
@@ -174,6 +179,15 @@ impl Chart {
         let mut clicked = None;
         let mut now = Instant::now();
         match message {
+            ChartMessage::PrimitiveEdit(event) => {
+                if let Some(event) = self.apply_primitive_edit(event) {
+                    events.push(ChartEvent::PrimitiveEdit(event));
+                }
+            }
+            ChartMessage::Interaction(_)
+            | ChartMessage::PaneInteraction(_)
+            | ChartMessage::PriceAxis(_)
+                if self.primitive_edit.is_some() => {}
             ChartMessage::PriceAxis(input) => {
                 self.cancel_plot_pan();
                 self.model.set_crosshair_position(0, None)?;
@@ -255,6 +269,11 @@ impl Chart {
             }
         }
         self.prepare(self.size, self.ratio, now)?;
+        events.extend(
+            self.pending_primitive_edits
+                .drain(..)
+                .map(ChartEvent::PrimitiveEdit),
+        );
         if let Some((pane, position)) = clicked {
             events.push(ChartEvent::Click(
                 self.pointer_event_at(
@@ -482,6 +501,9 @@ impl Chart {
         };
         let panes = self.model.panes().len();
         let valid = match message {
+            ChartMessage::PrimitiveEdit(event) => {
+                point_valid(event.start) && point_valid(event.position)
+            }
             ChartMessage::Interaction(input) => panes > 0 && input_valid(input),
             ChartMessage::PaneInteraction(MultiPaneInteraction::Plot { pane, interaction }) => {
                 *pane < panes && input_valid(interaction)

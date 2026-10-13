@@ -68,6 +68,7 @@ pub struct MultiPaneChartFrameOwner {
     last_count: usize,
     retained: Option<InvalidateMask>,
     pass_limit: usize,
+    freeze_axis_sizes: bool,
 }
 impl Default for MultiPaneChartFrameOwner {
     fn default() -> Self {
@@ -78,10 +79,14 @@ impl Default for MultiPaneChartFrameOwner {
             last_count: 0,
             retained: None,
             pass_limit: 8,
+            freeze_axis_sizes: false,
         }
     }
 }
 impl MultiPaneChartFrameOwner {
+    pub(crate) fn freeze_axis_sizes(&mut self, frozen: bool) {
+        self.freeze_axis_sizes = frozen;
+    }
     pub fn retained_mask(&self) -> Option<&InvalidateMask> {
         self.retained.as_ref()
     }
@@ -286,7 +291,9 @@ impl MultiPaneChartFrameOwner {
                     .retained
                     .as_ref()
                     .is_some_and(|m| m.global_level() == InvalidationLevel::Full);
-            let mut requests = if full {
+            let mut requests = if self.freeze_axis_sizes {
+                self.allocated
+            } else if full {
                 measured
             } else {
                 self.allocated.grow_to(measured)
@@ -322,7 +329,11 @@ impl MultiPaneChartFrameOwner {
                     }
                 }
                 let (axes, measurements, measured) = measure_all(model)?;
-                let next = requests.grow_to(measured);
+                let next = if self.freeze_axis_sizes {
+                    requests
+                } else {
+                    requests.grow_to(measured)
+                };
                 if next != requests {
                     requests = next;
                     continue;

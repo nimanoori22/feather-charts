@@ -70,6 +70,8 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    pub(super) primitive_edit: Option<super::primitive_editing::EditSession>,
+    pub(super) pending_primitive_edits: Vec<super::PrimitiveEditEvent>,
     pub(crate) extension_order: u64,
     pub(crate) marker_orders: BTreeMap<super::MarkerCollectionId, u64>,
     pub(super) last_primitive: Option<super::PrimitiveHit>,
@@ -86,7 +88,7 @@ pub struct Chart {
     pub(crate) active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     pub(super) kinds: BTreeMap<SeriesId, SeriesType>,
     views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
-    owner: MultiPaneChartFrameOwner,
+    pub(super) owner: MultiPaneChartFrameOwner,
     pub(crate) controller: TimeScaleAnimationController,
     frame: IcedMultiPaneChartFrame,
     fonts: AxisFontResolver,
@@ -114,6 +116,8 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            primitive_edit: None,
+            pending_primitive_edits: vec![],
             extension_order: 0,
             marker_orders: BTreeMap::new(),
             last_primitive: None,
@@ -312,6 +316,7 @@ impl Chart {
         ratio: f32,
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        self.check_primitive_edit(size, ratio);
         let series = self
             .views
             .iter()
@@ -466,7 +471,7 @@ impl Chart {
             }
             None => self.last_hit.is_some() || self.last_primitive.is_some(),
         };
-        self.controller.is_active() || changed
+        self.controller.is_active() || changed || !self.pending_primitive_edits.is_empty()
     }
     pub fn fit_content(&mut self) {
         self.model.fit_content();

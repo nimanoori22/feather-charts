@@ -42,6 +42,35 @@ pub struct PrimitiveContext<'a> {
     pub visible_range: Option<crate::model::range_impl::RangeImpl<TimePointIndex>>,
 }
 impl PrimitiveContext<'_> {
+    /// Continuous drawing positions; unlike the source index API, no rounding.
+    pub fn continuous_logical_to_coordinate(&self, logical: f64) -> Option<f64> {
+        let scale = self.model.time_scale();
+        let anchor = self.logical_to_coordinate(0.)?;
+        let x = anchor + logical * scale.bar_spacing();
+        (logical.is_finite() && x.is_finite()).then_some(x)
+    }
+    pub fn coordinate_to_logical(&self, x: f64) -> Option<f64> {
+        let scale = self.model.time_scale();
+        let logical = (x - self.logical_to_coordinate(0.)?) / scale.bar_spacing();
+        (x.is_finite() && logical.is_finite()).then_some(logical)
+    }
+    /// Uses the owning series' actual scale and visible first value.
+    pub fn coordinate_to_price(&self, y: f64) -> Option<f64> {
+        let PrimitiveOwner::Series(id) = self.owner else {
+            return None;
+        };
+        let scale = self
+            .model
+            .panes()
+            .get(self.pane)?
+            .price_scale_for_source(id)?;
+        let first = self
+            .model
+            .series(id)?
+            .first_value(self.visible_range.as_ref())?;
+        let price = scale.coordinate_to_price(y.into(), first.value);
+        (y.is_finite() && price.is_finite()).then_some(price)
+    }
     pub fn time_to_coordinate(
         &self,
         time: &crate::model::horz_scale_behavior_time::types::Time,
@@ -96,6 +125,8 @@ pub trait DrawingPrimitive: std::fmt::Debug + 'static {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveHitCandidate {
+    /// Opt into mouse editing; `external_id` names the application's edit target.
+    pub editable: bool,
     pub external_id: String,
     pub distance: f64,
     pub priority: crate::model::internal_hit_test::HitTestPriority,
@@ -106,6 +137,7 @@ pub struct PrimitiveHitCandidate {
 impl PrimitiveHitCandidate {
     pub fn new(external_id: impl Into<String>) -> Self {
         Self {
+            editable: false,
             external_id: external_id.into(),
             distance: 0.,
             priority: Default::default(),
@@ -117,6 +149,7 @@ impl PrimitiveHitCandidate {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct PrimitiveHit {
+    pub editable: bool,
     pub primitive: PrimitiveId,
     pub owner: PrimitiveOwner,
     pub external_id: String,
@@ -176,6 +209,34 @@ impl Drop for Attachment {
     }
 }
 impl Chart {
+    pub fn primitive_context(
+        &mut self,
+        id: PrimitiveId,
+    ) -> Result<PrimitiveContext<'_>, ChartError> {
+        let owner = self.primitive_owner(id)?;
+        let pane = match owner {
+            PrimitiveOwner::Series(series) => self.model.pane_for_series(series),
+            PrimitiveOwner::Pane(key) => self.primitive_panes.iter().position(|p| *p == key),
+        }
+        .ok_or(ChartError::UnknownPrimitive(id))?;
+        let visible_range = self.model.visible_strict_range();
+        let state = &self.model.panes()[pane];
+        Ok(PrimitiveContext {
+            owner,
+            pane,
+            size: Size::new(state.width() as f32, state.height() as f32),
+            pixel_ratio: self.ratio,
+            model: &self.model,
+            visible_range,
+        })
+    }
+    /// Notify after application-owned state changes. Preparation still copies geometry.
+    pub fn request_primitive_update(&mut self, id: PrimitiveId) -> Result<(), ChartError> {
+        self.primitive_owner(id)?;
+        self.cancel_primitive_edit_for(id, super::PrimitiveEditCancelReason::ExternalChange);
+        self.model.full_update();
+        Ok(())
+    }
     pub(crate) fn next_extension_order(&mut self) -> u64 {
         let order = self.extension_order;
         self.extension_order = self
@@ -261,6 +322,8 @@ impl Chart {
         id: PrimitiveId,
         primitive: impl DrawingPrimitive,
     ) -> Result<(), ChartError> {
+        self.primitive_owner(id)?;
+        self.cancel_primitive_edit_for(id, super::PrimitiveEditCancelReason::ExternalChange);
         let attachment = self
             .primitives
             .iter_mut()
@@ -284,6 +347,8 @@ impl Chart {
         Ok(())
     }
     pub fn remove_primitive(&mut self, id: PrimitiveId) -> Result<(), ChartError> {
+        self.primitive_owner(id)?;
+        self.cancel_primitive_edit_for(id, super::PrimitiveEditCancelReason::OwnerRemoved);
         let index = self
             .primitives
             .iter()

@@ -4,6 +4,11 @@ mod defaults;
 mod markers;
 pub use chart::{Chart, ChartError};
 mod interaction;
+mod primitive_edit_input;
+mod primitive_editing;
+pub use primitive_editing::{
+    PrimitiveEditCancelReason, PrimitiveEditEvent, PrimitiveEditId, PrimitiveEditPhase,
+};
 mod widget;
 pub use interaction::{ChartEvent, ChartMessage, PointerEvent};
 pub use widget::{ChartProgram, ChartState};

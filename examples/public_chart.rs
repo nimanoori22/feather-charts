@@ -241,6 +241,10 @@ impl App {
                     Ok(events) => {
                         for event in events {
                             let (kind, data) = match event {
+                                ChartEvent::PrimitiveEdit(edit) => {
+                                    self.status = format!("Primitive edit: {:?}", edit.phase);
+                                    continue;
+                                }
                                 ChartEvent::Click(data) => ("Click", data),
                                 ChartEvent::CrosshairMoved(data) => ("Crosshair", data),
                             };

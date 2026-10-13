@@ -112,6 +112,7 @@ impl PlotSnapshot {
                         background: c.is_background,
                         order: attachment.order,
                         hit: PaneHit::Primitive(PrimitiveHit {
+                            editable: c.editable,
                             primitive: attachment.id,
                             owner: attachment.owner,
                             external_id: c.external_id,
