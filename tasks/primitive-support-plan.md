@@ -1,6 +1,6 @@
 # Implementation roadmap: custom drawing primitives
 
-Date: 2026-10-13. Status: planned; implementation has not started.
+Date: 2026-10-13. Status: implemented; automated acceptance complete; physical acceptance pending.
 Foundation: `8025ca1` (built-in hover selection and rendering).
 Execution checklist: [primitive-support-todo.md](primitive-support-todo.md).
 Use separate milestone files, following the existing project convention; retain
