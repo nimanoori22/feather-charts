@@ -121,7 +121,7 @@ Modified production files:
 
 Verification/demo files:
 `tests/series_markers.rs`, `examples/public_chart.rs`,
-`examples/public_chart/markers.rs`, `examples/public_api_profile.rs`,
+`examples/public_chart/markers.rs`, `examples/public_chart/tests.rs`, `examples/public_api_profile.rs`,
 `examples/series_markers_reference.rs`,
 `scripts/check_series_markers_reference.cjs`.
 Documentation: this report, `README.md`, `tasks/series-markers-plan.md`,
@@ -172,8 +172,8 @@ cargo run --example public_chart -- --series-markers --marker-captures-only --ca
 ```
 
 Formatting, all tests, all-target check, strict Clippy, example builds and diff
-checks pass. The complete suite contains 432 tests (337 library, 21 existing public
-API, 10 markers, and 64 native-example interaction tests). Headless public smoke
+checks pass. The complete suite contains 433 tests (337 library, 21 existing public
+API, 10 markers, 64 native-example interaction tests and one public demo layout test). Headless public smoke
 passes for all six families. Bounded native startup with `--series-markers` ran
 without errors until its intentional ten-second timeout.
 
@@ -186,6 +186,23 @@ overlap and stacking captures were inspected on both backends. Local evidence:
 `/tmp/feather-series-markers/verified-{tiny-skia,wgpu}/`,
 `/tmp/feather-series-markers/verified-overlaps.png`.
 These temporary artifacts are not repository dependencies.
+
+### Narrow-window hover regression
+
+Physical testing reported the bottom of the chart jumping during hover in a
+half-sized window. The demo's status text included the full marker payload and
+wrapped to different line counts as pointer events changed. Iced consequently
+changed the height left for the chart. An actual Iced widget-layout regression
+reproduced a 20.8-pixel shift at 640 logical pixels wide before the fix.
+
+The status widget now fills the available width without wrapping; long status
+details can be clipped horizontally rather than changing the chart's bounds.
+`cargo test --example public_chart hover_status_keeps_chart_bounds_stable_in_narrow_windows`
+verifies the complete host view at widths 640/480/360 and height 480, passing bounds
+updates and alternating marker/non-marker hover events through the public Chart
+API. It checks real status identity changes and stable chart geometry. The test
+failed before the fix and passes afterward. Marker engine behavior is unchanged;
+fresh user-observed mouse/touchpad acceptance remains pending.
 
 ### Performance
 

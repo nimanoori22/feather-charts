@@ -27,6 +27,9 @@ use iced::{
 use std::time::Instant;
 #[path = "public_chart/markers.rs"]
 mod marker_demo;
+#[cfg(test)]
+#[path = "public_chart/tests.rs"]
+mod tests;
 use marker_demo::sample_markers;
 
 struct App {
@@ -354,7 +357,10 @@ impl App {
     }
     fn view(&self) -> Element<'_, Message> {
         column![
-            text(&self.status),
+            // Hover details must not resize the chart when the window is narrow.
+            text(&self.status)
+                .width(iced::Length::Fill)
+                .wrapping(text::Wrapping::None),
             row![
                 button("Append bar").on_press(Message::Append),
                 button("Change style").on_press(Message::Style),
