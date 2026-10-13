@@ -206,6 +206,36 @@ where
         geometry: HitGeometry::Range { items, spacing },
     })
 }
+#[derive(Clone, Debug)]
+pub struct PreparedPriceLineHit {
+    pub series: SeriesId,
+    pub y: f64,
+    pub width: f64,
+    pub kind: crate::model::hit_test::PriceLineKind,
+    pub external_id: Option<String>,
+}
+impl PreparedPriceLineHit {
+    fn hit(&self, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
+        let distance = (y - self.y).abs();
+        (distance <= self.width + 7.).then(|| {
+            (
+                ChartHit {
+                    series: self.series,
+                    target: HitTarget::PriceLine {
+                        line: self.kind,
+                        external_id: self.external_id.clone(),
+                    },
+                },
+                InternalHitTestCandidate {
+                    distance,
+                    priority: HitTestPriority::Point,
+                    cursor_style: None,
+                    external_id: self.external_id.clone(),
+                },
+            )
+        })
+    }
+}
 impl PlotSnapshot {
     pub fn hit_test(&self, point: iced::Point) -> Option<ChartHit> {
         if !point.x.is_finite()
@@ -230,10 +260,34 @@ impl PlotSnapshot {
                     })
                 });
             }
-            if let Some(hit) = series.hit(f64::from(point.x), f64::from(point.y))
-                && is_better_hit(&hit.1, best.as_ref().map(|(_, c)| c))
+            let prices = self
+                .hit_price_lines
+                .iter()
+                .filter(|p| p.series == series.series);
+            let mut local: Option<(ChartHit, InternalHitTestCandidate)> = None;
+            let mut offer = |hit: Option<(ChartHit, InternalHitTestCandidate)>| {
+                if let Some(h) = hit
+                    && is_better_hit(&h.1, local.as_ref().map(|(_, c)| c))
+                {
+                    local = Some(h);
+                }
+            };
+            for p in prices
+                .clone()
+                .filter(|p| p.kind == crate::model::hit_test::PriceLineKind::RelativeBase)
             {
-                best = Some(hit);
+                offer(p.hit(f64::from(point.y)));
+            }
+            offer(series.hit(f64::from(point.x), f64::from(point.y)));
+            for p in
+                prices.filter(|p| p.kind != crate::model::hit_test::PriceLineKind::RelativeBase)
+            {
+                offer(p.hit(f64::from(point.y)));
+            }
+            if let Some(h) = local
+                && is_better_hit(&h.1, best.as_ref().map(|(_, c)| c))
+            {
+                best = Some(h);
             }
         }
         best.map(|(h, _)| h).or_else(|| {

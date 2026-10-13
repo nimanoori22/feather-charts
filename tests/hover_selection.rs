@@ -204,3 +204,115 @@ fn every_family_hits_its_source_geometry_at_fractional_ratios() {
         }
     }
 }
+
+#[test]
+fn custom_price_line_identity_visibility_and_lifecycle() {
+    let (mut c, id) = chart();
+    let mut o = PriceLineOptions::new(104.);
+    o.external_id = Some("level".into());
+    o.line_width = feather_charts::renderers::draw_line::LineWidth::Two;
+    let line = c.add_price_line(id, o.clone()).unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    let p = position(&c, id, 1., 104.);
+    let hit = c.hit_test(0, p).expect("price-line hit");
+    assert_eq!(
+        hit.target,
+        HitTarget::PriceLine {
+            line: PriceLineKind::Custom(line),
+            external_id: Some("level".into())
+        }
+    );
+    o.line_visible = false;
+    c.replace_price_line_options(line, o).unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    assert!(c.hit_test(0, p).is_none());
+    c.remove_price_line(line).unwrap();
+    assert!(c.price_line_options(line).is_err());
+}
+
+#[test]
+fn marker_foreground_beats_own_price_line_but_higher_source_wins() {
+    let (mut c, id) = chart();
+    let line = c.add_price_line(id, PriceLineOptions::new(104.)).unwrap();
+    let mut m = SeriesMarker::new(
+        Time::from(UtcTimestamp::new(1040.)),
+        MarkerPosition::AtPriceMiddle(104.),
+        MarkerShape::Circle,
+        "red",
+    );
+    m.size = 3.;
+    m.id = Some("marker".into());
+    let collection = c
+        .add_series_markers(
+            id,
+            vec![m],
+            SeriesMarkersOptions {
+                auto_scale: false,
+                z_order: MarkerZOrder::Top,
+            },
+        )
+        .unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    let p = position(&c, id, 4., 104.);
+    assert!(matches!(
+        c.hit_test(0, p).unwrap().target,
+        HitTarget::Marker(_)
+    ));
+    let upper = c
+        .add_series(options(SeriesType::Line), 0, PriceScalePosition::Right)
+        .unwrap();
+    c.set_data(upper, (0..10).map(|i| row(SeriesType::Line, i)).collect())
+        .unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    assert_eq!(c.hit_test(0, p).unwrap().series, upper);
+    assert_eq!(c.marker_hit(0, p).unwrap().collection, collection);
+    let events = c
+        .update(ChartMessage::Click {
+            pane: 0,
+            position: p,
+        })
+        .unwrap();
+    assert!(events.iter().any(|e|matches!(e,ChartEvent::Click(d) if d.hit.as_ref().is_some_and(|h|h.series==upper) && d.marker.is_none())));
+    c.remove_series(upper).unwrap();
+    c.remove_series_markers(collection).unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    assert_eq!(
+        c.hit_test(0, p).unwrap().target,
+        HitTarget::PriceLine {
+            line: PriceLineKind::Custom(line),
+            external_id: None
+        }
+    );
+}
+#[test]
+fn stationary_pointer_reconciles_price_line_removal_once() {
+    let (mut c, id) = chart();
+    let line = c.add_price_line(id, PriceLineOptions::new(104.)).unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    let p = position(&c, id, 1., 104.);
+    c.update(ChartMessage::Click {
+        pane: 0,
+        position: p,
+    })
+    .unwrap();
+    assert!(!c.is_animating());
+    c.remove_price_line(line).unwrap();
+    c.prepare(iced::Size::new(640., 480.), 1., std::time::Instant::now())
+        .unwrap();
+    assert!(c.is_animating());
+    let events = c
+        .update(ChartMessage::Tick(std::time::Instant::now()))
+        .unwrap();
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e,ChartEvent::CrosshairMoved(d) if d.hit.is_none()))
+    );
+    assert!(!c.is_animating());
+}

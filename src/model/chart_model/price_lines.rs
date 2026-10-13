@@ -9,11 +9,17 @@ use std::sync::atomic::{AtomicU64, Ordering};
 static NEXT_LINE: AtomicU64 = AtomicU64::new(1);
 #[derive(Default)]
 pub(crate) struct PriceDecorations {
-    pub lines: Vec<(SeriesId, PriceLine)>,
+    pub lines: Vec<PriceDecorationLine>,
     pub left: Vec<SeriesAxisLabel>,
     pub right: Vec<SeriesAxisLabel>,
     pub left_center: Option<f64>,
     pub right_center: Option<f64>,
+}
+pub(crate) struct PriceDecorationLine {
+    pub series: SeriesId,
+    pub line: PriceLine,
+    pub kind: crate::model::hit_test::PriceLineKind,
+    pub external_id: Option<String>,
 }
 impl<B, M> ChartModel<B, M>
 where
@@ -143,6 +149,26 @@ where
                 continue;
             }
             let common = series.common_options();
+            if common.base_line_visible
+                && matches!(scale.id(), "left" | "right")
+                && matches!(
+                    scale.options().mode,
+                    crate::model::price_scale::PriceScaleMode::Percentage
+                        | crate::model::price_scale::PriceScaleMode::IndexedTo100
+                )
+            {
+                result.lines.push(PriceDecorationLine {
+                    series: id,
+                    kind: crate::model::hit_test::PriceLineKind::RelativeBase,
+                    external_id: None,
+                    line: PriceLine {
+                        coordinate: scale.price_to_coordinate(first.value, first.value).value(),
+                        color: common.base_line_color.clone(),
+                        width: common.base_line_width,
+                        style: common.base_line_style,
+                    },
+                });
+            }
             let last = series.last_value_data(scale, visible.as_ref(), false);
             let line_value = if common.price_line_source == PriceLineSource::LastBar {
                 series.last_value_data(scale, visible.as_ref(), true)
@@ -152,9 +178,11 @@ where
             if common.price_line_visible
                 && let Some(value) = line_value
             {
-                result.lines.push((
-                    id,
-                    PriceLine {
+                result.lines.push(PriceDecorationLine {
+                    series: id,
+                    kind: crate::model::hit_test::PriceLineKind::LastValue,
+                    external_id: None,
+                    line: PriceLine {
                         coordinate: value.coordinate,
                         color: if common.price_line_color.is_empty() {
                             value.color
@@ -164,7 +192,7 @@ where
                         width: common.price_line_width,
                         style: common.price_line_style,
                     },
-                ));
+                });
             }
             let target = match scale.id() {
                 "left" => Some("left"),
@@ -217,7 +245,7 @@ where
                     });
                 }
             }
-            for (_, options) in &series.price_lines {
+            for (line_id, options) in &series.price_lines {
                 let y = scale
                     .price_to_coordinate(options.price, first.value)
                     .value();
@@ -225,15 +253,17 @@ where
                     continue;
                 }
                 if options.line_visible {
-                    result.lines.push((
-                        id,
-                        PriceLine {
+                    result.lines.push(PriceDecorationLine {
+                        series: id,
+                        kind: crate::model::hit_test::PriceLineKind::Custom(*line_id),
+                        external_id: options.external_id.clone(),
+                        line: PriceLine {
                             coordinate: y,
                             color: options.color.clone(),
                             width: options.line_width,
                             style: options.line_style,
                         },
-                    ));
+                    });
                 }
                 if options.axis_label_visible {
                     let bg = if options.axis_label_color.is_empty() {
