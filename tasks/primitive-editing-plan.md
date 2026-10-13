@@ -1,6 +1,8 @@
 # Implementation roadmap: interactive primitive editing
 
-Date: 2026-10-13. Status: planned; implementation not started.
+Date: 2026-10-13. Status: implemented and automatically validated; physical acceptance pending.
+The strict history-independent performance target remains open; see
+[the port report](../docs/porting/primitive-editing.md) for measured limits.
 Foundation: `380f4bc` (custom drawing primitives).
 Execution checklist: [primitive-editing-todo.md](primitive-editing-todo.md).
 Use separate milestone files following the existing project convention. Keep

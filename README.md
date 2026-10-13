@@ -201,7 +201,38 @@ shaded price/time region, selectable boundary, autoscale, labels and axis graphi
 The volume pane also has an independent graphic. This scene mixes filled series,
 price levels and markers, and keeps chart bounds stable when status changes.
 
+Click the box to select it. Drag inside it to move it, or drag an edge/corner to
+resize it using the eight handles. Click outside to deselect. Escape, focus loss
+or leaving the window cancels the current drag and restores its starting bounds.
+Dragging outside the box pans the chart. During an edit, wheel/axis navigation
+is held; it resumes after release or cancellation.
+
+Set `PrimitiveHitCandidate::editable = true` to opt an application drawing into
+the widget's synchronous `ChartEvent::PrimitiveEdit` events. The external hit ID
+names your application's edit target. Store the drawing state in the application
+and copy its geometry during preparation. `request_primitive_update(id)` notifies
+external changes; `preview_primitive_update(edit_id)` notifies an active editor
+without detach/reattach. Apply an edit event to your state, then call `prepare`
+once. Edit messages return owned events without preparing a discarded frame.
+`PrimitiveContext::coordinate_transform()` copies the time/owner price mapping
+for start-relative previews, including fractional logical positions.
+
+The demo holds autoscale and allocated axis sizes during a drag, restoring their
+prior policy afterward. External replacement/update cancels without rolling back
+newer geometry; removal never recreates an attachment. Adding hit fields/event
+variants requires downstream struct literals and exhaustive matches to adapt.
+
+Editing captures and profiling:
+
+```sh
+cargo run --example public_chart -- --primitives --primitive-edit-captures-only --capture-dir /tmp/feather-editing
+cargo run --example public_chart -- --primitive-edit-profile
+```
+
 See the [primitive port report](docs/porting/primitive-support.md) and
 [checklist](tasks/primitive-support-todo.md) for source comparisons and validation.
-Physical mouse/touchpad acceptance is pending. Custom data-series rendering,
-editable annotations and JavaScript plugin compatibility remain future work.
+See the [editing report](docs/porting/primitive-editing.md) and
+[editing checklist](tasks/primitive-editing-todo.md) for the interaction contract
+and acceptance evidence. Physical mouse/touchpad editing acceptance is pending.
+Custom data-series rendering, more drawing tools, touch editing and JavaScript
+plugin compatibility remain future work.

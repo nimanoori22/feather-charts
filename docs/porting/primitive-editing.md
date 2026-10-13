@@ -1,6 +1,6 @@
 # Interactive primitive editing
 
-Status: design accepted for implementation; validation pending.
+Status: implemented; automated validation complete; physical acceptance pending.
 Foundation: `380f4bc`. Roadmap: `tasks/primitive-editing-plan.md`.
 
 ## Source and consumers
@@ -22,6 +22,10 @@ creates rectangles from two clicks; it does not specify drag-resize behavior.
 This milestone is a Rust application extension, not a claim of upstream or
 TradingView web-app annotation parity.
 
+Flowsurface's complete `src/chart.rs::canvas_interaction` provided an example of
+start-relative movement, release cleanup and suppressing wheel navigation while
+panning. Its generic architecture and bounded-pointer rules were not copied.
+
 The pinned Iced Canvas forwards native events to Program::update and publishes
 one action/message synchronously with optional capture. Typed horizontal,
 vertical and both diagonal resize cursors exist. Event capture prevents sibling
@@ -36,7 +40,7 @@ but mixes shape rules with navigation, complicates owner borrowing/reentrancy an
 snapshot ownership. Application events cost a small owned payload per update
 and fit existing synchronous host updates. Neither needs Send/Sync or async.
 
-Proposed additive public API:
+Public API (important signatures):
 
 ```rust
 // Default false; external_id identifies the application-defined edit target.
@@ -55,7 +59,7 @@ pub struct PrimitiveEditEvent {
 ChartMessage::PrimitiveEdit(PrimitiveEditEvent)
 ChartEvent::PrimitiveEdit(PrimitiveEditEvent)
 impl Chart {
-    pub fn primitive_context(&self, id: PrimitiveId) -> Result<PrimitiveContext<'_>, ChartError>;
+    pub fn primitive_context(&mut self, id: PrimitiveId) -> Result<PrimitiveContext<'_>, ChartError>;
     pub fn request_primitive_update(&mut self, id: PrimitiveId) -> Result<(), ChartError>;
     pub fn preview_primitive_update(&mut self, id: PrimitiveEditId) -> Result<(), ChartError>;
 }
@@ -63,11 +67,17 @@ impl PrimitiveContext<'_> {
     pub fn continuous_logical_to_coordinate(&self, value: f64) -> Option<f64>;
     pub fn coordinate_to_logical(&self, x: f64) -> Option<f64>;
     pub fn coordinate_to_price(&self, y: f64) -> Option<f64>;
+    pub fn coordinate_transform(&self) -> Option<PrimitiveCoordinateTransform>;
 }
 ```
 
-Final signatures will be recorded alongside validation. New enum variants and
-public struct fields require downstream exhaustive matches/literals to adapt.
+`primitive_context` takes a mutable borrow to settle the source time scale's lazy
+visible-range cache, then exposes read-only context. `PrimitiveCoordinateTransform`
+is Copy and owns coefficients; its logical/price forward/inverse methods return
+Option for unavailable or nonfinite mappings. Its price coefficients come from
+`PriceScale::coordinate_transform(base)`, sharing the existing conversion math.
+New enum variants and public struct fields require downstream exhaustive
+matches/literals to adapt. The prepared drawing traits remain unchanged.
 
 Chart owns attachment Rc -> application primitive adapter -> Rc<RefCell<box>>.
 Application Scene owns the other Rc and selection/original bounds. Preparation
@@ -101,7 +111,114 @@ including left/right/overlay, inversion and nonlinear modes. Nonfinite inputs or
 outputs and empty mappings return None. Existing source-compatible integer
 conversion remains unchanged.
 
+## TypeScript-specific patterns discarded
+
+Application-owned typed events replace callback identity and mutable chart-owned
+editing hooks. Rust attachment ownership and deterministic detach replace
+manual JavaScript destruction conventions. Prepared drawings copy geometry;
+they do not share mutable live objects with the renderer. The owned transform
+holds coefficients rather than references into the model. No async machinery,
+thread-safe locks, unchecked downcasts or new dependencies were introduced.
+
+## Files changed
+
+- Public API/routing: `src/api/mod.rs`, `src/api/chart.rs`,
+  `src/api/interaction.rs`, `src/api/primitives.rs`,
+  `src/api/primitive_editing.rs`, `src/api/primitive_edit_input.rs`,
+  `src/api/widget.rs`.
+- Model/layout/hits: `src/model/price_scale.rs`, `src/model/pane.rs`,
+  `src/model/chart_model/primitives.rs`, `src/ui/multi_pane_frame.rs`,
+  `src/ui/primitive_hit_testing.rs`.
+- Demo/captures/profile: `examples/public_chart.rs`,
+  `examples/public_chart/primitives.rs`,
+  `examples/public_chart/primitive_editing.rs`,
+  `examples/public_chart/primitive_editing_capture.rs`,
+  `examples/support/chart_demo.rs`.
+- Tests: `tests/primitive_editing.rs`, `tests/series_markers.rs`.
+- Documentation: `README.md`, this report,
+  `tasks/primitive-editing-plan.md`, `tasks/primitive-editing-todo.md`.
+
 ## Validation
 
-Pending implementation. Record behavioral tests, native sequences, renderer
-captures, profile results, source-reference checks and physical acceptance here.
+`cargo fmt --check`, `cargo test --all-targets`, `cargo check --all-targets`,
+`cargo clippy --all-targets -- -D warnings`, and `cargo build --examples` pass.
+The full suite reports 478 passing tests and zero failures.
+All 16 existing source-reference checks pass. Tests preserve integer source
+conversion behavior and cover continuous fractional/offscreen round trips,
+left/right/overlay owners, all four price modes and inversion, retained
+transforms, native input capture before navigation, duplicate moves, outside-plot
+release, stale tokens, lifecycle notifications, cancellation and restoration of
+prior autoscale policy. A growing primitive contributes wider price labels and
+larger autoscale bounds without changing the editing viewport until commit.
+Crosshair labels clear when editing starts and remain cleared after focus loss.
+The demo tests cover selection/movement/deselection, all eight resize constraints,
+minimum extents/crossings, nonfinite input and immutable handle hit geometry.
+
+Renderer validation covers 12 primitive states at ratios 1, 1.25, 1.5 and 2 on
+TinySkia and WGPU: 96 captures with pixel/hit assertions. Five editing states
+(selected, moving, resized, cancelled and selected in a narrow window) were also
+rerun on the final build with explicit geometry assertions. Contact sheets were
+visually inspected on both backends. These checks do not replace hardware tests.
+
+Reproduce editing captures with:
+
+```sh
+cargo run --example public_chart -- --primitives --primitive-edit-captures-only --capture-dir /tmp/feather-editing
+# Add --wgpu for the other renderer.
+cargo run --example public_chart -- --primitive-edit-profile
+```
+
+## Performance evidence and limits
+
+Compared debug builds against foundation `380f4bc`, using three alternating
+baseline/current runs per existing workload (20 warmups, 100 measured samples).
+The table gives the median of the three per-run medians in milliseconds:
+
+| Existing workload | Baseline | Editing build |
+| --- | ---: | ---: |
+| Empty hover | 0.124 | 0.123 |
+| 20,000-row line zoom | 11.939 | 12.021 |
+| 20,000-row candlestick zoom | 13.574 | 13.530 |
+| 20,000-row histogram zoom | 10.303 | 10.222 |
+| 16-source line hover | 34.352 | 34.361 |
+| 16-source candlestick hover | 79.935 | 80.540 |
+| 16-source histogram hover | 45.318 | 45.316 |
+
+Existing append medians improved by 0.36–1.68%; the largest measured median
+increase was 0.76%. Tail timings varied: candlestick offscreen append p95 reached
+43.543 ms versus baseline maximum 40.655 ms; crowded line append reached
+59.978 ms versus 51.313 ms. This evidence supports similar median behavior,
+not a guarantee that every tail improved.
+
+The new native preview profile includes widget routing, host update and prepared
+frame/glyph work. Results are medians of three runs:
+
+| Rows / sources / concurrent data update | Median ms | p95 ms |
+| --- | ---: | ---: |
+| 1,200 / 1 / no | 13.014 | 13.192 |
+| 20,000 / 1 / no | 17.123 | 17.412 |
+| 20,000 / 1 / yes | 40.039 | 41.362 |
+| 1,200 / 16 / yes | 42.561 | 42.881 |
+
+Drag geometry is start-relative and bounded in cost; preview notification uses a
+light update and never detaches/reattaches. Primitive-free presses skip primitive
+hit scanning. The chart's overall preparation/data-update paths still depend on
+history and source count: the original roadmap's strict history-independent
+per-event performance target is not fully met. Optimizing those existing paths
+is deferred and recorded explicitly; these debug measurements do not establish
+60 fps for large live workloads.
+
+## Remaining scope and acceptance
+
+Physical mouse/touchpad acceptance is pending. Run the dedicated checklist in
+`tasks/primitive-editing-todo.md` using `cargo run --example public_chart --
+--primitives`, including all handles, window exit/focus loss, half-size/high-DPI
+layout and navigation after editing. The implementation and automated validation
+are complete; the interaction milestone remains awaiting hardware acceptance
+and the strict history-independent performance target remains open.
+
+Touch gestures, snapping, undo, multi-selection, drawing creation, persistence,
+rotation and more drawing types are outside this milestone. Existing primitive
+API consumers remain valid with default noneditable targets; downstream struct
+literals and exhaustive event matches must account for the additive API fields
+and variants. The upstream rectangle creation tool is a separate future port.
