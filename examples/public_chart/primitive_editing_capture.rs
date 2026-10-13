@@ -149,7 +149,9 @@ pub(in super::super) fn profile() {
     for (rows, sources, live) in [
         (1200, 1, false),
         (20000, 1, false),
+        (100000, 1, false),
         (20000, 1, true),
+        (100000, 1, true),
         (1200, 16, true),
     ] {
         let mut app = App::new(SeriesType::Line);

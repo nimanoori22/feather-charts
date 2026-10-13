@@ -91,6 +91,10 @@ impl PlotSnapshot {
             };
         if background && pass.kind != SeriesPassKind::Foreground {
             self.draw_series_price_lines(frame, id, true);
+        }
+        // Upstream fill composites draw in the source's foreground pass.
+        // Only a raised outline separates from its fill, without painting it twice.
+        if !background && pass.kind != SeriesPassKind::Foreground {
             self.draw_fills(frame, fills);
         }
         if !background && pass.kind != SeriesPassKind::Background {
