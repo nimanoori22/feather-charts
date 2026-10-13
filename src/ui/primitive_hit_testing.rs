@@ -10,13 +10,13 @@ use crate::{
 };
 #[derive(Clone)]
 pub(crate) enum PaneHit {
-    BuiltIn(ChartHit),
+    BuiltIn(ChartHit, Option<crate::api::CustomHitData>),
     Primitive(PrimitiveHit),
 }
 impl PaneHit {
     pub(crate) fn series(&self) -> Option<SeriesId> {
         match self {
-            Self::BuiltIn(h) => Some(h.series),
+            Self::BuiltIn(h, _) => Some(h.series),
             Self::Primitive(h) => match h.owner {
                 PrimitiveOwner::Series(id) => Some(id),
                 _ => None,
@@ -41,7 +41,7 @@ fn rank(layer: PrimitiveLayer) -> u8 {
 impl PlotSnapshot {
     pub fn hit_test(&self, point: iced::Point) -> Option<ChartHit> {
         match self.selection(point)? {
-            PaneHit::BuiltIn(h) => Some(h),
+            PaneHit::BuiltIn(h, _) => Some(h),
             _ => None,
         }
     }
@@ -53,7 +53,7 @@ impl PlotSnapshot {
     }
     pub(crate) fn selection(&self, point: iced::Point) -> Option<PaneHit> {
         if self.primitives.is_empty() {
-            return self.builtin_hit_test(point).map(PaneHit::BuiltIn);
+            return self.builtin_hit_test(point);
         }
         if !point.x.is_finite()
             || !point.y.is_finite()
@@ -134,10 +134,13 @@ impl PlotSnapshot {
             }
             if let Some(m) = marker.as_ref().filter(|m| Some(m.series) == source) {
                 offer(ExtensionHit {
-                    hit: PaneHit::BuiltIn(ChartHit {
-                        series: m.series,
-                        target: HitTarget::Marker(m.clone()),
-                    }),
+                    hit: PaneHit::BuiltIn(
+                        ChartHit {
+                            series: m.series,
+                            target: HitTarget::Marker(m.clone()),
+                        },
+                        None,
+                    ),
                     candidate: InternalHitTestCandidate {
                         distance: 0.,
                         priority: HitTestPriority::Point,
@@ -156,7 +159,7 @@ impl PlotSnapshot {
         {
             return primitive.map(|h| h.hit);
         }
-        let mut best: Option<(ChartHit, InternalHitTestCandidate)> = None;
+        let mut best: Option<super::hit_testing::ResolvedSeriesHit> = None;
         let mut geometry = self.hit_series.iter().rev().peekable();
         for source in ids() {
             let owns = primitive
@@ -164,14 +167,14 @@ impl PlotSnapshot {
                 .is_some_and(|h| h.hit.series() == source && h.layer != PrimitiveLayer::Bottom);
             if owns && primitive.as_ref().is_some_and(|h| !h.background) {
                 return best
-                    .map(|(h, _)| PaneHit::BuiltIn(h))
+                    .map(|(h, _, data)| PaneHit::BuiltIn(h, data))
                     .or_else(|| primitive.map(|h| h.hit));
             }
             if let Some(id) = source {
-                let mut local: Option<(ChartHit, InternalHitTestCandidate)> = None;
-                let mut offer = |hit: Option<(ChartHit, InternalHitTestCandidate)>| {
+                let mut local: Option<super::hit_testing::ResolvedSeriesHit> = None;
+                let mut offer = |hit: Option<super::hit_testing::ResolvedSeriesHit>| {
                     if let Some(hit) = hit
-                        && is_better_hit(&hit.1, local.as_ref().map(|(_, c)| c))
+                        && is_better_hit(&hit.1, local.as_ref().map(|(_, c, _)| c))
                     {
                         local = Some(hit);
                     }
@@ -200,18 +203,18 @@ impl PlotSnapshot {
                     offer(price.hit(f64::from(point.y)));
                 }
                 if let Some(hit) = local
-                    && is_better_hit(&hit.1, best.as_ref().map(|(_, c)| c))
+                    && is_better_hit(&hit.1, best.as_ref().map(|(_, c, _)| c))
                 {
                     best = Some(hit);
                 }
             }
             if owns {
                 return best
-                    .map(|(h, _)| PaneHit::BuiltIn(h))
+                    .map(|(h, _, data)| PaneHit::BuiltIn(h, data))
                     .or_else(|| primitive.map(|h| h.hit));
             }
         }
-        best.map(|(h, _)| PaneHit::BuiltIn(h))
+        best.map(|(h, _, data)| PaneHit::BuiltIn(h, data))
             .or_else(|| primitive.map(|h| h.hit))
     }
 }

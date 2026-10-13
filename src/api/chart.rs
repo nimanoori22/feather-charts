@@ -65,7 +65,7 @@ impl From<DataLayerError<TimeConversionError>> for ChartError {
         Self::Data(e)
     }
 }
-static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
+pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
@@ -81,13 +81,13 @@ pub struct Chart {
     hovered_series_on_top: bool,
     pub(super) last_hit: Option<super::ChartHit>,
     pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
-    layer: DataLayer<HorzScaleBehaviorTime>,
+    pub(super) layer: DataLayer<HorzScaleBehaviorTime>,
     pub(crate) size: iced::Size,
     pub(crate) ratio: f32,
     pub(crate) plot_pan: Option<super::interaction::PlotPan>,
     pub(crate) active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     pub(super) kinds: BTreeMap<SeriesId, SeriesType>,
-    views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
+    pub(super) views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
     pub(super) owner: MultiPaneChartFrameOwner,
     pub(crate) controller: TimeScaleAnimationController,
     frame: IcedMultiPaneChartFrame,
@@ -403,16 +403,7 @@ impl Chart {
                     .map_err(ChartError::Frame)
             });
         match result {
-            Ok(mut frame) => {
-                let origin = self.model.crosshair().origin();
-                for (index, pane) in frame.panes.iter_mut().enumerate() {
-                    pane.plot.prepare_hover(
-                        origin
-                            .filter(|o| o.pane == index)
-                            .map(|o| iced::Point::new(o.point.x as f32, o.point.y as f32)),
-                        self.hovered_series_on_top,
-                    );
-                }
+            Ok(frame) => {
                 self.frame = frame;
                 Ok(())
             }
@@ -465,7 +456,7 @@ impl Chart {
                 .selection(iced::Point::new(o.point.x as f32, o.point.y as f32))
         });
         let changed = match selection {
-            Some(PaneHit::BuiltIn(h)) => {
+            Some(PaneHit::BuiltIn(h, _)) => {
                 self.last_hit.as_ref() != Some(&h) || self.last_primitive.is_some()
             }
             Some(PaneHit::Primitive(h)) => {

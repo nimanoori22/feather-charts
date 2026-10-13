@@ -115,3 +115,11 @@ impl Default for crate::model::chart_model::ChartModelOptions {
         }
     }
 }
+
+impl Default for CustomStyleOptions {
+    fn default() -> Self {
+        Self {
+            color: "#2196f3".into(),
+        }
+    }
+}

@@ -22,6 +22,8 @@ pub enum ChartMessage {
 }
 #[derive(Clone, Debug)]
 pub struct PointerEvent {
+    pub custom_series_data: Vec<super::CustomSeriesEventData>,
+    pub custom_hit: Option<super::CustomHitData>,
     pub primitive: Option<super::PrimitiveHit>,
     pub hit: Option<super::ChartHit>,
     pub marker: Option<super::MarkerHit>,
@@ -349,6 +351,21 @@ impl Chart {
             .and_then(|index| self.model.time_scale().index_to_original_time(index))
             .cloned();
         let mut series_data = Vec::new();
+        let custom_series_data = logical
+            .map(|index| {
+                self.views
+                    .iter()
+                    .flatten()
+                    .filter_map(|(_, view)| {
+                        if let crate::ui::multi_pane_frame::SeriesPaneView::Custom(view) = view {
+                            view.adapter.data_at(index)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
         if let Some(index) = logical {
             for id in self.kinds.keys() {
                 let Some(series) = self.model.series(*id) else {
@@ -442,16 +459,20 @@ impl Chart {
         let selection = pane
             .zip(point)
             .and_then(|(pane, point)| self.frame_for_pane(pane)?.plot.selection(point));
-        let (hit, primitive) = match selection {
-            Some(crate::ui::primitive_hit_testing::PaneHit::BuiltIn(h)) => (Some(h), None),
-            Some(crate::ui::primitive_hit_testing::PaneHit::Primitive(h)) => (None, Some(h)),
-            None => (None, None),
+        let (hit, primitive, custom_hit) = match selection {
+            Some(crate::ui::primitive_hit_testing::PaneHit::BuiltIn(h, data)) => {
+                (Some(h), None, data)
+            }
+            Some(crate::ui::primitive_hit_testing::PaneHit::Primitive(h)) => (None, Some(h), None),
+            None => (None, None, None),
         };
         let marker = hit.as_ref().and_then(|h| match &h.target {
             super::HitTarget::Marker(m) => Some(m.clone()),
             _ => None,
         });
         PointerEvent {
+            custom_series_data,
+            custom_hit,
             primitive,
             hit,
             marker,

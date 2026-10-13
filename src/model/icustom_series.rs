@@ -4,7 +4,7 @@ use crate::model::{
     bar::BarPrice,
     coordinate::Coordinate,
     data_consumer::TimedData,
-    time_data::{TimePointIndex, ValueRange},
+    time_data::{SeriesItemsIndexesRange, TimePointIndex},
 };
 
 /// A whitespace item for a custom series.
@@ -81,7 +81,9 @@ pub struct CustomBarItemData<Data> {
 pub struct PaneRendererCustomData<Data> {
     pub bars: Vec<CustomBarItemData<Data>>,
     pub bar_spacing: f64,
-    pub visible_range: Option<ValueRange<TimePointIndex>>,
+    pub visible_range: Option<SeriesItemsIndexesRange>,
+    /// Settled device pixel ratio; drawing coordinates remain logical.
+    pub pixel_ratio: f64,
     pub conflation_factor: f64,
 }
 
@@ -334,6 +336,7 @@ mod tests {
                 bar_spacing: 6.0,
                 visible_range: None,
                 conflation_factor: 1.0,
+                pixel_ratio: 1.0,
             },
             &view.default_options(),
         );

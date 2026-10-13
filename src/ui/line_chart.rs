@@ -121,6 +121,7 @@ pub struct CanvasFill {
 }
 #[derive(Clone, Debug, Default)]
 pub struct CanvasSeriesGeometry {
+    pub custom: Option<super::custom_series::PreparedCustomSeries>,
     pub series_id: Option<SeriesId>,
     pub fills: Vec<CanvasFill>,
     pub gradient_lines: Vec<CanvasGradientStroke>,
@@ -131,6 +132,8 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub hovered_custom_data: Option<crate::api::CustomHitData>,
+    pub custom: Option<super::custom_series::PreparedCustomSeries>,
     pub marker_orders:
         std::collections::BTreeMap<crate::model::series_markers::MarkerCollectionId, u64>,
     pub primitives: Vec<crate::api::primitives::PreparedAttachment>,
@@ -167,6 +170,8 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            hovered_custom_data: None,
+            custom: None,
             marker_orders: Default::default(),
             primitives: vec![],
             time_primitives: vec![],
@@ -389,6 +394,8 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            hovered_custom_data: None,
+            custom: None,
             marker_orders: Default::default(),
             primitives: vec![],
             time_primitives: vec![],

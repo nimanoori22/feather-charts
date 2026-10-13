@@ -8,6 +8,11 @@ pub enum PriceLineKind {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum HitTarget {
+    CustomSeries {
+        hit_type: super::icustom_series::CustomSeriesHitTestType,
+        object_id: Option<String>,
+        cursor_style: Option<String>,
+    },
     SeriesPoint,
     SeriesLine,
     SeriesRange,

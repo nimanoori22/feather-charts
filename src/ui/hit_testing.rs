@@ -13,6 +13,11 @@ use crate::{
         line_renderer::{LinePoint, LineRendererData},
     },
 };
+pub(crate) type ResolvedSeriesHit = (
+    ChartHit,
+    InternalHitTestCandidate,
+    Option<crate::api::CustomHitData>,
+);
 #[derive(Clone, Debug)]
 pub struct PreparedSeriesHit {
     pub series: SeriesId,
@@ -22,6 +27,7 @@ pub struct PreparedSeriesHit {
 }
 #[derive(Clone, Debug)]
 pub enum HitGeometry {
+    Custom(super::custom_series::PreparedCustomSeries),
     Line {
         data: LineRendererData,
         kind: LineType,
@@ -69,8 +75,20 @@ impl PreparedSeriesHit {
             },
         }
     }
-    pub(crate) fn hit(&self, x: f64, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
+    pub(crate) fn hit(&self, x: f64, y: f64) -> Option<ResolvedSeriesHit> {
         let (distance, priority) = match &self.geometry {
+            HitGeometry::Custom(renderer) => {
+                return renderer.hit(x, y, self.tolerance).map(|hit| {
+                    (
+                        ChartHit {
+                            series: self.series,
+                            target: hit.target,
+                        },
+                        hit.candidate,
+                        hit.data,
+                    )
+                });
+            }
             HitGeometry::Line { data, kind } => line_hit(
                 &data.items,
                 data.visible_range,
@@ -107,6 +125,7 @@ impl PreparedSeriesHit {
                 cursor_style: None,
                 external_id: None,
             },
+            None,
         ))
     }
 }
@@ -218,7 +237,7 @@ pub struct PreparedPriceLineHit {
     pub external_id: Option<String>,
 }
 impl PreparedPriceLineHit {
-    pub(crate) fn hit(&self, y: f64) -> Option<(ChartHit, InternalHitTestCandidate)> {
+    pub(crate) fn hit(&self, y: f64) -> Option<ResolvedSeriesHit> {
         let distance = (y - self.y).abs();
         (distance <= self.width + 7.).then(|| {
             (
@@ -235,6 +254,7 @@ impl PreparedPriceLineHit {
                     cursor_style: None,
                     external_id: self.external_id.clone(),
                 },
+                None,
             )
         })
     }
@@ -242,11 +262,17 @@ impl PreparedPriceLineHit {
 impl PlotSnapshot {
     pub(crate) fn prepare_hover(&mut self, point: Option<iced::Point>, enabled: bool) {
         self.hovered_series_on_top = enabled;
-        self.hovered_series = point
-            .and_then(|p| self.selection(p))
-            .and_then(|h| h.series());
+        let selection = point.and_then(|p| self.selection(p));
+        self.hovered_series = selection.as_ref().and_then(|h| h.series());
+        self.hovered_custom_data = selection.and_then(|h| match h {
+            super::primitive_hit_testing::PaneHit::BuiltIn(_, data) => data,
+            _ => None,
+        });
     }
-    pub(crate) fn builtin_hit_test(&self, point: iced::Point) -> Option<ChartHit> {
+    pub(crate) fn builtin_hit_test(
+        &self,
+        point: iced::Point,
+    ) -> Option<super::primitive_hit_testing::PaneHit> {
         if !point.x.is_finite()
             || !point.y.is_finite()
             || point.x < 0.
@@ -257,7 +283,7 @@ impl PlotSnapshot {
             return None;
         }
         let marker = self.marker_hit(point);
-        let mut best: Option<(ChartHit, InternalHitTestCandidate)> = None;
+        let mut best: Option<ResolvedSeriesHit> = None;
         let mut geometry = self.hit_series.iter().rev().peekable();
         let sources =
             std::iter::once(self.series_id).chain(self.series_layers.iter().map(|s| s.series_id));
@@ -270,20 +296,25 @@ impl PlotSnapshot {
             if let Some(m) = &marker
                 && m.series == id
             {
-                return best.map(|(h, _)| h).or_else(|| {
-                    Some(ChartHit {
-                        series: m.series,
-                        target: HitTarget::Marker(m.clone()),
-                    })
-                });
+                return best
+                    .map(|(h, _, data)| super::primitive_hit_testing::PaneHit::BuiltIn(h, data))
+                    .or_else(|| {
+                        Some(super::primitive_hit_testing::PaneHit::BuiltIn(
+                            ChartHit {
+                                series: m.series,
+                                target: HitTarget::Marker(m.clone()),
+                            },
+                            None,
+                        ))
+                    });
             }
             let from = self.hit_price_lines.partition_point(|p| p.series < id);
             let to = self.hit_price_lines.partition_point(|p| p.series <= id);
             let prices = self.hit_price_lines[from..to].iter();
-            let mut local: Option<(ChartHit, InternalHitTestCandidate)> = None;
-            let mut offer = |hit: Option<(ChartHit, InternalHitTestCandidate)>| {
+            let mut local: Option<ResolvedSeriesHit> = None;
+            let mut offer = |hit: Option<ResolvedSeriesHit>| {
                 if let Some(h) = hit
-                    && is_better_hit(&h.1, local.as_ref().map(|(_, c)| c))
+                    && is_better_hit(&h.1, local.as_ref().map(|(_, c, _)| c))
                 {
                     local = Some(h);
                 }
@@ -301,16 +332,22 @@ impl PlotSnapshot {
                 offer(p.hit(f64::from(point.y)));
             }
             if let Some(h) = local
-                && is_better_hit(&h.1, best.as_ref().map(|(_, c)| c))
+                && is_better_hit(&h.1, best.as_ref().map(|(_, c, _)| c))
             {
                 best = Some(h);
             }
         }
-        best.map(|(h, _)| h).or_else(|| {
-            marker.map(|m| ChartHit {
-                series: m.series,
-                target: HitTarget::Marker(m),
+        best.map(|(h, _, data)| super::primitive_hit_testing::PaneHit::BuiltIn(h, data))
+            .or_else(|| {
+                marker.map(|m| {
+                    super::primitive_hit_testing::PaneHit::BuiltIn(
+                        ChartHit {
+                            series: m.series,
+                            target: HitTarget::Marker(m),
+                        },
+                        None,
+                    )
+                })
             })
-        })
     }
 }

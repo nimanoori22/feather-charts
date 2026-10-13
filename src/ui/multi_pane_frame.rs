@@ -30,6 +30,7 @@ use crate::{
 use std::{hash::Hash, time::Instant};
 
 pub enum SeriesPaneView {
+    Custom(super::custom_series::CustomPaneView),
     Line(LinePaneView),
     Area(crate::model::series::area_pane_view::AreaPaneView),
     Bars(crate::model::series::bars_pane_view::BarsPaneView),
@@ -40,6 +41,7 @@ pub enum SeriesPaneView {
 impl SeriesPaneView {
     fn borrowed(&mut self) -> PaneView<'_> {
         match self {
+            Self::Custom(v) => PaneView::Line(&mut v.empty),
             Self::Line(v) => PaneView::Line(v),
             Self::Area(v) => PaneView::Area(v),
             Self::Bars(v) => PaneView::Bars(v),
@@ -49,6 +51,59 @@ impl SeriesPaneView {
         }
     }
 }
+impl SeriesPaneView {
+    fn prepare<B, M>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        id: Option<SeriesId>,
+        layout: &FrameLayout,
+    ) -> Result<super::line_chart::PlotSnapshot, FrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+    {
+        if let Self::Custom(view) = self {
+            let mut plot =
+                prepare_series_plot(model, &mut PaneView::Line(&mut view.empty), None, layout)?;
+            plot.series_id = id;
+            let visible = model.visible_strict_range();
+            let first = view.adapter.first_value(visible.as_ref());
+            let price = id
+                .and_then(|id| model.panes()[layout.pane].price_scale_for_source(id))
+                .zip(first)
+                .map(|(scale, first)| scale.coordinate_transform(first.value));
+            let time = model.time_scale();
+            plot.custom = view
+                .adapter
+                .prepare(super::custom_series::CustomPreparation {
+                    visible,
+                    coordinate: &|index| time.index_to_coordinate(index),
+                    bar_spacing: time.bar_spacing(),
+                    pixel_ratio: f64::from(layout.pixel_ratio.horizontal),
+                    price,
+                });
+            if let Some(id) = id {
+                plot.annotations = model.prepare_series_markers(id);
+                if let Some(renderer) = &plot.custom {
+                    plot.hit_series.push(super::hit_testing::PreparedSeriesHit {
+                        series: id,
+                        filled: false,
+                        tolerance: view.adapter.hit_tolerance(),
+                        geometry: super::hit_testing::HitGeometry::Custom(renderer.clone()),
+                    });
+                }
+            }
+            Ok(plot)
+        } else {
+            prepare_series_plot(model, &mut self.borrowed(), id, layout)
+        }
+    }
+}
+
 pub struct MultiPaneChartFrameInput {
     pub series: Vec<Option<SeriesId>>,
     pub bounds: AxisBounds,
@@ -354,15 +409,15 @@ impl MultiPaneChartFrameOwner {
                     let mut entries = views[i].iter_mut();
                     let mut empty = SeriesPaneView::Line(Default::default());
                     let mut plot = if let Some((id, view)) = entries.next() {
-                        prepare_series_plot(model, &mut view.borrowed(), *id, &plot_layout)
+                        view.prepare(model, *id, &plot_layout)
                     } else {
-                        prepare_series_plot(model, &mut empty.borrowed(), None, &plot_layout)
+                        empty.prepare(model, None, &plot_layout)
                     }
                     .map_err(ChartFrameError::Plot)?;
                     for (id, view) in entries {
-                        let series_plot =
-                            prepare_series_plot(model, &mut view.borrowed(), *id, &plot_layout)
-                                .map_err(ChartFrameError::Plot)?;
+                        let series_plot = view
+                            .prepare(model, *id, &plot_layout)
+                            .map_err(ChartFrameError::Plot)?;
                         plot.hit_series.extend(series_plot.hit_series);
                         let layer = plot.series_layers.len() + 1;
                         plot.annotations
@@ -379,6 +434,7 @@ impl MultiPaneChartFrameOwner {
                                 gradient_markers: series_plot.gradient_markers,
                                 candles: series_plot.candles,
                                 markers: series_plot.markers,
+                                custom: series_plot.custom,
                             });
                     }
                     plot.axes = Some(axes.clone());

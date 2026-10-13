@@ -284,6 +284,7 @@ fn selection_profile(primitive_count: usize) {
             .map(|h| match &h.geometry {
                 HitGeometry::Line { data, .. } => data.items.len(),
                 HitGeometry::Range { items, .. } => items.len(),
+                HitGeometry::Custom(_) => 0,
             })
             .sum();
         let mut samples = vec![];

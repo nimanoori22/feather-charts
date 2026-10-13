@@ -98,6 +98,22 @@ impl PlotSnapshot {
             self.draw_fills(frame, fills);
         }
         if !background && pass.kind != SeriesPassKind::Background {
+            let custom = if pass.layer == 0 {
+                self.custom.as_ref()
+            } else {
+                self.series_layers[pass.layer - 1].custom.as_ref()
+            };
+            if let Some(custom) = custom {
+                custom.draw(
+                    frame,
+                    id.is_some() && id == self.hovered_series,
+                    if id == self.hovered_series {
+                        self.hovered_custom_data.as_ref()
+                    } else {
+                        None
+                    },
+                );
+            }
             self.draw_strokes(frame, lines.iter());
             self.draw_gradient_strokes(frame, gradient_lines);
             for rect in candles {

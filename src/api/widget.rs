@@ -432,6 +432,23 @@ fn local_primitive_cursor(
             point.y - l.plot.origin.y as f32,
         );
         let plot = multi.and_then(|m| m.panes.get(index)).unwrap_or(snapshot);
-        plot.plot.primitive_hit(local)?.cursor
+        match plot.plot.selection(local)? {
+            crate::ui::primitive_hit_testing::PaneHit::Primitive(hit) => hit.cursor,
+            crate::ui::primitive_hit_testing::PaneHit::BuiltIn(hit, _) => match hit.target {
+                super::HitTarget::CustomSeries {
+                    cursor_style: Some(style),
+                    ..
+                } => match style.as_str() {
+                    "pointer" => Some(iced::mouse::Interaction::Pointer),
+                    "crosshair" => Some(iced::mouse::Interaction::Crosshair),
+                    "grab" => Some(iced::mouse::Interaction::Grab),
+                    "grabbing" => Some(iced::mouse::Interaction::Grabbing),
+                    "ns-resize" => Some(iced::mouse::Interaction::ResizingVertically),
+                    "ew-resize" => Some(iced::mouse::Interaction::ResizingHorizontally),
+                    _ => None,
+                },
+                _ => None,
+            },
+        }
     })
 }
