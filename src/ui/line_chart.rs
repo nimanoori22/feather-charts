@@ -727,19 +727,9 @@ where
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
     snapshot.series_id = id;
     if let Some(id) = id
-        && let PaneView::Line(view) = view
-        && let Some(data) = view.data()
-        && let Some(series) = model.series(id)
-        && let crate::model::series_options::SeriesOptionsMap::Line(options) = series.options()
+        && let Some(hit) = super::hit_testing::prepare(model, id, view)
     {
-        snapshot
-            .hit_series
-            .push(super::hit_testing::PreparedSeriesHit::line(
-                id,
-                data,
-                options.style.line_type,
-                options.common.hit_test_tolerance,
-            ));
+        snapshot.hit_series.push(hit);
     }
 
     if let Some(id) = id {
