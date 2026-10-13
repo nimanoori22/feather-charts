@@ -166,6 +166,16 @@ pub struct BarStyleOptions {
     pub open_visible: bool,
     pub thin_bars: bool,
 }
+impl Default for BarStyleOptions {
+    fn default() -> Self {
+        Self {
+            up_color: "#26a69a".into(),
+            down_color: "#ef5350".into(),
+            open_visible: true,
+            thin_bars: true,
+        }
+    }
+}
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct BarStyleOptionsPatch {
     pub up_color: Option<String>,

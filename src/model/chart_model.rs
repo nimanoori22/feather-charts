@@ -807,6 +807,29 @@ where
         area_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
     }
 
+    pub fn prepare_bars(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::bars_renderer::BarsRendererData>,
+        crate::model::series::bars_pane_view::BarPreparationError,
+    > {
+        use crate::model::series::bars_pane_view::{self, BarPreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(BarPreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(BarPreparationError::NotBarSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(BarPreparationError::MissingPriceScale(id))?;
+        bars_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
     pub fn prepare_candlesticks(
         &mut self,
         id: SeriesId,

@@ -1,6 +1,7 @@
 //! Non-rendering series state: plot rows, formatting, and invalidation.
 
 pub mod area_pane_view;
+pub mod bars_pane_view;
 pub mod candlesticks_pane_view;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
@@ -89,6 +90,17 @@ fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
 }
 
 fn validate_visual_options(options: &SeriesOptionsMap) -> Result<(), SeriesConstructionError> {
+    if let SeriesOptionsMap::Bar(o) = options {
+        let mut parser = crate::model::colors::ColorParser::default();
+        if [&o.style.up_color, &o.style.down_color]
+            .into_iter()
+            .any(|c| parser.parse_color(c).is_err())
+            || (!o.common.price_line_color.is_empty()
+                && parser.parse_color(&o.common.price_line_color).is_err())
+        {
+            return Err(SeriesConstructionError::InvalidVisualOptions);
+        }
+    }
     if let SeriesOptionsMap::Area(o) = options {
         let mut parser = crate::model::colors::ColorParser::default();
         let c = &o.common;
@@ -255,6 +267,13 @@ where
             }
             (SeriesPlotRow::Histogram(r), SeriesOptionsMap::Histogram(o)) => {
                 r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Bar(r), SeriesOptionsMap::Bar(o)) => {
+                r.color.as_ref().unwrap_or(if value[0] <= price {
+                    &o.style.up_color
+                } else {
+                    &o.style.down_color
+                })
             }
             (SeriesPlotRow::Candlestick(r), SeriesOptionsMap::Candlestick(o)) => {
                 r.color.as_ref().unwrap_or(if value[0] <= price {
