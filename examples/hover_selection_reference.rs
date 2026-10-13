@@ -8,6 +8,8 @@ use feather_charts::{
         range_hit_test::{RangePoint, range_hit},
     },
 };
+#[path = "hover_selection/pane_cases.rs"]
+mod pane_cases;
 fn main() {
     let mut records = vec![];
     for spacing in [0.5, 6., 20.] {
@@ -96,5 +98,6 @@ fn main() {
             }
         }
     }
+    records.extend(pane_cases::records());
     println!("[{}]", records.join(","));
 }
