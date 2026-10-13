@@ -211,6 +211,24 @@ fn baseline_scale_projection_and_decoration_colors_follow_source() {
             .background,
         "rgb(239, 83, 80)"
     );
+    use feather_charts::ui::price_axis_input::{PriceAxisAction, PriceAxisInteraction};
+    c.replace_series_options(id, SeriesOptionsMap::Baseline(options(105.)))
+        .unwrap();
+    prepare(&mut c);
+    let before = c.model().panes()[0].right_price_scale().price_range();
+    c.update(ChartMessage::PriceAxis(PriceAxisInteraction {
+        pane: 0,
+        side: PriceAxisSide::Right,
+        action: PriceAxisAction::Wheel { delta: 1. },
+    }))
+    .unwrap();
+    let scale = c.model().panes()[0].right_price_scale();
+    assert!(!scale.options().auto_scale);
+    assert_ne!(scale.price_range(), before);
+    let expected = (scale.price_to_coordinate(105., 100.).value()
+        / f64::from(c.frame().plot.size.height))
+    .clamp(0., 1.) as f32;
+    assert!((c.frame().plot.fills[0].gradient.stops[1].unwrap().offset - expected).abs() < 1e-5);
 }
 
 #[test]
@@ -360,4 +378,117 @@ fn new_series_compose_owned_frames_and_preserve_exact_event_rows() {
     );
     assert!(!retained.fills.is_empty());
     assert_eq!(retained.series_layers[1].candles.len(), 9);
+}
+
+#[test]
+fn whitespace_has_no_geometry_or_nearest_row_event_payload() {
+    use feather_charts::{
+        api::{ChartEvent, ChartMessage},
+        model::{
+            data_consumer::{AreaData, AreaDataItem, BarData, BarDataItem, WhitespaceData},
+            series_options::{AreaSeriesOptions, BarSeriesOptions},
+        },
+    };
+    let mut c = Chart::default();
+    let base = c
+        .add_series(
+            SeriesOptionsMap::Baseline(options(105.)),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let area = c
+        .add_series(
+            SeriesOptionsMap::Area(AreaSeriesOptions::default()),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let bar = c
+        .add_series(
+            SeriesOptionsMap::Bar(BarSeriesOptions::default()),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let time = |i| Time::from(UtcTimestamp::new(i));
+    let white = WhitespaceData {
+        time: time(1.),
+        custom_values: None,
+    };
+    c.set_data(
+        base,
+        vec![
+            row(0., 100.),
+            BuiltInSeriesDataItem::Baseline(BaselineDataItem::Whitespace(white.clone())),
+            row(2., 110.),
+        ],
+    )
+    .unwrap();
+    let area_row = |i, v| {
+        BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
+            time: time(i),
+            value: v,
+            line_color: None,
+            top_color: None,
+            bottom_color: None,
+            custom_values: None,
+        }))
+    };
+    let bar_row = |i, v| {
+        BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
+            time: time(i),
+            open: v - 1.,
+            high: v + 2.,
+            low: v - 2.,
+            close: v,
+            color: None,
+            custom_values: None,
+        }))
+    };
+    c.set_data(
+        area,
+        vec![
+            area_row(0., 100.),
+            BuiltInSeriesDataItem::Area(AreaDataItem::Whitespace(white.clone())),
+            area_row(2., 110.),
+        ],
+    )
+    .unwrap();
+    c.set_data(
+        bar,
+        vec![
+            bar_row(0., 100.),
+            BuiltInSeriesDataItem::Bar(BarDataItem::Whitespace(white)),
+            bar_row(2., 110.),
+        ],
+    )
+    .unwrap();
+    c.fit_content();
+    prepare(&mut c);
+    assert_eq!(c.frame().plot.series_layers[1].candles.len(), 6);
+    for (index, count) in [(1., 0), (2., 3)] {
+        let x = c
+            .model()
+            .time_scale()
+            .index_to_coordinate(index.into())
+            .value() as f32;
+        let events = c
+            .update(ChartMessage::Click {
+                pane: 0,
+                position: iced::Point::new(x, 100.),
+            })
+            .unwrap();
+        let e = events
+            .iter()
+            .find_map(|e| {
+                if let ChartEvent::Click(e) = e {
+                    Some(e)
+                } else {
+                    None
+                }
+            })
+            .unwrap();
+        assert_eq!(e.series_data.len(), count);
+    }
 }

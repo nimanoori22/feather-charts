@@ -123,7 +123,7 @@ impl LineRendererData {
                 .rev()
                 .map(|p| PointMarker {
                     center: Point {
-                        x: p.x.round() + correction,
+                        x: (p.x + 0.5).floor() + correction,
                         y: p.y,
                     },
                     radius: radius * f64::from(ratio.vertical) + correction,
@@ -177,6 +177,18 @@ mod tests {
         );
         assert_eq!(commands.markers[1].center.x, 15.5);
         let mut hidden = data;
+        hidden.items[0].x = -0.5;
+        assert_eq!(
+            hidden
+                .draw_commands(PixelRatio {
+                    horizontal: 1.,
+                    vertical: 1.
+                })
+                .markers[1]
+                .center
+                .x,
+            0.5
+        );
         hidden.point_markers_radius = None;
         assert_eq!(
             hidden.draw_commands(PixelRatio {
