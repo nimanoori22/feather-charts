@@ -3,14 +3,14 @@ use feather_charts::{
     api::{Chart, ChartEvent, ChartMessage, PriceLineId, PriceLineOptions},
     model::{
         data_consumer::{
-            BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, HistogramData,
-            HistogramDataItem,
+            AreaData, AreaDataItem, BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem,
+            HistogramData, HistogramDataItem, LineData, LineDataItem,
         },
         horz_scale_behavior_time::types::{Time, UtcTimestamp},
         pane::PriceScalePosition,
         series_options::{
-            CandlestickSeriesOptions, HistogramSeriesOptions, PriceFormat, PriceFormatBuiltIn,
-            PriceFormatBuiltInType, SeriesOptionsMap,
+            AreaSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions, LineSeriesOptions,
+            PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType, SeriesOptionsMap, SeriesType,
         },
     },
 };
@@ -30,6 +30,8 @@ struct App {
     levels: Vec<PriceLineId>,
     latest: usize,
     show_last: bool,
+    kind: SeriesType,
+    style_step: u8,
 }
 #[derive(Clone, Debug)]
 enum Message {
@@ -41,16 +43,18 @@ enum Message {
     ToggleLevels,
     Cluster,
     ToggleLast,
+    Style,
 }
 impl Default for App {
     fn default() -> Self {
+        Self::new(SeriesType::Candlestick)
+    }
+}
+impl App {
+    fn new(kind: SeriesType) -> Self {
         let mut chart = Chart::default();
         let price = chart
-            .add_series(
-                SeriesOptionsMap::Candlestick(CandlestickSeriesOptions::default()),
-                0,
-                PriceScalePosition::Right,
-            )
+            .add_series(sample_options(kind, true), 0, PriceScalePosition::Right)
             .unwrap();
         let pane = chart.add_pane();
         let mut volume_options = HistogramSeriesOptions::default();
@@ -81,19 +85,7 @@ impl Default for App {
                     .clone()
                     .map(|(i, time)| {
                         let close = 100. + (i as f64 * 0.1).sin() * 8.;
-                        BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(
-                            CandlestickData {
-                                time,
-                                open: close - 1.,
-                                high: close + 2.,
-                                low: close - 2.,
-                                close,
-                                color: None,
-                                border_color: None,
-                                wick_color: None,
-                                custom_values: None,
-                            },
-                        ))
+                        sample_row(kind, time, close)
                     })
                     .collect(),
             )
@@ -126,6 +118,8 @@ impl Default for App {
             levels,
             latest: 119,
             show_last: true,
+            kind,
+            style_step: 0,
         }
     }
 }
@@ -172,19 +166,7 @@ impl App {
                 self.chart
                     .update_data(
                         self.price,
-                        BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(
-                            CandlestickData {
-                                time: time.clone(),
-                                open: close - 1.,
-                                high: close + 2.,
-                                low: close - 2.,
-                                close,
-                                color: None,
-                                border_color: None,
-                                wick_color: None,
-                                custom_values: None,
-                            },
-                        )),
+                        sample_row(self.kind, time.clone(), close),
                         false,
                     )
                     .unwrap();
@@ -233,12 +215,45 @@ impl App {
                 }
                 self.prepare();
             }
+            Message::Style => {
+                self.style_step = (self.style_step + 1) % 6;
+                let mut options = sample_options(self.kind, self.show_last);
+                use feather_charts::renderers::draw_line::LineType;
+                match &mut options {
+                    SeriesOptionsMap::Area(o) => {
+                        o.style.invert_filled_area = !self.style_step.is_multiple_of(2);
+                        o.style.relative_gradient = !self.style_step.is_multiple_of(2);
+                        o.style.line_type = match self.style_step % 3 {
+                            1 => LineType::WithSteps,
+                            2 => LineType::Curved,
+                            _ => LineType::Simple,
+                        };
+                    }
+                    SeriesOptionsMap::Line(o) => {
+                        o.style.line_type = match self.style_step % 3 {
+                            1 => LineType::WithSteps,
+                            2 => LineType::Curved,
+                            _ => LineType::Simple,
+                        };
+                    }
+                    SeriesOptionsMap::Candlestick(o) => {
+                        o.style.wick_visible = self.style_step.is_multiple_of(2)
+                    }
+                    SeriesOptionsMap::Histogram(o) => {
+                        o.style.base = 10. * f64::from(self.style_step)
+                    }
+                    _ => unreachable!(),
+                }
+                self.chart
+                    .replace_series_options(self.price, options)
+                    .unwrap();
+                self.prepare();
+            }
             Message::ToggleLast => {
                 self.show_last = !self.show_last;
-                let mut options = CandlestickSeriesOptions::default();
-                options.common.last_value_visible = self.show_last;
+                let options = sample_options(self.kind, self.show_last);
                 self.chart
-                    .replace_series_options(self.price, SeriesOptionsMap::Candlestick(options))
+                    .replace_series_options(self.price, options)
                     .unwrap();
                 self.prepare();
             }
@@ -255,6 +270,7 @@ impl App {
             text(&self.status),
             row![
                 button("Append bar").on_press(Message::Append),
+                button("Change style").on_press(Message::Style),
                 button("Move stop").on_press(Message::MoveStop),
                 button("Add/remove levels").on_press(Message::ToggleLevels),
                 button("Cluster labels").on_press(Message::Cluster),
@@ -268,6 +284,71 @@ impl App {
     }
     fn subscription(&self) -> Subscription<Message> {
         iced::window::events().map(|(id, event)| Message::Window(id, event))
+    }
+}
+fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
+    match kind {
+        SeriesType::Area => {
+            let mut o = AreaSeriesOptions::default();
+            o.common.last_value_visible = last;
+            SeriesOptionsMap::Area(o)
+        }
+        SeriesType::Line => {
+            let mut o = LineSeriesOptions::default();
+            o.common.last_value_visible = last;
+            SeriesOptionsMap::Line(o)
+        }
+        SeriesType::Histogram => {
+            let mut o = HistogramSeriesOptions::default();
+            o.common.last_value_visible = last;
+            SeriesOptionsMap::Histogram(o)
+        }
+        SeriesType::Candlestick => {
+            let mut o = CandlestickSeriesOptions::default();
+            o.common.last_value_visible = last;
+            SeriesOptionsMap::Candlestick(o)
+        }
+        _ => unreachable!("example accepts supported built-in types"),
+    }
+}
+fn sample_row(kind: SeriesType, time: Time, close: f64) -> BuiltInSeriesDataItem<Time> {
+    match kind {
+        SeriesType::Area => BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
+            time,
+            value: close,
+            line_color: None,
+            top_color: None,
+            bottom_color: None,
+            custom_values: None,
+        })),
+        SeriesType::Line => BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+            time,
+            value: close,
+            color: None,
+            custom_values: None,
+        })),
+        SeriesType::Histogram => {
+            BuiltInSeriesDataItem::Histogram(HistogramDataItem::Data(HistogramData {
+                time,
+                value: close,
+                color: None,
+                custom_values: None,
+            }))
+        }
+        SeriesType::Candlestick => {
+            BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(CandlestickData {
+                time,
+                open: close - 1.,
+                high: close + 2.,
+                low: close - 2.,
+                close,
+                color: None,
+                border_color: None,
+                wick_color: None,
+                custom_values: None,
+            }))
+        }
+        _ => unreachable!("example accepts supported built-in types"),
     }
 }
 fn add_levels(
@@ -288,7 +369,7 @@ fn add_levels(
     })
     .collect()
 }
-fn capture(directory: &std::path::Path, wgpu: bool) {
+fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     use iced::advanced::{
         graphics::geometry::Renderer as _,
         renderer::{Headless, Renderer as _},
@@ -301,12 +382,19 @@ fn capture(directory: &std::path::Path, wgpu: bool) {
     ))
     .unwrap();
     std::fs::create_dir_all(directory).unwrap();
-    for scenario in ["default", "cluster", "hidden", "live", "left", "empty"] {
+    let mut scenarios = vec!["default", "cluster", "hidden", "live", "left", "empty"];
+    if kind == SeriesType::Area {
+        scenarios.extend([
+            "inverted", "relative", "curved", "steps", "styles", "single",
+        ]);
+    }
+    let count = scenarios.len() * 4;
+    for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
             let mut app = App {
                 size: Size::new(800., 500.),
                 ratio,
-                ..Default::default()
+                ..App::new(kind)
             };
             match scenario {
                 "cluster" => {
@@ -375,6 +463,54 @@ fn capture(directory: &std::path::Path, wgpu: bool) {
                     level.title = "Long left-side entry title".into();
                     app.chart.add_price_line(left, level).unwrap();
                 }
+                "inverted" | "relative" | "curved" | "steps" => {
+                    let mut options = AreaSeriesOptions::default();
+                    options.style.invert_filled_area = scenario == "inverted";
+                    options.style.relative_gradient = scenario == "relative";
+                    use feather_charts::renderers::draw_line::LineType;
+                    options.style.line_type = match scenario {
+                        "curved" => LineType::Curved,
+                        "steps" => LineType::WithSteps,
+                        _ => LineType::Simple,
+                    };
+                    app.chart
+                        .replace_series_options(app.price, SeriesOptionsMap::Area(options))
+                        .unwrap();
+                }
+                "styles" => {
+                    let data = (0..120)
+                        .map(|i| {
+                            let mut row = sample_row(
+                                kind,
+                                Time::from(UtcTimestamp::new(1_700_000_000. + i as f64 * 60.)),
+                                100. + (i as f64 * 0.1).sin() * 8.,
+                            );
+                            if i % 10 > 4
+                                && let BuiltInSeriesDataItem::Area(AreaDataItem::Data(data)) =
+                                    &mut row
+                            {
+                                data.line_color = Some("yellow".into());
+                                data.top_color = Some("rgba(0,0,0,0.6)".into());
+                                data.bottom_color = Some("rgba(0,0,255,0.2)".into());
+                            }
+                            row
+                        })
+                        .collect();
+                    app.chart.set_data(app.price, data).unwrap();
+                }
+                "single" => {
+                    app.chart
+                        .set_data(
+                            app.price,
+                            vec![sample_row(
+                                kind,
+                                Time::from(UtcTimestamp::new(1_700_000_000.)),
+                                100.,
+                            )],
+                        )
+                        .unwrap();
+                    app.chart.fit_content();
+                }
                 "empty" => {
                     app.chart.set_data(app.price, vec![]).unwrap();
                     app.chart.set_data(app.volume, vec![]).unwrap();
@@ -409,25 +545,37 @@ fn capture(directory: &std::path::Path, wgpu: bool) {
             .unwrap();
         }
     }
-    println!("24 {backend} price-line captures passed");
+    println!("{count} {backend} {kind:?} captures passed");
 }
 fn main() -> iced::Result {
     let args = std::env::args().collect::<Vec<_>>();
+    let kind = if args.iter().any(|a| a == "--area") {
+        SeriesType::Area
+    } else if args.iter().any(|a| a == "--line") {
+        SeriesType::Line
+    } else if args.iter().any(|a| a == "--histogram") {
+        SeriesType::Histogram
+    } else {
+        SeriesType::Candlestick
+    };
     if let Some(index) = args.iter().position(|a| a == "--capture-dir") {
         capture(
             std::path::Path::new(args.get(index + 1).expect("capture directory")),
             args.iter().any(|a| a == "--wgpu"),
+            kind,
         );
         return Ok(());
     }
     if std::env::args().any(|a| a == "--smoke") {
-        let mut app = App::default();
+        let mut app = App::new(kind);
         app.chart
             .prepare(Size::new(800., 500.), 1.25, Instant::now())
             .unwrap();
         let frame = app.chart.multi_frame().unwrap();
         assert_eq!(frame.panes.len(), 2);
-        assert!(frame.panes.iter().all(|pane| !pane.plot.candles.is_empty()));
+        assert!(frame.panes.iter().all(|pane| !pane.plot.candles.is_empty()
+            || !pane.plot.lines.is_empty()
+            || !pane.plot.fills.is_empty()));
         app.size = Size::new(800., 500.);
         app.ratio = 1.25;
         for message in [
@@ -451,7 +599,7 @@ fn main() -> iced::Result {
         println!("public chart API and price-line lifecycle smoke passed");
         return Ok(());
     }
-    iced::application(App::default, App::update, App::view)
+    iced::application(move || App::new(kind), App::update, App::view)
         .title("Feather Charts — public API")
         .subscription(App::subscription)
         .run()

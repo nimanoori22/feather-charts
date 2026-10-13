@@ -31,6 +31,7 @@ use std::{hash::Hash, time::Instant};
 
 pub enum SeriesPaneView {
     Line(LinePaneView),
+    Area(crate::model::series::area_pane_view::AreaPaneView),
     Candlesticks(CandlesticksPaneView),
     Histogram(HistogramPaneView),
 }
@@ -38,6 +39,7 @@ impl SeriesPaneView {
     fn borrowed(&mut self) -> PaneView<'_> {
         match self {
             Self::Line(v) => PaneView::Line(v),
+            Self::Area(v) => PaneView::Area(v),
             Self::Candlesticks(v) => PaneView::Candlesticks(v),
             Self::Histogram(v) => PaneView::Histogram(v),
         }
@@ -303,6 +305,7 @@ impl MultiPaneChartFrameOwner {
                         plot.series_layers
                             .push(super::line_chart::CanvasSeriesGeometry {
                                 lines: series_plot.lines,
+                                fills: series_plot.fills,
                                 candles: series_plot.candles,
                                 markers: series_plot.markers,
                             });

@@ -7,6 +7,7 @@ use crate::{
         ihorz_scale_behavior::HorzScaleBehavior,
         invalidate_mask::InvalidateMask,
         series::{
+            area_pane_view::{AreaPaneView, AreaPreparationError},
             candlesticks_pane_view::{CandlestickPreparationError, CandlesticksPaneView},
             histogram_pane_view::{HistogramPaneView, HistogramPreparationError},
             line_pane_view::{LinePaneView, LinePreparationError},
@@ -32,6 +33,7 @@ pub enum FrameError {
     Axes(AxisSnapshotError),
     Model(ChartModelError),
     Line(LinePreparationError),
+    Area(AreaPreparationError),
     Candlesticks(CandlestickPreparationError),
     CandleGeometry(CandlestickRenderError),
     Histogram(HistogramPreparationError),
@@ -42,6 +44,7 @@ pub enum FrameError {
 }
 pub(crate) enum PaneView<'a> {
     Line(&'a mut LinePaneView),
+    Area(&'a mut AreaPaneView),
     Candlesticks(&'a mut CandlesticksPaneView),
     Histogram(&'a mut HistogramPaneView),
 }
@@ -49,6 +52,7 @@ impl PaneView<'_> {
     pub(crate) fn clear(&mut self) {
         match self {
             Self::Line(v) => v.clear(),
+            Self::Area(v) => v.clear(),
             Self::Candlesticks(v) => v.clear(),
             Self::Histogram(v) => v.clear(),
         }
@@ -59,6 +63,7 @@ impl PaneView<'_> {
                 FrameError::Histogram(HistogramPreparationError::UnknownSeries(id))
             }
             Self::Line(_) => FrameError::Line(LinePreparationError::UnknownSeries(id)),
+            Self::Area(_) => FrameError::Area(AreaPreparationError::UnknownSeries(id)),
             Self::Candlesticks(_) => {
                 FrameError::Candlesticks(CandlestickPreparationError::UnknownSeries(id))
             }
@@ -90,14 +95,21 @@ pub struct CanvasMarker {
     pub color: Color,
     pub color_key: String,
 }
+#[derive(Clone, Debug)]
+pub struct CanvasFill {
+    pub path: Vec<PathOperation>,
+    pub gradient: iced::widget::canvas::gradient::Linear,
+}
 #[derive(Clone, Debug, Default)]
 pub struct CanvasSeriesGeometry {
+    pub fills: Vec<CanvasFill>,
     pub lines: Vec<CanvasStroke>,
     pub candles: Vec<CanvasRectangle>,
     pub markers: Vec<CanvasMarker>,
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub fills: Vec<CanvasFill>,
     /// Prepared from the same settled viewport as the grid and line.
     pub axes: Option<AxisSnapshots>,
     pub size: Size,
@@ -124,6 +136,7 @@ impl Default for PlotSnapshot {
             markers: vec![],
             candles: vec![],
             series_layers: vec![],
+            fills: vec![],
             price_lines: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
@@ -191,6 +204,25 @@ fn canvas_stroke(stroke: StyledStroke, ratio: PixelRatio) -> Result<CanvasStroke
         path,
         color: color(&stroke.color)?,
         width: (stroke.width / f64::from(ratio.vertical)) as f32,
+    })
+}
+fn canvas_path(ops: &[PathOperation], closed: bool) -> Path {
+    Path::new(|builder| {
+        for op in ops {
+            let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
+            match *op {
+                PathOperation::MoveTo(p) => builder.move_to(to_iced(p)),
+                PathOperation::LineTo(p) => builder.line_to(to_iced(p)),
+                PathOperation::CubicTo {
+                    control1,
+                    control2,
+                    end,
+                } => builder.bezier_curve_to(to_iced(control1), to_iced(control2), to_iced(end)),
+            }
+        }
+        if closed {
+            builder.close();
+        }
     })
 }
 impl PlotSnapshot {
@@ -311,6 +343,7 @@ impl PlotSnapshot {
             markers,
             candles: vec![],
             series_layers: vec![],
+            fills: vec![],
             price_lines: vec![],
             crosshair: vec![],
             crosshair_markers: vec![],
@@ -379,13 +412,16 @@ impl PlotSnapshot {
         } else {
             frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
         }
-        self.draw_strokes(frame, self.grid.iter().chain(&self.lines));
+        self.draw_strokes(frame, self.grid.iter());
+        self.draw_fills(frame, &self.fills);
+        self.draw_strokes(frame, self.lines.iter());
         for rect in &self.candles {
             frame.fill_rectangle(rect.origin, rect.size, rect.color);
         }
 
         self.draw_markers(frame, &self.markers);
         for layer in &self.series_layers {
+            self.draw_fills(frame, &layer.fills);
             self.draw_strokes(frame, layer.lines.iter());
             for rect in &layer.candles {
                 frame.fill_rectangle(rect.origin, rect.size, rect.color);
@@ -415,26 +451,14 @@ impl PlotSnapshot {
             frame.fill(&path, group[0].color);
         }
     }
+    fn draw_fills(&self, frame: &mut Frame, fills: &[CanvasFill]) {
+        for fill in fills {
+            frame.fill(&canvas_path(&fill.path, true), fill.gradient);
+        }
+    }
     fn draw_strokes<'a>(&self, frame: &mut Frame, strokes: impl Iterator<Item = &'a CanvasStroke>) {
         for stroke in strokes {
-            let path = Path::new(|builder| {
-                for op in &stroke.path {
-                    let to_iced = |p: Point| iced::Point::new(p.x as f32, p.y as f32);
-                    match *op {
-                        PathOperation::MoveTo(p) => builder.move_to(to_iced(p)),
-                        PathOperation::LineTo(p) => builder.line_to(to_iced(p)),
-                        PathOperation::CubicTo {
-                            control1,
-                            control2,
-                            end,
-                        } => builder.bezier_curve_to(
-                            to_iced(control1),
-                            to_iced(control2),
-                            to_iced(end),
-                        ),
-                    }
-                }
-            });
+            let path = canvas_path(&stroke.path, false);
             frame.stroke(
                 &path,
                 Stroke::default()
@@ -585,6 +609,7 @@ where
         match view {
             PaneView::Histogram(view) => view.refresh(model, id).map_err(FrameError::Histogram)?,
             PaneView::Line(view) => view.refresh(model, id).map_err(FrameError::Line)?,
+            PaneView::Area(view) => view.refresh(model, id).map_err(FrameError::Area)?,
             PaneView::Candlesticks(view) => {
                 view.refresh(model, id).map_err(FrameError::Candlesticks)?
             }
@@ -609,9 +634,52 @@ where
             .data()
             .map(|data| data.draw_commands(ratio))
             .unwrap_or_default(),
+        PaneView::Area(view) => view
+            .data()
+            .map(|data| data.line.draw_commands(ratio))
+            .unwrap_or_default(),
         PaneView::Candlesticks(_) | PaneView::Histogram(_) => LineDrawCommands::default(),
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    if let PaneView::Area(view) = view
+        && let Some(data) = view.data()
+    {
+        snapshot.fills = data
+            .draw_commands(ratio)
+            .0
+            .into_iter()
+            .map(|fill| {
+                let path = fill
+                    .path
+                    .into_iter()
+                    .map(|op| match op {
+                        PathOperation::MoveTo(p) => PathOperation::MoveTo(logical(p, ratio)),
+                        PathOperation::LineTo(p) => PathOperation::LineTo(logical(p, ratio)),
+                        PathOperation::CubicTo {
+                            control1,
+                            control2,
+                            end,
+                        } => PathOperation::CubicTo {
+                            control1: logical(control1, ratio),
+                            control2: logical(control2, ratio),
+                            end: logical(end, ratio),
+                        },
+                    })
+                    .collect();
+                let mut gradient = iced::widget::canvas::gradient::Linear::new(
+                    iced::Point::new(0., (fill.gradient.top / f64::from(ratio.vertical)) as f32),
+                    iced::Point::new(
+                        0.,
+                        (fill.gradient.bottom / f64::from(ratio.vertical)) as f32,
+                    ),
+                );
+                for (offset, c) in fill.gradient.stops {
+                    gradient = gradient.add_stop(offset as f32, color(&c)?);
+                }
+                Ok(CanvasFill { path, gradient })
+            })
+            .collect::<Result<_, FrameError>>()?;
+    }
     if let PaneView::Candlesticks(view) = view
         && let Some(data) = view.data()
     {
