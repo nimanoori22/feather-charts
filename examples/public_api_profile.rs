@@ -56,6 +56,18 @@ fn prepare(chart: &mut Chart) {
         .unwrap();
 }
 fn main() {
+    let args = std::env::args().collect::<Vec<_>>();
+    let marker_count = args
+        .iter()
+        .position(|s| s == "--marker-count")
+        .map(|i| args[i + 1].parse::<usize>().unwrap())
+        .unwrap_or(0);
+    let row_count = args
+        .iter()
+        .position(|s| s == "--rows")
+        .map(|i| args[i + 1].parse::<usize>().unwrap())
+        .unwrap_or(1200);
+    let hover = args.iter().any(|s| s == "--hover");
     for kind in [
         SeriesType::Line,
         SeriesType::Candlestick,
@@ -74,20 +86,53 @@ fn main() {
                 _ => unreachable!(),
             };
             let id = c.add_series(options, 0, PriceScalePosition::Right).unwrap();
-            c.set_data(id, (0..1200).map(|i| row(kind, i)).collect())
+            c.set_data(id, (0..row_count).map(|i| row(kind, i)).collect())
                 .unwrap();
             c.fit_content();
             prepare(&mut c);
+            if marker_count > 0 {
+                use feather_charts::api::{
+                    MarkerPosition, MarkerShape, SeriesMarker, SeriesMarkersOptions,
+                };
+                let markers = (0..marker_count)
+                    .map(|i| {
+                        let index = i * row_count / marker_count;
+                        let mut m = SeriesMarker::new(
+                            Time::from(UtcTimestamp::new(1_700_000_000. + index as f64 * 60.)),
+                            MarkerPosition::InBar,
+                            MarkerShape::Circle,
+                            "red",
+                        );
+                        m.text = Some("Signal".into());
+                        m
+                    })
+                    .collect();
+                c.add_series_markers(id, markers, SeriesMarkersOptions::default())
+                    .unwrap();
+                c.set_logical_range(feather_charts::model::time_data::LogicalRange {
+                    from: (row_count.saturating_sub(400) as f64).into(),
+                    to: ((row_count - 1) as f64).into(),
+                });
+                prepare(&mut c);
+            }
+            if let Some(i) = args.iter().position(|s| s == "--visible-rows") {
+                let visible = args[i + 1].parse::<usize>().unwrap();
+                c.set_logical_range(feather_charts::model::time_data::LogicalRange {
+                    from: (row_count.saturating_sub(visible) as f64).into(),
+                    to: ((row_count - 1) as f64).into(),
+                });
+                prepare(&mut c);
+            }
             let mut samples = vec![];
             for i in 0..120 {
                 let start = Instant::now();
                 if updates {
-                    c.update_data(id, row(kind, 1200 + i), false).unwrap();
+                    c.update_data(id, row(kind, row_count + i), false).unwrap();
                     prepare(&mut c);
                 } else {
                     c.update(ChartMessage::Interaction(ChartInteraction {
                         position: Some(iced::Point::new(200., 100.)),
-                        navigation: Some(Navigation::Wheel {
+                        navigation: (!hover).then_some(Navigation::Wheel {
                             x: 200.,
                             zoom: if i % 2 == 0 { 0.32 } else { -0.32 / 1.032 },
                             scroll: 0.,
@@ -104,7 +149,13 @@ fn main() {
             samples.sort_by(f64::total_cmp);
             println!(
                 "{kind:?} {} model+frame+glyph median {:.3} ms p95 {:.3} ms",
-                if updates { "append" } else { "zoom" },
+                if updates {
+                    "append"
+                } else if hover {
+                    "hover"
+                } else {
+                    "zoom"
+                },
                 samples[50],
                 samples[95]
             );

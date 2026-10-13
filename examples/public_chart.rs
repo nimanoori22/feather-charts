@@ -1,6 +1,9 @@
 //! A host application using the public owner/widget API, without demo support.
 use feather_charts::{
-    api::{Chart, ChartEvent, ChartMessage, PriceLineId, PriceLineOptions},
+    api::{
+        Chart, ChartEvent, ChartMessage, MarkerCollectionId, MarkerZOrder, PriceLineId,
+        PriceLineOptions, SeriesMarkersOptions,
+    },
     model::{
         data_consumer::{
             AreaData, AreaDataItem, BarData, BarDataItem, BaselineData, BaselineDataItem,
@@ -22,8 +25,13 @@ use iced::{
     widget::{button, column, row, text},
 };
 use std::time::Instant;
+#[path = "public_chart/markers.rs"]
+mod marker_demo;
+use marker_demo::sample_markers;
 
 struct App {
+    annotations: Option<MarkerCollectionId>,
+    marker_step: usize,
     chart: Chart,
     size: Size,
     ratio: f32,
@@ -38,6 +46,8 @@ struct App {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    ToggleMarkers,
+    MarkerLayer,
     Chart(ChartMessage),
     Window(iced::window::Id, iced::window::Event),
     Ratio(f32),
@@ -110,7 +120,25 @@ impl App {
             .unwrap();
         chart.fit_content();
         let levels = add_levels(&mut chart, price);
+        let annotations = std::env::args().any(|a| a == "--series-markers").then(|| {
+            chart
+                .add_series_markers(
+                    volume,
+                    sample_markers(true),
+                    SeriesMarkersOptions::default(),
+                )
+                .unwrap();
+            chart
+                .add_series_markers(
+                    price,
+                    sample_markers(false),
+                    SeriesMarkersOptions::default(),
+                )
+                .unwrap()
+        });
         Self {
+            annotations,
+            marker_step: 0,
             chart,
             size: Size::ZERO,
             ratio: 1.,
@@ -129,6 +157,46 @@ impl App {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ToggleMarkers => {
+                if let Some(id) = self.annotations {
+                    let markers = if self.chart.series_markers(id).unwrap().is_empty() {
+                        sample_markers(false)
+                    } else {
+                        vec![]
+                    };
+                    self.chart.set_series_markers(id, markers).unwrap();
+                } else {
+                    self.annotations = Some(
+                        self.chart
+                            .add_series_markers(
+                                self.price,
+                                sample_markers(false),
+                                SeriesMarkersOptions::default(),
+                            )
+                            .unwrap(),
+                    );
+                }
+                self.prepare();
+            }
+            Message::MarkerLayer => {
+                self.marker_step += 1;
+                if let Some(id) = self.annotations {
+                    self.chart
+                        .replace_series_marker_options(
+                            id,
+                            SeriesMarkersOptions {
+                                auto_scale: true,
+                                z_order: match self.marker_step % 3 {
+                                    1 => MarkerZOrder::AboveSeries,
+                                    2 => MarkerZOrder::Top,
+                                    _ => MarkerZOrder::Normal,
+                                },
+                            },
+                        )
+                        .unwrap();
+                }
+                self.prepare();
+            }
             Message::Chart(message) => {
                 if let ChartMessage::Bounds(size) = &message {
                     self.size = *size;
@@ -141,10 +209,11 @@ impl App {
                                 ChartEvent::CrosshairMoved(data) => ("Crosshair", data),
                             };
                             self.status = format!(
-                                "{kind}: time {:?}, price {:?}, {} series",
+                                "{kind}: time {:?}, price {:?}, {} series, marker {:?}",
                                 data.time,
                                 data.price,
-                                data.series_data.len()
+                                data.series_data.len(),
+                                data.marker
                             );
                         }
                     }
@@ -295,6 +364,11 @@ impl App {
                 button("Last-value label").on_press(Message::ToggleLast),
             ]
             .spacing(8),
+            row![
+                button("Add/clear markers").on_press(Message::ToggleMarkers),
+                button("Marker layer").on_press(Message::MarkerLayer)
+            ]
+            .spacing(8),
             self.chart.element().map(Message::Chart)
         ]
         .spacing(4)
@@ -437,6 +511,16 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     .unwrap();
     std::fs::create_dir_all(directory).unwrap();
     let mut scenarios = vec!["default", "cluster", "hidden", "live", "left", "empty"];
+    if std::env::args().any(|a| a == "--series-markers") {
+        scenarios.extend([
+            "annotation-stack",
+            "annotation-price",
+            "annotation-inverted",
+            "annotation-layers",
+            "annotation-navigation",
+            "annotation-line-overlap",
+        ]);
+    }
     if kind == SeriesType::Area {
         scenarios.extend([
             "inverted", "relative", "curved", "steps", "styles", "single",
@@ -458,6 +542,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             "markers",
         ]);
     }
+    if std::env::args().any(|a| a == "--marker-captures-only") {
+        scenarios.retain(|s| s.starts_with("annotation-"));
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -470,6 +557,14 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                 app.prepare();
             }
             match scenario {
+                scenario if scenario.starts_with("annotation-") => marker_demo::setup_capture(
+                    &mut app.chart,
+                    app.price,
+                    app.annotations.unwrap(),
+                    scenario,
+                    app.size,
+                    app.ratio,
+                ),
                 "cluster" => {
                     let _ = app.update(Message::Cluster);
                 }
@@ -683,6 +778,18 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             renderer.draw_geometry(frame.into_geometry());
             let physical = iced::Size::new((800. * ratio) as u32, (500. * ratio) as u32);
             let rgba = renderer.screenshot(physical, ratio, iced::Color::from_rgb8(255, 0, 255));
+            if scenario == "annotation-line-overlap" {
+                let marker = &app.chart.frame().plot.annotations[0].items[0];
+                let plot = app.chart.frame().layout.plot;
+                let x = ((marker.center.x + plot.origin.x) * f64::from(ratio)).round() as usize;
+                let y = ((marker.center.y + plot.origin.y) * f64::from(ratio)).round() as usize;
+                let pixel = &rgba[(y * physical.width as usize + x) * 4..][..3];
+                assert_eq!(
+                    pixel,
+                    [255, 0, 0],
+                    "normal marker must cover its own price line"
+                );
+            }
             assert_eq!(
                 rgba,
                 renderer.screenshot(physical, ratio, iced::Color::from_rgb8(0, 255, 0)),
@@ -753,6 +860,14 @@ fn main() -> iced::Result {
             let _ = app.update(message);
         }
         assert_eq!(app.levels.len(), 3);
+        if let Some(id) = app.annotations {
+            assert!(!app.chart.frame().plot.annotation_geometry.is_empty());
+            let _ = app.update(Message::MarkerLayer);
+            let _ = app.update(Message::ToggleMarkers);
+            assert!(app.chart.series_markers(id).unwrap().is_empty());
+            let _ = app.update(Message::ToggleMarkers);
+            assert!(!app.chart.series_markers(id).unwrap().is_empty());
+        }
         assert!(
             app.chart.multi_frame().unwrap().panes[0]
                 .plot
