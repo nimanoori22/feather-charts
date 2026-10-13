@@ -6,6 +6,7 @@ pub mod baseline_pane_view;
 pub mod candlesticks_pane_view;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
+pub mod markers_pane_view;
 
 use crate::{
     formatters::{

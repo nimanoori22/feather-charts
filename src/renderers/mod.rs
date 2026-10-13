@@ -8,6 +8,7 @@ pub mod iprice_axis_view_renderer;
 pub mod line_renderer;
 pub mod price_axis_renderer;
 pub mod price_axis_renderer_options_provider;
+pub mod series_markers_renderer;
 pub mod time_axis_renderer;
 pub mod walk_line;
 

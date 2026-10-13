@@ -79,13 +79,20 @@ pub(crate) struct MarkerCollection<T> {
     pub id: MarkerCollectionId,
     pub markers: Vec<SeriesMarker<T>>,
     pub options: SeriesMarkersOptions,
+    pub index_cache: std::cell::RefCell<MarkerIndexCache>,
+    positions: [bool; 3],
+}
+#[derive(Clone, Debug, Default)]
+pub(crate) struct MarkerIndexCache {
+    pub generation: Option<(u64, u64)>,
+    pub indices: Vec<(usize, super::time_data::TimePointIndex)>,
 }
 pub fn ceiled_odd(value: f64) -> f64 {
     let n = value.ceil();
-    if n % 2. == 0. { n + 1. } else { n }
+    if n % 2. == 0. { n - 1. } else { n }
 }
 pub fn shape_height(spacing: f64) -> f64 {
-    ceiled_odd(spacing.clamp(12., 30.)) + 1.
+    ceiled_odd(spacing.clamp(12., 30.)) - 1.
 }
 pub fn shape_margin(spacing: f64) -> f64 {
     ceiled_odd(spacing.clamp(12., 30.) * 0.1).max(3.)
@@ -101,27 +108,47 @@ pub fn shape_size(shape: MarkerShape, size: f64) -> f64 {
     )
 }
 impl<T> MarkerCollection<T> {
+    pub fn new(
+        id: MarkerCollectionId,
+        markers: Vec<SeriesMarker<T>>,
+        options: SeriesMarkersOptions,
+    ) -> Self {
+        let mut collection = Self {
+            id,
+            markers,
+            options,
+            index_cache: Default::default(),
+            positions: [false; 3],
+        };
+        collection.invalidate();
+        collection
+    }
+    pub fn invalidate(&mut self) {
+        *self.index_cache.get_mut() = Default::default();
+        self.positions = [
+            MarkerPosition::AboveBar,
+            MarkerPosition::BelowBar,
+            MarkerPosition::InBar,
+        ]
+        .map(|p| self.markers.iter().any(|m| m.position == p));
+    }
     pub fn margins(&self, spacing: f64) -> Option<AutoScaleMargins> {
         if !self.options.auto_scale || self.markers.is_empty() {
             return None;
         }
         let margin = shape_height(spacing) * 1.5 + shape_margin(spacing) * 2.;
-        let in_bar = self
-            .markers
-            .iter()
-            .any(|m| m.position == MarkerPosition::InBar);
-        let adjusted = |side| {
-            if self.markers.iter().any(|m| m.position == side) {
+        let adjusted = |side: usize| {
+            if self.positions[side] {
                 margin
-            } else if in_bar {
+            } else if self.positions[2] {
                 (margin / 2.).ceil()
             } else {
                 0.
             }
         };
         Some(AutoScaleMargins {
-            above: adjusted(MarkerPosition::AboveBar),
-            below: adjusted(MarkerPosition::BelowBar),
+            above: adjusted(0),
+            below: adjusted(1),
         })
     }
 }

@@ -40,6 +40,7 @@ where
     width: f64,
     base_index: Option<TimePointIndex>,
     points: Vec<TimeScalePoint<B::InternalItem, B::Item>>,
+    data_generation: u64,
     bar_spacing: f64,
     right_offset: f64,
     tick_marks: TickMarks<B::InternalItem, B::Item>,
@@ -95,6 +96,7 @@ where
             width: 0.0,
             base_index: None,
             points: vec![],
+            data_generation: 0,
             bar_spacing,
             right_offset,
             tick_marks: TickMarks::default(),
@@ -153,7 +155,11 @@ where
     pub fn has_points(&self) -> bool {
         !self.points.is_empty()
     }
+    pub(crate) fn data_generation(&self) -> u64 {
+        self.data_generation
+    }
     pub fn update(&mut self, update: TimeScaleUpdate<B::InternalItem, B::Item>) {
+        self.data_generation = self.data_generation.wrapping_add(1);
         self.visible_range_invalidated = true;
         self.time_marks_cache = None;
         self.tick_marks

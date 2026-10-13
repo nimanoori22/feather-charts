@@ -467,6 +467,26 @@ impl PriceScale {
                 below = below.max(m.below)
             }
         }
+        if let Some(mut r) = range
+            && r.min_value() == r.max_value()
+        {
+            let min_move = if self.is_percentage() || self.is_indexed_to_100() {
+                1.
+            } else {
+                self.selected_formatter_source
+                    .as_ref()
+                    .map(|s| 1. / s.borrow().base())
+                    .unwrap_or(1.)
+            };
+            if self.options.mode == PriceScaleMode::Logarithmic {
+                r = convert_price_range_from_log(Some(r), self.log_formula).unwrap();
+            }
+            r = PriceRangeImpl::new(r.min_value() - 5. * min_move, r.max_value() + 5. * min_move);
+            if self.options.mode == PriceScaleMode::Logarithmic {
+                r = convert_price_range_to_log(Some(r), self.log_formula).unwrap();
+            }
+            range = Some(r);
+        }
         self.range = range;
         self.source_margin_above = above;
         self.source_margin_below = below;

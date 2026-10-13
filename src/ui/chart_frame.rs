@@ -474,9 +474,12 @@ pub struct IcedChartFrame {
 }
 impl IcedChartFrame {
     pub fn from_snapshot(
-        snapshot: ChartFrameSnapshot,
+        mut snapshot: ChartFrameSnapshot,
         fonts: &AxisFontResolver,
     ) -> Result<Self, ChartFrameError> {
+        snapshot
+            .plot
+            .prepare_annotations(fonts, snapshot.plot.annotation_ratio)?;
         let pane_labels = IcedPriceAxes {
             left: IcedPriceAxis::from_commands(&snapshot.pane_left, fonts)
                 .map_err(ChartFrameError::PriceUi)?,

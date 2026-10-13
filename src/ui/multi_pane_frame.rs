@@ -306,6 +306,12 @@ impl MultiPaneChartFrameOwner {
                         let series_plot =
                             prepare_series_plot(model, &mut view.borrowed(), *id, &plot_layout)
                                 .map_err(ChartFrameError::Plot)?;
+                        let layer = plot.series_layers.len() + 1;
+                        plot.annotations
+                            .extend(series_plot.annotations.into_iter().map(|mut c| {
+                                c.series_layer = layer;
+                                c
+                            }));
                         plot.series_layers
                             .push(super::line_chart::CanvasSeriesGeometry {
                                 lines: series_plot.lines,

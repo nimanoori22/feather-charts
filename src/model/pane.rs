@@ -1061,7 +1061,7 @@ mod tests {
         assert_eq!(
             pane.left_price_scale().price_range(),
             Some(crate::model::price_range_impl::PriceRangeImpl::new(
-                10.0, 10.0
+                9.95, 10.05
             ))
         );
         assert_eq!(
@@ -1483,7 +1483,7 @@ mod tests {
         assert_eq!(
             manual.left_price_scale().price_range(),
             Some(crate::model::price_range_impl::PriceRangeImpl::new(
-                25.0, 25.0
+                24.95, 25.05
             ))
         );
         assert!(!manual.left_price_scale().is_auto_scale());

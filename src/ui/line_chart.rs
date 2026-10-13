@@ -128,6 +128,9 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub annotation_ratio: f64,
+    pub annotations: Vec<crate::renderers::series_markers_renderer::PreparedMarkerCollection>,
+    pub annotation_geometry: Vec<super::series_annotations::CanvasAnnotations>,
     pub fills: Vec<CanvasFill>,
     pub gradient_lines: Vec<CanvasGradientStroke>,
     pub gradient_markers: Vec<CanvasGradientMarkers>,
@@ -148,6 +151,9 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            annotation_ratio: 1.,
+            annotations: vec![],
+            annotation_geometry: vec![],
             axes: None,
             size: Size::ZERO,
             background: Color::WHITE,
@@ -357,6 +363,9 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            annotation_ratio: f64::from(ratio.horizontal),
+            annotations: vec![],
+            annotation_geometry: vec![],
             axes: None,
             size: layout.size,
             background: color(&layout.background)?,
@@ -447,7 +456,12 @@ impl PlotSnapshot {
 
         self.draw_markers(frame, &self.markers);
         self.draw_gradient_markers(frame, &self.gradient_markers);
-        for layer in &self.series_layers {
+        self.draw_annotations(
+            frame,
+            crate::model::series_markers::MarkerZOrder::Normal,
+            Some(0),
+        );
+        for (index, layer) in self.series_layers.iter().enumerate() {
             self.draw_fills(frame, &layer.fills);
             self.draw_strokes(frame, layer.lines.iter());
             self.draw_gradient_strokes(frame, &layer.gradient_lines);
@@ -456,6 +470,11 @@ impl PlotSnapshot {
             }
             self.draw_markers(frame, &layer.markers);
             self.draw_gradient_markers(frame, &layer.gradient_markers);
+            self.draw_annotations(
+                frame,
+                crate::model::series_markers::MarkerZOrder::Normal,
+                Some(index + 1),
+            );
         }
         self.draw_strokes(frame, self.price_lines.iter());
         if crosshair {
@@ -467,6 +486,12 @@ impl PlotSnapshot {
         for marker in &self.crosshair_markers {
             frame.fill(&Path::circle(marker.center, marker.radius), marker.color);
         }
+        self.draw_annotations(
+            frame,
+            crate::model::series_markers::MarkerZOrder::AboveSeries,
+            None,
+        );
+        self.draw_annotations(frame, crate::model::series_markers::MarkerZOrder::Top, None);
     }
     fn draw_markers(&self, frame: &mut Frame, markers: &[CanvasMarker]) {
         // One fill per source style run avoids double alpha blending where
@@ -675,6 +700,9 @@ where
         | PaneView::Histogram(_) => LineDrawCommands::default(),
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    if let Some(id) = id {
+        snapshot.annotations = model.prepare_series_markers(id);
+    }
     if let PaneView::Area(view) = view
         && let Some(data) = view.data()
     {

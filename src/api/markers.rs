@@ -48,14 +48,8 @@ impl Chart {
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map(MarkerCollectionId)
             .map_err(|_| ChartError::IdExhausted)?;
-        self.model.insert_marker_collection(
-            series,
-            MarkerCollection {
-                id,
-                markers,
-                options,
-            },
-        );
+        self.model
+            .insert_marker_collection(series, MarkerCollection::new(id, markers, options));
         Ok(id)
     }
     /// Replace a collection. Equal times are permitted; decreasing times are rejected.
@@ -64,7 +58,7 @@ impl Chart {
         id: MarkerCollectionId,
         markers: Vec<SeriesMarker<Time>>,
     ) -> Result<(), ChartError> {
-        self.series_markers(id)?;
+        self.series_marker_options(id)?;
         validate(&markers)?;
         self.model
             .edit_marker_collection(id, |collection| collection.markers = markers);
@@ -83,10 +77,14 @@ impl Chart {
         &self,
         id: MarkerCollectionId,
     ) -> Result<SeriesMarkersOptions, ChartError> {
-        self.model
-            .marker_collection(id)
-            .map(|c| c.options)
-            .ok_or(ChartError::UnknownMarkerCollection(id))
+        for series in self.kinds.keys() {
+            if let Some(series) = self.model.series(*series)
+                && let Some(collection) = series.marker_collections.iter().find(|c| c.id == id)
+            {
+                return Ok(collection.options);
+            }
+        }
+        Err(ChartError::UnknownMarkerCollection(id))
     }
     pub fn replace_series_marker_options(
         &mut self,

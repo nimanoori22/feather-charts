@@ -49,15 +49,41 @@ pub enum PriceAxisUiError {
 pub struct AxisFontResolver {
     named: Vec<(&'static str, Font)>,
     glyphs: RefCell<VecDeque<CachedAxisText>>,
+    widths: RefCell<VecDeque<(String, Font, f32, f64)>>,
 }
 impl AxisFontResolver {
     pub fn register(&mut self, name: &'static str, font: Font) {
         self.glyphs.get_mut().clear();
+        self.widths.get_mut().clear();
         if let Some(entry) = self.named.iter_mut().find(|(family, _)| *family == name) {
             entry.1 = font;
         } else {
             self.named.push((name, font));
         }
+    }
+    pub(crate) fn text_width(
+        &self,
+        content: &str,
+        font: Font,
+        size: f32,
+    ) -> Result<f64, PriceAxisUiError> {
+        let mut widths = self.widths.borrow_mut();
+        if let Some((_, _, _, width)) = widths
+            .iter()
+            .find(|(s, f, z, _)| s == content && *f == font && *z == size)
+        {
+            return Ok(*width);
+        }
+        let width = f64::from(
+            IcedAxisTextMeasurer::with_font(font, size)?
+                .measure_text(content)
+                .width,
+        );
+        if widths.len() == 256 {
+            widths.pop_front();
+        }
+        widths.push_back((content.into(), font, size, width));
+        Ok(width)
     }
     pub fn resolve(&self, families: &str) -> Result<Font, PriceAxisUiError> {
         for family in families

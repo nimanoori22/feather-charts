@@ -47,6 +47,7 @@ where
                 let mut series = handle.borrow_mut();
                 if let Some(c) = series.marker_collections.iter_mut().find(|c| c.id == id) {
                     edit(c);
+                    c.invalidate();
                     drop(series);
                     self.markers_changed();
                     return;
@@ -69,5 +70,27 @@ where
         self.recalculate_requested = true;
         self.light_update();
         self.flush_effects();
+    }
+    pub(crate) fn prepare_series_markers(
+        &mut self,
+        id: SeriesId,
+    ) -> Vec<crate::renderers::series_markers_renderer::PreparedMarkerCollection> {
+        let Some(entry) = self.series.get(&id) else {
+            return vec![];
+        };
+        let Some(handle) = entry.built_in() else {
+            return vec![];
+        };
+        let series = handle.borrow();
+        let Some(scale) = self.panes[entry.pane].price_scale_for_source(id) else {
+            return vec![];
+        };
+        crate::model::series::markers_pane_view::prepare(
+            &series,
+            &mut self.time_scale,
+            scale,
+            self.options.layout.font_size,
+            &self.options.layout.font_family,
+        )
     }
 }

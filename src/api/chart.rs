@@ -69,6 +69,7 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    pub(super) last_marker_hit: Option<super::MarkerHit>,
     pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
     layer: DataLayer<HorzScaleBehaviorTime>,
     pub(crate) size: iced::Size,
@@ -105,6 +106,7 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            last_marker_hit: None,
             size: iced::Size::ZERO,
             ratio: 1.,
             plot_pan: None,
@@ -353,11 +355,18 @@ impl Chart {
     pub fn frame(&self) -> &IcedChartFrame {
         self.frame.panes.first().unwrap_or(&EMPTY_FRAME)
     }
+    pub fn marker_hit(&self, pane: usize, point: iced::Point) -> Option<super::MarkerHit> {
+        self.frame.panes.get(pane)?.plot.marker_hit(point)
+    }
     pub fn multi_frame(&self) -> Option<&IcedMultiPaneChartFrame> {
         (self.frame.panes.len() > 1).then_some(&self.frame)
     }
     pub fn is_animating(&self) -> bool {
         self.controller.is_active()
+            || self.last_marker_hit
+                != self.model.crosshair().origin().and_then(|o| {
+                    self.marker_hit(o.pane, iced::Point::new(o.point.x as f32, o.point.y as f32))
+                })
     }
     pub fn fit_content(&mut self) {
         self.model.fit_content();
