@@ -1,5 +1,6 @@
 //! Non-rendering series state: plot rows, formatting, and invalidation.
 
+pub mod area_pane_view;
 pub mod candlesticks_pane_view;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
@@ -34,6 +35,7 @@ use std::{
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum SeriesConstructionError {
+    InvalidVisualOptions,
     OptionsDoNotMatchSeriesType { series_type: SeriesType },
 }
 
@@ -86,6 +88,35 @@ fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
     }
 }
 
+fn validate_visual_options(options: &SeriesOptionsMap) -> Result<(), SeriesConstructionError> {
+    if let SeriesOptionsMap::Area(o) = options {
+        let mut parser = crate::model::colors::ColorParser::default();
+        let c = &o.common;
+        let v = &o.style;
+        let valid = [&v.top_color, &v.bottom_color, &v.line_color]
+            .into_iter()
+            .all(|s| parser.parse_color(s).is_ok())
+            && [
+                &v.crosshair_marker_border_color,
+                &v.crosshair_marker_background_color,
+                &c.price_line_color,
+            ]
+            .into_iter()
+            .all(|s| s.is_empty() || parser.parse_color(s).is_ok())
+            && [
+                Some(v.crosshair_marker_radius),
+                Some(v.crosshair_marker_border_width),
+                v.point_markers_radius,
+            ]
+            .into_iter()
+            .flatten()
+            .all(|r| r.is_finite() && r >= 0. && r <= f64::from(f32::MAX));
+        if !valid {
+            return Err(SeriesConstructionError::InvalidVisualOptions);
+        }
+    }
+    Ok(())
+}
 fn matches_type(series_type: SeriesType, options: &SeriesOptionsMap) -> bool {
     matches!(
         (series_type, options),
@@ -171,6 +202,7 @@ where
         if !matches_type(series_type, &options) {
             return Err(SeriesConstructionError::OptionsDoNotMatchSeriesType { series_type });
         }
+        validate_visual_options(&options)?;
         let formatter = formatter_for(&common(&options).price_format);
         Ok(Self {
             id,
@@ -202,6 +234,7 @@ where
                 series_type: self.series_type,
             });
         }
+        validate_visual_options(&options)?;
         self.formatter = formatter_for(&common(&options).price_format);
         self.options = options;
         self.invalidate_pane_data();
@@ -209,6 +242,29 @@ where
     }
     pub fn common_options(&self) -> &SeriesOptionsCommon {
         common(&self.options)
+    }
+    pub(crate) fn bar_color<'a>(&'a self, row: &'a SeriesPlotRow<I, O, (), M>) -> Option<&'a str> {
+        let value = PlotRowLike::values(row);
+        let price = value[3];
+        Some(match (row, &self.options) {
+            (SeriesPlotRow::Line(r), SeriesOptionsMap::Line(o)) => {
+                r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Area(r), SeriesOptionsMap::Area(o)) => {
+                r.line_color.as_ref().unwrap_or(&o.style.line_color)
+            }
+            (SeriesPlotRow::Histogram(r), SeriesOptionsMap::Histogram(o)) => {
+                r.color.as_ref().unwrap_or(&o.style.color)
+            }
+            (SeriesPlotRow::Candlestick(r), SeriesOptionsMap::Candlestick(o)) => {
+                r.color.as_ref().unwrap_or(if value[0] <= price {
+                    &o.style.up_color
+                } else {
+                    &o.style.down_color
+                })
+            }
+            _ => return None,
+        })
     }
     pub fn last_value_data(
         &self,
@@ -229,23 +285,7 @@ where
         };
         let value = PlotRowLike::values(row);
         let price = value[3];
-        let color = match (row, &self.options) {
-            (SeriesPlotRow::Line(r), SeriesOptionsMap::Line(o)) => {
-                r.color.as_ref().unwrap_or(&o.style.color)
-            }
-            (SeriesPlotRow::Histogram(r), SeriesOptionsMap::Histogram(o)) => {
-                r.color.as_ref().unwrap_or(&o.style.color)
-            }
-            (SeriesPlotRow::Candlestick(r), SeriesOptionsMap::Candlestick(o)) => {
-                r.color.as_ref().unwrap_or(if value[0] <= price {
-                    &o.style.up_color
-                } else {
-                    &o.style.down_color
-                })
-            }
-            _ => return None,
-        }
-        .clone();
+        let color = self.bar_color(row)?.to_owned();
         let coordinate = scale.price_to_coordinate(price, first.value).value();
         if !coordinate.is_finite() {
             return None;

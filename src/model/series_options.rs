@@ -243,6 +243,29 @@ pub struct AreaStyleOptions {
     pub crosshair_marker_border_width: f64,
     pub last_price_animation: LastPriceAnimationMode,
 }
+impl Default for AreaStyleOptions {
+    fn default() -> Self {
+        Self {
+            top_color: "rgba(46, 220, 135, 0.4)".into(),
+            bottom_color: "rgba(40, 221, 100, 0)".into(),
+            relative_gradient: false,
+            invert_filled_area: false,
+            line_color: "#33D778".into(),
+            line_style: LineStyle::Solid,
+            line_width: LineWidth::Three,
+            line_type: LineType::Simple,
+            line_visible: true,
+            point_markers_visible: false,
+            point_markers_radius: None,
+            crosshair_marker_visible: true,
+            crosshair_marker_radius: 4.,
+            crosshair_marker_border_color: String::new(),
+            crosshair_marker_background_color: String::new(),
+            crosshair_marker_border_width: 2.,
+            last_price_animation: LastPriceAnimationMode::Disabled,
+        }
+    }
+}
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct AreaStyleOptionsPatch {
     pub top_color: Option<String>,

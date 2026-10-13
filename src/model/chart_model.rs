@@ -161,15 +161,27 @@ where
                 continue;
             };
             let series = handle.borrow();
-            let SeriesOptionsMap::Line(options) = series.options() else {
-                continue;
+            macro_rules! marker_options {
+                ($options:expr) => {{
+                    let o = &$options.style;
+                    (
+                        o.crosshair_marker_visible,
+                        o.crosshair_marker_radius,
+                        o.crosshair_marker_border_width,
+                        &o.crosshair_marker_background_color,
+                        &o.crosshair_marker_border_color,
+                    )
+                }};
+            }
+            let (enabled, radius, border_width, background, border) = match series.options() {
+                SeriesOptionsMap::Line(o) => marker_options!(o),
+                SeriesOptionsMap::Area(o) => marker_options!(o),
+                _ => continue,
             };
-            if !series.visible() || !options.style.crosshair_marker_visible {
+            if !series.visible() || !enabled {
                 continue;
             }
-            let Some(crate::model::series_data::SeriesPlotRow::Line(row)) =
-                series.bars().value_at(position.index)
-            else {
+            let Some(row) = series.bars().value_at(position.index) else {
                 continue;
             };
             let Some(first) = series.first_value(visible.as_ref()) else {
@@ -182,18 +194,20 @@ where
                 continue;
             };
             let y = scale
-                .price_to_coordinate(row.base.value[3], first.value)
+                .price_to_coordinate(
+                    crate::model::plot_data::PlotRowLike::values(row)[3],
+                    first.value,
+                )
                 .value();
-            let style = &options.style;
             if !y.is_finite()
-                || !style.crosshair_marker_radius.is_finite()
-                || style.crosshair_marker_radius < 0.
-                || !style.crosshair_marker_border_width.is_finite()
-                || style.crosshair_marker_border_width < 0.
+                || !radius.is_finite()
+                || radius < 0.
+                || !border_width.is_finite()
+                || border_width < 0.
             {
                 continue;
             }
-            let border_color = if style.crosshair_marker_border_color.is_empty() {
+            let border_color = if border.is_empty() {
                 match &self.options.layout.background {
                     crate::model::layout_options::Background::Solid { color } => color.clone(),
                     crate::model::layout_options::Background::VerticalGradient {
@@ -208,16 +222,16 @@ where
                         .unwrap_or_else(|_| top_color.clone()),
                 }
             } else {
-                style.crosshair_marker_border_color.clone()
+                border.clone()
             };
             markers.push(CrosshairMarker {
                 point: Point { x: position.x, y },
-                radius: style.crosshair_marker_radius,
-                border_width: style.crosshair_marker_border_width,
-                color: if style.crosshair_marker_background_color.is_empty() {
-                    row.color.clone().unwrap_or_else(|| style.color.clone())
+                radius,
+                border_width,
+                color: if background.is_empty() {
+                    series.bar_color(row).unwrap_or_default().to_owned()
                 } else {
-                    style.crosshair_marker_background_color.clone()
+                    background.clone()
                 },
                 border_color,
             });
@@ -768,6 +782,29 @@ where
             .price_scale_for_source(id)
             .ok_or(LinePreparationError::MissingPriceScale(id))?;
         line_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
+    }
+
+    pub fn prepare_area(
+        &mut self,
+        id: SeriesId,
+    ) -> Result<
+        Option<crate::renderers::area_renderer::AreaRendererData>,
+        crate::model::series::area_pane_view::AreaPreparationError,
+    > {
+        use crate::model::series::area_pane_view::{self, AreaPreparationError};
+        let entry = self
+            .series
+            .get(&id)
+            .ok_or(AreaPreparationError::UnknownSeries(id))?;
+        let handle = entry
+            .built_in()
+            .ok_or(AreaPreparationError::NotAreaSeries(id))?;
+        let series = handle.borrow();
+        let pane = &self.panes[entry.pane];
+        let price = pane
+            .price_scale_for_source(id)
+            .ok_or(AreaPreparationError::MissingPriceScale(id))?;
+        area_pane_view::prepare(&series, &mut self.time_scale, price, pane.height())
     }
 
     pub fn prepare_candlesticks(
