@@ -25,7 +25,11 @@ pub enum PrimitiveOwner {
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 static NEXT_PANE: AtomicU64 = AtomicU64::new(1);
 pub(crate) fn pane_id() -> PrimitivePaneId {
-    PrimitivePaneId(NEXT_PANE.fetch_add(1, Ordering::Relaxed))
+    PrimitivePaneId(
+        NEXT_PANE
+            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
+            .expect("pane identity exhausted"),
+    )
 }
 
 /// Borrowed only during preparation. A pane attachment has no price converter.
@@ -38,16 +42,26 @@ pub struct PrimitiveContext<'a> {
     pub visible_range: Option<crate::model::range_impl::RangeImpl<TimePointIndex>>,
 }
 impl PrimitiveContext<'_> {
+    pub fn time_to_coordinate(
+        &self,
+        time: &crate::model::horz_scale_behavior_time::types::Time,
+    ) -> Option<f64> {
+        let time = crate::model::horz_scale_behavior_time::time_utils::convert_time(time).ok()?;
+        let index = self.model.time_scale().time_to_index(&time, false)?;
+        self.logical_to_coordinate(index.value())
+    }
+    /// Matches the source scale: fractional indices map to zero. Interpolate
+    /// from an integer index and `bar_spacing` for continuous positions.
     pub fn logical_to_coordinate(&self, logical: f64) -> Option<f64> {
         if !logical.is_finite() || self.model.time_scale().is_empty() {
             return None;
         }
-        Some(
-            self.model
-                .time_scale()
-                .index_to_coordinate(TimePointIndex::new(logical))
-                .value(),
-        )
+        let coordinate = self
+            .model
+            .time_scale()
+            .index_to_coordinate(TimePointIndex::new(logical))
+            .value();
+        coordinate.is_finite().then_some(coordinate)
     }
     pub fn price_to_coordinate(&self, price: f64) -> Option<f64> {
         let PrimitiveOwner::Series(id) = self.owner else {
@@ -254,13 +268,17 @@ impl Chart {
             .ok_or(ChartError::UnknownPrimitive(id))?;
         let owner = attachment.owner;
         let order = attachment.order;
-        primitive.attached(owner);
-        *attachment = Attachment {
-            order,
-            id,
-            owner,
-            primitive: Rc::new(primitive),
-        };
+        let previous = std::mem::replace(
+            attachment,
+            Attachment {
+                order,
+                id,
+                owner,
+                primitive: Rc::new(primitive),
+            },
+        );
+        drop(previous);
+        attachment.primitive.attached(owner);
         self.sync_primitive_autoscale(id);
         self.model.full_update();
         Ok(())
@@ -315,7 +333,7 @@ impl crate::ui::line_chart::PlotSnapshot {
             if matches {
                 for view in &attachment.output.views {
                     if view.layer == layer {
-                        // A private draft prevents a plugin transform from leaking into later views.
+                        // Restore transforms before drawing the next view.
                         frame.with_save(|frame| {
                             if background {
                                 view.renderer.draw_background(frame);

@@ -128,6 +128,7 @@ fn retained_frames_keep_old_geometry_without_keeping_attachment_active() {
     chart
         .replace_primitive(id, drawing("new", PrimitiveLayer::Normal, &calls))
         .unwrap();
+    assert_eq!(*calls.borrow(), ["attach:old", "detach:old", "attach:new"]);
     chart
         .prepare(Size::new(400., 300.), 2., Instant::now())
         .unwrap();
@@ -278,9 +279,30 @@ fn data(chart: &mut Chart, id: feather_charts::model::data_layer::SeriesId) {
 }
 #[test]
 fn autoscale_merges_ranges_last_margins_win_and_removal_restores_builtin() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide, price_scale::PriceScaleOptionsPatch,
+    };
     let mut chart = Chart::default();
     let s = series(&mut chart, 0);
     data(&mut chart, s);
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    let manual_range = chart.model().panes()[0]
+        .right_price_scale()
+        .price_range()
+        .unwrap()
+        .to_raw();
+    chart
+        .apply_price_axis_options(
+            0,
+            PriceAxisSide::Right,
+            PriceScaleOptionsPatch {
+                auto_scale: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
     let a = chart
         .add_series_primitive(
             s,
@@ -301,6 +323,17 @@ fn autoscale_merges_ranges_last_margins_win_and_removal_restores_builtin() {
             },
         )
         .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(
+        chart.model().panes()[0]
+            .right_price_scale()
+            .price_range()
+            .unwrap()
+            .to_raw(),
+        manual_range
+    );
     let raw = || {
         chart
             .model()
@@ -671,4 +704,258 @@ fn invalid_extension_output_cannot_poison_autoscale_or_create_hits() {
     );
     assert!(chart.primitive_hit(0, Point::new(f32::NAN, 0.)).is_none());
     assert!(chart.primitive_hit(0, Point::new(-1., 50.)).is_none());
+}
+
+#[test]
+fn native_primitive_click_drag_update_and_focus_loss_follow_navigation_contract() {
+    use feather_charts::api::{ChartEvent, ChartState};
+    use iced::{
+        Rectangle, mouse,
+        widget::canvas::{Event, Program},
+    };
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    let id = chart
+        .add_series_primitive(
+            s,
+            Selectable {
+                layer: PrimitiveLayer::Top,
+                background: false,
+            },
+        )
+        .unwrap();
+    let size = Size::new(640., 480.);
+    chart.prepare(size, 1.5, Instant::now()).unwrap();
+    let origin = chart.frame().layout.plot.origin;
+    let p = Point::new(origin.x as f32 + 50., origin.y as f32 + 50.);
+    let mut state = ChartState::default();
+    let mut events = vec![];
+    for event in [
+        mouse::Event::ButtonPressed(mouse::Button::Left),
+        mouse::Event::ButtonReleased(mouse::Button::Left),
+    ] {
+        let message = chart
+            .program(std::convert::identity)
+            .update(
+                &mut state,
+                &Event::Mouse(event),
+                Rectangle::with_size(size),
+                mouse::Cursor::Available(p),
+            )
+            .and_then(|a| a.into_inner().0);
+        if let Some(message) = message {
+            events.extend(chart.update(message).unwrap());
+        }
+    }
+    assert!(events.iter().any(
+        |e| matches!(e,ChartEvent::Click(e) if e.primitive.as_ref().is_some_and(|h|h.primitive==id))
+    ));
+    events.clear();
+    for (event, point) in [
+        (
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+            p,
+        ),
+        (
+            Event::Mouse(mouse::Event::CursorMoved {
+                position: Point::new(p.x + 30., p.y + 20.),
+            }),
+            Point::new(p.x + 30., p.y + 20.),
+        ),
+    ] {
+        let message = chart
+            .program(std::convert::identity)
+            .update(
+                &mut state,
+                &event,
+                Rectangle::with_size(size),
+                mouse::Cursor::Available(point),
+            )
+            .and_then(|a| a.into_inner().0);
+        if let Some(message) = message {
+            events.extend(chart.update(message).unwrap());
+        }
+    }
+    chart
+        .replace_primitive(
+            id,
+            Selectable {
+                layer: PrimitiveLayer::Top,
+                background: false,
+            },
+        )
+        .unwrap();
+    chart.prepare(size, 1.5, Instant::now()).unwrap();
+    assert_eq!(
+        chart.program(std::convert::identity).mouse_interaction(
+            &state,
+            Rectangle::with_size(size),
+            mouse::Cursor::Available(p)
+        ),
+        mouse::Interaction::Grabbing
+    );
+    let message = chart
+        .program(std::convert::identity)
+        .update(
+            &mut state,
+            &Event::Window(iced::window::Event::Unfocused),
+            Rectangle::with_size(size),
+            mouse::Cursor::Unavailable,
+        )
+        .and_then(|a| a.into_inner().0)
+        .unwrap();
+    events.extend(chart.update(message).unwrap());
+    assert!(!events.iter().any(|e| matches!(e, ChartEvent::Click(_))));
+    assert_eq!(
+        chart.program(std::convert::identity).mouse_interaction(
+            &state,
+            Rectangle::with_size(size),
+            mouse::Cursor::Unavailable
+        ),
+        mouse::Interaction::default()
+    );
+    assert_eq!(
+        chart.program(std::convert::identity).mouse_interaction(
+            &state,
+            Rectangle::with_size(size),
+            mouse::Cursor::Available(p)
+        ),
+        mouse::Interaction::default()
+    );
+    let _ = chart.program(std::convert::identity).update(
+        &mut state,
+        &Event::Window(iced::window::Event::Focused),
+        Rectangle::with_size(size),
+        mouse::Cursor::Available(p),
+    );
+    assert_eq!(
+        chart.program(std::convert::identity).mouse_interaction(
+            &state,
+            Rectangle::with_size(size),
+            mouse::Cursor::Available(p)
+        ),
+        mouse::Interaction::Pointer
+    );
+    assert!(!chart.is_animating());
+}
+
+#[test]
+fn primitive_coordinates_follow_scale_modes_and_viewport_and_clear_on_empty_data() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide,
+        price_scale::{PriceScaleMode, PriceScaleOptionsPatch},
+    };
+    #[derive(Debug)]
+    struct Coordinates(Rc<RefCell<Vec<Projection>>>);
+    type Projection = (Size, Option<f64>, Option<f64>);
+    impl DrawingPrimitive for Coordinates {
+        fn prepare(&self, c: &PrimitiveContext<'_>) -> PreparedPrimitive {
+            assert!(c.logical_to_coordinate(f64::MAX).is_none());
+            if !c.model.time_scale().is_empty() {
+                assert_eq!(c.logical_to_coordinate(5.5), Some(0.));
+            }
+            if let PrimitiveOwner::Series(id) = c.owner
+                && c.model.series(id).unwrap().bars().rows().len() == 10
+            {
+                assert_eq!(
+                    c.time_to_coordinate(&Time::from(UtcTimestamp::new(1050.))),
+                    c.logical_to_coordinate(5.)
+                );
+                assert!(
+                    c.time_to_coordinate(&Time::from(UtcTimestamp::new(9999.)))
+                        .is_none()
+                );
+            }
+            self.0.borrow_mut().push((
+                c.size,
+                c.logical_to_coordinate(5.),
+                c.price_to_coordinate(105.),
+            ));
+            Default::default()
+        }
+    }
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    let coords = Rc::new(RefCell::new(vec![]));
+    let id = chart
+        .add_series_primitive(s, Coordinates(coords.clone()))
+        .unwrap();
+    for mode in [
+        PriceScaleMode::Normal,
+        PriceScaleMode::Logarithmic,
+        PriceScaleMode::Percentage,
+        PriceScaleMode::IndexedTo100,
+    ] {
+        for invert in [false, true] {
+            chart
+                .apply_price_axis_options(
+                    0,
+                    PriceAxisSide::Right,
+                    PriceScaleOptionsPatch {
+                        mode: Some(mode),
+                        invert_scale: Some(invert),
+                        ..Default::default()
+                    },
+                )
+                .unwrap();
+            for size in [Size::new(640., 480.), Size::new(320., 240.)] {
+                chart.prepare(size, 1.25, Instant::now()).unwrap();
+                let (_, x, y) = *coords.borrow().last().unwrap();
+                assert!(x.unwrap().is_finite());
+                assert!(y.unwrap().is_finite());
+            }
+        }
+    }
+    chart.set_data(s, vec![]).unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 2., Instant::now())
+        .unwrap();
+    let (_, x, y) = *coords.borrow().last().unwrap();
+    assert!(x.is_none() && y.is_none());
+    chart
+        .set_data(
+            s,
+            vec![BuiltInSeriesDataItem::Line(LineDataItem::Whitespace(
+                feather_charts::model::data_consumer::WhitespaceData {
+                    time: Time::from(UtcTimestamp::new(1000.)),
+                    custom_values: None,
+                },
+            ))],
+        )
+        .unwrap();
+    chart
+        .prepare(Size::new(640., 480.), 1., Instant::now())
+        .unwrap();
+    let (_, x, y) = *coords.borrow().last().unwrap();
+    assert!(x.is_some() && y.is_none());
+    data(&mut chart, s);
+    chart
+        .prepare(Size::new(640., 480.), 2., Instant::now())
+        .unwrap();
+    assert!(coords.borrow().last().unwrap().2.is_some());
+    assert!(chart.primitive_owner(id).is_ok());
+    for (scale_id, position) in [
+        ("left", PriceScalePosition::Left),
+        ("extra", PriceScalePosition::Overlay("extra".into())),
+    ] {
+        let owner = chart
+            .add_series(SeriesOptionsMap::Line(Default::default()), 0, position)
+            .unwrap();
+        data(&mut chart, owner);
+        let own_coords = Rc::new(RefCell::new(vec![]));
+        chart
+            .add_series_primitive(owner, Coordinates(own_coords.clone()))
+            .unwrap();
+        chart
+            .prepare(Size::new(640., 480.), 1.5, Instant::now())
+            .unwrap();
+        let expected = chart.model().panes()[0]
+            .price_scale_by_id(scale_id)
+            .unwrap()
+            .price_to_coordinate(105., 100.)
+            .value();
+        assert_eq!(own_coords.borrow().last().unwrap().2, Some(expected));
+    }
 }

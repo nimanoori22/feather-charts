@@ -26,7 +26,8 @@ pub fn align_labels(labels: &mut [SeriesAxisLabel], center: f64, height: f64, la
             .total_cmp(&labels[*b].axis.coordinate)
     });
     for label in labels.iter_mut().filter(|l| l.fixed_coordinate.is_none()) {
-        let half = ((label_height + f64::from(label.additional_padding)) / 2.).floor();
+        // The source excludes primitive background padding from collision height.
+        let half = (label_height / 2.).floor();
         let y = label.axis.coordinate;
         if y > -half && y < half {
             label.render_coordinate = half;
@@ -49,13 +50,9 @@ fn recalculate(
         return;
     };
     let mut start = 0;
-    let mut space = (direction
-        * (height / 2.
-            - (labels[*first].render_coordinate
-                - (h + f64::from(labels[*first].additional_padding)) / 2.)))
-        .max(0.);
+    let mut space =
+        (direction * (height / 2. - (labels[*first].render_coordinate - h / 2.))).max(0.);
     for i in 1..indices.len() {
-        let h = h + f64::from(labels[indices[i - 1]].additional_padding);
         let y = labels[indices[i]].render_coordinate;
         let prev = labels[indices[i - 1]].render_coordinate;
         let overlaps = if direction == 1. {

@@ -63,6 +63,7 @@ pub struct ChartProgram<'a, Message> {
 }
 #[derive(Default)]
 pub struct ChartState {
+    unfocused: bool,
     input: ChartInput,
     multi_input: MultiPaneInput,
     axis_input: PriceAxisInput,
@@ -92,6 +93,11 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> Option<canvas::Action<Message>> {
+        match event {
+            canvas::Event::Window(iced::window::Event::Unfocused) => state.unfocused = true,
+            canvas::Event::Window(iced::window::Event::Focused) => state.unfocused = false,
+            _ => {}
+        }
         let revision_changed = state
             .revision
             .replace(self.revision)
@@ -288,6 +294,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         bounds: iced::Rectangle,
         cursor: iced::mouse::Cursor,
     ) -> iced::mouse::Interaction {
+        if state.unfocused {
+            return iced::mouse::Interaction::default();
+        }
         if state.input.is_dragging() || state.multi_input.is_dragging() {
             return iced::mouse::Interaction::Grabbing;
         }
