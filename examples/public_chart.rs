@@ -25,6 +25,8 @@ use iced::{
     widget::{button, column, row, text},
 };
 use std::time::Instant;
+#[path = "public_chart/hover.rs"]
+mod hover_demo;
 #[path = "public_chart/markers.rs"]
 mod marker_demo;
 #[cfg(test)]
@@ -49,6 +51,7 @@ struct App {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    ToggleHoverOrder,
     ToggleMarkers,
     MarkerLayer,
     Chart(ChartMessage),
@@ -121,24 +124,29 @@ impl App {
                     .collect(),
             )
             .unwrap();
+        if std::env::args().any(|a| a == "--hover-selection") {
+            hover_demo::add_overlays(&mut chart);
+        }
         chart.fit_content();
         let levels = add_levels(&mut chart, price);
-        let annotations = std::env::args().any(|a| a == "--series-markers").then(|| {
-            chart
-                .add_series_markers(
-                    volume,
-                    sample_markers(true),
-                    SeriesMarkersOptions::default(),
-                )
-                .unwrap();
-            chart
-                .add_series_markers(
-                    price,
-                    sample_markers(false),
-                    SeriesMarkersOptions::default(),
-                )
-                .unwrap()
-        });
+        let annotations = std::env::args()
+            .any(|a| a == "--series-markers" || a == "--hover-selection")
+            .then(|| {
+                chart
+                    .add_series_markers(
+                        volume,
+                        sample_markers(true),
+                        SeriesMarkersOptions::default(),
+                    )
+                    .unwrap();
+                chart
+                    .add_series_markers(
+                        price,
+                        sample_markers(false),
+                        SeriesMarkersOptions::default(),
+                    )
+                    .unwrap()
+            });
         Self {
             annotations,
             marker_step: 0,
@@ -160,6 +168,11 @@ impl App {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ToggleHoverOrder => {
+                self.chart
+                    .set_hovered_series_on_top(!self.chart.hovered_series_on_top());
+                self.prepare();
+            }
             Message::ToggleMarkers => {
                 if let Some(id) = self.annotations {
                     let markers = if self.chart.series_markers(id).unwrap().is_empty() {
@@ -212,11 +225,12 @@ impl App {
                                 ChartEvent::CrosshairMoved(data) => ("Crosshair", data),
                             };
                             self.status = format!(
-                                "{kind}: time {:?}, price {:?}, {} series, marker {:?}",
+                                "{kind}: time {:?}, price {:?}, {} series, marker {:?}, target {:?}",
                                 data.time,
                                 data.price,
                                 data.series_data.len(),
-                                data.marker
+                                data.marker,
+                                data.hit
                             );
                         }
                     }
@@ -372,7 +386,13 @@ impl App {
             .spacing(8),
             row![
                 button("Add/clear markers").on_press(Message::ToggleMarkers),
-                button("Marker layer").on_press(Message::MarkerLayer)
+                button("Marker layer").on_press(Message::MarkerLayer),
+                button(if self.chart.hovered_series_on_top() {
+                    "Raise hovered: on"
+                } else {
+                    "Raise hovered: off"
+                })
+                .on_press(Message::ToggleHoverOrder)
             ]
             .spacing(8),
             self.chart.element().map(Message::Chart)
@@ -527,6 +547,24 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             "annotation-line-overlap",
         ]);
     }
+    if std::env::args().any(|a| a == "--hover-selection") {
+        scenarios.extend([
+            "hover-line",
+            "hover-area",
+            "hover-area-disabled",
+            "hover-baseline-disabled",
+            "hover-fill-only-disabled",
+            "hover-baseline",
+            "hover-fill-only",
+            "hover-bar",
+            "hover-candle",
+            "hover-histogram",
+            "hover-disabled",
+            "hover-crossover",
+            "hover-removed",
+            "hover-narrow",
+        ]);
+    }
     if kind == SeriesType::Area {
         scenarios.extend([
             "inverted", "relative", "curved", "steps", "styles", "single",
@@ -551,6 +589,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     if std::env::args().any(|a| a == "--marker-captures-only") {
         scenarios.retain(|s| s.starts_with("annotation-"));
     }
+    if std::env::args().any(|a| a == "--hover-captures-only") {
+        scenarios.retain(|s| s.starts_with("hover-"));
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -563,6 +604,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                 app.prepare();
             }
             match scenario {
+                scenario if scenario.starts_with("hover-") => {
+                    hover_demo::setup_capture(&mut app, scenario)
+                }
                 scenario if scenario.starts_with("annotation-") => marker_demo::setup_capture(
                     &mut app.chart,
                     app.price,
@@ -782,8 +826,12 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             let mut frame = iced::widget::canvas::Frame::new(&renderer, app.size);
             app.chart.multi_frame().unwrap().draw(&mut frame);
             renderer.draw_geometry(frame.into_geometry());
-            let physical = iced::Size::new((800. * ratio) as u32, (500. * ratio) as u32);
+            let physical = iced::Size::new(
+                (app.size.width * ratio) as u32,
+                (app.size.height * ratio) as u32,
+            );
             let rgba = renderer.screenshot(physical, ratio, iced::Color::from_rgb8(255, 0, 255));
+            hover_demo::verify_pixels(&app, scenario, &rgba, physical.width as usize);
             if scenario == "annotation-line-overlap" {
                 let marker = &app.chart.frame().plot.annotations[0].items[0];
                 let plot = app.chart.frame().layout.plot;

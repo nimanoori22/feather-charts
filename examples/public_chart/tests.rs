@@ -56,6 +56,7 @@ fn hover_status_keeps_chart_bounds_stable_in_narrow_windows() {
             )));
             assert_eq!(app.chart.marker_hit(0, position).is_some(), hovered_marker);
             assert_eq!(app.status.contains("marker Some("), hovered_marker);
+            assert_eq!(app.status.contains("target Some("), hovered_marker);
         }
     }
 }
