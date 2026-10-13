@@ -50,6 +50,10 @@ pub struct AxisFontResolver {
     named: Vec<(&'static str, Font)>,
     glyphs: RefCell<VecDeque<CachedAxisText>>,
     widths: RefCell<VecDeque<(String, Font, f32, f64)>>,
+    #[cfg(test)]
+    width_shapes: std::cell::Cell<usize>,
+    #[cfg(test)]
+    glyph_shapes: std::cell::Cell<usize>,
 }
 impl AxisFontResolver {
     pub fn register(&mut self, name: &'static str, font: Font) {
@@ -74,6 +78,8 @@ impl AxisFontResolver {
         {
             return Ok(*width);
         }
+        #[cfg(test)]
+        self.width_shapes.set(self.width_shapes.get() + 1);
         let width = f64::from(
             IcedAxisTextMeasurer::with_font(font, size)?
                 .measure_text(content)
@@ -134,6 +140,8 @@ impl AxisFontResolver {
         let index = match index {
             Some(index) => index,
             None => {
+                #[cfg(test)]
+                self.glyph_shapes.set(self.glyph_shapes.get() + 1);
                 let text = canvas::Text {
                     content: content.into(),
                     position: Point::ORIGIN,
@@ -432,6 +440,38 @@ mod tests {
             horizontal: value,
             vertical: value,
         }
+    }
+    #[test]
+    fn repeated_marker_labels_shape_once_per_font_style() {
+        let fonts = AxisFontResolver::default();
+        for frame in 0..100 {
+            for marker in 0..400 {
+                let width = fonts.text_width("Signal", Font::DEFAULT, 12.).unwrap();
+                assert!(width > 0.);
+                let paths = fonts.glyph_paths(
+                    "Signal",
+                    Font::DEFAULT,
+                    12.,
+                    text::Alignment::Left,
+                    Color::BLACK,
+                    Point::new(marker as f32, frame as f32),
+                );
+                assert!(!paths.is_empty());
+            }
+        }
+        assert_eq!(fonts.width_shapes.get(), 1);
+        assert_eq!(fonts.glyph_shapes.get(), 1);
+        fonts.text_width("Signal", Font::DEFAULT, 14.).unwrap();
+        fonts.glyph_paths(
+            "Signal",
+            Font::DEFAULT,
+            14.,
+            text::Alignment::Left,
+            Color::BLACK,
+            Point::ORIGIN,
+        );
+        assert_eq!(fonts.width_shapes.get(), 2);
+        assert_eq!(fonts.glyph_shapes.get(), 2);
     }
     #[test]
     fn cached_text_preserves_glyphs_and_reuses_positions_without_mixing_styles() {

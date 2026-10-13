@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 static NEXT_LINE: AtomicU64 = AtomicU64::new(1);
 #[derive(Default)]
 pub(crate) struct PriceDecorations {
-    pub lines: Vec<PriceLine>,
+    pub lines: Vec<(SeriesId, PriceLine)>,
     pub left: Vec<SeriesAxisLabel>,
     pub right: Vec<SeriesAxisLabel>,
     pub left_center: Option<f64>,
@@ -152,16 +152,19 @@ where
             if common.price_line_visible
                 && let Some(value) = line_value
             {
-                result.lines.push(PriceLine {
-                    coordinate: value.coordinate,
-                    color: if common.price_line_color.is_empty() {
-                        value.color
-                    } else {
-                        common.price_line_color.clone()
+                result.lines.push((
+                    id,
+                    PriceLine {
+                        coordinate: value.coordinate,
+                        color: if common.price_line_color.is_empty() {
+                            value.color
+                        } else {
+                            common.price_line_color.clone()
+                        },
+                        width: common.price_line_width,
+                        style: common.price_line_style,
                     },
-                    width: common.price_line_width,
-                    style: common.price_line_style,
-                });
+                ));
             }
             let target = match scale.id() {
                 "left" => Some("left"),
@@ -222,12 +225,15 @@ where
                     continue;
                 }
                 if options.line_visible {
-                    result.lines.push(PriceLine {
-                        coordinate: y,
-                        color: options.color.clone(),
-                        width: options.line_width,
-                        style: options.line_style,
-                    });
+                    result.lines.push((
+                        id,
+                        PriceLine {
+                            coordinate: y,
+                            color: options.color.clone(),
+                            width: options.line_width,
+                            style: options.line_style,
+                        },
+                    ));
                 }
                 if options.axis_label_visible {
                     let bg = if options.axis_label_color.is_empty() {

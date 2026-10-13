@@ -314,6 +314,7 @@ impl MultiPaneChartFrameOwner {
                             }));
                         plot.series_layers
                             .push(super::line_chart::CanvasSeriesGeometry {
+                                series_id: *id,
                                 lines: series_plot.lines,
                                 fills: series_plot.fills,
                                 gradient_lines: series_plot.gradient_lines,

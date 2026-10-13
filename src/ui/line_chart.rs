@@ -119,6 +119,7 @@ pub struct CanvasFill {
 }
 #[derive(Clone, Debug, Default)]
 pub struct CanvasSeriesGeometry {
+    pub series_id: Option<SeriesId>,
     pub fills: Vec<CanvasFill>,
     pub gradient_lines: Vec<CanvasGradientStroke>,
     pub gradient_markers: Vec<CanvasGradientMarkers>,
@@ -128,6 +129,8 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub series_id: Option<SeriesId>,
+    pub price_line_series: Vec<SeriesId>,
     pub annotation_ratio: f64,
     pub annotations: Vec<crate::renderers::series_markers_renderer::PreparedMarkerCollection>,
     pub annotation_geometry: Vec<super::series_annotations::CanvasAnnotations>,
@@ -151,6 +154,8 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            series_id: None,
+            price_line_series: vec![],
             annotation_ratio: 1.,
             annotations: vec![],
             annotation_geometry: vec![],
@@ -363,6 +368,8 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            series_id: None,
+            price_line_series: vec![],
             annotation_ratio: f64::from(ratio.horizontal),
             annotations: vec![],
             annotation_geometry: vec![],
@@ -456,6 +463,7 @@ impl PlotSnapshot {
 
         self.draw_markers(frame, &self.markers);
         self.draw_gradient_markers(frame, &self.gradient_markers);
+        self.draw_series_price_lines(frame, self.series_id);
         self.draw_annotations(
             frame,
             crate::model::series_markers::MarkerZOrder::Normal,
@@ -470,13 +478,18 @@ impl PlotSnapshot {
             }
             self.draw_markers(frame, &layer.markers);
             self.draw_gradient_markers(frame, &layer.gradient_markers);
+            self.draw_series_price_lines(frame, layer.series_id);
             self.draw_annotations(
                 frame,
                 crate::model::series_markers::MarkerZOrder::Normal,
                 Some(index + 1),
             );
         }
-        self.draw_strokes(frame, self.price_lines.iter());
+        // Low-level hosts can append strokes without an owning series.
+        self.draw_strokes(
+            frame,
+            self.price_lines.iter().skip(self.price_line_series.len()),
+        );
         if crosshair {
             self.draw_crosshair(frame);
         }
@@ -492,6 +505,15 @@ impl PlotSnapshot {
             None,
         );
         self.draw_annotations(frame, crate::model::series_markers::MarkerZOrder::Top, None);
+    }
+    fn draw_series_price_lines(&self, frame: &mut Frame, series: Option<SeriesId>) {
+        self.draw_strokes(
+            frame,
+            self.price_lines
+                .iter()
+                .zip(&self.price_line_series)
+                .filter_map(|(line, id)| (Some(*id) == series).then_some(line)),
+        );
     }
     fn draw_markers(&self, frame: &mut Frame, markers: &[CanvasMarker]) {
         // One fill per source style run avoids double alpha blending where
@@ -700,6 +722,7 @@ where
         | PaneView::Histogram(_) => LineDrawCommands::default(),
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    snapshot.series_id = id;
     if let Some(id) = id {
         snapshot.annotations = model.prepare_series_markers(id);
     }
@@ -787,23 +810,22 @@ where
             .map(|r| canvas_rectangle(r, ratio))
             .collect::<Result<_, _>>()?;
     }
-    snapshot.price_lines = model
+    let decorations = model
         .price_decorations(layout.pane)
-        .map_err(FrameError::Axes)?
-        .lines
-        .iter()
-        .filter_map(|line| {
-            crate::renderers::horizontal_line_renderer::draw_commands(
-                line,
-                crate::renderers::price_axis_renderer::AxisBounds {
-                    width: f64::from(layout.size.width),
-                    height: f64::from(layout.size.height),
-                },
-                ratio,
-            )
-        })
-        .map(|stroke| canvas_stroke(stroke, ratio))
-        .collect::<Result<_, _>>()?;
+        .map_err(FrameError::Axes)?;
+    for (series, line) in &decorations.lines {
+        if let Some(stroke) = crate::renderers::horizontal_line_renderer::draw_commands(
+            line,
+            crate::renderers::price_axis_renderer::AxisBounds {
+                width: f64::from(layout.size.width),
+                height: f64::from(layout.size.height),
+            },
+            ratio,
+        ) {
+            snapshot.price_lines.push(canvas_stroke(stroke, ratio)?);
+            snapshot.price_line_series.push(*series);
+        }
+    }
     if let Some(mut position) = model.crosshair().position() {
         if position.pane != layout.pane {
             position.y = None;

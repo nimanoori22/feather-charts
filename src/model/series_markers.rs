@@ -80,12 +80,26 @@ pub(crate) struct MarkerCollection<T> {
     pub markers: Vec<SeriesMarker<T>>,
     pub options: SeriesMarkersOptions,
     pub index_cache: std::cell::RefCell<MarkerIndexCache>,
+    pub projection_cache: std::cell::RefCell<
+        Option<(
+            MarkerProjectionKey,
+            Vec<crate::renderers::series_markers_renderer::PreparedMarker>,
+        )>,
+    >,
     positions: [bool; 3],
 }
 #[derive(Clone, Debug, Default)]
 pub(crate) struct MarkerIndexCache {
     pub generation: Option<(u64, u64)>,
     pub indices: Vec<(usize, super::time_data::TimePointIndex)>,
+}
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct MarkerProjectionKey {
+    pub scale_generation: u64,
+    pub generation: (u64, u64),
+    pub geometry: [f64; 10],
+    pub mode: super::price_scale::PriceScaleMode,
+    pub inverted: bool,
 }
 pub fn ceiled_odd(value: f64) -> f64 {
     let n = value.ceil();
@@ -118,6 +132,7 @@ impl<T> MarkerCollection<T> {
             markers,
             options,
             index_cache: Default::default(),
+            projection_cache: Default::default(),
             positions: [false; 3],
         };
         collection.invalidate();
@@ -125,6 +140,7 @@ impl<T> MarkerCollection<T> {
     }
     pub fn invalidate(&mut self) {
         *self.index_cache.get_mut() = Default::default();
+        *self.projection_cache.get_mut() = None;
         self.positions = [
             MarkerPosition::AboveBar,
             MarkerPosition::BelowBar,

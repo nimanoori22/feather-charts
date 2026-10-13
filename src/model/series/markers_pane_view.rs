@@ -53,8 +53,43 @@ where
     );
     let mut collections = vec![];
     for collection in &series.marker_collections {
-        let mut cache = collection.index_cache.borrow_mut();
+        let range = scale.price_range().unwrap();
         let generation = (series.pane_data_generation(), time.data_generation());
+        let key = crate::model::series_markers::MarkerProjectionKey {
+            scale_generation: scale.marks_generation(),
+            generation,
+            geometry: [
+                time.width(),
+                scale.height(),
+                spacing,
+                time.right_offset(),
+                range.min_value(),
+                range.max_value(),
+                scale.internal_height(),
+                first.value,
+                font_size,
+                scale.options().scale_margins.bottom,
+            ],
+            mode: scale.options().mode,
+            inverted: scale.options().invert_scale,
+        };
+        if let Some((previous, items)) = collection.projection_cache.borrow().as_ref()
+            && *previous == key
+        {
+            if !items.is_empty() {
+                collections.push(PreparedMarkerCollection {
+                    series_layer: 0,
+                    series: series.id(),
+                    id: collection.id,
+                    z_order: collection.options.z_order,
+                    items: items.clone(),
+                    font_size,
+                    font_family: font_family.into(),
+                });
+            }
+            continue;
+        }
+        let mut cache = collection.index_cache.borrow_mut();
         if cache.generation != Some(generation) {
             cache.indices = collection
                 .markers
@@ -180,6 +215,7 @@ where
                 }),
             });
         }
+        *collection.projection_cache.borrow_mut() = Some((key, items.clone()));
         if !items.is_empty() {
             collections.push(PreparedMarkerCollection {
                 series_layer: 0,

@@ -524,6 +524,8 @@ fn annotations_render_and_hit_on_all_six_families_in_independent_panes() {
         c.set_data(series, data).unwrap();
         let mut m = marker(40.);
         m.position = MarkerPosition::InBar;
+        m.color = "rgba(255, 0, 0, 0.5)".into();
+        m.text = Some(String::new());
         c.add_series_markers(
             series,
             vec![m],
@@ -541,7 +543,14 @@ fn annotations_render_and_hit_on_all_six_families_in_independent_panes() {
     assert_eq!(frame.panes.len(), 6);
     for (pane, p) in frame.panes.iter().enumerate() {
         assert!(!p.plot.annotation_geometry[0].paths.is_empty());
+        assert!(
+            p.plot.annotation_geometry[0]
+                .paths
+                .iter()
+                .all(|(_, color)| color.a == 0.5)
+        );
         let m = &p.plot.annotations[0].items[0];
+        assert!(m.text.is_none());
         assert_eq!(
             c.marker_hit(pane, iced::Point::new(m.center.x as f32, m.center.y as f32))
                 .unwrap()
@@ -549,4 +558,112 @@ fn annotations_render_and_hit_on_all_six_families_in_independent_panes() {
             m.hit.series
         );
     }
+}
+#[test]
+fn native_canvas_clicks_markers_and_redraw_reconciles_stationary_cursor() {
+    use feather_charts::api::{ChartEvent, ChartMessage, ChartState};
+    use iced::{
+        Point, Rectangle, mouse,
+        widget::canvas::{Event, Program},
+    };
+    let (mut c, series) = chart();
+    let id = c
+        .add_series_markers(series, vec![marker(40.)], SeriesMarkersOptions::default())
+        .unwrap();
+    prepare(&mut c);
+    let m = c.frame().plot.annotations[0].items[0].center;
+    let plot = c.frame().layout.plot;
+    let p = Point::new((m.x + plot.origin.x) as f32, (m.y + plot.origin.y) as f32);
+    let size = iced::Size::new(800., 500.);
+    let mut state = ChartState::default();
+    let mut events = vec![];
+    for event in [
+        Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+        Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+    ] {
+        let message = c
+            .program(std::convert::identity)
+            .update(
+                &mut state,
+                &event,
+                Rectangle::with_size(size),
+                mouse::Cursor::Available(p),
+            )
+            .and_then(|a| a.into_inner().0);
+        if let Some(message) = message {
+            events.extend(c.update(message).unwrap());
+        }
+    }
+    assert!(events.iter().any(
+        |e| matches!(e,ChartEvent::Click(p) if p.marker.as_ref().is_some_and(|h|h.collection==id))
+    ));
+    c.set_series_markers(id, vec![]).unwrap();
+    prepare(&mut c);
+    assert!(c.is_animating());
+    let message = c
+        .program(std::convert::identity)
+        .update(
+            &mut state,
+            &Event::Window(iced::window::Event::RedrawRequested(
+                std::time::Instant::now(),
+            )),
+            Rectangle::with_size(size),
+            mouse::Cursor::Available(p),
+        )
+        .and_then(|a| a.into_inner().0)
+        .expect("stationary hit change must request an update");
+    let events = c.update(message).unwrap();
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e,ChartEvent::CrosshairMoved(p) if p.marker.is_none()))
+    );
+    assert!(!c.is_animating());
+    assert!(
+        c.update(ChartMessage::Tick(std::time::Instant::now()))
+            .unwrap()
+            .is_empty()
+    );
+}
+#[test]
+fn equal_total_margin_changes_reproject_other_collections_and_disabled_margins_restore() {
+    let (mut c, series) = chart();
+    let mut in_bar = marker(40.);
+    in_bar.position = MarkerPosition::InBar;
+    let first = c
+        .add_series_markers(
+            series,
+            vec![in_bar],
+            SeriesMarkersOptions {
+                auto_scale: false,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    let second = c
+        .add_series_markers(series, vec![marker(40.)], SeriesMarkersOptions::default())
+        .unwrap();
+    prepare(&mut c);
+    let before = c.frame().plot.annotations[0].items[0].center.y;
+    let height = c.model().panes()[0].right_price_scale().internal_height();
+    let mut below = marker(40.);
+    below.position = MarkerPosition::BelowBar;
+    c.set_series_markers(second, vec![below]).unwrap();
+    prepare(&mut c);
+    assert_eq!(c.frame().plot.annotations[0].id, first);
+    assert_eq!(
+        c.model().panes()[0].right_price_scale().internal_height(),
+        height
+    );
+    assert_ne!(c.frame().plot.annotations[0].items[0].center.y, before);
+    c.replace_series_marker_options(
+        second,
+        SeriesMarkersOptions {
+            auto_scale: false,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    prepare(&mut c);
+    assert!(c.model().panes()[0].right_price_scale().internal_height() > height);
 }

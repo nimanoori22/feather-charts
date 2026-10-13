@@ -129,6 +129,7 @@ where
         &self.localization
     }
     pub fn configure_behavior(&mut self, options: B::Options) -> Vec<TimeScaleEffect> {
+        self.data_generation = self.data_generation.wrapping_add(1);
         self.behavior.set_options(options);
         self.behavior.update_scale_options(&self.options);
         self.behavior.update_formatter(&self.localization);
