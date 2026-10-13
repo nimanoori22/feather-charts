@@ -138,6 +138,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                             .multi
                             .and_then(|m| m.panes.get(pane))
                             .unwrap_or(self.snapshot);
+                        if frame.plot.primitives.is_empty() {
+                            return None;
+                        }
                         frame
                             .plot
                             .primitive_hit(position)
@@ -352,7 +355,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         if state.unfocused {
             return iced::mouse::Interaction::default();
         }
-        if let Some(cursor) = state.edit_input.cursor() {
+        if let Some(cursor) = state.edit_input.cursor(self.primitive_edit) {
             return cursor;
         }
         if state.input.is_dragging() || state.multi_input.is_dragging() {

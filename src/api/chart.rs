@@ -306,6 +306,7 @@ impl Chart {
         &mut self,
         patch: crate::model::time_scale_options::HorzScaleOptionsPatch,
     ) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.apply_time_scale_options(&mut self.layer, patch);
     }
     /// Settle shared layout and geometry without converting glyphs. Primarily
@@ -416,6 +417,7 @@ impl Chart {
                 Ok(())
             }
             Err(error) => {
+                self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
                 self.last_hit = None;
                 self.last_primitive = None;
                 self.frame = Default::default();
@@ -474,15 +476,19 @@ impl Chart {
         self.controller.is_active() || changed || !self.pending_primitive_edits.is_empty()
     }
     pub fn fit_content(&mut self) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.fit_content();
     }
     pub fn set_logical_range(&mut self, range: crate::model::time_data::LogicalRange) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.set_logical_range(range);
     }
     pub fn set_right_offset(&mut self, offset: f64) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.set_right_offset(offset);
     }
     pub fn scroll_to_offset_animated(&mut self, offset: f64, duration: std::time::Duration) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.scroll_to_offset_animated(offset, duration);
     }
     pub fn stop_time_scale_animation(&mut self) {
@@ -508,6 +514,17 @@ impl Chart {
         side: crate::model::axis_snapshots::PriceAxisSide,
         patch: crate::model::price_scale::PriceScaleOptionsPatch,
     ) -> Result<(), ChartError> {
+        use crate::model::axis_snapshots::{PriceAxisOptionsError, PriceAxisSide};
+        let pane_state = self.model.panes().get(pane).ok_or(ChartError::PriceAxis(
+            PriceAxisOptionsError::InvalidPane(pane),
+        ))?;
+        let scale = match side {
+            PriceAxisSide::Left => pane_state.left_price_scale(),
+            PriceAxisSide::Right => pane_state.right_price_scale(),
+        };
+        scale
+            .margins_after_patch(patch.scale_margins.as_ref())
+            .map_err(|e| ChartError::PriceAxis(PriceAxisOptionsError::Options(e)))?;
         self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ExternalChange);
         self.model
             .apply_price_axis_options(pane, side, patch)

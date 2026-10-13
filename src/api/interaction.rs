@@ -477,6 +477,7 @@ impl Chart {
         self.model.reset_price_scale(pane, side).map_err(Into::into)
     }
     pub fn zoom_time(&mut self, point: crate::model::coordinate::Coordinate, factor: f64) {
+        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.model.zoom_time(point, factor);
     }
     pub fn set_crosshair_position(

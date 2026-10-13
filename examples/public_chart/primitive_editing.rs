@@ -1,6 +1,9 @@
 //! Box constraints belong to this example, not the chart's gesture router.
 use super::*;
 use feather_charts::api::{PrimitiveEditId, PrimitiveHitTester};
+#[path = "primitive_editing_capture.rs"]
+mod capture;
+pub(super) use capture::{profile, setup_capture, verify_pixels};
 
 const HIT_RADIUS: f32 = 7.;
 const MIN_EXTENT: f64 = 8.;

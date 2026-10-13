@@ -363,6 +363,13 @@ pub fn setup_capture(app: &mut App, scenario: &str) {
     }
     app.prepare();
     match scenario {
+        "primitive-selected"
+        | "primitive-selected-narrow"
+        | "primitive-moving"
+        | "primitive-resized"
+        | "primitive-cancelled" => {
+            editing::setup_capture(app, scenario);
+        }
         "primitive-top" => {
             app.primitive_scene.as_mut().unwrap().layer(&mut app.chart);
         }
@@ -410,6 +417,17 @@ pub fn setup_capture(app: &mut App, scenario: &str) {
 }
 
 pub fn verify_pixels(app: &App, scenario: &str, rgba: &[u8], width: usize) {
+    if matches!(
+        scenario,
+        "primitive-selected"
+            | "primitive-selected-narrow"
+            | "primitive-moving"
+            | "primitive-resized"
+            | "primitive-cancelled"
+    ) {
+        editing::verify_pixels(app, rgba, width);
+        return;
+    }
     if !scenario.starts_with("primitive-") || scenario == "primitive-narrow" {
         return;
     }
@@ -461,6 +479,9 @@ pub fn verify_pixels(app: &App, scenario: &str, rgba: &[u8], width: usize) {
             "{scenario}: prepared time-axis band must be visible: {pixel:?}"
         );
     }
+}
+pub fn profile() {
+    editing::profile();
 }
 
 #[cfg(test)]

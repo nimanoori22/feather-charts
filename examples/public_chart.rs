@@ -656,10 +656,27 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             "primitive-updated",
             "primitive-removed",
             "primitive-narrow",
+            "primitive-selected",
+            "primitive-selected-narrow",
+            "primitive-moving",
+            "primitive-resized",
+            "primitive-cancelled",
         ]);
     }
     if std::env::args().any(|a| a == "--primitive-captures-only") {
         scenarios.retain(|s| s.starts_with("primitive-"));
+    }
+    if std::env::args().any(|a| a == "--primitive-edit-captures-only") {
+        scenarios.retain(|s| {
+            matches!(
+                *s,
+                "primitive-selected"
+                    | "primitive-selected-narrow"
+                    | "primitive-moving"
+                    | "primitive-resized"
+                    | "primitive-cancelled"
+            )
+        });
     }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
@@ -955,6 +972,10 @@ fn main() -> iced::Result {
     } else {
         SeriesType::Candlestick
     };
+    if args.iter().any(|a| a == "--primitive-edit-profile") {
+        primitive_demo::profile();
+        return Ok(());
+    }
     if let Some(index) = args.iter().position(|a| a == "--capture-dir") {
         capture(
             std::path::Path::new(args.get(index + 1).expect("capture directory")),

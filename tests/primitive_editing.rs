@@ -432,3 +432,242 @@ fn wheel_is_suspended_during_edit_and_external_manual_policy_survives_cancellati
     chart.update(ChartMessage::Tick(Instant::now())).unwrap();
     assert!(!chart.model().panes()[0].right_price_scale().is_auto_scale());
 }
+
+#[test]
+fn captured_cursor_clears_immediately_after_removal_and_manual_autoscale_policy_is_retained() {
+    use feather_charts::model::{
+        axis_snapshots::PriceAxisSide, price_scale::PriceScaleOptionsPatch,
+    };
+    let (mut chart, id, _) = setup_edit();
+    chart
+        .apply_price_axis_options(
+            0,
+            PriceAxisSide::Right,
+            PriceScaleOptionsPatch {
+                auto_scale: Some(false),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    prepare(&mut chart);
+    let mut state = ChartState::default();
+    let p = Point::new(50., 50.);
+    let begin = native(&chart, &mut state, &press(), p).unwrap();
+    chart.update(begin).unwrap();
+    let plot = chart.frame().layout.plot;
+    let cursor = mouse::Cursor::Available(Point::new(
+        p.x + plot.origin.x as f32,
+        p.y + plot.origin.y as f32,
+    ));
+    let bounds = iced::Rectangle::new(Point::ORIGIN, Size::new(640., 480.));
+    assert_eq!(
+        chart
+            .program(std::convert::identity)
+            .mouse_interaction(&state, bounds, cursor),
+        mouse::Interaction::Grabbing
+    );
+    chart.remove_primitive(id).unwrap();
+    prepare(&mut chart);
+    assert_ne!(
+        chart
+            .program(std::convert::identity)
+            .mouse_interaction(&state, bounds, cursor),
+        mouse::Interaction::Grabbing
+    );
+    assert!(!chart.model().panes()[0].right_price_scale().is_auto_scale());
+}
+
+#[test]
+fn owner_specific_transforms_cover_left_overlay_and_pane_attachments() {
+    let (mut chart, _) = chart();
+    for position in [
+        PriceScalePosition::Left,
+        PriceScalePosition::Overlay("drawing".into()),
+    ] {
+        let series = chart
+            .add_series(SeriesOptionsMap::Line(Default::default()), 0, position)
+            .unwrap();
+        chart
+            .set_data(
+                series,
+                (0..100)
+                    .map(|i| {
+                        BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+                            time: Time::from(UtcTimestamp::new(1000. + i as f64 * 10.)),
+                            value: 200. + (i % 10) as f64,
+                            color: None,
+                            custom_values: None,
+                        }))
+                    })
+                    .collect(),
+            )
+            .unwrap();
+        let id = chart
+            .add_series_primitive(
+                series,
+                Editable {
+                    detached: Rc::new(Cell::new(0)),
+                },
+            )
+            .unwrap();
+        prepare(&mut chart);
+        let c = chart.primitive_context(id).unwrap();
+        let t = c.coordinate_transform().unwrap();
+        for price in [190., 200., 220.] {
+            let y = c.price_to_coordinate(price).unwrap();
+            assert!((t.coordinate_to_price(y).unwrap() - price).abs() < 1e-8);
+        }
+    }
+    let id = chart
+        .add_pane_primitive(
+            0,
+            Editable {
+                detached: Rc::new(Cell::new(0)),
+            },
+        )
+        .unwrap();
+    let c = chart.primitive_context(id).unwrap();
+    let t = c.coordinate_transform().unwrap();
+    assert_eq!(t.coordinate_to_price(20.), None);
+    assert_eq!(t.price_to_coordinate(100.), None);
+    assert!(t.logical_to_coordinate(30.25).is_some());
+}
+
+#[test]
+fn invalid_edit_input_and_empty_data_cannot_leave_an_active_session() {
+    let (mut chart, id, _) = setup_edit();
+    let mut state = ChartState::default();
+    let begin = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+    let ChartMessage::PrimitiveEdit(mut invalid) = begin.clone() else {
+        panic!()
+    };
+    invalid.position.x = f32::NAN;
+    assert!(chart.update(ChartMessage::PrimitiveEdit(invalid)).is_err());
+    assert!(chart.model().panes()[0].right_price_scale().is_auto_scale());
+    let ChartMessage::PrimitiveEdit(event) = &begin else {
+        panic!()
+    };
+    let token = event.id;
+    chart.update(begin).unwrap();
+    let series = match chart.primitive_owner(id).unwrap() {
+        feather_charts::api::PrimitiveOwner::Series(s) => s,
+        _ => panic!(),
+    };
+    chart.set_data(series, vec![]).unwrap();
+    prepare(&mut chart);
+    assert!(chart.preview_primitive_update(token).is_err());
+    assert!(
+        chart
+            .primitive_context(id)
+            .unwrap()
+            .coordinate_transform()
+            .is_none()
+    );
+    let events = chart.update(ChartMessage::Tick(Instant::now())).unwrap();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| matches!(e, ChartEvent::PrimitiveEdit(_)))
+            .count(),
+        1
+    );
+}
+
+#[derive(Debug)]
+struct Growing(Rc<Cell<f64>>);
+impl DrawingPrimitive for Growing {
+    fn prepare(&self, c: &PrimitiveContext<'_>) -> PreparedPrimitive {
+        PreparedPrimitive {
+            views: vec![PrimitiveView::new(PrimitiveLayer::Top, EditHit)],
+            price_labels: vec![feather_charts::api::PrimitiveAxisLabel::new(
+                c.price_to_coordinate(self.0.get()).unwrap(),
+                format!("Drawing value {:.0}", self.0.get()),
+                "purple",
+                "white",
+            )],
+            ..Default::default()
+        }
+    }
+    fn autoscale_info(
+        &self,
+        _: feather_charts::model::time_data::TimePointIndex,
+        _: feather_charts::model::time_data::TimePointIndex,
+    ) -> Option<feather_charts::model::autoscale_info_impl::AutoscaleInfo> {
+        Some(feather_charts::model::autoscale_info_impl::AutoscaleInfo {
+            price_range: Some(feather_charts::model::price_range_impl::PriceRange {
+                min_value: 90.,
+                max_value: self.0.get(),
+            }),
+            margins: None,
+        })
+    }
+}
+#[test]
+fn widening_labels_and_autoscale_contributions_keep_viewport_fixed_until_commit() {
+    let (mut chart, series) = chart();
+    let high = Rc::new(Cell::new(115.));
+    chart
+        .add_series_primitive(series, Growing(high.clone()))
+        .unwrap();
+    prepare(&mut chart);
+    let layout = chart.frame().layout;
+    let range = chart.model().panes()[0].right_price_scale().price_range();
+    let mut state = ChartState::default();
+    let p = Point::new(50., 50.);
+    let begin = native(&chart, &mut state, &press(), p).unwrap();
+    let ChartMessage::PrimitiveEdit(event) = &begin else {
+        panic!()
+    };
+    let token = event.id;
+    chart.update(begin).unwrap();
+    high.set(1000000.);
+    chart.preview_primitive_update(token).unwrap();
+    prepare(&mut chart);
+    assert_eq!(chart.frame().layout, layout);
+    assert_eq!(
+        chart.model().panes()[0].right_price_scale().price_range(),
+        range
+    );
+    let commit = native(&chart, &mut state, &release(), p).unwrap();
+    chart.update(commit).unwrap();
+    prepare(&mut chart);
+    assert!(chart.frame().layout.right_axis.size.width > layout.right_axis.size.width);
+    assert!(
+        chart.model().panes()[0]
+            .right_price_scale()
+            .price_range()
+            .unwrap()
+            .max_value()
+            >= 1000000.
+    );
+}
+
+#[test]
+fn editing_hides_the_crosshair_and_focus_loss_does_not_leave_stale_hover_labels() {
+    use feather_charts::ui::chart_input::ChartInteraction;
+    let (mut chart, _, _) = setup_edit();
+    let p = Point::new(50., 50.);
+    chart
+        .update(ChartMessage::Interaction(ChartInteraction {
+            position: Some(p),
+            navigation: None,
+            capture: false,
+        }))
+        .unwrap();
+    assert!(chart.model().crosshair().position().is_some());
+    let mut state = ChartState::default();
+    let begin = native(&chart, &mut state, &press(), p).unwrap();
+    chart.update(begin).unwrap();
+    prepare(&mut chart);
+    assert!(chart.model().crosshair().position().is_none());
+    let cancel = native(
+        &chart,
+        &mut state,
+        &Event::Window(iced::window::Event::Unfocused),
+        p,
+    )
+    .unwrap();
+    chart.update(cancel).unwrap();
+    prepare(&mut chart);
+    assert!(chart.model().crosshair().position().is_none());
+}

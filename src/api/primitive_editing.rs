@@ -121,7 +121,8 @@ impl Chart {
         if self.primitive_edit_id() != Some(id) {
             return Err(ChartError::InvalidInteraction);
         }
-        self.model.full_update();
+        // Autoscale and axis allocation are held; only prepared geometry changed.
+        self.model.light_update();
         Ok(())
     }
     pub(super) fn check_primitive_edit(&mut self, size: Size, ratio: f32) {
@@ -196,6 +197,7 @@ impl Chart {
                     return None;
                 }
                 self.cancel_viewport_interaction();
+                self.model.set_crosshair_position(event.pane, None).ok()?;
                 self.stop_time_scale_animation();
                 self.controller.cancel();
                 let auto_scale = match event.hit.owner {

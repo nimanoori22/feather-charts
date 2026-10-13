@@ -19,11 +19,14 @@ pub(super) enum EditAction {
     Capture(Option<PrimitiveEditEvent>),
 }
 impl EditInput {
-    pub fn cursor(&self) -> Option<mouse::Interaction> {
-        self.capture.as_ref().map(|c| match c.event.hit.cursor {
-            Some(mouse::Interaction::Grab) => mouse::Interaction::Grabbing,
-            cursor => cursor.unwrap_or(mouse::Interaction::Grabbing),
-        })
+    pub fn cursor(&self, active: Option<PrimitiveEditId>) -> Option<mouse::Interaction> {
+        self.capture
+            .as_ref()
+            .filter(|c| active == Some(c.event.id))
+            .map(|c| match c.event.hit.cursor {
+                Some(mouse::Interaction::Grab) => mouse::Interaction::Grabbing,
+                cursor => cursor.unwrap_or(mouse::Interaction::Grabbing),
+            })
     }
     pub fn update(
         &mut self,

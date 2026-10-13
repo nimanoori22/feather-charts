@@ -558,7 +558,7 @@ impl PriceScale {
         changed
     }
 
-    fn margins_after_patch(
+    pub(crate) fn margins_after_patch(
         &self,
         patch: Option<&PriceScaleMarginsPatch>,
     ) -> Result<Option<PriceScaleMargins>, PriceScaleOptionsError> {
