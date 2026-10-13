@@ -66,8 +66,7 @@ cargo run --example public_chart -- --baseline
 The same example also accepts `--line` and `--histogram`; its default is
 Candlestick. Use **Change style** to exercise styles and Baseline base changes.
 All families share data updates, price decorations, zoom/pan and scale controls.
-Conflation, last-price animation and hovered-series hit testing remain outside
-this milestone. Iced gradients differ slightly from browser Canvas interpolation,
+Conflation and last-price animation remain outside this milestone. Iced gradients differ slightly from browser Canvas interpolation,
 especially on WGPU; paths and gradient stops are checked against source.
 
 Contracts and validation: [Area](docs/porting/area-rendering.md),
@@ -92,8 +91,8 @@ After a batch, call `prepare` once, as for other direct Chart mutations.
 Labels align per scale without moving the line's actual price coordinate; set
 `align_labels: false` on the price-axis options to disable alignment. The public
 example includes append/move/remove/cluster controls and supports `--capture-dir`.
-These levels are visual annotations; trading actions, alerts, dragging and hit
-testing are outside this milestone. Source contract and results:
+These levels support hover selection; trading actions, alerts and dragging
+remain outside this milestone. Source contract and results:
 [price-line report](docs/porting/price-lines.md).
 
 ## Series markers
@@ -128,7 +127,38 @@ cargo run --example public_chart -- --series-markers --area
 
 Use **Add/clear markers** and **Marker layer** to exercise replacement and layers.
 Marker margins follow source rules; arbitrary text, stacked markers and explicit
-prices are not guaranteed to fit inside autoscale. General series/price-line hit
-arbitration and editable annotations remain future work. Fresh marker mouse/
+prices are not guaranteed to fit inside autoscale. Editable annotations remain future work. Fresh marker mouse/
 touchpad acceptance remains pending. See the [marker port report](docs/porting/series-markers.md)
 and [implementation checklist](tasks/series-markers-todo.md).
+
+
+## Series and price-line hover selection
+
+All six built-in families support selection from settled logical geometry.
+Click/crosshair events expose `hit: Option<ChartHit>` with the owning `SeriesId`.
+`HitTarget` distinguishes series points, outlines/ranges, markers and price lines.
+`PriceLineKind` distinguishes last-value, relative base and `Custom(PriceLineId)`.
+External strings can be absent or repeated; typed handles remain distinct.
+
+`chart.hit_test(pane, point)` uses raw plot coordinates, independently of crosshair
+magnet snapping. The event's `marker` field describes a winning marker;
+`chart.marker_hit(pane, point)` remains a separate marker-only query.
+Call `prepare` after direct data/options changes to refresh the displayed frame.
+
+Hovered series rise by default. Area/Baseline fills and normal marker attachments
+keep their original order; only their outlines/points and price-line views rise.
+`chart.set_hovered_series_on_top(false)` disables raising. Hit order stays stable.
+
+```sh
+cargo run --example public_chart -- --hover-selection
+```
+
+This scene combines filled series, an outline, price levels and markers. Use
+**Raise hovered: on/off** to compare drawing order. The status reports the target
+without resizing the chart in narrow windows.
+
+Automated source, widget and renderer checks are recorded in the
+[hover selection report](docs/porting/hover-selection.md) and
+[checklist](tasks/hover-selection-todo.md). Fresh physical mouse/touchpad acceptance
+is pending. Custom primitives/series, editable annotations and touch/kinetic input
+remain outside this milestone.

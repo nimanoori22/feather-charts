@@ -1,6 +1,6 @@
 # Implementation roadmap: series and price-line hover selection
 
-Date: 2026-10-13. Status: planned; implementation has not started.
+Date: 2026-10-13. Status: implemented; automated/native validation complete; physical acceptance pending.
 Foundation: `13ac49b` (markers and narrow-window hover-layout fix).
 Source revision: `8a7c94ff8ddffde68955db61ef8b58098f239de0`.
 Execution checklist: [hover-selection-todo.md](hover-selection-todo.md).
