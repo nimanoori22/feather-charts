@@ -2,15 +2,9 @@
 use crate::model::plot_data::PlotRowLike;
 use crate::{
     model::{
-        chart_model::ChartModel,
-        data_layer::SeriesId,
-        ihorz_scale_behavior::HorzScaleBehavior,
-        price_scale::PriceScale,
-        series::Series,
-        series_data::SeriesPlotRow,
-        series_options::SeriesOptionsMap,
-        time_data::{TimedValue, visible_timed_values},
-        time_scale::TimeScale,
+        chart_model::ChartModel, data_layer::SeriesId, ihorz_scale_behavior::HorzScaleBehavior,
+        price_scale::PriceScale, series::Series, series_data::SeriesPlotRow,
+        series_options::SeriesOptionsMap, time_data::visible_range_by, time_scale::TimeScale,
     },
     renderers::candlesticks_renderer::{CandlePoint, CandlestickRendererData},
 };
@@ -89,16 +83,7 @@ where
     let Some(first) = series.first_value(Some(&visible)) else {
         return Ok(None);
     };
-    let timed = series
-        .bars()
-        .rows()
-        .iter()
-        .map(|row| TimedValue {
-            time: row.index(),
-            x: 0.0.into(),
-        })
-        .collect::<Vec<_>>();
-    let range = visible_timed_values(&timed, &visible, false);
+    let range = visible_range_by(series.bars().rows(), &visible, false, PlotRowLike::index);
     if range.from >= range.to {
         return Ok(None);
     }

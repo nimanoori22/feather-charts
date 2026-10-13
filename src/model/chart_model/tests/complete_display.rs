@@ -416,7 +416,8 @@ fn assert_frame(
                 );
             }
         }
-        for (p, row) in data.items.iter().zip(series.bars().rows()) {
+        for p in &data.items {
+            let row = series.bars().value_at(p.index).unwrap();
             close(p.x, model.time_scale().index_to_coordinate(p.index).value());
             let crate::model::series_data::SeriesPlotRow::Line(row) = row else {
                 panic!("line row expected")

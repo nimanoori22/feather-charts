@@ -1,4 +1,5 @@
 //! Stateless preparation with an owned output; no back-reference to ChartModel.
+use crate::model::plot_data::PlotRowLike;
 use crate::{
     model::{
         chart_model::ChartModel,
@@ -8,7 +9,7 @@ use crate::{
         series::Series,
         series_data::SeriesPlotRow,
         series_options::SeriesOptionsMap,
-        time_data::{TimedValue, visible_timed_values},
+        time_data::{SeriesItemsIndexesRange, visible_range_by},
         time_scale::TimeScale,
     },
     renderers::line_renderer::{LinePoint, LineRendererData},
@@ -86,9 +87,20 @@ where
     let Some(first) = series.first_value(Some(&visible)) else {
         return Ok(None);
     };
-    let mut items = Vec::with_capacity(series.bars().rows().len());
-    let mut timed = Vec::with_capacity(items.capacity());
-    for row in series.bars().rows() {
+    let rows = series.bars().rows();
+    let visible_rows = visible_range_by(rows, &visible, true, PlotRowLike::index);
+    if visible_rows.from >= visible_rows.to {
+        return Ok(None);
+    }
+    // Curved segments need one control-point neighbor beyond each drawing edge.
+    let from = visible_rows.from.saturating_sub(1);
+    let to = (visible_rows.to + 1).min(rows.len());
+    let range = SeriesItemsIndexesRange {
+        from: visible_rows.from - from,
+        to: visible_rows.to - from,
+    };
+    let mut items = Vec::with_capacity(to - from);
+    for row in &rows[from..to] {
         let SeriesPlotRow::Line(row) = row else {
             unreachable!("line Series contains line rows");
         };
@@ -100,10 +112,6 @@ where
         if !x.is_finite() || !y.is_finite() {
             return Err(LinePreparationError::NonFiniteCoordinates);
         }
-        timed.push(TimedValue {
-            time: index,
-            x: x.into(),
-        });
         items.push(LinePoint {
             index,
             x,
@@ -113,10 +121,6 @@ where
                 .clone()
                 .unwrap_or_else(|| options.style.color.clone()),
         });
-    }
-    let range = visible_timed_values(&timed, &visible, true);
-    if range.from >= range.to {
-        return Ok(None);
     }
     let style = &options.style;
     Ok(Some(LineRendererData {

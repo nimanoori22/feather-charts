@@ -78,10 +78,12 @@ impl<Row: PlotRowLike + Clone> PlotList<Row> {
         plots: &[PlotRowValueIndex],
     ) -> Option<MinMax> {
         let mut result: Option<MinMax> = None;
-        for row in &self.items {
-            if row.index() < start || row.index() > end {
-                continue;
-            }
+        let from = self.indices.partition_point(|index| *index < start);
+        let to = self.indices.partition_point(|index| *index <= end);
+        if from >= to {
+            return None;
+        }
+        for row in &self.items[from..to] {
             for plot in plots {
                 let value = row.values()[*plot as usize];
                 if value.is_nan() {
@@ -157,6 +159,49 @@ mod tests {
                 &[PlotRowValueIndex::Open, PlotRowValueIndex::Close]
             ),
             Some(MinMax { min: 1., max: 4. })
+        );
+    }
+
+    #[test]
+    fn range_queries_visit_only_intersecting_sorted_rows() {
+        use std::{cell::Cell, rc::Rc};
+        #[derive(Clone)]
+        struct CountedRow {
+            row: PlotRow<(), ()>,
+            reads: Rc<Cell<usize>>,
+        }
+        impl PlotRowLike for CountedRow {
+            fn index(&self) -> TimePointIndex {
+                self.reads.set(self.reads.get() + 1);
+                self.row.index
+            }
+            fn values(&self) -> &[f64; 4] {
+                self.reads.set(self.reads.get() + 1);
+                &self.row.value
+            }
+        }
+        let reads = Rc::new(Cell::new(0));
+        let mut list = PlotList::new();
+        list.set_data(
+            (0..10000)
+                .map(|i| CountedRow {
+                    row: row(i as f64, [i as f64; 4]),
+                    reads: reads.clone(),
+                })
+                .collect(),
+        );
+        reads.set(0);
+        assert_eq!(
+            list.min_max_on_range_cached(5000.0.into(), 5010.0.into(), &[PlotRowValueIndex::Close]),
+            Some(MinMax {
+                min: 5000.,
+                max: 5010.
+            })
+        );
+        assert!(
+            reads.get() <= 40,
+            "range query visited history: {} reads",
+            reads.get()
         );
     }
 }

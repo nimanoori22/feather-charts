@@ -186,8 +186,10 @@ fn line_snapshot_matches_selected_scale_and_extends_both_visible_edges() {
     let first = model.series(id).unwrap().first_value(Some(&range)).unwrap();
     assert_eq!(
         data.visible_range,
-        crate::model::time_data::ValueRange { from: 4, to: 12 }
+        crate::model::time_data::ValueRange { from: 1, to: 9 }
     );
+    assert_eq!(data.items[data.visible_range.from].index.value(), 4.);
+    assert_eq!(data.items[data.visible_range.to - 1].index.value(), 11.);
     for point in &data.items {
         assert_eq!(
             point.x,
@@ -451,8 +453,15 @@ fn rendering_snapshots_rebuild_on_resize_append_and_historical_updates() {
     model.set_pane_height(0, 400.).unwrap();
     flush(&mut model);
     let resized = model.prepare_line(id).unwrap().unwrap();
-    assert_ne!(resized.items[15].x, old.items[15].x);
-    assert_ne!(resized.items[15].y, old.items[15].y);
+    let point = |data: &crate::renderers::line_renderer::LineRendererData, index| {
+        data.items
+            .iter()
+            .find(|point| point.index.value() == index)
+            .unwrap()
+            .clone()
+    };
+    assert_ne!(point(&resized, 15.).x, point(&old, 15.).x);
+    assert_ne!(point(&resized, 15.).y, point(&old, 15.).y);
     view(&mut model, 5., 10.);
     let before = model.prepare_line(id).unwrap().unwrap();
     model
@@ -460,13 +469,13 @@ fn rendering_snapshots_rebuild_on_resize_append_and_historical_updates() {
         .unwrap();
     flush(&mut model);
     let appended = model.prepare_line(id).unwrap().unwrap();
-    assert_eq!(before.items[7].x, appended.items[7].x);
+    assert_eq!(point(&before, 7.).x, point(&appended, 7.).x);
     model
         .apply_data_update(layer.update_series_data(id, line(8., 100.), true).unwrap())
         .unwrap();
     flush(&mut model);
     let updated = model.prepare_line(id).unwrap().unwrap();
-    assert_ne!(appended.items[7].y, updated.items[7].y);
+    assert_ne!(point(&appended, 7.).y, point(&updated, 7.).y);
 }
 
 #[test]

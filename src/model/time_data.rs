@@ -137,22 +137,32 @@ pub fn visible_timed_values(
     range: &RangeImpl<TimePointIndex>,
     extended_range: bool,
 ) -> SeriesItemsIndexesRange {
+    visible_range_by(items, range, extended_range, |item| item.time)
+}
+
+/// Select sorted source rows without allocating a history-sized timed array.
+pub(crate) fn visible_range_by<T>(
+    items: &[T],
+    range: &RangeImpl<TimePointIndex>,
+    extended_range: bool,
+    index: impl Fn(&T) -> TimePointIndex,
+) -> SeriesItemsIndexesRange {
     let first_bar = range.left();
     let last_bar = range.right();
-    let from = items.partition_point(|item| item.time < first_bar);
-    let to = items.partition_point(|item| item.time <= last_bar);
+    let from = items.partition_point(|item| index(item) < first_bar);
+    let to = items.partition_point(|item| index(item) <= last_bar);
 
     if !extended_range {
         return ValueRange { from, to };
     }
 
     ValueRange {
-        from: if from > 0 && from < items.len() && items[from].time >= first_bar {
+        from: if from > 0 && from < items.len() && index(&items[from]) >= first_bar {
             from - 1
         } else {
             from
         },
-        to: if to > 0 && to < items.len() && items[to - 1].time <= last_bar {
+        to: if to > 0 && to < items.len() && index(&items[to - 1]) <= last_bar {
             to + 1
         } else {
             to
