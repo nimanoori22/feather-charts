@@ -16,3 +16,5 @@ pub mod horizontal_line_renderer;
 pub mod price_axis_labels;
 
 pub mod bars_renderer;
+
+pub mod baseline_renderer;
