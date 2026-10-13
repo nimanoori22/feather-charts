@@ -124,7 +124,7 @@ where
     M: Clone + 'static,
 {
     use super::line_chart::PaneView;
-    use crate::model::{plot_data::PlotRowLike, series_options::SeriesOptionsMap};
+    use crate::model::series_options::SeriesOptionsMap;
     use crate::renderers::range_hit_test::RangePoint;
     let series = model.series(id)?;
     let tolerance = series.common_options().hit_test_tolerance;
@@ -145,7 +145,6 @@ where
         hit.filled = matches!(view, PaneView::Area(_) | PaneView::Baseline(_));
         return Some(hit);
     }
-    let rows = series.bars().rows();
     let (items, spacing) = match view {
         PaneView::Bars(v) => {
             let d = v.data()?;
@@ -153,9 +152,11 @@ where
             (
                 d.items[r.from..r.to]
                     .iter()
-                    .enumerate()
-                    .map(|(i, p)| RangePoint {
-                        index: rows[r.from + i].index().value(),
+                    .map(|p| RangePoint {
+                        index: model
+                            .time_scale()
+                            .coordinate_to_index(p.x.into(), false)
+                            .value(),
                         x: p.x,
                         top: p.high_y,
                         bottom: p.low_y,
@@ -170,9 +171,11 @@ where
             (
                 d.items[r.from..r.to]
                     .iter()
-                    .enumerate()
-                    .map(|(i, p)| RangePoint {
-                        index: rows[r.from + i].index().value(),
+                    .map(|p| RangePoint {
+                        index: model
+                            .time_scale()
+                            .coordinate_to_index(p.x.into(), false)
+                            .value(),
                         x: p.x,
                         top: p.high_y,
                         bottom: p.low_y,

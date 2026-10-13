@@ -34,6 +34,51 @@ fn chart() -> (Chart, feather_charts::model::data_layer::SeriesId) {
     (c, id)
 }
 #[test]
+fn visible_ohlc_hits_preserve_logical_indexes_across_whitespace_gaps() {
+    use feather_charts::{model::time_data::LogicalRange, ui::hit_testing::HitGeometry};
+    for kind in [SeriesType::Bar, SeriesType::Candlestick] {
+        let mut c = Chart::default();
+        let shared = c
+            .add_series(options(SeriesType::Line), 0, PriceScalePosition::Right)
+            .unwrap();
+        c.set_data(shared, (0..50).map(|i| row(SeriesType::Line, i)).collect())
+            .unwrap();
+        let id = c
+            .add_series(options(kind), 0, PriceScalePosition::Right)
+            .unwrap();
+        c.set_data(
+            id,
+            [0, 1, 2, 30, 32, 34, 36]
+                .into_iter()
+                .map(|i| row(kind, i))
+                .collect(),
+        )
+        .unwrap();
+        c.set_logical_range(LogicalRange {
+            from: 29.0.into(),
+            to: 37.0.into(),
+        });
+        c.prepare(iced::Size::new(640., 480.), 1.25, std::time::Instant::now())
+            .unwrap();
+        let geometry = &c
+            .frame()
+            .plot
+            .hit_series
+            .iter()
+            .find(|h| h.series == id)
+            .unwrap()
+            .geometry;
+        let HitGeometry::Range { items, .. } = geometry else {
+            panic!("OHLC range geometry")
+        };
+        assert_eq!(
+            items.iter().map(|p| p.index).collect::<Vec<_>>(),
+            vec![30., 32., 34., 36.]
+        );
+    }
+}
+
+#[test]
 fn settled_line_hit_is_owned_and_public_click_reports_it() {
     let (mut c, id) = chart();
     let stroke = &c.frame().plot.lines[0];
