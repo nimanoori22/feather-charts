@@ -364,6 +364,7 @@ impl Chart {
                 Ok(())
             }
             Err(error) => {
+                self.last_hit = None;
                 self.frame = Default::default();
                 let mut pane = IcedChartFrame::default();
                 pane.layout.available = AxisBounds {

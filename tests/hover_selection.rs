@@ -715,3 +715,26 @@ fn raw_hover_is_independent_of_magnet_and_reconciles_after_navigation() {
             .is_empty()
     );
 }
+
+#[test]
+fn failed_preparation_clears_selection_without_a_reconciliation_loop() {
+    let (mut c, id) = chart();
+    let point = position(&c, id, 4., 104.);
+    c.update(ChartMessage::Click {
+        pane: 0,
+        position: point,
+    })
+    .unwrap();
+    let retained = c.frame().clone();
+    assert!(
+        c.prepare(iced::Size::new(-1., 480.), 1.25, std::time::Instant::now())
+            .is_err()
+    );
+    assert!(c.hit_test(0, point).is_none());
+    assert!(c.frame().plot.hovered_series.is_none());
+    assert!(
+        !c.is_animating(),
+        "failed geometry must not retry forever for a stale target"
+    );
+    assert_eq!(retained.plot.hit_test(point).unwrap().series, id);
+}
