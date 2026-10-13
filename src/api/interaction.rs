@@ -403,17 +403,16 @@ impl Chart {
             let first = scale.first_value()?;
             Some(scale.coordinate_to_price(y?.into(), first))
         });
+        let hit = pane
+            .zip(point)
+            .and_then(|(pane, point)| self.hit_test(pane, point));
+        let marker = hit.as_ref().and_then(|h| match &h.target {
+            super::HitTarget::Marker(m) => Some(m.clone()),
+            _ => None,
+        });
         PointerEvent {
-            hit: pane
-                .zip(point)
-                .and_then(|(pane, point)| self.hit_test(pane, point)),
-            marker: pane
-                .zip(point)
-                .and_then(|(pane, point)| self.hit_test(pane, point))
-                .and_then(|h| match h.target {
-                    super::HitTarget::Marker(m) => Some(m),
-                    _ => None,
-                }),
+            hit,
+            marker,
             pane,
             point,
             logical,

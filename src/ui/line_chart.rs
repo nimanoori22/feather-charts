@@ -1,4 +1,5 @@
 //! Iced adapter. Model/frame preparation is separate from immutable Canvas draw.
+mod series_drawing;
 mod series_paint;
 use crate::{
     model::{
@@ -31,6 +32,7 @@ use iced::{
     Color, Rectangle, Size,
     widget::canvas::{Frame, LineCap, LineJoin, Path, Stroke},
 };
+pub use series_drawing::{SeriesDrawPass, SeriesPassKind};
 pub use series_paint::{CanvasGradientMarkers, CanvasGradientStroke};
 use series_paint::{canvas_fill, canvas_gradient};
 use std::{hash::Hash, time::Instant};
@@ -129,9 +131,13 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub hovered_series: Option<SeriesId>,
+    pub hovered_series_on_top: bool,
+    /// Visible hit geometry in stable source order, independent of raised drawing.
     pub hit_series: Vec<super::hit_testing::PreparedSeriesHit>,
     pub series_id: Option<SeriesId>,
     pub price_line_series: Vec<SeriesId>,
+    /// Sorted by SeriesId; ties retain the source pane-view order.
     pub hit_price_lines: Vec<super::hit_testing::PreparedPriceLineHit>,
     pub price_line_kinds: Vec<crate::model::hit_test::PriceLineKind>,
     pub annotation_ratio: f64,
@@ -157,6 +163,8 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            hovered_series: None,
+            hovered_series_on_top: true,
             series_id: None,
             price_line_series: vec![],
             hit_price_lines: vec![],
@@ -374,6 +382,8 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            hovered_series: None,
+            hovered_series_on_top: true,
             series_id: None,
             price_line_series: vec![],
             hit_price_lines: vec![],
@@ -463,39 +473,7 @@ impl PlotSnapshot {
             frame.fill_rectangle(iced::Point::ORIGIN, size, self.background);
         }
         self.draw_strokes(frame, self.grid.iter());
-        self.draw_series_price_lines(frame, self.series_id, true);
-        self.draw_fills(frame, &self.fills);
-        self.draw_strokes(frame, self.lines.iter());
-        self.draw_gradient_strokes(frame, &self.gradient_lines);
-        for rect in &self.candles {
-            frame.fill_rectangle(rect.origin, rect.size, rect.color);
-        }
-
-        self.draw_markers(frame, &self.markers);
-        self.draw_gradient_markers(frame, &self.gradient_markers);
-        self.draw_series_price_lines(frame, self.series_id, false);
-        self.draw_annotations(
-            frame,
-            crate::model::series_markers::MarkerZOrder::Normal,
-            Some(0),
-        );
-        for (index, layer) in self.series_layers.iter().enumerate() {
-            self.draw_series_price_lines(frame, layer.series_id, true);
-            self.draw_fills(frame, &layer.fills);
-            self.draw_strokes(frame, layer.lines.iter());
-            self.draw_gradient_strokes(frame, &layer.gradient_lines);
-            for rect in &layer.candles {
-                frame.fill_rectangle(rect.origin, rect.size, rect.color);
-            }
-            self.draw_markers(frame, &layer.markers);
-            self.draw_gradient_markers(frame, &layer.gradient_markers);
-            self.draw_series_price_lines(frame, layer.series_id, false);
-            self.draw_annotations(
-                frame,
-                crate::model::series_markers::MarkerZOrder::Normal,
-                Some(index + 1),
-            );
-        }
+        self.draw_series(frame);
         // Low-level hosts can append strokes without an owning series.
         self.draw_strokes(
             frame,
@@ -909,6 +887,7 @@ where
             color_key: marker.color,
         });
     }
+    snapshot.hit_price_lines.sort_by_key(|p| p.series);
     Ok(snapshot)
 }
 

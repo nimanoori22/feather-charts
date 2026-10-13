@@ -75,7 +75,7 @@ fn common() -> SeriesOptionsCommon {
             base: Some(100.0),
         }),
         base_line_visible: true,
-        base_line_color: String::new(),
+        base_line_color: "#B2B5BE".into(),
         base_line_width: LineWidth::One,
         base_line_style: LineStyle::Solid,
         autoscale_info_provider: None,

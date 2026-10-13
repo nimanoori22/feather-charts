@@ -237,6 +237,10 @@ impl PreparedPriceLineHit {
     }
 }
 impl PlotSnapshot {
+    pub(crate) fn prepare_hover(&mut self, point: Option<iced::Point>, enabled: bool) {
+        self.hovered_series_on_top = enabled;
+        self.hovered_series = point.and_then(|p| self.hit_test(p)).map(|h| h.series);
+    }
     pub fn hit_test(&self, point: iced::Point) -> Option<ChartHit> {
         if !point.x.is_finite()
             || !point.y.is_finite()
@@ -249,9 +253,17 @@ impl PlotSnapshot {
         }
         let marker = self.marker_hit(point);
         let mut best: Option<(ChartHit, InternalHitTestCandidate)> = None;
-        for series in self.hit_series.iter().rev() {
+        let mut geometry = self.hit_series.iter().rev().peekable();
+        let sources =
+            std::iter::once(self.series_id).chain(self.series_layers.iter().map(|s| s.series_id));
+        for id in sources.rev().flatten() {
+            let series = if geometry.peek().is_some_and(|s| s.series == id) {
+                geometry.next()
+            } else {
+                None
+            };
             if let Some(m) = &marker
-                && m.series == series.series
+                && m.series == id
             {
                 return best.map(|(h, _)| h).or_else(|| {
                     Some(ChartHit {
@@ -260,10 +272,9 @@ impl PlotSnapshot {
                     })
                 });
             }
-            let prices = self
-                .hit_price_lines
-                .iter()
-                .filter(|p| p.series == series.series);
+            let from = self.hit_price_lines.partition_point(|p| p.series < id);
+            let to = self.hit_price_lines.partition_point(|p| p.series <= id);
+            let prices = self.hit_price_lines[from..to].iter();
             let mut local: Option<(ChartHit, InternalHitTestCandidate)> = None;
             let mut offer = |hit: Option<(ChartHit, InternalHitTestCandidate)>| {
                 if let Some(h) = hit
@@ -278,7 +289,7 @@ impl PlotSnapshot {
             {
                 offer(p.hit(f64::from(point.y)));
             }
-            offer(series.hit(f64::from(point.x), f64::from(point.y)));
+            offer(series.and_then(|s| s.hit(f64::from(point.x), f64::from(point.y))));
             for p in
                 prices.filter(|p| p.kind != crate::model::hit_test::PriceLineKind::RelativeBase)
             {

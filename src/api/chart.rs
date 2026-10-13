@@ -69,6 +69,7 @@ static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    hovered_series_on_top: bool,
     pub(super) last_hit: Option<super::ChartHit>,
     pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
     layer: DataLayer<HorzScaleBehaviorTime>,
@@ -106,6 +107,7 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            hovered_series_on_top: true,
             last_hit: None,
             size: iced::Size::ZERO,
             ratio: 1.,
@@ -312,6 +314,18 @@ impl Chart {
                 &mut IcedAxisMeasurer { fonts: &self.fonts },
                 now,
             )
+            .map(|mut snapshot| {
+                let origin = self.model.crosshair().origin();
+                for (index, pane) in snapshot.panes.iter_mut().enumerate() {
+                    pane.plot.prepare_hover(
+                        origin
+                            .filter(|o| o.pane == index)
+                            .map(|o| iced::Point::new(o.point.x as f32, o.point.y as f32)),
+                        self.hovered_series_on_top,
+                    );
+                }
+                snapshot
+            })
             .map_err(ChartError::Frame)
     }
     /// Prepare an immutable frame after a batch of updates. Failed preparation
@@ -336,7 +350,16 @@ impl Chart {
                     .map_err(ChartError::Frame)
             });
         match result {
-            Ok(frame) => {
+            Ok(mut frame) => {
+                let origin = self.model.crosshair().origin();
+                for (index, pane) in frame.panes.iter_mut().enumerate() {
+                    pane.plot.prepare_hover(
+                        origin
+                            .filter(|o| o.pane == index)
+                            .map(|o| iced::Point::new(o.point.x as f32, o.point.y as f32)),
+                        self.hovered_series_on_top,
+                    );
+                }
                 self.frame = frame;
                 Ok(())
             }
@@ -354,6 +377,17 @@ impl Chart {
     }
     pub fn frame(&self) -> &IcedChartFrame {
         self.frame.panes.first().unwrap_or(&EMPTY_FRAME)
+    }
+    /// Source default is enabled. Changes drawing order without changing selection order.
+    pub fn set_hovered_series_on_top(&mut self, enabled: bool) {
+        self.hovered_series_on_top = enabled;
+        for pane in &mut self.frame.panes {
+            pane.plot.hovered_series_on_top = enabled;
+        }
+        self.revision = self.revision.wrapping_add(1);
+    }
+    pub fn hovered_series_on_top(&self) -> bool {
+        self.hovered_series_on_top
     }
     pub fn hit_test(&self, pane: usize, point: iced::Point) -> Option<super::ChartHit> {
         self.frame.panes.get(pane)?.plot.hit_test(point)
