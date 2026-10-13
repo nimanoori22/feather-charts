@@ -234,6 +234,7 @@ impl TextMeasurer for IcedAxisTextMeasurer {
 
 #[derive(Clone, Debug)]
 pub(crate) enum AxisPrimitive {
+    PrimitiveLayer(crate::api::PrimitiveLayer),
     Fill {
         origin: Point,
         size: Size,
@@ -259,6 +260,9 @@ impl IcedPriceAxis {
         let mut primitives = vec![];
         for command in &commands.commands {
             match command {
+                PriceAxisCommand::PrimitiveLayer(layer) => {
+                    primitives.push(AxisPrimitive::PrimitiveLayer(*layer))
+                }
                 PriceAxisCommand::RoundedRectangle {
                     rect,
                     radii,
@@ -354,6 +358,16 @@ impl IcedPriceAxis {
             draw_axis_primitives(&self.primitives, clip, frame);
         }
     }
+    pub(crate) fn draw_at_with(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+        hook: impl FnMut(&mut Frame, crate::api::PrimitiveLayer),
+    ) {
+        if let Some(clip) = axis_region_clip(region, frame.size()) {
+            crate::ui::price_axis::draw_axis_primitives_with(&self.primitives, clip, frame, hook);
+        }
+    }
     fn clip_bounds(&self, available: Size) -> Option<Rectangle> {
         let size = Size::new(
             self.size.width.min(available.width),
@@ -368,11 +382,22 @@ pub(crate) fn draw_axis_primitives(
     clip: Rectangle,
     frame: &mut Frame,
 ) {
+    draw_axis_primitives_with(primitives, clip, frame, |_, _| {});
+}
+pub(crate) fn draw_axis_primitives_with(
+    primitives: &[AxisPrimitive],
+    clip: Rectangle,
+    frame: &mut Frame,
+    mut hook: impl FnMut(&mut Frame, crate::api::PrimitiveLayer),
+) {
     frame.with_clip(clip, |frame| {
         // Frame::draft does not inherit its parent's transform in Iced 0.14.
         frame.translate(iced::Vector::new(clip.x, clip.y));
         for primitive in primitives {
             match primitive {
+                AxisPrimitive::PrimitiveLayer(layer) => {
+                    frame.with_save(|frame| hook(frame, *layer))
+                }
                 AxisPrimitive::Fill { origin, size, fill } => {
                     frame.fill_rectangle(*origin, *size, *fill)
                 }

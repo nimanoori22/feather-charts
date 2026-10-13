@@ -14,6 +14,7 @@ use crate::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TimeAxisCommand {
+    PrimitiveLayer(crate::model::ipane_primitive::PrimitivePaneViewZOrder),
     RoundedRectangle {
         rect: AxisRect,
         radii: [f32; 4],
@@ -57,6 +58,7 @@ pub struct TimeAxisMeasurement {
     widths: Vec<f64>,
     required_height: f64,
     floating_width: Option<f64>,
+    primitive_widths: Vec<f64>,
 }
 impl TimeAxisMeasurement {
     pub fn required_height(&self) -> f64 {
@@ -102,6 +104,25 @@ pub fn measure_time_axis<N: TextMeasurer, E: TextMeasurer>(
     } else {
         None
     };
+    let primitive_widths = if snapshot.visible {
+        snapshot
+            .primitive_labels
+            .iter()
+            .map(|l| f64::from(normal.measure_text(&l.axis.text).width))
+            .collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
+    if primitive_widths.iter().any(|w| !w.is_finite() || *w < 0.) {
+        return Err(TimeAxisRenderError::InvalidMetrics);
+    }
+    if snapshot
+        .primitive_labels
+        .iter()
+        .any(|l| !l.axis.coordinate.is_finite())
+    {
+        return Err(TimeAxisRenderError::InvalidSnapshot);
+    }
     if floating_width.is_some_and(|width| !width.is_finite() || width < 0.) {
         return Err(TimeAxisRenderError::InvalidMetrics);
     }
@@ -151,6 +172,7 @@ pub fn measure_time_axis<N: TextMeasurer, E: TextMeasurer>(
         widths,
         required_height,
         floating_width,
+        primitive_widths,
     })
 }
 
@@ -205,6 +227,11 @@ pub fn prepare_time_axis(
             color: snapshot.border_color.clone(),
         });
     }
+    if snapshot.primitive_graphics {
+        result.commands.push(TimeAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Bottom,
+        ));
+    }
     if snapshot.border_visible && snapshot.ticks_visible {
         for tick in snapshot.ticks.iter().rev() {
             result.commands.push(TimeAxisCommand::Rectangle {
@@ -253,8 +280,23 @@ pub fn prepare_time_axis(
             });
         }
     }
-    if let (Some(label), Some(width)) = (&snapshot.crosshair_label, measurement.floating_width) {
-        let width = source_round(width) + 2. * f64::from(options.padding_horizontal);
+    if snapshot.primitive_graphics {
+        result.commands.push(TimeAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Normal,
+        ));
+    }
+    let primitive_labels = snapshot
+        .primitive_labels
+        .iter()
+        .zip(&measurement.primitive_widths)
+        .map(|(l, w)| (&l.axis, *w, l.tick_visible));
+    let crosshair = snapshot
+        .crosshair_label
+        .as_ref()
+        .zip(measurement.floating_width)
+        .map(|(l, w)| (l, w, snapshot.ticks_visible));
+    for (label, text_width, tick_visible) in primitive_labels.chain(crosshair) {
+        let width = source_round(text_width) + 2. * f64::from(options.padding_horizontal);
         let mut x = (label.coordinate - width / 2.).floor() + 0.5;
         if x < 0. {
             x = 0.5;
@@ -291,7 +333,7 @@ pub fn prepare_time_axis(
             ],
             color: label.background.clone(),
         });
-        if snapshot.ticks_visible {
+        if tick_visible {
             result.commands.push(TimeAxisCommand::Rectangle {
                 rect: AxisRect {
                     origin: Point {
@@ -311,8 +353,7 @@ pub fn prepare_time_axis(
         result.commands.push(TimeAxisCommand::Text {
             label: label.text.clone(),
             position: Point {
-                x: x + f64::from(options.padding_horizontal)
-                    + source_round(measurement.floating_width.unwrap()) / 2.,
+                x: x + f64::from(options.padding_horizontal) + source_round(text_width) / 2.,
                 y,
             },
             emphasis: TimeLabelEmphasis::Normal,
@@ -320,6 +361,11 @@ pub fn prepare_time_axis(
             font_family: options.font_family.clone(),
             color: label.color.clone(),
         });
+    }
+    if snapshot.primitive_graphics {
+        result.commands.push(TimeAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Top,
+        ));
     }
     Ok(result)
 }

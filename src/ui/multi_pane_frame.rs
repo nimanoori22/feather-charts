@@ -123,7 +123,14 @@ impl MultiPaneChartFrameOwner {
             .zip(&input.series)
             .map(|(view, id)| vec![(*id, view)])
             .collect::<Vec<_>>();
-        self.prepare_borrowed(model, controller, &mut borrowed, input, measurer, now)
+        self.prepare_borrowed(
+            model,
+            controller,
+            &mut borrowed,
+            input,
+            (measurer, &mut |_, _| Ok(())),
+            now,
+        )
     }
     pub fn prepare_composed<B, M, A>(
         &mut self,
@@ -143,23 +150,22 @@ impl MultiPaneChartFrameOwner {
         M: Clone + 'static,
         A: AxisMeasurer,
     {
-        let mut borrowed = views
-            .iter_mut()
-            .map(|pane| {
-                pane.iter_mut()
-                    .map(|(id, view)| (Some(*id), view))
-                    .collect()
-            })
-            .collect::<Vec<_>>();
-        self.prepare_borrowed(model, controller, &mut borrowed, input, measurer, now)
+        self.prepare_composed_decorated(
+            model,
+            controller,
+            views,
+            input,
+            (measurer, &mut |_, _| Ok(())),
+            now,
+        )
     }
-    fn prepare_borrowed<B, M, A>(
+    pub fn prepare_composed_decorated<B, M, A, D>(
         &mut self,
         model: &mut ChartModel<B, M>,
         controller: &mut TimeScaleAnimationController,
-        views: &mut [Vec<(Option<SeriesId>, &mut SeriesPaneView)>],
+        views: &mut [Vec<(SeriesId, SeriesPaneView)>],
         input: &MultiPaneChartFrameInput,
-        measurer: &mut A,
+        preparation: (&mut A, &mut D),
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartFrameError>
     where
@@ -170,7 +176,44 @@ impl MultiPaneChartFrameOwner {
         B::CacheKey: Eq + Hash,
         M: Clone + 'static,
         A: AxisMeasurer,
+        D: FnMut(
+            &mut ChartModel<B, M>,
+            &mut [crate::model::axis_snapshots::AxisSnapshots],
+        ) -> Result<(), ChartFrameError>,
     {
+        let mut borrowed = views
+            .iter_mut()
+            .map(|pane| {
+                pane.iter_mut()
+                    .map(|(id, view)| (Some(*id), view))
+                    .collect()
+            })
+            .collect::<Vec<_>>();
+        self.prepare_borrowed(model, controller, &mut borrowed, input, preparation, now)
+    }
+    fn prepare_borrowed<B, M, A, D>(
+        &mut self,
+        model: &mut ChartModel<B, M>,
+        controller: &mut TimeScaleAnimationController,
+        views: &mut [Vec<(Option<SeriesId>, &mut SeriesPaneView)>],
+        input: &MultiPaneChartFrameInput,
+        preparation: (&mut A, &mut D),
+        now: Instant,
+    ) -> Result<MultiPaneChartFrameSnapshot, ChartFrameError>
+    where
+        B: HorzScaleBehavior,
+        B::Item: 'static,
+        B::InternalItem: 'static,
+        B::Key: PartialOrd,
+        B::CacheKey: Eq + Hash,
+        M: Clone + 'static,
+        A: AxisMeasurer,
+        D: FnMut(
+            &mut ChartModel<B, M>,
+            &mut [crate::model::axis_snapshots::AxisSnapshots],
+        ) -> Result<(), ChartFrameError>,
+    {
+        let (measurer, decorate) = preparation;
         let result = (|| {
             for (_, view) in views.iter_mut().flatten() {
                 view.borrowed().clear();
@@ -214,19 +257,22 @@ impl MultiPaneChartFrameOwner {
                 }
             }
             let mut measure_all = |model: &mut ChartModel<B, M>| {
-                let mut axes = Vec::with_capacity(count);
+                let mut axes = (0..count)
+                    .map(|pane| {
+                        model
+                            .prepare_axis_snapshots(pane)
+                            .map_err(|e| ChartFrameError::Plot(FrameError::Axes(e)))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                decorate(model, &mut axes)?;
                 let mut measurements = Vec::with_capacity(count);
                 let mut requests = AxisSizeRequests::default();
-                for pane in 0..count {
-                    let snapshot = model
-                        .prepare_axis_snapshots(pane)
-                        .map_err(|e| ChartFrameError::Plot(FrameError::Axes(e)))?;
-                    let measured = measurer.measure(&snapshot)?;
+                for snapshot in &axes {
+                    let measured = measurer.measure(snapshot)?;
                     let q = measured.requests();
                     requests.left_width = requests.left_width.max(q.left_width);
                     requests.right_width = requests.right_width.max(q.right_width);
                     requests.time_height = requests.time_height.max(q.time_height);
-                    axes.push(snapshot);
                     measurements.push(measured);
                 }
                 Ok::<_, ChartFrameError>((axes, measurements, requests))
@@ -324,6 +370,7 @@ impl MultiPaneChartFrameOwner {
                                 markers: series_plot.markers,
                             });
                     }
+                    plot.axes = Some(axes.clone());
                     panes.push(ChartFrameSnapshot {
                         layout: *pane_layout,
                         pane_left:
@@ -432,8 +479,7 @@ impl IcedMultiPaneChartFrame {
             pane.pane_labels.left.draw_at(frame, pane.layout.plot);
             pane.pane_labels.right.draw_at(frame, pane.layout.plot);
             pane.plot.draw_crosshair_at(frame, pane.layout.plot);
-            pane.prices.left.draw_at(frame, pane.layout.left_axis);
-            pane.prices.right.draw_at(frame, pane.layout.right_axis);
+            pane.draw_price_axes(frame);
         }
         for region in &self.layout.separators {
             if let Some(clip) = super::price_axis::axis_region_clip(*region, frame.size()) {

@@ -132,6 +132,7 @@ pub struct CanvasSeriesGeometry {
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
     pub primitives: Vec<crate::api::primitives::PreparedAttachment>,
+    pub time_primitives: Vec<crate::api::primitives::PreparedAttachment>,
     pub hovered_series: Option<SeriesId>,
     pub hovered_series_on_top: bool,
     /// Visible hit geometry in stable source order, independent of raised drawing.
@@ -165,6 +166,7 @@ impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
             primitives: vec![],
+            time_primitives: vec![],
             hovered_series: None,
             hovered_series_on_top: true,
             series_id: None,
@@ -385,6 +387,7 @@ impl PlotSnapshot {
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
             primitives: vec![],
+            time_primitives: vec![],
             hovered_series: None,
             hovered_series_on_top: true,
             series_id: None,

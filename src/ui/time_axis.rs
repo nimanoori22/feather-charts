@@ -54,6 +54,9 @@ impl IcedTimeAxis {
         let mut primitives = vec![];
         for command in &commands.commands {
             match command {
+                TimeAxisCommand::PrimitiveLayer(layer) => {
+                    primitives.push(AxisPrimitive::PrimitiveLayer(*layer))
+                }
                 TimeAxisCommand::RoundedRectangle {
                     rect,
                     radii,
@@ -127,6 +130,16 @@ impl IcedTimeAxis {
     ) {
         if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
             draw_axis_primitives(&self.primitives, clip, frame);
+        }
+    }
+    pub(crate) fn draw_at_with(
+        &self,
+        frame: &mut Frame,
+        region: crate::renderers::price_axis_renderer::AxisRect,
+        hook: impl FnMut(&mut Frame, crate::api::PrimitiveLayer),
+    ) {
+        if let Some(clip) = crate::ui::price_axis::axis_region_clip(region, frame.size()) {
+            crate::ui::price_axis::draw_axis_primitives_with(&self.primitives, clip, frame, hook);
         }
     }
     fn clip_bounds(&self, available: Size) -> Option<Rectangle> {

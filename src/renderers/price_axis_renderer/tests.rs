@@ -9,6 +9,7 @@ use crate::{
 pub(crate) fn snapshot(side: PriceAxisSide) -> PriceAxisSnapshot {
     let mut provider = PriceAxisRendererOptionsProvider::new();
     PriceAxisSnapshot {
+        primitive_graphics: false,
         labels: vec![],
         align_labels: true,
         label_center: None,

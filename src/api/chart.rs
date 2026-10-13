@@ -309,8 +309,21 @@ impl Chart {
             .iter()
             .map(|v| v.first().map(|(id, _)| *id))
             .collect();
+        let mut primitive_output = vec![];
+        let mut decorator =
+            |model: &mut ChartModel<HorzScaleBehaviorTime>,
+             axes: &mut [crate::model::axis_snapshots::AxisSnapshots]| {
+                primitive_output = super::primitives::prepare_axes(
+                    model,
+                    axes,
+                    &self.primitives,
+                    &self.primitive_panes,
+                    ratio,
+                )?;
+                Ok(())
+            };
         self.owner
-            .prepare_composed(
+            .prepare_composed_decorated(
                 &mut self.model,
                 &mut self.controller,
                 &mut self.views,
@@ -326,13 +339,22 @@ impl Chart {
                     },
                     background: self.background.clone(),
                 },
-                &mut IcedAxisMeasurer { fonts: &self.fonts },
+                (&mut IcedAxisMeasurer { fonts: &self.fonts }, &mut decorator),
                 now,
             )
             .map(|mut snapshot| {
                 let origin = self.model.crosshair().origin();
+                let time_primitives = primitive_output
+                    .iter()
+                    .flatten()
+                    .filter(|a| matches!(a.owner, super::PrimitiveOwner::Series(_)))
+                    .cloned()
+                    .collect::<Vec<_>>();
                 for (index, pane) in snapshot.panes.iter_mut().enumerate() {
-                    pane.plot.primitives = self.prepare_primitives(index, pane.plot.size, ratio);
+                    pane.plot.primitives = primitive_output.get(index).cloned().unwrap_or_default();
+                    if index == 0 {
+                        pane.plot.time_primitives = time_primitives.clone();
+                    }
                     pane.plot.prepare_hover(
                         origin
                             .filter(|o| o.pane == index)

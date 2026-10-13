@@ -52,6 +52,7 @@ fn label_cases(cases: &mut Vec<String>) {
             for side in [PriceAxisSide::Left, PriceAxisSide::Right] {
                 let mut provider = PriceAxisRendererOptionsProvider::new();
                 let snapshot = PriceAxisSnapshot {
+                    primitive_graphics: false,
                     labels: vec![],
                     align_labels: true,
                     label_center: None,
@@ -120,6 +121,8 @@ fn label_cases(cases: &mut Vec<String>) {
                 cases.push(format!("{{\"kind\":\"price-label\",\"ratio\":{ratio},\"coordinate\":{coordinate},\"left\":{},\"result\":{result:?}}}",side==PriceAxisSide::Left));
             }
             let snapshot = TimeAxisSnapshot {
+                primitive_graphics: false,
+                primitive_labels: vec![],
                 crosshair_label: Some(label),
                 visible: true,
                 ticks: vec![],

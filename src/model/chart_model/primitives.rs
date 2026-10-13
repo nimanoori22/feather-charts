@@ -9,6 +9,9 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    pub(crate) fn ordered_pane_sources(&mut self, pane: usize) -> Vec<SeriesId> {
+        self.panes[pane].ordered_source_ids().to_vec()
+    }
     pub(crate) fn set_primitive_autoscale(
         &mut self,
         owner: SeriesId,

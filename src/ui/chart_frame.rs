@@ -506,6 +506,20 @@ impl IcedChartFrame {
                 .map_err(ChartFrameError::TimeUi)?,
         })
     }
+    pub(crate) fn draw_price_axes(&self, frame: &mut iced::widget::canvas::Frame) {
+        self.prices
+            .left
+            .draw_at_with(frame, self.layout.left_axis, |frame, layer| {
+                self.plot
+                    .draw_axis_views(frame, layer, Some(PriceAxisSide::Left))
+            });
+        self.prices
+            .right
+            .draw_at_with(frame, self.layout.right_axis, |frame, layer| {
+                self.plot
+                    .draw_axis_views(frame, layer, Some(PriceAxisSide::Right))
+            });
+    }
     pub fn draw(&self, frame: &mut iced::widget::canvas::Frame) {
         // Fractional clip edges can leave partially covered pixels on WGPU.
         // Paint a continuous prepared backdrop before the independently clipped
@@ -538,9 +552,11 @@ impl IcedChartFrame {
         self.pane_labels.left.draw_at(frame, self.layout.plot);
         self.pane_labels.right.draw_at(frame, self.layout.plot);
         self.plot.draw_crosshair_at(frame, self.layout.plot);
-        self.prices.left.draw_at(frame, self.layout.left_axis);
-        self.prices.right.draw_at(frame, self.layout.right_axis);
-        self.time.draw_at(frame, self.layout.time_axis);
+        self.draw_price_axes(frame);
+        self.time
+            .draw_at_with(frame, self.layout.time_axis, |frame, layer| {
+                self.plot.draw_axis_views(frame, layer, None)
+            });
         self.left_corner.draw_at(frame, self.layout.left_corner);
         self.right_corner.draw_at(frame, self.layout.right_corner);
     }

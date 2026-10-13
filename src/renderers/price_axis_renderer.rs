@@ -27,6 +27,7 @@ pub enum AxisTextAlignment {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum PriceAxisCommand {
+    PrimitiveLayer(crate::model::ipane_primitive::PrimitivePaneViewZOrder),
     RoundedRectangle {
         rect: AxisRect,
         radii: [f32; 4],
@@ -142,11 +143,13 @@ pub fn measure_price_axis<M: TextMeasurer>(
             }
         })
         .collect::<Vec<_>>();
-    if snapshot
-        .labels
-        .iter()
-        .any(|l| !l.axis.coordinate.is_finite() || !l.render_coordinate.is_finite())
-        || snapshot.label_center.is_some_and(|v| !v.is_finite())
+    if snapshot.labels.iter().any(|l| {
+        !l.axis.coordinate.is_finite()
+            || !l.render_coordinate.is_finite()
+            || l.fixed_coordinate.is_some_and(|v| !v.is_finite())
+            || !l.additional_padding.is_finite()
+            || l.additional_padding < 0.
+    }) || snapshot.label_center.is_some_and(|v| !v.is_finite())
     {
         return Err(PriceAxisRenderError::InvalidSnapshot);
     }
@@ -274,6 +277,11 @@ pub fn prepare_price_axis(
             color: snapshot.border_color.clone(),
         });
     }
+    if snapshot.primitive_graphics {
+        result.commands.push(PriceAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Bottom,
+        ));
+    }
     let tick_x = if left {
         bounds.width - f64::from(options.tick_length)
     } else {
@@ -324,6 +332,11 @@ pub fn prepare_price_axis(
             font_family: options.font_family.clone(),
             color: options.color.clone(),
         });
+    }
+    if snapshot.primitive_graphics {
+        result.commands.push(PriceAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Normal,
+        ));
     }
     result
         .commands
@@ -409,6 +422,11 @@ pub fn prepare_price_axis(
             font_family: options.font_family.clone(),
             color: label.color.clone(),
         });
+    }
+    if snapshot.primitive_graphics {
+        result.commands.push(PriceAxisCommand::PrimitiveLayer(
+            crate::api::PrimitiveLayer::Top,
+        ));
     }
     Ok(result)
 }

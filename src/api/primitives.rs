@@ -11,6 +11,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+pub use crate::model::axis_snapshots::PrimitiveAxisLabel;
 pub use crate::model::ipane_primitive::PrimitivePaneViewZOrder as PrimitiveLayer;
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PrimitiveId(u64);
@@ -99,6 +100,10 @@ impl PrimitiveView {
 }
 #[derive(Clone, Debug, Default)]
 pub struct PreparedPrimitive {
+    pub price_labels: Vec<PrimitiveAxisLabel>,
+    pub time_labels: Vec<PrimitiveAxisLabel>,
+    pub price_views: Vec<PrimitiveView>,
+    pub time_views: Vec<PrimitiveView>,
     pub views: Vec<PrimitiveView>,
 }
 #[derive(Clone, Debug)]
@@ -106,6 +111,7 @@ pub struct PreparedAttachment {
     pub id: PrimitiveId,
     pub owner: PrimitiveOwner,
     pub output: PreparedPrimitive,
+    pub price_side: Option<crate::model::axis_snapshots::PriceAxisSide>,
 }
 pub(crate) struct Attachment {
     pub id: PrimitiveId,
@@ -230,38 +236,6 @@ impl Chart {
             .map(|a| a.owner)
             .ok_or(ChartError::UnknownPrimitive(id))
     }
-    pub(crate) fn prepare_primitives(
-        &mut self,
-        pane: usize,
-        size: Size,
-        ratio: f32,
-    ) -> Vec<PreparedAttachment> {
-        let visible_range = self.model.visible_strict_range();
-        self.primitives
-            .iter()
-            .filter_map(|a| {
-                let owns = match a.owner {
-                    PrimitiveOwner::Series(id) => {
-                        self.model.pane_for_series(id) == Some(pane)
-                            && self.model.series(id)?.common_options().visible
-                    }
-                    PrimitiveOwner::Pane(id) => self.primitive_panes.get(pane) == Some(&id),
-                };
-                owns.then(|| PreparedAttachment {
-                    id: a.id,
-                    owner: a.owner,
-                    output: a.primitive.prepare(&PrimitiveContext {
-                        owner: a.owner,
-                        pane,
-                        size,
-                        pixel_ratio: ratio,
-                        model: &self.model,
-                        visible_range,
-                    }),
-                })
-            })
-            .collect()
-    }
 }
 
 impl crate::ui::line_chart::PlotSnapshot {
@@ -300,6 +274,170 @@ impl crate::ui::line_chart::PlotSnapshot {
                             }
                         });
                     }
+                }
+            }
+        }
+    }
+}
+
+pub(crate) fn prepare_axes(
+    model: &mut ChartModel<HorzScaleBehaviorTime>,
+    axes: &mut [crate::model::axis_snapshots::AxisSnapshots],
+    attachments: &[Attachment],
+    pane_keys: &[PrimitivePaneId],
+    ratio: f32,
+) -> Result<Vec<Vec<PreparedAttachment>>, crate::ui::chart_frame::ChartFrameError> {
+    use crate::model::{
+        axis_snapshots::{PriceAxisSide, SeriesAxisLabel},
+        pane::PriceScalePosition,
+    };
+    if attachments.is_empty() {
+        return Ok(vec![]);
+    }
+    let visible_range = model.visible_strict_range();
+    let mut output = vec![vec![]; axes.len()];
+    let mut time_labels = vec![];
+    for (pane, snapshots) in axes.iter_mut().enumerate() {
+        let source_ids = model.ordered_pane_sources(pane);
+        let state = &model.panes()[pane];
+        let mut ordered = attachments
+            .iter()
+            .filter(|a| match a.owner {
+                PrimitiveOwner::Series(id) => model.pane_for_series(id) == Some(pane),
+                PrimitiveOwner::Pane(id) => pane_keys.get(pane) == Some(&id),
+            })
+            .collect::<Vec<_>>();
+        ordered.sort_by_key(|a| match a.owner {
+            PrimitiveOwner::Pane(_) => 0,
+            PrimitiveOwner::Series(id) => 1 + source_ids.iter().position(|s| *s == id).unwrap_or(0),
+        });
+        for a in ordered {
+            let size = Size::new(state.width() as f32, state.height() as f32);
+            let mut prepared = a.primitive.prepare(&PrimitiveContext {
+                owner: a.owner,
+                pane,
+                size,
+                pixel_ratio: ratio,
+                model,
+                visible_range,
+            });
+            let price_side = match a.owner {
+                PrimitiveOwner::Series(id) => match state.source_position(id) {
+                    Some(PriceScalePosition::Left) => Some(PriceAxisSide::Left),
+                    Some(PriceScalePosition::Right) => Some(PriceAxisSide::Right),
+                    _ => None,
+                },
+                _ => None,
+            };
+            if let PrimitiveOwner::Series(id) = a.owner {
+                let label_side = price_side.or_else(|| {
+                    state.default_visible_price_scale().map(|s| {
+                        if s.id() == "left" {
+                            PriceAxisSide::Left
+                        } else {
+                            PriceAxisSide::Right
+                        }
+                    })
+                });
+                if let Some(side) = label_side {
+                    let axis = match side {
+                        PriceAxisSide::Left => &mut snapshots.left,
+                        PriceAxisSide::Right => &mut snapshots.right,
+                    };
+                    for label in prepared
+                        .price_labels
+                        .iter()
+                        .filter(|l| l.visible && !l.axis.text.is_empty())
+                    {
+                        axis.labels.push(SeriesAxisLabel {
+                            source: Some(id),
+                            axis: label.axis.clone(),
+                            pane_text: String::new(),
+                            render_coordinate: label
+                                .fixed_coordinate
+                                .unwrap_or(label.axis.coordinate),
+                            fixed_coordinate: label.fixed_coordinate,
+                            tick_visible: Some(label.tick_visible),
+                            additional_padding: axis.renderer_options.font_size / 3.,
+                        });
+                    }
+                }
+                time_labels.extend(
+                    prepared
+                        .time_labels
+                        .iter()
+                        .filter(|l| l.visible && !l.axis.text.is_empty())
+                        .cloned(),
+                );
+            } else {
+                prepared.price_labels.clear();
+                prepared.time_labels.clear();
+                prepared.price_views.clear();
+                prepared.time_views.clear();
+            }
+            if let Some(side) = price_side {
+                let axis = match side {
+                    PriceAxisSide::Left => &mut snapshots.left,
+                    PriceAxisSide::Right => &mut snapshots.right,
+                };
+                axis.primitive_graphics |= !prepared.price_views.is_empty();
+            }
+            output[pane].push(PreparedAttachment {
+                id: a.id,
+                owner: a.owner,
+                output: prepared,
+                price_side,
+            });
+        }
+        for axis in [&mut snapshots.left, &mut snapshots.right] {
+            axis.labels.sort_by_key(|label| {
+                label
+                    .source
+                    .and_then(|id| source_ids.iter().position(|s| *s == id))
+                    .unwrap_or(0)
+            });
+        }
+    }
+    for axis in axes {
+        axis.time.primitive_labels = time_labels.clone();
+        axis.time.primitive_graphics = output
+            .iter()
+            .flatten()
+            .any(|a| !a.output.time_views.is_empty());
+    }
+    Ok(output)
+}
+
+impl crate::ui::line_chart::PlotSnapshot {
+    pub(crate) fn draw_axis_views(
+        &self,
+        frame: &mut Frame,
+        layer: PrimitiveLayer,
+        side: Option<crate::model::axis_snapshots::PriceAxisSide>,
+    ) {
+        let attachments = if side.is_some() {
+            &self.primitives
+        } else {
+            &self.time_primitives
+        };
+        for background in [true, false] {
+            for a in attachments {
+                if side.is_some() && a.price_side != side {
+                    continue;
+                }
+                let views = if side.is_some() {
+                    &a.output.price_views
+                } else {
+                    &a.output.time_views
+                };
+                for v in views.iter().filter(|v| v.layer == layer) {
+                    frame.with_save(|frame| {
+                        if background {
+                            v.renderer.draw_background(frame)
+                        } else {
+                            v.renderer.draw(frame)
+                        }
+                    });
                 }
             }
         }

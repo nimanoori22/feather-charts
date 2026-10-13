@@ -234,6 +234,10 @@ where
                         .generate_contrast_colors(bg)
                         .map_err(|_| AxisSnapshotError::InvalidLabelColor)?;
                     labels.push(SeriesAxisLabel {
+                        source: Some(id),
+                        fixed_coordinate: None,
+                        tick_visible: None,
+                        additional_padding: 0.,
                         axis: FloatingAxisLabel {
                             coordinate: value.coordinate,
                             text: axis_text,
@@ -275,6 +279,10 @@ where
                         .generate_contrast_colors(bg)
                         .map_err(|_| AxisSnapshotError::InvalidLabelColor)?;
                     labels.push(SeriesAxisLabel {
+                        source: Some(id),
+                        fixed_coordinate: None,
+                        tick_visible: None,
+                        additional_padding: 0.,
                         axis: FloatingAxisLabel {
                             coordinate: y,
                             text: scale.format_price(options.price, first.value),

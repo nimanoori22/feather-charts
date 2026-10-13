@@ -41,8 +41,10 @@ pub(super) fn prepare(
             0.
         };
         let tick_height = vratio.floor().max(1.);
-        let mut height =
-            source_round(f64::from(o.font_size + o.padding_top + o.padding_bottom) * vratio);
+        let mut height = source_round(
+            f64::from(o.font_size + o.padding_top + o.padding_bottom + l.additional_padding)
+                * vratio,
+        );
         if height % 2. != tick_height % 2. {
             height += 1.;
         }
@@ -81,7 +83,7 @@ pub(super) fn prepare(
             },
             color: l.axis.background.clone(),
         });
-        if !pane && snapshot.ticks_visible {
+        if !pane && l.tick_visible.unwrap_or(snapshot.ticks_visible) {
             commands.push(PriceAxisCommand::Rectangle {
                 rect: AxisRect {
                     origin: Point {

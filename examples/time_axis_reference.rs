@@ -33,6 +33,8 @@ fn main() {
                     for bold in [false, true] {
                         for empty in [false, true] {
                             let snapshot = TimeAxisSnapshot {
+                                primitive_graphics: false,
+                                primitive_labels: vec![],
                                 crosshair_label: None,
                                 visible: true,
                                 ticks: if empty {
@@ -100,6 +102,9 @@ fn main() {
                                 .commands
                                 .iter()
                                 .map(|c| match c {
+                                    TimeAxisCommand::PrimitiveLayer(_) => {
+                                        unreachable!("fixture has no primitive views")
+                                    }
                                     TimeAxisCommand::RoundedRectangle { .. } => unreachable!(
                                         "ordinary axis reference has no floating label"
                                     ),

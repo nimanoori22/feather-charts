@@ -718,7 +718,7 @@ where
             .position(|attached| attached.id == id)
     }
 
-    fn source_position(&self, id: SeriesId) -> Option<&PriceScalePosition> {
+    pub(crate) fn source_position(&self, id: SeriesId) -> Option<&PriceScalePosition> {
         self.source_index(id)
             .map(|index| &self.attached_sources[index].position)
     }

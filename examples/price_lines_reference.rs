@@ -29,6 +29,10 @@ impl TextMeasurer for Metrics {
 }
 fn label(y: f64) -> SeriesAxisLabel {
     SeriesAxisLabel {
+        source: None,
+        fixed_coordinate: None,
+        tick_visible: None,
+        additional_padding: 0.,
         axis: FloatingAxisLabel {
             coordinate: y,
             text: "123.45".into(),

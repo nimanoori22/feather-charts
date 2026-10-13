@@ -80,6 +80,7 @@ impl DrawingPrimitive for Drawing {
                     calls: self.calls.clone(),
                 },
             )],
+            ..Default::default()
         }
     }
 }
@@ -333,4 +334,115 @@ fn autoscale_merges_ranges_last_margins_win_and_removal_restores_builtin() {
         }
     );
     assert_eq!(info.margins(), None);
+}
+
+#[derive(Debug)]
+struct Labels {
+    calls: Rc<RefCell<Vec<String>>>,
+}
+impl DrawingPrimitive for Labels {
+    fn prepare(&self, context: &PrimitiveContext<'_>) -> PreparedPrimitive {
+        use feather_charts::api::PrimitiveAxisLabel;
+        let mut fixed = PrimitiveAxisLabel::new(100., "Fixed", "blue", "white");
+        fixed.fixed_coordinate = Some(35.);
+        fixed.tick_visible = false;
+        let mut time = PrimitiveAxisLabel::new(-10., "Outside time", "blue", "white");
+        time.fixed_coordinate = Some(800.);
+        time.tick_visible = false;
+        PreparedPrimitive {
+            price_labels: vec![
+                PrimitiveAxisLabel::new(
+                    context.price_to_coordinate(105.).unwrap_or(100.),
+                    "A very wide primitive price label",
+                    "blue",
+                    "white",
+                ),
+                fixed,
+            ],
+            time_labels: vec![time],
+            price_views: vec![PrimitiveView::new(
+                PrimitiveLayer::Bottom,
+                Frozen {
+                    label: "price",
+                    width: 10.,
+                    calls: self.calls.clone(),
+                },
+            )],
+            time_views: vec![PrimitiveView::new(
+                PrimitiveLayer::Top,
+                Frozen {
+                    label: "time",
+                    width: 10.,
+                    calls: self.calls.clone(),
+                },
+            )],
+            ..Default::default()
+        }
+    }
+}
+#[test]
+fn primitive_labels_settle_axis_width_and_axis_views_are_clipped_and_drawn() {
+    use feather_charts::renderers::{
+        price_axis_renderer::PriceAxisCommand, time_axis_renderer::TimeAxisCommand,
+    };
+    let calls = Rc::new(RefCell::new(vec![]));
+    let mut chart = Chart::default();
+    let s = series(&mut chart, 0);
+    data(&mut chart, s);
+    chart
+        .prepare(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    let base_width = chart.frame().layout.right_axis.size.width;
+    chart
+        .add_series_primitive(
+            s,
+            Labels {
+                calls: calls.clone(),
+            },
+        )
+        .unwrap();
+    let snapshot = chart
+        .prepare_snapshot(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    let pane = &snapshot.panes[0];
+    assert!(pane.layout.right_axis.size.width > base_width);
+    assert!(pane.passes <= 8);
+    assert!(
+        pane.right
+            .commands
+            .iter()
+            .any(|cmd| matches!(cmd, PriceAxisCommand::Text{label,..} if label=="Fixed"))
+    );
+    let labels = &pane.plot.axes.as_ref().unwrap().right.labels;
+    assert_eq!(
+        labels
+            .iter()
+            .find(|l| l.axis.text == "Fixed")
+            .unwrap()
+            .fixed_coordinate,
+        Some(35.)
+    );
+    // The source ignores fixedCoordinate for time labels; it clamps the background only.
+    assert!(pane.time.commands.iter().any(|cmd| matches!(cmd, TimeAxisCommand::RoundedRectangle{rect,..} if rect.origin.x>=0. && rect.origin.x<2.)));
+    chart
+        .prepare(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    let width = chart.frame().layout.right_axis.size.width;
+    chart
+        .prepare(Size::new(640., 480.), 1.25, Instant::now())
+        .unwrap();
+    assert_eq!(width, chart.frame().layout.right_axis.size.width);
+    let renderer = renderer();
+    calls.borrow_mut().clear();
+    chart
+        .frame()
+        .draw(&mut Frame::new(&renderer, Size::new(640., 480.)));
+    assert_eq!(
+        calls
+            .borrow()
+            .iter()
+            .map(|s| s.split(':').take(2).collect::<Vec<_>>().join(":"))
+            .collect::<Vec<_>>(),
+        ["bg:price", "fg:price", "bg:time", "fg:time"]
+    );
 }

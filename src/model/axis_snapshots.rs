@@ -31,14 +31,48 @@ pub struct FloatingAxisLabel {
     pub color: String,
 }
 
+/// A primitive label's coordinate remains independent from its placement.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PrimitiveAxisLabel {
+    pub axis: FloatingAxisLabel,
+    pub fixed_coordinate: Option<f64>,
+    pub visible: bool,
+    pub tick_visible: bool,
+}
+impl PrimitiveAxisLabel {
+    pub fn new(
+        coordinate: f64,
+        text: impl Into<String>,
+        background: impl Into<String>,
+        color: impl Into<String>,
+    ) -> Self {
+        Self {
+            axis: FloatingAxisLabel {
+                coordinate,
+                text: text.into(),
+                background: background.into(),
+                color: color.into(),
+            },
+            fixed_coordinate: None,
+            visible: true,
+            tick_visible: true,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct SeriesAxisLabel {
+    pub source: Option<crate::model::data_layer::SeriesId>,
+    pub fixed_coordinate: Option<f64>,
+    pub tick_visible: Option<bool>,
+    pub additional_padding: f32,
     pub axis: FloatingAxisLabel,
     pub pane_text: String,
     pub render_coordinate: f64,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct PriceAxisSnapshot {
+    pub primitive_graphics: bool,
     pub labels: Vec<SeriesAxisLabel>,
     pub align_labels: bool,
     pub label_center: Option<f64>,
@@ -91,6 +125,8 @@ pub struct TimeAxisRendererOptions {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct TimeAxisSnapshot {
+    pub primitive_graphics: bool,
+    pub primitive_labels: Vec<PrimitiveAxisLabel>,
     pub crosshair_label: Option<FloatingAxisLabel>,
     pub visible: bool,
     pub ticks: Vec<TimeAxisTick>,
@@ -164,6 +200,7 @@ pub(crate) fn price_snapshot(
         })
         .clone();
     PriceAxisSnapshot {
+        primitive_graphics: false,
         labels: vec![],
         align_labels: options.align_labels,
         label_center: None,
@@ -207,6 +244,8 @@ pub(crate) fn time_snapshot<B: HorzScaleBehavior>(
         .collect();
     let size = layout.font_size as f32;
     TimeAxisSnapshot {
+        primitive_graphics: false,
+        primitive_labels: vec![],
         crosshair_label: None,
         visible: options.visible,
         ticks,

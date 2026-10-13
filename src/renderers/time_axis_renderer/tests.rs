@@ -9,6 +9,8 @@ use crate::model::{
 
 pub(crate) fn snapshot() -> TimeAxisSnapshot {
     TimeAxisSnapshot {
+        primitive_graphics: false,
+        primitive_labels: vec![],
         crosshair_label: None,
         visible: true,
         ticks: [

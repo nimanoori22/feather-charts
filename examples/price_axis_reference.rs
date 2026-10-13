@@ -37,6 +37,7 @@ fn main() {
                         for gradient in [false, true] {
                             let mut provider = PriceAxisRendererOptionsProvider::new();
                             let snapshot = PriceAxisSnapshot {
+                                primitive_graphics: false,
                                 labels: vec![],
                                 align_labels: true,
                                 label_center: None,
@@ -98,6 +99,9 @@ fn main() {
                                 .commands
                                 .iter()
                                 .map(|cmd| match cmd {
+                                    PriceAxisCommand::PrimitiveLayer(_) => {
+                                        unreachable!("fixture has no primitive views")
+                                    }
                                     PriceAxisCommand::RoundedRectangle { .. } => unreachable!(
                                         "ordinary axis reference has no floating label"
                                     ),
