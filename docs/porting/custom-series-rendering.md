@@ -84,7 +84,8 @@ Initial public horizontal behavior is Time, with application metadata retained
 inside the typed datum and unit common metadata. Full conflation rendering and
 arbitrary public horizontal-scale behavior remain separate milestones. Physical
 mouse/touchpad acceptance for the new custom demo is pending, including narrow
-windows and high DPI. Touch/kinetic navigation is the next roadmap stage.
+windows and high DPI. Touch/kinetic navigation has now been implemented and
+automatically verified; see [touch-navigation.md](touch-navigation.md).
 
 ## Custom preparation performance
 

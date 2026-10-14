@@ -2,7 +2,8 @@
 
 Plan: [primitive-editing-plan.md](primitive-editing-plan.md).
 Status: implementation and automated checks complete; physical acceptance pending.
-Performance limitation: overall preparation remains history-dependent; see the port report.
+Static previews and existing-time replacement are bounded after the preparation
+roadmap; genuine append still reindexes. See the preparation performance report.
 
 ## 0. Contract and design
 
@@ -67,6 +68,10 @@ Performance limitation: overall preparation remains history-dependent; see the p
 ## Recorded limit
 
 - [ ] Meet the original strict history-independent per-event performance target.
-  Editing math and preview notifications are bounded; full chart preparation and
-  live data updates still grow with history/source count. Measured debug limits
-  and baseline comparisons are recorded in `docs/porting/primitive-editing.md`.
+  Static chart previews now avoid offscreen scans/copies; existing-time live
+  replacement is bounded. Three isolated static-preview debug runs grow by at
+  most 0.46% median/0.44% p95 between 1,200 and 100,000 rows. Genuine time append
+  still requires full reindexing, and source-count cost remains. Keep the broad
+  per-event target open for those workloads. Evidence and exceptions are in
+  `docs/porting/preparation-performance.md`; earlier measurements remain recorded
+  in `docs/porting/primitive-editing.md`.

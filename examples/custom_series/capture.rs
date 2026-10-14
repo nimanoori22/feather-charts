@@ -39,11 +39,18 @@ pub fn run(directory: &str, wgpu: bool) {
         "manual",
         "pan",
         "markers",
+        "touch-pan",
+        "touch-pinch",
+        "touch-tracking",
+        "touch-loss",
+        "touch-inertia",
+        "touch-narrow",
+        "touch-multi-pane",
     ];
     for ratio in [1., 1.25, 1.5, 2.] {
         for state in states {
             let mut app = App {
-                size: if state == "narrow" {
+                size: if matches!(state, "narrow" | "touch-narrow") {
                     Size::new(420., 320.)
                 } else {
                     Size::new(900., 600.)
@@ -53,9 +60,9 @@ pub fn run(directory: &str, wgpu: bool) {
             };
             app.chart.prepare(app.size, ratio, Instant::now()).unwrap();
             match state {
-                "left" | "multi-pane" => {
+                "left" | "multi-pane" | "touch-multi-pane" => {
                     app.apply(Message::Remove);
-                    let pane = if state == "multi-pane" {
+                    let pane = if matches!(state, "multi-pane" | "touch-multi-pane") {
                         app.chart.add_pane()
                     } else {
                         0
@@ -179,6 +186,9 @@ pub fn run(directory: &str, wgpu: bool) {
                 _ => {}
             }
             app.chart.prepare(app.size, ratio, Instant::now()).unwrap();
+            if state.starts_with("touch-") {
+                touch(&mut app, state);
+            }
             if state == "hover" {
                 app.chart
                     .update(feather_charts::api::ChartMessage::Click {
@@ -239,4 +249,119 @@ pub fn run(directory: &str, wgpu: bool) {
         "{} custom-series captures passed on {backend}",
         states.len() * 4
     );
+}
+
+fn touch(app: &mut App, scenario: &str) {
+    use feather_charts::api::{ChartMessage, ChartState};
+    use iced::{
+        Point, Rectangle, mouse, touch,
+        widget::canvas::{Event, Program},
+    };
+    use std::time::Duration;
+    let mut state = ChartState::default();
+    let now = Instant::now();
+    let pane = usize::from(scenario == "touch-multi-pane");
+    let plot = app
+        .chart
+        .multi_frame()
+        .map_or(app.chart.frame().layout.plot, |multi| {
+            multi.layout.panes[pane].plot
+        });
+    let position = Point::new(
+        plot.origin.x as f32 + plot.size.width as f32 * 0.4,
+        plot.origin.y as f32 + plot.size.height as f32 * 0.4,
+    );
+    let mut deliver = |event: Event, ms| {
+        if let Some(mut message) = app
+            .chart
+            .program(std::convert::identity)
+            .update(
+                &mut state,
+                &event,
+                Rectangle::with_size(app.size),
+                mouse::Cursor::Unavailable,
+            )
+            .and_then(|a| a.into_inner().0)
+        {
+            if let ChartMessage::Touch(input) = &mut message {
+                input.now = now + Duration::from_millis(ms);
+            }
+            app.chart.update(message).unwrap();
+        }
+    };
+    let id = touch::Finger(1);
+    deliver(
+        Event::Touch(touch::Event::FingerPressed { id, position }),
+        0,
+    );
+    match scenario {
+        "touch-pinch" => {
+            let second = Point::new(position.x + 60., position.y);
+            deliver(
+                Event::Touch(touch::Event::FingerPressed {
+                    id: touch::Finger(2),
+                    position: second,
+                }),
+                10,
+            );
+            deliver(
+                Event::Touch(touch::Event::FingerMoved {
+                    id: touch::Finger(2),
+                    position: Point::new(second.x + 60., second.y),
+                }),
+                30,
+            );
+        }
+        "touch-tracking" => {
+            deliver(
+                Event::Window(iced::window::Event::RedrawRequested(
+                    now + Duration::from_millis(241),
+                )),
+                241,
+            );
+            deliver(
+                Event::Touch(touch::Event::FingerMoved {
+                    id,
+                    position: Point::new(position.x + 30., position.y + 20.),
+                }),
+                260,
+            );
+            deliver(
+                Event::Touch(touch::Event::FingerLifted { id, position }),
+                280,
+            );
+            assert!(app.chart.model().crosshair().position().is_some());
+        }
+        _ => {
+            for (ms, dx) in [(10, 10.), (30, 40.), (50, 80.), (70, 120.)] {
+                deliver(
+                    Event::Touch(touch::Event::FingerMoved {
+                        id,
+                        position: Point::new(position.x + dx, position.y + dx * 0.15),
+                    }),
+                    ms,
+                );
+            }
+            if scenario == "touch-loss" {
+                deliver(Event::Touch(touch::Event::FingerLost { id, position }), 80);
+                assert!(!app.chart.is_animating());
+                assert!(!app.chart.is_panning());
+            } else if scenario == "touch-inertia" {
+                deliver(
+                    Event::Touch(touch::Event::FingerLifted {
+                        id,
+                        position: Point::new(position.x + 120., position.y + 18.),
+                    }),
+                    80,
+                );
+                assert!(app.chart.is_animating());
+                app.chart
+                    .update(ChartMessage::Tick(now + Duration::from_millis(180)))
+                    .unwrap();
+            } else {
+                assert!(app.chart.is_panning());
+                assert_eq!(app.chart.pan_pane(), Some(pane));
+            }
+        }
+    }
 }

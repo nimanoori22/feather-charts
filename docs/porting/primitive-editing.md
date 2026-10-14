@@ -204,8 +204,10 @@ Drag geometry is start-relative and bounded in cost; preview notification uses a
 light update and never detaches/reattaches. Primitive-free presses skip primitive
 hit scanning. The chart's overall preparation/data-update paths still depend on
 history and source count: the original roadmap's strict history-independent
-per-event performance target is not fully met. Optimizing those existing paths
-is deferred and recorded explicitly; these debug measurements do not establish
+per-event performance target was not fully met at this checkpoint. The later
+[preparation roadmap](preparation-performance.md) makes static previews and
+existing-time replacement bounded; genuine append retains full reindexing and
+the broad per-event target remains open for that route. These debug measurements do not establish
 60 fps for large live workloads.
 
 ## Remaining scope and acceptance

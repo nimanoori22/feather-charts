@@ -38,9 +38,9 @@ to zoom. Wheel/drag on a price axis scales it; double-click restores autoscale.
 Vertical plot movement explicitly enters manual price mode. Panes share time
 navigation and keep independent price ranges.
 
-This API covers built-in and typed custom series and the default `Time`
-behavior. Arbitrary pane reordering,
-touch/kinetic input and full TradingView API parity remain future work.
+This API covers built-in and typed custom series, native touch/kinetic navigation,
+and the default `Time` behavior. Arbitrary pane reordering and full TradingView
+API parity remain future work.
 Options already represented by the engine do not imply every visual feature is
 rendered. Read-only `model()` inspection remains available for advanced hosts.
 
@@ -262,5 +262,28 @@ See the [primitive port report](docs/porting/primitive-support.md) and
 See the [editing report](docs/porting/primitive-editing.md) and
 [editing checklist](tasks/primitive-editing-todo.md) for the interaction contract
 and acceptance evidence. Physical mouse/touchpad editing acceptance is pending.
-Custom data-series rendering, more drawing tools, touch editing and JavaScript
-plugin compatibility remain future work.
+More drawing tools, touch editing and JavaScript plugin compatibility remain future work.
+
+## Native touch and inertia
+
+All chart demos accept native touchscreen input. Drag one finger to pan; use
+two fingers to zoom around their initial midpoint. Hold for 240 ms to track
+the crosshair. Tracking persists until the next unmoved tap by default; choose
+`TrackingExitMode::OnTouchEnd` to clear it on release.
+
+`Chart::set_touch_navigation_options` controls horizontal/vertical drag
+delegation, pinch and tracking exit. `Chart::set_kinetic_scroll_options` controls
+inertia: touch is enabled and mouse disabled by default. Flicking animates time
+offset; vertical price movement remains manual without inertia. New navigation,
+focus loss, owner removal and incompatible layout changes stop the animation.
+Touchpad wheel input continues through the wheel path.
+
+Try `cargo run --example custom_series` for mixed custom/built-in data or
+`cargo run --example public_chart -- --primitives` for mouse box editing alongside
+touch navigation. Touch does not edit annotations. Physical touchscreen and
+fresh mouse/touchpad acceptance remain pending. See the
+[touch report](docs/porting/touch-navigation.md) and
+[roadmap checklist](tasks/custom-series-todo.md).
+
+Preparation/update measurements and remaining append costs are recorded in the
+[performance report](docs/porting/preparation-performance.md).
