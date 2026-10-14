@@ -11,8 +11,13 @@ mod primitive_editing;
 pub use primitive_editing::{
     PrimitiveEditCancelReason, PrimitiveEditEvent, PrimitiveEditId, PrimitiveEditPhase,
 };
+mod touch;
+mod touch_input;
 mod widget;
 pub use interaction::{ChartEvent, ChartMessage, PointerEvent};
+pub use touch::{
+    KineticScrollOptions, TouchAction, TouchInteraction, TouchNavigationOptions, TrackingExitMode,
+};
 pub use widget::{ChartProgram, ChartState};
 
 pub use crate::model::price_line::{PriceLineId, PriceLineOptions};

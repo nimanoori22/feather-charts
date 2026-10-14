@@ -10,8 +10,12 @@ use crate::{
     },
 };
 use std::time::Instant;
+#[cfg(test)]
+#[path = "interaction/tests.rs"]
+mod tests;
 #[derive(Clone, Debug)]
 pub enum ChartMessage {
+    Touch(super::TouchInteraction),
     PrimitiveEdit(super::PrimitiveEditEvent),
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
@@ -50,6 +54,148 @@ pub(crate) struct PlotPan {
     price_started: bool,
 }
 impl Chart {
+    fn begin_kinetic(&mut self, now: Instant, touch: bool) {
+        self.kinetic = None;
+        if if touch {
+            self.kinetic_options.touch
+        } else {
+            self.kinetic_options.mouse
+        } {
+            let spacing = self.model.time_scale().bar_spacing();
+            self.kinetic = crate::model::kinetic_animation::KineticSampler::new(
+                0.2 / spacing,
+                7. / spacing,
+                0.997,
+                15. / spacing,
+            );
+            self.sample_kinetic(now);
+        }
+    }
+    fn sample_kinetic(&mut self, now: Instant) {
+        if let Some(sampler) = &mut self.kinetic {
+            sampler.add_position(self.model.time_scale().right_offset(), now);
+        }
+    }
+    fn finish_pan(&mut self, now: Instant, animate: bool) {
+        let animation = self
+            .kinetic
+            .take()
+            .filter(|_| animate)
+            .and_then(|sampler| sampler.start(self.model.time_scale().right_offset(), now));
+        self.touch_pending_pan = None;
+        self.cancel_plot_pan();
+        if let Some(animation) = animation {
+            self.model.set_time_scale_animation(
+                crate::model::invalidate_mask::AnimationRequest::new(animation),
+            );
+        }
+    }
+    fn start_plot_pan(&mut self, pane: usize, start: iced::Point) {
+        self.cancel_plot_pan();
+        let side = if self.model.panes()[pane].default_price_scale().id() == "left" {
+            PriceAxisSide::Left
+        } else {
+            PriceAxisSide::Right
+        };
+        self.plot_pan = Some(PlotPan {
+            pane,
+            side,
+            anchor_y: start.y,
+            price_started: false,
+        });
+        self.model.start_scroll_time(f64::from(start.x).into());
+    }
+    fn move_plot_pan(&mut self, position: iced::Point) -> Result<(), ChartError> {
+        if let Some(pan) = &mut self.plot_pan {
+            if !pan.price_started && position.y != pan.anchor_y {
+                self.model
+                    .start_scroll_price(pan.pane, pan.side, f64::from(pan.anchor_y))?;
+                pan.price_started = true;
+            }
+            if pan.price_started {
+                self.model
+                    .scroll_price_to(pan.pane, pan.side, f64::from(position.y))?;
+            }
+            self.model.scroll_time_to(f64::from(position.x).into());
+        }
+        Ok(())
+    }
+    fn apply_touch(
+        &mut self,
+        input: super::TouchInteraction,
+    ) -> Result<Option<(usize, iced::Point)>, ChartError> {
+        use super::TouchAction;
+        match input.action {
+            TouchAction::Press => {
+                self.stop_time_scale_animation();
+                self.cancel_plot_pan();
+                self.cancel_price_axis();
+                self.touch_pending_pan = None;
+                if self.touch_tracking
+                    && self
+                        .model
+                        .crosshair()
+                        .position()
+                        .is_some_and(|point| point.pane != input.pane)
+                {
+                    self.model.set_crosshair_position(input.pane, None)?;
+                    self.touch_tracking = false;
+                }
+            }
+            TouchAction::Pan { start, position } => {
+                if !self.touch_options.horizontal_drag && !self.touch_options.vertical_drag {
+                    return Ok(None);
+                }
+                if let Some(start) = start {
+                    self.stop_time_scale_animation();
+                    self.touch_pending_pan = Some((start, input.now));
+                } else if let Some((point, started)) = self.touch_pending_pan
+                    && point != position
+                {
+                    self.touch_pending_pan = None;
+                    self.start_plot_pan(input.pane, position);
+                    self.begin_kinetic(started, true);
+                }
+                self.move_plot_pan(position)?;
+                self.sample_kinetic(input.now);
+            }
+            TouchAction::Pinch { anchor, zoom } => {
+                self.stop_time_scale_animation();
+                self.cancel_plot_pan();
+                self.touch_pending_pan = None;
+                if self.touch_options.pinch {
+                    self.model.zoom_time(f64::from(anchor.x).into(), zoom);
+                }
+            }
+            TouchAction::Track { position } => {
+                self.stop_time_scale_animation();
+                self.cancel_plot_pan();
+                self.touch_pending_pan = None;
+                self.touch_tracking = true;
+                self.model.set_crosshair_position(
+                    input.pane,
+                    Some(crate::renderers::line_renderer::Point {
+                        x: f64::from(position.x),
+                        y: f64::from(position.y),
+                    }),
+                )?;
+            }
+            TouchAction::Tap { position } => {
+                self.finish_pan(input.now, false);
+                return Ok(Some((input.pane, position)));
+            }
+            TouchAction::End => self.finish_pan(input.now, true),
+            TouchAction::ExitTracking | TouchAction::Cancel => {
+                self.stop_time_scale_animation();
+                self.finish_pan(input.now, false);
+                if self.touch_tracking {
+                    self.model.set_crosshair_position(input.pane, None)?;
+                }
+                self.touch_tracking = false;
+            }
+        }
+        Ok(None)
+    }
     fn cancel_plot_pan(&mut self) {
         self.model.end_scroll_time();
         if let Some(pan) = self.plot_pan.take() {
@@ -79,13 +225,21 @@ impl Chart {
         &mut self,
         pane: usize,
         input: ChartInteraction,
+        now: Instant,
     ) -> Result<(), ChartError> {
         if pane >= self.model.panes().len() {
             return Err(crate::model::chart_model::ChartModelError::InvalidPane(pane).into());
         }
         use crate::model::coordinate::Coordinate;
+        self.touch_tracking = false;
         match input.navigation {
+            Some(Navigation::StopAnimation) => {
+                self.stop_time_scale_animation();
+                self.touch_pending_pan = None;
+            }
             Some(Navigation::Wheel { x, zoom, scroll }) => {
+                self.stop_time_scale_animation();
+                self.touch_pending_pan = None;
                 self.cancel_plot_pan();
                 self.model.zoom_time(Coordinate::new(x), zoom);
                 if scroll != 0. {
@@ -96,46 +250,31 @@ impl Chart {
             }
             Some(Navigation::Pan { start, position }) => {
                 if let Some(start) = start {
-                    self.cancel_plot_pan();
-                    let side = if self.model.panes()[pane].default_price_scale().id() == "left" {
-                        PriceAxisSide::Left
-                    } else {
-                        PriceAxisSide::Right
-                    };
-                    self.plot_pan = Some(PlotPan {
-                        pane,
-                        side,
-                        anchor_y: start.y,
-                        price_started: false,
-                    });
-                    self.model
-                        .start_scroll_time(Coordinate::new(f64::from(start.x)));
+                    self.stop_time_scale_animation();
+                    self.touch_pending_pan = None;
+                    self.start_plot_pan(pane, start);
+                    self.begin_kinetic(now, false);
                 }
-                if let Some(pan) = &mut self.plot_pan {
-                    if !pan.price_started && position.y != pan.anchor_y {
-                        self.model.start_scroll_price(
-                            pan.pane,
-                            pan.side,
-                            f64::from(pan.anchor_y),
-                        )?;
-                        pan.price_started = true;
-                    }
-                    if pan.price_started {
-                        self.model
-                            .scroll_price_to(pan.pane, pan.side, f64::from(position.y))?;
-                    }
-                    self.model
-                        .scroll_time_to(Coordinate::new(f64::from(position.x)));
-                }
+                self.move_plot_pan(position)?;
+                self.sample_kinetic(now);
             }
             Some(Navigation::Scroll { start, x }) => {
                 if let Some(start) = start {
+                    self.stop_time_scale_animation();
+                    self.touch_pending_pan = None;
                     self.cancel_plot_pan();
                     self.model.start_scroll_time(Coordinate::new(start));
+                    self.begin_kinetic(now, false);
                 }
                 self.model.scroll_time_to(Coordinate::new(x));
+                self.sample_kinetic(now);
             }
-            Some(Navigation::EndScroll) => self.cancel_plot_pan(),
+            Some(Navigation::EndScroll) => {
+                if !input.capture {
+                    self.stop_time_scale_animation();
+                }
+                self.finish_pan(now, input.capture);
+            }
             None => {}
         }
         self.model.set_crosshair_position(
@@ -154,6 +293,13 @@ impl Chart {
         self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.cancel_plot_pan();
         self.cancel_price_axis();
+        self.stop_time_scale_animation();
+        self.touch_pending_pan = None;
+        self.touch_epoch = self.touch_epoch.wrapping_add(1);
+        if self.touch_tracking {
+            let _ = self.model.set_crosshair_position(0, None);
+        }
+        self.touch_tracking = false;
         self.revision += 1;
     }
     pub(crate) fn cancel_viewport_interaction(&mut self) {
@@ -163,6 +309,13 @@ impl Chart {
         }
         self.cancel_plot_pan();
         self.cancel_price_axis();
+        self.stop_time_scale_animation();
+        self.touch_pending_pan = None;
+        self.touch_epoch = self.touch_epoch.wrapping_add(1);
+        if self.touch_tracking {
+            let _ = self.model.set_crosshair_position(0, None);
+        }
+        self.touch_tracking = false;
     }
     pub fn is_panning(&self) -> bool {
         self.plot_pan.is_some()
@@ -186,6 +339,11 @@ impl Chart {
         let mut clicked = None;
         let mut now = Instant::now();
         match message {
+            ChartMessage::Touch(input) if self.primitive_edit.is_none() => {
+                now = input.now;
+                clicked = self.apply_touch(input)?;
+            }
+            ChartMessage::Touch(_) => {}
             ChartMessage::PrimitiveEdit(event) => {
                 if let Some(event) = self.apply_primitive_edit(event) {
                     events.push(ChartEvent::PrimitiveEdit(event));
@@ -196,6 +354,10 @@ impl Chart {
             | ChartMessage::PriceAxis(_)
                 if self.primitive_edit.is_some() => {}
             ChartMessage::PriceAxis(input) => {
+                self.stop_time_scale_animation();
+                self.touch_pending_pan = None;
+                self.touch_epoch = self.touch_epoch.wrapping_add(1);
+                self.touch_tracking = false;
                 self.cancel_plot_pan();
                 self.model.set_crosshair_position(0, None)?;
                 let result = match input.action {
@@ -228,16 +390,19 @@ impl Chart {
                 }
             }
 
-            ChartMessage::Interaction(input) => self.apply_interaction(0, input)?,
+            ChartMessage::Interaction(input) => self.apply_interaction(0, input, now)?,
             ChartMessage::PaneInteraction(action) => match action {
                 MultiPaneInteraction::Plot { pane, interaction } => {
-                    self.apply_interaction(pane, interaction)?
+                    self.apply_interaction(pane, interaction, now)?
                 }
                 MultiPaneInteraction::Resize {
                     top,
                     upper_stretch,
                     lower_stretch,
                 } => {
+                    self.stop_time_scale_animation();
+                    self.touch_pending_pan = None;
+                    self.touch_epoch = self.touch_epoch.wrapping_add(1);
                     self.cancel_plot_pan();
                     self.model.set_crosshair_position(0, None)?;
                     self.model.set_pane_stretch_factor(top, upper_stretch)?;
@@ -250,6 +415,7 @@ impl Chart {
                         navigation: Some(Navigation::EndScroll),
                         capture: false,
                     },
+                    now,
                 )?,
             },
 
@@ -271,6 +437,7 @@ impl Chart {
                         navigation: None,
                         capture: true,
                     },
+                    now,
                 )?;
                 clicked = Some((pane, position));
             }
@@ -498,7 +665,7 @@ impl Chart {
         self.model.reset_price_scale(pane, side).map_err(Into::into)
     }
     pub fn zoom_time(&mut self, point: crate::model::coordinate::Coordinate, factor: f64) {
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
+        self.cancel_viewport_interaction();
         self.model.zoom_time(point, factor);
     }
     pub fn set_crosshair_position(
@@ -537,6 +704,20 @@ impl Chart {
         };
         let panes = self.model.panes().len();
         let valid = match message {
+            ChartMessage::Touch(input) => {
+                input.pane < panes
+                    && match input.action {
+                        super::TouchAction::Pan { start, position } => {
+                            start.is_none_or(point_valid) && point_valid(position)
+                        }
+                        super::TouchAction::Pinch { anchor, zoom } => {
+                            point_valid(anchor) && zoom.is_finite()
+                        }
+                        super::TouchAction::Track { position }
+                        | super::TouchAction::Tap { position } => point_valid(position),
+                        _ => true,
+                    }
+            }
             ChartMessage::PrimitiveEdit(event) => {
                 point_valid(event.start) && point_valid(event.position)
             }

@@ -38,6 +38,11 @@ impl Chart {
             revision: self.revision,
             membership: self.series_ids().collect(),
             primitive_edit: self.primitive_edit_id(),
+            touch_options: self.touch_options,
+            touch_epoch: self.touch_epoch,
+            applied_crosshair: self.model.crosshair().position().and_then(|p| {
+                p.y.map(|y| (p.pane, iced::Point::new(p.x as f32, y as f32)))
+            }),
             on_message,
         }
     }
@@ -61,10 +66,15 @@ pub struct ChartProgram<'a, Message> {
     revision: u64,
     membership: Vec<crate::model::data_layer::SeriesId>,
     primitive_edit: Option<super::PrimitiveEditId>,
+    touch_options: super::TouchNavigationOptions,
+    touch_epoch: u64,
+    applied_crosshair: Option<(usize, iced::Point)>,
     on_message: fn(ChartMessage) -> Message,
 }
 #[derive(Default)]
 pub struct ChartState {
+    touch_input: super::touch_input::TouchInput,
+    touch_epoch: Option<u64>,
     edit_input: super::primitive_edit_input::EditInput,
     unfocused: bool,
     input: ChartInput,
@@ -113,6 +123,70 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         if membership_changed {
             state.membership.clone_from(&self.membership);
         }
+        let now = match event {
+            canvas::Event::Window(iced::window::Event::RedrawRequested(now)) => *now,
+            _ => Instant::now(),
+        };
+        if matches!(
+            event,
+            canvas::Event::Window(iced::window::Event::RedrawRequested(_))
+        ) && bounds.size()
+            != Size::new(
+                self.snapshot.layout.available.width as f32,
+                self.snapshot.layout.available.height as f32,
+            )
+        {
+            state.touch_input.cancel(now);
+            return Some(self.publish(ChartMessage::Bounds(bounds.size())));
+        }
+        let touch_changed = state
+            .touch_epoch
+            .replace(self.touch_epoch)
+            .is_some_and(|old| old != self.touch_epoch);
+        if state.touch_input.is_active()
+            && (touch_changed
+                || bounds_changed
+                || membership_changed
+                || state.unfocused
+                || !self.enabled
+                || self.primitive_edit.is_some()
+                || !state.touch_input.owner_matches(self.axis_layouts()))
+            && let Some(mut output) = state.touch_input.cancel(now)
+        {
+            // A removed pane cannot receive an input message. Model-side cancellation
+            // already ended its interaction; clear tracking through a surviving pane.
+            if output.input.pane >= self.axis_layouts().len() {
+                output.input.pane = 0;
+            }
+            return Some(self.publish(ChartMessage::Touch(output.input)));
+        }
+        if matches!(event, canvas::Event::Mouse(event) if !matches!(event, iced::mouse::Event::WheelScrolled { .. }))
+            && state.touch_input.suppresses_mouse(now)
+        {
+            return None;
+        }
+        if self.enabled
+            && !state.unfocused
+            && self.primitive_edit.is_none()
+            && !state.axis_input.is_dragging()
+            && !state.input.is_dragging()
+            && !state.multi_input.is_dragging()
+            && let Some(output) = state.touch_input.update(
+                event,
+                bounds,
+                self.axis_layouts(),
+                self.touch_options,
+                self.applied_crosshair,
+                now,
+            )
+        {
+            let action = self.publish(ChartMessage::Touch(output.input));
+            return Some(if output.capture {
+                action.and_capture()
+            } else {
+                action
+            });
+        }
         let local = cursor
             .position()
             .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y));
@@ -158,6 +232,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             revision_changed || bounds_changed || membership_changed,
         ) {
             super::primitive_edit_input::EditAction::Capture(message) => {
+                state.touch_input.cancel(now);
                 state.click = None;
                 state.input = ChartInput::default();
                 state.multi_input = MultiPaneInput::default();
@@ -269,6 +344,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                     .axis_input
                     .update(event, local, self.axis_layouts(), &self.axis_scaling)
             {
+                state.touch_input.cancel(now);
                 return Some(self.publish(ChartMessage::PriceAxis(action)).and_capture());
             }
             if state.axis_input.is_dragging() && matches!(event, canvas::Event::Mouse(_)) {
@@ -287,6 +363,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                     self.enabled,
                     self.resize_panes,
                 ) {
+                    state.touch_input.cancel(now);
                     if let Some(clicked) = clicked {
                         return Some(self.publish(clicked).and_capture());
                     }
@@ -307,6 +384,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                     self.snapshot.layout.plot,
                     self.enabled,
                 ) {
+                    state.touch_input.cancel(now);
                     if let Some(clicked) = clicked {
                         return Some(self.publish(clicked).and_capture());
                     }
@@ -323,26 +401,26 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             return Some(self.publish(clicked).and_capture());
         }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
-            if bounds.size()
-                != Size::new(
-                    self.snapshot.layout.available.width as f32,
-                    self.snapshot.layout.available.height as f32,
-                )
-            {
-                return Some(self.publish(ChartMessage::Bounds(bounds.size())));
-            }
             if self.animate {
                 let next = state
                     .last_redraw
                     .map(|last| last + Duration::from_millis(16))
                     .unwrap_or(*now);
                 if *now < next {
-                    return Some(canvas::Action::request_redraw_at(next));
+                    return Some(canvas::Action::request_redraw_at(
+                        state
+                            .touch_input
+                            .deadline()
+                            .map_or(next, |deadline| deadline.min(next)),
+                    ));
                 }
                 state.last_redraw = Some(*now);
                 return Some(self.publish(ChartMessage::Tick(*now)));
             }
             state.last_redraw = None;
+            if let Some(deadline) = state.touch_input.deadline() {
+                return Some(canvas::Action::request_redraw_at(deadline));
+            }
         }
         None
     }

@@ -79,6 +79,7 @@ struct Demo {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Touch(feather_charts::api::TouchInteraction),
     PrimitiveEdit(feather_charts::api::PrimitiveEditEvent),
     Click { pane: usize, position: iced::Point },
     CrosshairMode,
@@ -314,6 +315,14 @@ impl Demo {
             self.chart.cancel_interaction();
         }
         match message {
+            Message::Touch(input) => {
+                self.error = self
+                    .chart
+                    .update(ChartMessage::Touch(input))
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
+            }
             Message::PriceAxis(input) => {
                 self.error = self
                     .chart
@@ -590,6 +599,7 @@ impl Demo {
 impl From<ChartMessage> for Message {
     fn from(message: ChartMessage) -> Self {
         match message {
+            ChartMessage::Touch(input) => Self::Touch(input),
             ChartMessage::PrimitiveEdit(input) => Self::PrimitiveEdit(input),
             ChartMessage::Interaction(input) => Self::Interaction(input),
             ChartMessage::PaneInteraction(input) => Self::PaneInteraction(input),

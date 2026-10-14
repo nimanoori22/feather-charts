@@ -85,6 +85,12 @@ pub struct Chart {
     pub(crate) size: iced::Size,
     pub(crate) ratio: f32,
     pub(crate) plot_pan: Option<super::interaction::PlotPan>,
+    pub(super) touch_options: super::TouchNavigationOptions,
+    pub(super) kinetic_options: super::KineticScrollOptions,
+    pub(super) kinetic: Option<crate::model::kinetic_animation::KineticSampler>,
+    pub(super) touch_pending_pan: Option<(iced::Point, std::time::Instant)>,
+    pub(super) touch_tracking: bool,
+    pub(super) touch_epoch: u64,
     pub(crate) active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     pub(super) kinds: BTreeMap<SeriesId, SeriesType>,
     pub(super) views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
@@ -131,6 +137,12 @@ impl Chart {
             size: iced::Size::ZERO,
             ratio: 1.,
             plot_pan: None,
+            touch_options: Default::default(),
+            kinetic_options: Default::default(),
+            kinetic: None,
+            touch_pending_pan: None,
+            touch_tracking: false,
+            touch_epoch: 0,
             active_price_axis: None,
             views: (0..usize::from(options.add_default_pane))
                 .map(|_| vec![])
@@ -467,25 +479,34 @@ impl Chart {
         self.controller.is_active() || changed || !self.pending_primitive_edits.is_empty()
     }
     pub fn fit_content(&mut self) {
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
+        self.cancel_viewport_interaction();
         self.model.fit_content();
     }
     pub fn set_logical_range(&mut self, range: crate::model::time_data::LogicalRange) {
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
+        self.cancel_viewport_interaction();
         self.model.set_logical_range(range);
     }
     pub fn set_right_offset(&mut self, offset: f64) {
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
+        self.cancel_viewport_interaction();
         self.model.set_right_offset(offset);
     }
     pub fn scroll_to_offset_animated(&mut self, offset: f64, duration: std::time::Duration) {
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
+        self.cancel_viewport_interaction();
         self.model.scroll_to_offset_animated(offset, duration);
     }
     pub fn stop_time_scale_animation(&mut self) {
+        self.controller.cancel();
+        self.kinetic = None;
         self.model.stop_time_scale_animation();
     }
     pub fn set_pane_stretch_factor(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
+        if !factor.is_finite() || factor <= 0. {
+            return Err(crate::model::chart_model::ChartModelError::InvalidDimensions.into());
+        }
+        if pane >= self.model.panes().len() {
+            return Err(crate::model::chart_model::ChartModelError::InvalidPane(pane).into());
+        }
+        self.cancel_viewport_interaction();
         self.model
             .set_pane_stretch_factor(pane, factor)
             .map_err(Into::into)
@@ -516,7 +537,7 @@ impl Chart {
         scale
             .margins_after_patch(patch.scale_margins.as_ref())
             .map_err(|e| ChartError::PriceAxis(PriceAxisOptionsError::Options(e)))?;
-        self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ExternalChange);
+        self.cancel_viewport_interaction();
         self.model
             .apply_price_axis_options(pane, side, patch)
             .map_err(ChartError::PriceAxis)

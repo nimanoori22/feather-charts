@@ -3,6 +3,7 @@ use iced::{Point, mouse, widget::canvas::Event};
 
 #[derive(Clone, Copy, Debug)]
 pub enum Navigation {
+    StopAnimation,
     Wheel {
         x: f64,
         zoom: f64,
@@ -141,6 +142,7 @@ impl ChartInput {
                 self.gesture_origin = Some(Point::new(plot.origin.x as f32, plot.origin.y as f32));
                 self.scrolling = false;
                 action.capture = true;
+                action.navigation = Some(Navigation::StopAnimation);
             }
             Event::Mouse(mouse::Event::CursorMoved { .. }) => {
                 // Native cursor dispatch can repeat the same position after a redraw.
