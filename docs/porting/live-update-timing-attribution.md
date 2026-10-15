@@ -171,3 +171,10 @@ The [retained summary](timing-attribution-summary.json) records the observations
 and hashes for the local protocols, raw scheduling records, interpretations,
 diagnostic builds and normal physical-test executable. Every original automated
 failure remains linked through the implementation report and historical studies.
+
+## Further presentation and update diagnostics
+
+The [follow-up report](presentation-update-follow-up.md) records bounded client
+commit timing, a privileged compositor observation with an unresolved identity
+gap, and pinned RDPMC whole-update/phase studies. No new production cause or fix
+was established. Acceptance remains open; the earlier failures above stand.

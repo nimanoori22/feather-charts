@@ -227,3 +227,16 @@ The user passed all normal-build mouse checks on both backends at regular, half
 and problem sizes, including short-height recovery. Exact sizes were not logged
 by the normal build. Touchpad, touchscreen and high-DPI coverage remain untested;
 Checkpoint C and conflation remain open.
+
+## Presentation/update diagnostic follow-up
+
+See the [diagnostic report](../docs/porting/presentation-update-follow-up.md) and
+[retained summary](../docs/porting/presentation-update-follow-up-summary.json).
+Client wire traces localize some software delays after submission. Three
+privileged software sessions did not reproduce a late frame, and the observer
+did not capture the PID-file identity needed for a verified surface join.
+Whole-update and phase RDPMC studies retain all samples; the original slow
+median was not reproduced and no engine fix was justified. Tasks 6/8 and
+automated acceptance stay open. Establish the observer PID-file handshake before
+another privileged run; resolve model-phase wall/user-cycle gaps before changing
+the normal update path. No unchanged acceptance set was rerun to obtain a pass.
