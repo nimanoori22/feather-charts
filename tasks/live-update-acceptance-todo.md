@@ -259,3 +259,15 @@ The captured late frames miss the previous compositor render, wait for the next
 render and then presentation. Update faults explain only part of model tails;
 the original slow median remains unreproduced. No desktop setting or engine
 behavior changed; automated acceptance and conflation remain open.
+
+## Controlled scheduling and update experiments
+
+The [experiment report](../docs/porting/timing-experiments.md) records twelve
+serial native dispatch runs, twelve finer model-counter runs and twenty-four
+marker-spacing comparisons. Earlier direct dispatch discarded 37 frames and
+failed its fixed improvement rule. The marker cache passed its behavior test but
+failed its fixed timing rule; both candidates remain isolated under target/.
+Active user-cycle growth with stable instruction counts narrows the update
+attribution without establishing a specific stall. No production remedy was
+retained, so tasks 6/8 and unchanged acceptance remain open. No acceptance
+retries, budget changes or conflation work followed these rejected candidates.

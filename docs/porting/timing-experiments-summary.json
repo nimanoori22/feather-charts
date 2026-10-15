@@ -1,0 +1,308 @@
+{
+  "diagnostic_only": true,
+  "source_commit": "3479208",
+  "acceptance": "OPEN",
+  "production_change_retained": false,
+  "frame_dispatch": {
+    "decision": "REJECT",
+    "runs": [
+      {
+        "name": "1-tiny-skia-redraw",
+        "pan_due_to_present_p95_ms": 44.552841,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "1-tiny-skia-direct",
+        "pan_due_to_present_p95_ms": 35.996858,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "1-wgpu-redraw",
+        "pan_due_to_present_p95_ms": 33.714429,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "1-wgpu-direct",
+        "pan_due_to_present_p95_ms": 32.425046,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "2-wgpu-direct",
+        "pan_due_to_present_p95_ms": 37.275548,
+        "p95_infinite": false,
+        "discarded": 12,
+        "unresolved": 0
+      },
+      {
+        "name": "2-wgpu-redraw",
+        "pan_due_to_present_p95_ms": 27.77439,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "2-tiny-skia-direct",
+        "pan_due_to_present_p95_ms": 35.831554,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "2-tiny-skia-redraw",
+        "pan_due_to_present_p95_ms": 29.448419,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "3-tiny-skia-redraw",
+        "pan_due_to_present_p95_ms": 31.092442,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "3-tiny-skia-direct",
+        "pan_due_to_present_p95_ms": null,
+        "p95_infinite": true,
+        "discarded": 22,
+        "unresolved": 0
+      },
+      {
+        "name": "3-wgpu-redraw",
+        "pan_due_to_present_p95_ms": 39.619949,
+        "p95_infinite": false,
+        "discarded": 0,
+        "unresolved": 0
+      },
+      {
+        "name": "3-wgpu-direct",
+        "pan_due_to_present_p95_ms": 26.002621,
+        "p95_infinite": false,
+        "discarded": 3,
+        "unresolved": 0
+      }
+    ]
+  },
+  "update_attribution": {
+    "runs": 12,
+    "samples_per_run": 2000,
+    "marks_per_update": 9,
+    "instrumented_median_range_ns": [
+      20454.5,
+      26350.0
+    ],
+    "example_run": "3-100000",
+    "example": {
+      "model": {
+        "normal": {
+          "wall_ns": 3009.0,
+          "cpu_ns": 3024.0,
+          "instructions": 8282.0,
+          "cycles": 7073.0,
+          "estimated_user_ns": 1833.323220321809,
+          "clock_ratio": 1.337847112237356
+        },
+        "slow_whole_updates": {
+          "wall_ns": 7505.0,
+          "cpu_ns": 7511.5,
+          "instructions": 8282.0,
+          "cycles": 24161.5,
+          "estimated_user_ns": 6229.132305411601,
+          "clock_ratio": 1.338297903684389
+        },
+        "faults": 0,
+        "switches": 0
+      },
+      "model_probe_end": {
+        "normal": {
+          "wall_ns": 1363.0,
+          "cpu_ns": 1361.0,
+          "instructions": 448.0,
+          "cycles": 624.0,
+          "estimated_user_ns": 166.66574730198263,
+          "clock_ratio": 1.2913223140495869
+        },
+        "slow_whole_updates": {
+          "wall_ns": 1368.0,
+          "cpu_ns": 1372.0,
+          "instructions": 448.0,
+          "cycles": 626.5,
+          "estimated_user_ns": 166.66574730198263,
+          "clock_ratio": 1.2985537190082646
+        },
+        "faults": 0,
+        "switches": 0
+      }
+    },
+    "limitation": "Per-mark syscalls perturb timing; user time is estimated from calibrated reference cycles. No specific stall established."
+  },
+  "marker_cache": {
+    "decision": "REJECT",
+    "analysis": {
+      "1200": {
+        "improvement_percent": [
+          {
+            "median_ms": 0.6177606177606194,
+            "p95_ms": -8.549002969876963
+          },
+          {
+            "median_ms": 4.061603502944287,
+            "p95_ms": 1.3868764231008177
+          },
+          {
+            "median_ms": 2.3146033196284486,
+            "p95_ms": 1.250427058421598
+          },
+          {
+            "median_ms": 1.5767506569794352,
+            "p95_ms": -2.3848630181985446
+          },
+          {
+            "median_ms": 0.8906633906634023,
+            "p95_ms": -19.397926634768737
+          },
+          {
+            "median_ms": 19.146813022327553,
+            "p95_ms": 19.92726242206688
+          }
+        ],
+        "baseline_median_range_ms": [
+          0.006469,
+          0.008017
+        ],
+        "cached_median_range_ms": [
+          0.006354,
+          0.006482
+        ],
+        "keep": false
+      },
+      "100000": {
+        "improvement_percent": [
+          {
+            "median_ms": 0.46490004649001254,
+            "p95_ms": -30.798977971134576
+          },
+          {
+            "median_ms": 1.2398591764885885,
+            "p95_ms": 2.2814662906946963
+          },
+          {
+            "median_ms": 1.4073615836684317,
+            "p95_ms": -4.942751169166269
+          },
+          {
+            "median_ms": -0.2325581395348877,
+            "p95_ms": -22.175322228084738
+          },
+          {
+            "median_ms": 2.287732227851986,
+            "p95_ms": 10.969205060873714
+          },
+          {
+            "median_ms": 0.1407349491790377,
+            "p95_ms": 7.664514145141448
+          }
+        ],
+        "baseline_median_range_ms": [
+          0.006395,
+          0.006533
+        ],
+        "cached_median_range_ms": [
+          0.006364,
+          0.006465
+        ],
+        "keep": false
+      },
+      "keep": false
+    }
+  },
+  "artifact_sha256": {
+    "target/frame-start-study/analyze.py": "ab7ed70c64d3af0f2cb711f4ae14796c44423a128b9e7c04b9fb5852da1302e4",
+    "target/frame-start-study/build.py": "072b4405b23c94aaf2a2621272328b9a21ffec9100f9c50403d0ebc6845bc353",
+    "target/frame-start-study/build/manifest.json": "e8a77bb4b1bb0c8751e50559a25c15627dc5abc26752328b8a861aba07cb4d46",
+    "target/frame-start-study/runs/1-tiny-skia-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/1-tiny-skia-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/1-wgpu-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/1-wgpu-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/2-tiny-skia-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/2-tiny-skia-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/2-wgpu-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/2-wgpu-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/3-tiny-skia-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/3-tiny-skia-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/3-wgpu-direct.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/3-wgpu-redraw.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/frame-start-study/runs/analysis.json": "5577ebc1f9598fce1339375e7a938f1292cd8480c72d0915b8cfa852a1e4c2a8",
+    "target/frame-start-study/runs/protocol.json": "ebedc198f30b94a52d57bc7b7ddaf36addf360573520d70115e6e6b7c4138f65",
+    "target/marker-spacing-study/build.py": "77b4c7d2cee5aa2c77740c5c3a8a2738d1cbcecbd44fbe6525eec1f56a54a8db",
+    "target/marker-spacing-study/build/manifest.json": "89e45221139c62701b6af6fdd3613a4ebf0b8a1bb73ad317ff9402799d20b4e0",
+    "target/marker-spacing-study/run.py": "5589c8120c170e4e0108d144b5d556427a3bee9e9340a4722d4cecc2ab110878",
+    "target/marker-spacing-study/runs/1-100000-baseline.log": "deb59bdcbca673a848618ce940053e29b1136256844066dc444e4843f995db9d",
+    "target/marker-spacing-study/runs/1-100000-cached.log": "52582beb0006b748d28caaaeba8be48b0b487698ea735efcf21afa4b9ba3fa87",
+    "target/marker-spacing-study/runs/1-1200-baseline.log": "5ed57dd8f589ea294a7aaae9bd2a884187410a438f379a1abdc76d5a4aa888e5",
+    "target/marker-spacing-study/runs/1-1200-cached.log": "01ff2465a3fb82cb6ae1a0c77b81257deccd091ccfd78c8fce7bacee6b1c9a1e",
+    "target/marker-spacing-study/runs/2-100000-baseline.log": "627843a24dae076922a918a3a6b0f60efa2e2d695c8f36a719a827e47389d843",
+    "target/marker-spacing-study/runs/2-100000-cached.log": "fbf93115905eb2b14354c10ae2c5f3188c7968cb73c8b940f694ced9d7ba7115",
+    "target/marker-spacing-study/runs/2-1200-baseline.log": "e8d8ef5c6617c259643bee2d888cd5ac5fca8c1bbe32eb9264a6e8f25f9337e0",
+    "target/marker-spacing-study/runs/2-1200-cached.log": "e7f3fd0b59e92acc83848728321c354b05c072a98cf8ffe670ee4b165055e255",
+    "target/marker-spacing-study/runs/3-100000-baseline.log": "732317d9772dcc39f503788e4be6f156f3b863cf070842adc7a453837fe47cfd",
+    "target/marker-spacing-study/runs/3-100000-cached.log": "bbac68a054725cdae899b538bd58d5c7c8a299cffbee9f485066d3a931479d31",
+    "target/marker-spacing-study/runs/3-1200-baseline.log": "a4d81d93a6aeb69ec291152f5c22d23e3a5562285da4fdfaa2dccb675a9fb8d7",
+    "target/marker-spacing-study/runs/3-1200-cached.log": "0b9fbac0ba697fdc0b5bd9b77a637ae758abd72142c6b38dae246eb2e9012da3",
+    "target/marker-spacing-study/runs/4-100000-baseline.log": "338aac548b45ef4714b028734a8615ab47dbf5e09e45ea79b95d8c9b47839aa6",
+    "target/marker-spacing-study/runs/4-100000-cached.log": "29890298f5b5fdedbe0cd0280e27c3e941342d07daa75569948a9f01440dcf99",
+    "target/marker-spacing-study/runs/4-1200-baseline.log": "8e0b07980901a9f0e4f706e6d06f2fd75b98843d5a0434f351d78e113dccd1f4",
+    "target/marker-spacing-study/runs/4-1200-cached.log": "99b9284d306016428332639dc941f9a85d21e5a321c6b6be5fb1976f169bacfe",
+    "target/marker-spacing-study/runs/5-100000-baseline.log": "02a651a719a709edbac95e699796dfca8d0d29b737a9b6bc4f569ab7bc1f00e8",
+    "target/marker-spacing-study/runs/5-100000-cached.log": "c0e5c42cd7ca0e3e55418c512cb54c6d3bf1dacff38874e6d908f9bde4de770c",
+    "target/marker-spacing-study/runs/5-1200-baseline.log": "239a067943746daa5e83c58f7d2bb076c417815dea274448726b8f52c45a299a",
+    "target/marker-spacing-study/runs/5-1200-cached.log": "023c8c560295c7ff44e59cf7b52be78a40e0e3ccfe989e340eba53a1e85eaec1",
+    "target/marker-spacing-study/runs/6-100000-baseline.log": "a53179b513de2155a9cfc2bf01e88a71d53ec8bfe3e1fa303ffacef53ee146a3",
+    "target/marker-spacing-study/runs/6-100000-cached.log": "09341387cc6513083d047673e41e3327788e6ab31763dfec361cb20233071b31",
+    "target/marker-spacing-study/runs/6-1200-baseline.log": "53a46216e4ecc9ff4f38ab57d2a6df247c0ee5be8acec9df20f460470c5259a4",
+    "target/marker-spacing-study/runs/6-1200-cached.log": "5837a1cd985c43db6acd7c3d2d8d411f55424ac517c1354e1625759505710a01",
+    "target/marker-spacing-study/runs/analysis.json": "7bc2bd6fb6f25601bf69a43662aa29a599efb7e7ad4b1866987141deecf1b551",
+    "target/marker-spacing-study/runs/protocol.json": "2a7f52b2a2c28fdf0acba938028a27516dbfe2c650abfa216d59fd10f931e598",
+    "target/marker-spacing-study/runs/results.json": "58b519e2329a13913b6f01b0fedf20bdce26415c40d5b10c7d11490f4ac841ff",
+    "target/update-spike-study/analyze.py": "3690d424ea92268fa6554704917ee7da3347c05e9fbedd21df4ec47b91c7b3f0",
+    "target/update-spike-study/build-v3/manifest.json": "ccd359b1bee59d1881eae84115f52ac39df83f744d1f226c8f4c58ac94cc24fb",
+    "target/update-spike-study/build-v3/project/examples/support/update_fast_counters.rs": "acf7fa3a130af673e98362f33ba08a7b168f2ef7191d26402cffa437a78cf730",
+    "target/update-spike-study/build.py": "944d82f959fbb8c75d2440ace8a82b38c4ee0569c9c8dc9ce37193dc8283bb93",
+    "target/update-spike-study/run.py": "2802f497de851bfa168d24c4c6b0b0a96b633ef1899ad9e9bf77c2607c2be432",
+    "target/update-spike-study/runs/1-100000-phases.json": "7870ad9e847d5d1daefdded137b0689200f8d759d3500e29d9a90901cb6321f7",
+    "target/update-spike-study/runs/1-100000.log": "2aaccb1fbfbe1954e2bed355cb4e61ae178184a9334abf3d02f717be0d10f35a",
+    "target/update-spike-study/runs/1-1200-phases.json": "98d3fd4ee8572605acdd0c161ef5c41b72e0c686148e8077d1ecae14d5a5bba6",
+    "target/update-spike-study/runs/1-1200.log": "c17b84559e46b3aea64823a7f63313997267f9f04c983efe398522284b08a950",
+    "target/update-spike-study/runs/2-100000-phases.json": "5daf3f8c3f7fdf77d36e06ea543ca8dca0443b4a99366679344a5ec5a07cd1de",
+    "target/update-spike-study/runs/2-100000.log": "1d8d859e331d4a0c8f9f7ee635d6c1fd9f926da64ce83568ad7632e7f5dd0123",
+    "target/update-spike-study/runs/2-1200-phases.json": "9199d3d2ccf036a03acf4bd4263cc8350f0fe0889533ba6d6f67222e8a288049",
+    "target/update-spike-study/runs/2-1200.log": "da1ceb0ca94fdc3003b9fe081bdcd915d709981a39e96edd053655abfdada52e",
+    "target/update-spike-study/runs/3-100000-phases.json": "ec55662fde3500a5d661893186c811847282de791d9f5cb016986e8e4a5feff0",
+    "target/update-spike-study/runs/3-100000.log": "bf44982db9a2ad476d7ad787062aadca23be92937be7e31607f662c0dfea9a10",
+    "target/update-spike-study/runs/3-1200-phases.json": "bf1fe8111247e6ef7cbafa3fe59ad2649671f3e1c93234a5a9e87bfdf5ac3f5f",
+    "target/update-spike-study/runs/3-1200.log": "168bf8125bec6156ef6fe7717e5d8e0304955b8757098fdb09e45636051e4d28",
+    "target/update-spike-study/runs/4-100000-phases.json": "dc235d0ff832400f40299d0159310efcf978b2053487e9c8f0b4166dbec1b0a7",
+    "target/update-spike-study/runs/4-100000.log": "7422fbf5133a201e8ce6b19020d0c55ba187393e4fa30c6ac25b4422ff6c8fc3",
+    "target/update-spike-study/runs/4-1200-phases.json": "ea8616bb21bcbdbe84b3ed5b5356a7685f199b543c3aca94df7955e83ee0fb1b",
+    "target/update-spike-study/runs/4-1200.log": "05431a413c72cd74a7e565d136ecd03ff7f94f8daf620a70bb9be950b8469c9f",
+    "target/update-spike-study/runs/5-100000-phases.json": "d81301edc9a97b2dc7e3a3a3e2a9f64ed084baeeb75eec89f6bf6e3a8b27845b",
+    "target/update-spike-study/runs/5-100000.log": "020b3b46c9119befe79038e4319d97c7bbe073e1e86e0032e6e296385656bec7",
+    "target/update-spike-study/runs/5-1200-phases.json": "f06b3ba4bcf783452ea39a635cffede26acc850c92b7b751a3e967b3f5b69c36",
+    "target/update-spike-study/runs/5-1200.log": "fadcc9446e667911e4c93b3a8d767c4303f7df0d1f88596f9c92002345bba224",
+    "target/update-spike-study/runs/6-100000-phases.json": "8e19db5adede96e31a5bf3c099a05d5c2f5b5d07245a1a9be7628c226abda6de",
+    "target/update-spike-study/runs/6-100000.log": "f21500eee515a8aa1bfa80b44d9737dffd915703b256fd6de5e45f6c467c0c56",
+    "target/update-spike-study/runs/6-1200-phases.json": "9e151cdd9c5f44faef6aa6491cfe6f0ee7c091f184b694d4c30244860e6dbc78",
+    "target/update-spike-study/runs/6-1200.log": "d4dfab4b629056b0d92e86ff8643c5d490d0ac1da96f5b3b5c5df8a3df2dc4ad",
+    "target/update-spike-study/runs/analysis.json": "5fe26821934d2f250990ec72033a4784f4e6576890df9a1c2414e70d5fc48b9f",
+    "target/update-spike-study/runs/protocol.json": "504bb73b67715ed6daf0295cbb47b1387c2a06d4fae4824b1273e26d41d6953f"
+  }
+}
