@@ -591,7 +591,16 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     ))
     .unwrap();
     std::fs::create_dir_all(directory).unwrap();
-    let mut scenarios = vec!["default", "cluster", "hidden", "live", "left", "empty"];
+    let mut scenarios = vec![
+        "default",
+        "cluster",
+        "hidden",
+        "live",
+        "live-narrow",
+        "live-burst",
+        "left",
+        "empty",
+    ];
     if std::env::args().any(|a| a == "--series-markers") {
         scenarios.extend([
             "annotation-stack",
@@ -678,6 +687,9 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
             )
         });
     }
+    if std::env::args().any(|a| a == "--append-captures-only") {
+        scenarios.retain(|scenario| scenario.starts_with("live"));
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -711,8 +723,13 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
                     let _ = app.update(Message::ToggleLevels);
                     let _ = app.update(Message::ToggleLast);
                 }
-                "live" => {
-                    let _ = app.update(Message::Append);
+                "live" | "live-narrow" | "live-burst" => {
+                    if scenario == "live-narrow" {
+                        app.size = Size::new(400., 300.);
+                    }
+                    for _ in 0..if scenario == "live-burst" { 32 } else { 1 } {
+                        let _ = app.update(Message::Append);
+                    }
                     let _ = app.update(Message::MoveStop);
                 }
                 "left" => {

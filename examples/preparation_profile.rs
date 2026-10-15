@@ -4,7 +4,7 @@ use feather_charts::{
     model::{
         data_consumer::{
             BuiltInSeriesDataItem, CandlestickData, CandlestickDataItem, HistogramData,
-            HistogramDataItem, LineData, LineDataItem,
+            HistogramDataItem, LineData, LineDataItem, TimedData,
         },
         horz_scale_behavior_time::types::{Time, UtcTimestamp},
         pane::PriceScalePosition,
@@ -75,6 +75,23 @@ fn profile_row(
     }
     data
 }
+fn whitespace_row(kind: SeriesType, index: usize) -> BuiltInSeriesDataItem<Time> {
+    use feather_charts::model::data_consumer::WhitespaceData;
+    let gap = WhitespaceData {
+        time: UtcTimestamp::new(1_700_000_000. + index as f64 * 60.).into(),
+        custom_values: None,
+    };
+    match kind {
+        SeriesType::Line => BuiltInSeriesDataItem::Line(LineDataItem::Whitespace(gap)),
+        SeriesType::Candlestick => {
+            BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Whitespace(gap))
+        }
+        SeriesType::Histogram => {
+            BuiltInSeriesDataItem::Histogram(HistogramDataItem::Whitespace(gap))
+        }
+        _ => unreachable!(),
+    }
+}
 fn main() {
     // The response shape distinguishes the original full-history handoff from
     // the incremental engine when comparing builds in one Cargo target cache.
@@ -98,6 +115,13 @@ fn main() {
             .unwrap();
         println!(
             "engine_sentinel existing_timestamp_response_rows={}",
+            response.series[&id].rows.len()
+        );
+        let response = layer
+            .update_series_data(id, row(SeriesType::Line, 3, 1), false)
+            .unwrap();
+        println!(
+            "engine_sentinel tail_response_rows={}",
             response.series[&id].rows.len()
         );
     }
@@ -137,11 +161,26 @@ fn main() {
     let samples = number("--samples", 100);
     let fixed_last_price = args.iter().any(|arg| arg == "--fixed-last-price");
     let auxiliary = args.iter().any(|arg| arg == "--auxiliary-probes");
+    let whitespace_tail = number("--whitespace-tail", 0);
+    let mixed = args.iter().any(|arg| arg == "--mixed");
+    let append_whitespace = args.iter().any(|arg| arg == "--append-whitespace");
+    let burst = number("--burst", 1);
+    assert!(burst > 0);
     let selected_phase = args
         .iter()
         .position(|s| s == "--phase")
         .map(|i| args[i + 1].as_str());
-    assert!(selected_phase.is_none_or(|phase| ["static", "latest", "append"].contains(&phase)));
+    assert!(selected_phase.is_none_or(|phase| {
+        [
+            "static",
+            "latest",
+            "append",
+            "middle",
+            "reload",
+            "navigation",
+        ]
+        .contains(&phase)
+    }));
     assert!(samples > 0);
     if args.iter().any(|arg| arg == "--model-phases") {
         model_phases(&histories, &counts, &kinds, samples, selected_phase);
@@ -158,17 +197,34 @@ fn main() {
     for rows in histories {
         for &count in &counts {
             for &kind in &kinds {
-                for phase in ["static", "latest", "append"] {
+                for phase in [
+                    "static",
+                    "latest",
+                    "append",
+                    "middle",
+                    "reload",
+                    "navigation",
+                ] {
+                    if selected_phase.is_none() && !["static", "latest", "append"].contains(&phase)
+                    {
+                        continue;
+                    }
                     if auxiliary && phase != "static" {
                         continue;
                     }
                     if selected_phase.is_some_and(|selected| selected != phase) {
                         continue;
                     }
+                    assert!(phase != "middle" || count >= 2);
                     let mut chart = Chart::default();
                     let mut ids = Vec::new();
-                    for _ in 0..count {
-                        let options = match kind {
+                    for source in 0..count {
+                        let source_kind = if mixed {
+                            [kind, SeriesType::Candlestick, SeriesType::Histogram][source % 3]
+                        } else {
+                            kind
+                        };
+                        let options = match source_kind {
                             SeriesType::Line => {
                                 SeriesOptionsMap::Line(LineSeriesOptions::default())
                             }
@@ -186,15 +242,29 @@ fn main() {
                         chart
                             .set_data(
                                 id,
-                                (0..rows)
+                                (0..if phase == "middle" && source == 0 {
+                                    0
+                                } else {
+                                    rows
+                                })
                                     .map(|i| {
-                                        profile_row(kind, i, 0, fixed_last_price && i + 1 == rows)
+                                        if i >= rows.saturating_sub(whitespace_tail) {
+                                            whitespace_row(source_kind, i)
+                                        } else {
+                                            profile_row(
+                                                source_kind,
+                                                i,
+                                                0,
+                                                fixed_last_price && i + 1 == rows - whitespace_tail,
+                                            )
+                                        }
                                     })
                                     .collect(),
                             )
                             .unwrap();
                         ids.push(id);
                     }
+                    assert!(whitespace_tail < rows);
                     chart.set_logical_range(LogicalRange {
                         from: 20.0.into(),
                         to: 100.0.into(),
@@ -234,20 +304,55 @@ fn main() {
                     let fonts = AxisFontResolver::default();
                     let mut phases = [Vec::new(), Vec::new(), Vec::new()];
                     for sample in 0..samples + 20 {
+                        let reload = (phase == "reload").then(|| {
+                            (0..rows)
+                                .map(|index| {
+                                    profile_row(
+                                        kind,
+                                        index,
+                                        sample,
+                                        fixed_last_price && index + 1 == rows,
+                                    )
+                                })
+                                .collect()
+                        });
+                        let items = (0..if ["static", "reload", "navigation"].contains(&phase) {
+                            0
+                        } else {
+                            burst
+                        })
+                            .map(|offset| {
+                                let index = if phase == "latest" {
+                                    rows - 1
+                                } else if phase == "middle" {
+                                    20 + sample * burst + offset
+                                } else {
+                                    rows + sample * burst + offset
+                                };
+                                if append_whitespace {
+                                    whitespace_row(kind, index)
+                                } else {
+                                    let mut item =
+                                        profile_row(kind, index, sample, fixed_last_price);
+                                    if phase == "middle" {
+                                        *item.time_mut() = UtcTimestamp::new(
+                                            1_700_000_000. + index as f64 * 60. + 30.,
+                                        )
+                                        .into();
+                                    }
+                                    item
+                                }
+                            })
+                            .collect::<Vec<_>>();
                         let start = Instant::now();
-                        if phase != "static" {
-                            let index = if phase == "latest" {
-                                rows - 1
-                            } else {
-                                rows + sample
-                            };
-                            chart
-                                .update_data(
-                                    ids[0],
-                                    profile_row(kind, index, sample, fixed_last_price),
-                                    false,
-                                )
-                                .unwrap();
+                        if let Some(data) = reload {
+                            chart.set_data(ids[0], data).unwrap();
+                        }
+                        if phase == "navigation" {
+                            chart.set_right_offset(100. + (sample % 20) as f64 - (rows - 1) as f64);
+                        }
+                        for item in items {
+                            chart.update_data(ids[0], item, false).unwrap();
                         }
                         let updated = Instant::now();
                         let snapshot = chart.prepare_snapshot(size, 1.25, updated).unwrap();
@@ -257,6 +362,12 @@ fn main() {
                                 .unwrap(),
                         );
                         let converted = Instant::now();
+                        if sample == 0 {
+                            println!(
+                                "cold {kind:?} rows={rows} sources={count} phase={phase}/update ms={:.6}",
+                                (updated - start).as_secs_f64() * 1000.
+                            );
+                        }
                         if sample >= 20 {
                             phases[0].push((updated - start).as_secs_f64() * 1000.);
                             phases[1].push((prepared - updated).as_secs_f64() * 1000.);
@@ -266,6 +377,9 @@ fn main() {
                     for (name, mut timings) in
                         ["update", "snapshot", "glyph"].into_iter().zip(phases)
                     {
+                        println!(
+                            "raw {kind:?} rows={rows} sources={count} phase={phase}/{name} ms={timings:?}"
+                        );
                         timings.sort_by(f64::total_cmp);
                         println!(
                             "{kind:?} rows={rows} sources={count} phase={phase}/{name} median_ms={:.6} p95_ms={:.6}",
