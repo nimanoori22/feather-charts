@@ -27,6 +27,7 @@ struct App {
     size: Size,
     ratio: f32,
     status: String,
+    live_since: Option<Instant>,
 }
 #[derive(Clone, Debug)]
 enum Message {
@@ -34,6 +35,8 @@ enum Message {
     Window(iced::window::Id, iced::window::Event),
     Ratio(f32),
     Append,
+    ToggleLive,
+    FeedTick(Instant),
     Replace,
     Historical,
     Whitespace,
@@ -78,6 +81,7 @@ impl Default for App {
             size: Size::ZERO,
             ratio: 1.,
             status: "Box-and-whisker custom data beside a built-in median line".into(),
+            live_since: None,
         };
         app.reload();
         app
@@ -113,6 +117,7 @@ impl App {
         match message {
             Message::Reload => self.reload(),
             Message::Remove => {
+                self.live_since = None;
                 if let Some(handle) = self.custom.take() {
                     self.chart.remove_series(handle.id()).unwrap();
                 }
@@ -177,6 +182,17 @@ impl App {
     }
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ToggleLive => {
+                self.live_since =
+                    (self.live_since.is_none() && self.custom.is_some()).then(Instant::now);
+            }
+            Message::FeedTick(at) => {
+                if self.live_since.is_some_and(|since| at >= since) {
+                    self.apply(Message::Append);
+                } else {
+                    return Task::none();
+                }
+            }
             Message::Chart(message) => {
                 if let ChartMessage::Bounds(size) = &message {
                     self.size = *size;
@@ -219,6 +235,13 @@ impl App {
             ]
             .spacing(4),
             row![
+                button(if self.live_since.is_some() {
+                    "Stop live feed"
+                } else {
+                    "Start live feed"
+                })
+                .width(130)
+                .on_press_maybe(self.custom.as_ref().map(|_| Message::ToggleLive)),
                 button("Style").on_press(Message::Style),
                 button("Clear").on_press(Message::Clear),
                 button("Reload").on_press(Message::Reload),
@@ -231,7 +254,14 @@ impl App {
         .into()
     }
     fn subscription(&self) -> Subscription<Message> {
-        iced::window::events().map(|(id, event)| Message::Window(id, event))
+        Subscription::batch([
+            iced::window::events().map(|(id, event)| Message::Window(id, event)),
+            if self.live_since.is_some() {
+                iced::time::every(std::time::Duration::from_millis(250)).map(Message::FeedTick)
+            } else {
+                Subscription::none()
+            },
+        ])
     }
 }
 fn main() -> iced::Result {
@@ -246,9 +276,52 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
-    iced::application(App::default, App::update, App::view)
-        .title("Feather Charts — typed custom series")
-        .subscription(App::subscription)
-        .window_size((1100., 700.))
-        .run()
+    let live = arguments.iter().any(|a| a == "--live-feed");
+    iced::application(
+        move || {
+            let mut app = App::default();
+            app.live_since = live.then(Instant::now);
+            app
+        },
+        App::update,
+        App::view,
+    )
+    .title("Feather Charts — typed custom series")
+    .subscription(App::subscription)
+    .window_size((1100., 700.))
+    .run()
+}
+
+#[cfg(test)]
+mod live_tests {
+    use super::*;
+
+    #[test]
+    fn custom_live_feed_pauses_and_stops_when_owner_is_removed() {
+        let mut app = App::default();
+        app.size = Size::new(400., 300.);
+        let _ = app.update(Message::FeedTick(Instant::now()));
+        assert_eq!(app.latest, 119);
+        let _ = app.update(Message::ToggleLive);
+        let _ = app.update(Message::FeedTick(Instant::now()));
+        assert_eq!(app.latest, 120);
+        let _ = app.update(Message::ToggleLive);
+        let _ = app.update(Message::FeedTick(Instant::now()));
+        assert_eq!(app.latest, 120);
+        let _ = app.update(Message::ToggleLive);
+        let stale = app.live_since.unwrap() - std::time::Duration::from_secs(1);
+        let _ = app.update(Message::FeedTick(stale));
+        assert_eq!(app.latest, 120);
+        let _ = app.update(Message::Remove);
+        assert!(app.live_since.is_none());
+        let _ = app.update(Message::FeedTick(Instant::now()));
+        assert_eq!(app.latest, 120);
+        assert!(app.custom.is_none());
+        let _ = app.update(Message::ToggleLive);
+        assert!(app.live_since.is_none());
+        let _ = app.update(Message::Reload);
+        let _ = app.update(Message::ToggleLive);
+        let _ = app.update(Message::FeedTick(Instant::now()));
+        assert_eq!(app.latest, 120);
+    }
 }

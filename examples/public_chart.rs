@@ -51,6 +51,7 @@ struct App {
     show_last: bool,
     kind: SeriesType,
     style_step: u8,
+    live_since: Option<Instant>,
 }
 #[derive(Clone, Debug)]
 enum Message {
@@ -64,6 +65,8 @@ enum Message {
     Window(iced::window::Id, iced::window::Event),
     Ratio(f32),
     Append,
+    ToggleLive,
+    FeedTick(Instant),
     MoveStop,
     ToggleLevels,
     Cluster,
@@ -172,12 +175,21 @@ impl App {
             show_last: true,
             kind,
             style_step: 0,
+            live_since: None,
         }
     }
 }
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ToggleLive => {
+                self.live_since = self.live_since.is_none().then(Instant::now);
+            }
+            Message::FeedTick(at) => {
+                if self.live_since.is_some_and(|since| at >= since) {
+                    return self.update(Message::Append);
+                }
+            }
             Message::TogglePrimitive | Message::MovePrimitive | Message::PrimitiveLayer => {
                 if let Some(scene) = &mut self.primitive_scene {
                     match message {
@@ -427,6 +439,13 @@ impl App {
             ]
             .spacing(8),
             row![
+                button(if self.live_since.is_some() {
+                    "Stop live feed"
+                } else {
+                    "Start live feed"
+                })
+                .width(130)
+                .on_press(Message::ToggleLive),
                 button("Add/clear markers").on_press(Message::ToggleMarkers),
                 button("Marker layer").on_press(Message::MarkerLayer),
                 button(if self.chart.hovered_series_on_top() {
@@ -456,7 +475,14 @@ impl App {
             .into()
     }
     fn subscription(&self) -> Subscription<Message> {
-        iced::window::events().map(|(id, event)| Message::Window(id, event))
+        Subscription::batch([
+            iced::window::events().map(|(id, event)| Message::Window(id, event)),
+            if self.live_since.is_some() {
+                iced::time::every(std::time::Duration::from_millis(250)).map(Message::FeedTick)
+            } else {
+                Subscription::none()
+            },
+        ])
     }
 }
 fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
@@ -1043,8 +1069,17 @@ fn main() -> iced::Result {
         println!("public chart API and price-line lifecycle smoke passed");
         return Ok(());
     }
-    iced::application(move || App::new(kind), App::update, App::view)
-        .title("Feather Charts — public API")
-        .subscription(App::subscription)
-        .run()
+    let live = args.iter().any(|a| a == "--live-feed");
+    iced::application(
+        move || {
+            let mut app = App::new(kind);
+            app.live_since = live.then(Instant::now);
+            app
+        },
+        App::update,
+        App::view,
+    )
+    .title("Feather Charts — public API")
+    .subscription(App::subscription)
+    .run()
 }

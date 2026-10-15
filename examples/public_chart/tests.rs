@@ -106,3 +106,47 @@ fn primitive_controls_and_hover_keep_narrow_chart_bounds_stable() {
         }
     }
 }
+
+#[test]
+fn live_feed_ticks_append_only_while_running_and_ignore_old_sessions() {
+    let mut app = App::new(SeriesType::Line);
+    app.size = Size::new(400., 300.);
+    app.prepare();
+    let initial = app.latest;
+    let _ = app.update(Message::FeedTick(Instant::now()));
+    assert_eq!(app.latest, initial);
+    let _ = app.update(Message::ToggleLive);
+    let first_session = app.live_since.unwrap();
+    let _ = app.update(Message::FeedTick(first_session));
+    assert_eq!(app.latest, initial + 1);
+    assert_eq!(
+        app.chart
+            .model()
+            .series(app.price)
+            .unwrap()
+            .bars()
+            .rows()
+            .len(),
+        initial + 2
+    );
+    assert_eq!(
+        app.chart
+            .model()
+            .series(app.volume)
+            .unwrap()
+            .bars()
+            .rows()
+            .len(),
+        initial + 2
+    );
+    let _ = app.update(Message::ToggleLive);
+    assert!(app.live_since.is_none());
+    let _ = app.update(Message::FeedTick(Instant::now()));
+    assert_eq!(app.latest, initial + 1);
+    let _ = app.update(Message::ToggleLive);
+    let stale = app.live_since.unwrap() - std::time::Duration::from_secs(1);
+    let _ = app.update(Message::FeedTick(stale));
+    assert_eq!(app.latest, initial + 1);
+    let _ = app.update(Message::FeedTick(Instant::now()));
+    assert_eq!(app.latest, initial + 2);
+}
