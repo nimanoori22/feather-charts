@@ -25,7 +25,9 @@ use crate::{
     },
     ui::{
         chart_layout::{AxisSizeRequests, ChartLayout, ChartLayoutError, allocate_chart_layout},
-        line_chart::{FrameError, FrameLayout, PaneView, PlotSnapshot, prepare_series_plot},
+        line_chart::{
+            FrameError, FrameLayout, PaneView, PlotContent, PlotSnapshot, prepare_series_plot,
+        },
         price_axis::{
             AxisFontResolver, IcedAxisTextMeasurer, IcedPriceAxes, IcedPriceAxis, PriceAxisUiError,
         },
@@ -356,7 +358,7 @@ impl ChartFrameOwner {
                 pixel_ratio: input.pixel_ratio,
                 background: input.background.clone(),
             };
-            let plot = prepare_series_plot(model, &mut view, id, &plot_layout)
+            let plot = prepare_series_plot(model, &mut view, id, &plot_layout, PlotContent::Pane)
                 .map_err(ChartFrameError::Plot)?;
             let left = prepare_price_axis(&measured.left, layout.left_axis.size, input.pixel_ratio)
                 .map_err(ChartFrameError::Price)?;

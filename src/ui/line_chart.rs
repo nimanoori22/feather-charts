@@ -1,4 +1,6 @@
 //! Iced adapter. Model/frame preparation is separate from immutable Canvas draw.
+#[cfg(test)]
+mod rectangle_clipping_tests;
 mod series_drawing;
 mod series_paint;
 use crate::{
@@ -94,6 +96,23 @@ pub struct CanvasRectangle {
     pub origin: iced::Point,
     pub size: Size,
     pub color: Color,
+}
+impl CanvasRectangle {
+    fn clipped_to(&self, bounds: Rectangle) -> Option<Self> {
+        let clipped = Rectangle::new(self.origin, self.size).intersection(&bounds)?;
+        (clipped.width > 0. && clipped.height > 0.).then_some(Self {
+            origin: clipped.position(),
+            size: clipped.size(),
+            color: self.color,
+        })
+    }
+    fn covered_by(&self, later: &Self, bounds: Rectangle) -> bool {
+        later.color.a == 1.
+            && self.clipped_to(bounds).is_some_and(|visible| {
+                Rectangle::new(visible.origin, visible.size)
+                    .is_within(&Rectangle::new(later.origin, later.size))
+            })
+    }
 }
 pub struct FrameLayout {
     pub pane: usize,
@@ -643,7 +662,19 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
-    prepare_series_plot(model, &mut PaneView::Line(view), id, layout)
+    prepare_series_plot(
+        model,
+        &mut PaneView::Line(view),
+        id,
+        layout,
+        PlotContent::Pane,
+    )
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum PlotContent {
+    Pane,
+    Series,
 }
 
 pub(crate) fn prepare_series_plot<B, M>(
@@ -651,6 +682,7 @@ pub(crate) fn prepare_series_plot<B, M>(
     view: &mut PaneView<'_>,
     id: Option<SeriesId>,
     layout: &FrameLayout,
+    content: PlotContent,
 ) -> Result<PlotSnapshot, FrameError>
 where
     B: HorzScaleBehavior,
@@ -692,9 +724,13 @@ where
             _ => {}
         }
     }
-    let axes = model
-        .prepare_axis_snapshots(layout.pane)
-        .map_err(FrameError::Axes)?;
+    let axes = (content == PlotContent::Pane)
+        .then(|| {
+            model
+                .prepare_axis_snapshots(layout.pane)
+                .map_err(FrameError::Axes)
+        })
+        .transpose()?;
     if let Some(id) = id {
         match view {
             PaneView::Histogram(view) => view.refresh(model, id).map_err(FrameError::Histogram)?,
@@ -710,17 +746,21 @@ where
         view.clear();
     }
     let ratio = layout.pixel_ratio;
-    let grid = model.panes()[layout.pane]
-        .grid()
-        .pane_view()
-        .renderer()
-        .draw_commands(
-            BitmapSize {
-                width: layout.size.width * ratio.horizontal,
-                height: layout.size.height * ratio.vertical,
-            },
-            ratio,
-        );
+    let grid = if content == PlotContent::Pane {
+        model.panes()[layout.pane]
+            .grid()
+            .pane_view()
+            .renderer()
+            .draw_commands(
+                BitmapSize {
+                    width: layout.size.width * ratio.horizontal,
+                    height: layout.size.height * ratio.vertical,
+                },
+                ratio,
+            )
+    } else {
+        Vec::new()
+    };
     let line = match view {
         PaneView::Line(view) => view
             .data()
@@ -830,6 +870,10 @@ where
             .map(|r| canvas_rectangle(r, ratio))
             .collect::<Result<_, _>>()?;
     }
+    // Additional sources contribute series geometry; their pane-wide copies are discarded.
+    let Some(axes) = axes else {
+        return Ok(snapshot);
+    };
     let decorations = model
         .price_decorations(layout.pane)
         .map_err(FrameError::Axes)?;

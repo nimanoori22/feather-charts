@@ -4,7 +4,7 @@ use super::{
         AxisMeasurer, ChartFrameError, ChartFrameSnapshot, IcedChartFrame, prepare_corner,
     },
     chart_layout::AxisSizeRequests,
-    line_chart::{FrameError, FrameLayout, PaneView, prepare_series_plot},
+    line_chart::{FrameError, FrameLayout, PaneView, PlotContent, prepare_series_plot},
     multi_pane_layout::{MultiPaneLayout, allocate_multi_pane_layout},
     price_axis::AxisFontResolver,
 };
@@ -57,6 +57,7 @@ impl SeriesPaneView {
         model: &mut ChartModel<B, M>,
         id: Option<SeriesId>,
         layout: &FrameLayout,
+        content: PlotContent,
     ) -> Result<super::line_chart::PlotSnapshot, FrameError>
     where
         B: HorzScaleBehavior,
@@ -67,8 +68,13 @@ impl SeriesPaneView {
         M: Clone + 'static,
     {
         if let Self::Custom(view) = self {
-            let mut plot =
-                prepare_series_plot(model, &mut PaneView::Line(&mut view.empty), None, layout)?;
+            let mut plot = prepare_series_plot(
+                model,
+                &mut PaneView::Line(&mut view.empty),
+                None,
+                layout,
+                content,
+            )?;
             plot.series_id = id;
             let visible = model.visible_strict_range();
             let first = view.adapter.first_value(visible.as_ref());
@@ -99,7 +105,7 @@ impl SeriesPaneView {
             }
             Ok(plot)
         } else {
-            prepare_series_plot(model, &mut self.borrowed(), id, layout)
+            prepare_series_plot(model, &mut self.borrowed(), id, layout, content)
         }
     }
 }
@@ -409,14 +415,14 @@ impl MultiPaneChartFrameOwner {
                     let mut entries = views[i].iter_mut();
                     let mut empty = SeriesPaneView::Line(Default::default());
                     let mut plot = if let Some((id, view)) = entries.next() {
-                        view.prepare(model, *id, &plot_layout)
+                        view.prepare(model, *id, &plot_layout, PlotContent::Pane)
                     } else {
-                        empty.prepare(model, None, &plot_layout)
+                        empty.prepare(model, None, &plot_layout, PlotContent::Pane)
                     }
                     .map_err(ChartFrameError::Plot)?;
                     for (id, view) in entries {
                         let series_plot = view
-                            .prepare(model, *id, &plot_layout)
+                            .prepare(model, *id, &plot_layout, PlotContent::Series)
                             .map_err(ChartFrameError::Plot)?;
                         plot.hit_series.extend(series_plot.hit_series);
                         let layer = plot.series_layers.len() + 1;

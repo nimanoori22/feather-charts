@@ -1,4 +1,6 @@
 //! Temporary source order borrows stable frame geometry; filled sources split passes.
+#[cfg(test)]
+mod tests;
 use super::PlotSnapshot;
 use iced::widget::canvas::Frame;
 
@@ -14,6 +16,27 @@ pub struct SeriesDrawPass {
     pub kind: SeriesPassKind,
 }
 impl PlotSnapshot {
+    fn occluding_candles(&self, pass: SeriesDrawPass) -> Option<&[super::CanvasRectangle]> {
+        if !self.primitives.is_empty()
+            || self.custom.is_some()
+            || self
+                .series_layers
+                .iter()
+                .any(|layer| layer.custom.is_some())
+        {
+            return None;
+        }
+        let next = self
+            .series_draw_passes()
+            .skip_while(|candidate| *candidate != pass)
+            .skip(1)
+            .find(|candidate| candidate.kind != SeriesPassKind::Background)?;
+        Some(if next.layer == 0 {
+            &self.candles
+        } else {
+            &self.series_layers[next.layer - 1].candles
+        })
+    }
     pub fn series_draw_passes(&self) -> impl Iterator<Item = SeriesDrawPass> + '_ {
         let raised = self.hovered_series.filter(|_| self.hovered_series_on_top);
         let layer_id = |i: usize| {
@@ -116,7 +139,17 @@ impl PlotSnapshot {
             }
             self.draw_strokes(frame, lines.iter());
             self.draw_gradient_strokes(frame, gradient_lines);
-            for rect in candles {
+            let occluders = self.occluding_candles(pass);
+            for (index, rect) in candles.iter().enumerate() {
+                // One corresponding candidate keeps the check bounded when many bars are visible.
+                if occluders
+                    .and_then(|later| later.get(index))
+                    .is_some_and(|later| {
+                        rect.covered_by(later, iced::Rectangle::with_size(self.size))
+                    })
+                {
+                    continue;
+                }
                 frame.fill_rectangle(rect.origin, rect.size, rect.color);
             }
             self.draw_markers(frame, markers);
