@@ -154,5 +154,7 @@
     "normal_executable_preservation_and_execution": "PASS"
   },
   "follow_up_report": "presentation-update-follow-up.md",
-  "follow_up_summary": "presentation-update-follow-up-summary.json"
+  "follow_up_summary": "presentation-update-follow-up-summary.json",
+  "verified_timing_report": "timing-resolution.md",
+  "verified_timing_summary": "timing-resolution-summary.json"
 }

@@ -178,3 +178,11 @@ The [follow-up report](presentation-update-follow-up.md) records bounded client
 commit timing, a privileged compositor observation with an unresolved identity
 gap, and pinned RDPMC whole-update/phase studies. No new production cause or fix
 was established. Acceptance remains open; the earlier failures above stand.
+
+## Verified continuation
+
+The [verified timing report](timing-resolution.md) records the corrected PID
+handshake, two captures with verified chart identity and reproduced late frames,
+monitor-render/output timing, and a 30-execution page-fault study. The trace-buffer
+fault artifact is fixed. Production timing acceptance remains open; no engine
+remedy or repeated acceptance pass is claimed.

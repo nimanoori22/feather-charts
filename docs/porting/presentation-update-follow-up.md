@@ -153,3 +153,11 @@ phase's wall/user-cycle gaps with faults or kernel activity. A diagnostic phase
 tail by itself does not justify changing the normal update path. Implement a
 production fix only when the cause and behavioral contract are established;
 then rerun the unchanged acceptance protocols once under their stop rules.
+
+## Verified continuation
+
+The [verified timing report](timing-resolution.md) records the corrected PID
+handshake, two captures with verified chart identity and reproduced late frames,
+monitor-render/output timing, and a 30-execution page-fault study. The trace-buffer
+fault artifact is fixed. Production timing acceptance remains open; no engine
+remedy or repeated acceptance pass is claimed.

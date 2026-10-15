@@ -1,0 +1,375 @@
+{
+  "date": "2026-10-15",
+  "baseline_commit": "fe053e4",
+  "diagnostic_only": true,
+  "automated_acceptance": "OPEN",
+  "production_engine_fix": null,
+  "roadmap_status": {
+    "handshake": "FIXED AND VERIFIED",
+    "late_frame_attribution": "Reproduced, verified chart/monitor identity, stage attribution complete for captured frames",
+    "update_fault_investigation": "Completed bounded study; original slow median not reproduced; tails not fully attributed",
+    "production_fix_and_unchanged_acceptance": "OPEN; no demonstrated production remedy; no repeat-to-green"
+  },
+  "unchanged_outcomes": {
+    "update": "INCONCLUSIVE",
+    "native": "31/32 cohorts in first set; stopped per policy",
+    "mouse": "PASS; both backends, all three sizes and short-height recovery"
+  },
+  "measured_native": {
+    "backend": "tiny-skia",
+    "rows": 1200,
+    "sources": 16,
+    "physical_size": [
+      917,
+      871
+    ],
+    "scale": 1,
+    "monitor_id": 1,
+    "monitor_name": "HDMI-A-1",
+    "monitor_refresh_hz": 60,
+    "frames_per_execution": 2880,
+    "warmups_per_phase": 20,
+    "measured_individual_misses": [
+      18,
+      9
+    ],
+    "observer_records": [
+      32933,
+      79536
+    ],
+    "client_pids": [
+      474763,
+      481807
+    ],
+    "wire_surface": 29,
+    "pipeline_late_frames": [
+      {
+        "frame": 1462,
+        "phase": "pan",
+        "warmup": false,
+        "work_ns": 11731258,
+        "presentation_ns": 45005598,
+        "receipt_ns": 38846752202235,
+        "apply_ns": 38846752205778,
+        "render": {
+          "start_ns": 38846768209140,
+          "end_ns": 38846768624342,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38846768573630,
+          "end_ns": 38846768622389,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          587982,
+          614605
+        ],
+        "receipt_to_apply_ns": 3543,
+        "apply_to_render_ns": 16003362,
+        "render_to_submit_ns": 364490,
+        "submit_call_ns": 48759,
+        "submit_to_present_ns": 16254611
+      },
+      {
+        "frame": 1937,
+        "phase": "pan",
+        "warmup": false,
+        "work_ns": 14950005,
+        "presentation_ns": 44886475,
+        "receipt_ns": 38854704956073,
+        "apply_ns": 38854704960479,
+        "render": {
+          "start_ns": 38854718221530,
+          "end_ns": 38854718803128,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38854718742105,
+          "end_ns": 38854718800793,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          13820,
+          40443
+        ],
+        "receipt_to_apply_ns": 4406,
+        "apply_to_render_ns": 13261051,
+        "render_to_submit_ns": 520575,
+        "submit_call_ns": 58688,
+        "submit_to_present_ns": 16064207
+      },
+      {
+        "frame": 2030,
+        "phase": "pan",
+        "warmup": false,
+        "work_ns": 11843334,
+        "presentation_ns": 44976182,
+        "receipt_ns": 38856268568501,
+        "apply_ns": 38856268571889,
+        "render": {
+          "start_ns": 38856284837844,
+          "end_ns": 38856285372946,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38856285309271,
+          "end_ns": 38856285370846,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          158248,
+          184871
+        ],
+        "receipt_to_apply_ns": 3388,
+        "apply_to_render_ns": 16265955,
+        "render_to_submit_ns": 471427,
+        "submit_call_ns": 61575,
+        "submit_to_present_ns": 16158154
+      },
+      {
+        "frame": 2237,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 11837052,
+        "presentation_ns": 44967001,
+        "receipt_ns": 38859735316068,
+        "apply_ns": 38859735319322,
+        "render": {
+          "start_ns": 38859751544849,
+          "end_ns": 38859752020821,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38859751960437,
+          "end_ns": 38859752018754,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          242815,
+          269438
+        ],
+        "receipt_to_apply_ns": 3254,
+        "apply_to_render_ns": 16225527,
+        "render_to_submit_ns": 415588,
+        "submit_call_ns": 58317,
+        "submit_to_present_ns": 16171246
+      },
+      {
+        "frame": 2414,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 12000718,
+        "presentation_ns": 44231387,
+        "receipt_ns": 38862702640419,
+        "apply_ns": 38862702644441,
+        "render": {
+          "start_ns": 38862718168097,
+          "end_ns": 38862718646377,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38862718584944,
+          "end_ns": 38862718644288,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          5166,
+          31789
+        ],
+        "receipt_to_apply_ns": 4022,
+        "apply_to_render_ns": 15523656,
+        "render_to_submit_ns": 416847,
+        "submit_call_ns": 59344,
+        "submit_to_present_ns": 16207712
+      },
+      {
+        "frame": 2473,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 12924001,
+        "presentation_ns": 44904535,
+        "receipt_ns": 38863702885980,
+        "apply_ns": 38863702890273,
+        "render": {
+          "start_ns": 38863718145493,
+          "end_ns": 38863718570949,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38863718513578,
+          "end_ns": 38863718569104,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          1727,
+          28350
+        ],
+        "receipt_to_apply_ns": 4293,
+        "apply_to_render_ns": 15255220,
+        "render_to_submit_ns": 368085,
+        "submit_call_ns": 55526,
+        "submit_to_present_ns": 16281896
+      },
+      {
+        "frame": 2532,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 11446692,
+        "presentation_ns": 44341864,
+        "receipt_ns": 38864701966548,
+        "apply_ns": 38864701969657,
+        "render": {
+          "start_ns": 38864718241112,
+          "end_ns": 38864718726621,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38864718670845,
+          "end_ns": 38864718724634,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          -705,
+          25918
+        ],
+        "receipt_to_apply_ns": 3109,
+        "apply_to_render_ns": 16271455,
+        "render_to_submit_ns": 429733,
+        "submit_call_ns": 53789,
+        "submit_to_present_ns": 16124366
+      },
+      {
+        "frame": 2688,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 12773045,
+        "presentation_ns": 44907541,
+        "receipt_ns": 38867319389929,
+        "apply_ns": 38867319393669,
+        "render": {
+          "start_ns": 38867334851110,
+          "end_ns": 38867335296685,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38867335243773,
+          "end_ns": 38867335294683,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          6676,
+          33299
+        ],
+        "receipt_to_apply_ns": 3740,
+        "apply_to_render_ns": 15457441,
+        "render_to_submit_ns": 392663,
+        "submit_call_ns": 50910,
+        "submit_to_present_ns": 16217317
+      },
+      {
+        "frame": 2827,
+        "phase": "price",
+        "warmup": false,
+        "work_ns": 11846814,
+        "presentation_ns": 44964861,
+        "receipt_ns": 38869651983328,
+        "apply_ns": 38869651986657,
+        "render": {
+          "start_ns": 38869668164888,
+          "end_ns": 38869668540271,
+          "monitor_id": 1
+        },
+        "output": {
+          "start_ns": 38869668491228,
+          "end_ns": 38869668538235,
+          "monitor_id": 1,
+          "ok": true
+        },
+        "client_to_receipt_bounds_ns": [
+          246075,
+          272698
+        ],
+        "receipt_to_apply_ns": 3329,
+        "apply_to_render_ns": 16178231,
+        "render_to_submit_ns": 326340,
+        "submit_call_ns": 47007,
+        "submit_to_present_ns": 16303765
+      }
+    ],
+    "conclusion": "All nine late frames applied after the prior monitor render finished, then waited for the next render and presentation; no slow state application or blocking output submission observed.",
+    "limitations": [
+      "Long captures are not acceptance cohorts",
+      "Observer perturbation is not subtracted",
+      "First subsequent monitor render is a candidate; no DRM buffer identity join",
+      "No direct GPU-fence completion measurement",
+      "Does not establish the cause of every historical failure"
+    ]
+  },
+  "update_fault_study": {
+    "executions": 30,
+    "probe_control_executions": 6,
+    "history_executions": 12,
+    "same_history_control_executions": 12,
+    "samples": 2000,
+    "warmups": 20,
+    "cpu": 5,
+    "trace_storage_model_faults_before": [
+      63,
+      63,
+      63
+    ],
+    "trace_storage_model_faults_after": [
+      0,
+      0,
+      0
+    ],
+    "small_history_model_minor_fault_range": [
+      148,
+      173
+    ],
+    "large_history_model_minor_faults": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "measured_history_phase_major_faults": 0,
+    "original_slow_median_reproduced": false,
+    "conclusion": "Trace-storage defect fixed. Some genuine small-history append faults identified; fault-free model tails remain; no engine change justified."
+  },
+  "validation": {
+    "python_tests": 50,
+    "rust_counter_tests": 1,
+    "copied_examples_strict_clippy": "PASS",
+    "root_check": "cargo check --offline --all-targets PASS",
+    "format": "PASS",
+    "mutation_regression": "Rejects full-RAX bool decode; restored suite passes"
+  },
+  "local_raw_artifact_count": 240,
+  "artifacts": {
+    "target/timing-resolution/artifact-hashes.json": "f5f2209771acc4c306920aa1f8d15979eff2af7e927c6a42aa002208bde0e346",
+    "target/timing-resolution/software-long-3/compositor-analysis.json": "ab47a4fcc848ef420e67a9919950cce0c75dea9558d318b501010fdae4d0ba90",
+    "target/timing-resolution/software-pipeline-1/verified-pipeline-analysis.json": "f1b005270438f55627eae91e1f478277dc41f7e14b869e2527a4363ee7184a49",
+    "target/timing-resolution/software-pipeline-1/missed-render-slot.json": "e751796d8c74887220778907fd9724487e854120736db44a77a3744ee8c2f5b2",
+    "target/timing-resolution/handshake/observer/events.json": "644e36d5ab14b801c251851b260b92971f9bbe1af2dcc5b4450fe73029d923e0",
+    "target/timing-resolution/pipeline-handshake/observer/events.json": "c2997191649ac312518d0decaca0b3f1000ecd1554f10a8ea930a416af93c2f9",
+    "target/timing-resolution/fault-study/protocol.json": "7d2535b0c5996e3be467cf9d6e2672711431533dcc5bb363b3d4e346d881da16",
+    "target/timing-resolution/fault-study/analysis.json": "1c3cdfdd49ab20520953ad62c7dcf8b60f2cb2875457701c19bb4abf1c39b4d9",
+    "target/timing-resolution/fault-study/trace-storage-regression.json": "ea5bb325ca642acbec4f1304e1726b63ad46d81e9be97c3fa0abd740e868c878",
+    "target/timing-resolution/fault-study/tail-attribution.json": "1e4198cc6866c85bc11cbdd361c98a67257f32a71ae5b9db1ea3c49c4a0e8988",
+    "target/timing-resolution/monitors.json": "34201b2db3d377530dd31dccb74a3bd0aba9c61b9a43226914904c4a35f3c07a",
+    "target/timing-resolution/pipeline-handshake/source/trace_hyprland_surface.py": "cae1fb299d0e6bdc26c69cde9d1ab79ab244c813c81dc3d3be489990b17bdef7",
+    "target/timing-resolution/pipeline-handshake/source/profile_frame_schedule.py": "f0d8b6622c3e44171f4692bcd387f36f2bad6580c88d14ed20539381b63f9898"
+  }
+}

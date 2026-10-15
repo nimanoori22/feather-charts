@@ -240,3 +240,22 @@ median was not reproduced and no engine fix was justified. Tasks 6/8 and
 automated acceptance stay open. Establish the observer PID-file handshake before
 another privileged run; resolve model-phase wall/user-cycle gaps before changing
 the normal update path. No unchanged acceptance set was rerun to obtain a pass.
+
+## Verified compositor and fault continuation
+
+- [x] Require the observer to acknowledge the owned chart PID before resuming it.
+- [x] Reproduce late frames with verified chart/surface and monitor identity.
+- [x] Measure state application, the next monitor render, output submission and
+  actual presentation; retain 18 and nine individual misses in two long captures.
+- [x] Investigate update-phase faults and off-CPU intervals with complete controls.
+- [x] Remove trace-storage first-touch faults from the phase probe; three controls
+  show 63 model-phase trace-write faults before and zero after.
+- [ ] Establish a production remedy and rerun unchanged timing acceptance under
+  the existing stop rules. Diagnostics alone do not authorize claiming a pass.
+
+The [report](../docs/porting/timing-resolution.md) and
+[summary](../docs/porting/timing-resolution-summary.json) retain the evidence.
+The captured late frames miss the previous compositor render, wait for the next
+render and then presentation. Update faults explain only part of model tails;
+the original slow median remains unreproduced. No desktop setting or engine
+behavior changed; automated acceptance and conflation remain open.
