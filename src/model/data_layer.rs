@@ -716,12 +716,21 @@ where
     }
 
     fn ensure_point(&mut self, time: B::InternalItem, original_time: B::Item) -> usize {
-        if let Some(index) = self.find_point(&time) {
-            return index;
-        }
-        let index = self
-            .points
-            .partition_point(|point| self.compare_time(&point.time, &time) == Ordering::Less);
+        let at_tail = self.points.last().is_none_or(|last| {
+            self.behavior
+                .key(&time)
+                .partial_cmp(&self.behavior.key(&last.time))
+                == Some(Ordering::Greater)
+        });
+        let index = if at_tail {
+            self.points.len()
+        } else {
+            if let Some(index) = self.find_point(&time) {
+                return index;
+            }
+            self.points
+                .partition_point(|point| self.compare_time(&point.time, &time) == Ordering::Less)
+        };
         self.points.insert(
             index,
             TimePointData {
@@ -736,6 +745,17 @@ where
         index
     }
     fn find_point(&self, time: &B::InternalItem) -> Option<usize> {
+        if let Some(last) = self.points.last() {
+            match self
+                .behavior
+                .key(time)
+                .partial_cmp(&self.behavior.key(&last.time))
+            {
+                Some(Ordering::Greater) => return None,
+                Some(Ordering::Equal) => return Some(self.points.len() - 1),
+                _ => {}
+            }
+        }
         let index = self
             .points
             .partition_point(|point| self.compare_time(&point.time, time) == Ordering::Less);

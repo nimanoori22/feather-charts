@@ -714,7 +714,13 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         if is_full_replacement {
             self.data = custom_rows;
         } else if let Some(index) = changed_index {
-            let at = self.data.partition_point(|row| row.base.index < index);
+            let at = if self.data.last().is_none_or(|row| row.base.index < index) {
+                self.data.len()
+            } else if self.data.last().is_some_and(|row| row.base.index == index) {
+                self.data.len() - 1
+            } else {
+                self.data.partition_point(|row| row.base.index < index)
+            };
             let exists = self.data.get(at).is_some_and(|row| row.base.index == index);
             match (exists, custom_rows.into_iter().next()) {
                 (true, Some(row)) => self.data[at] = row,

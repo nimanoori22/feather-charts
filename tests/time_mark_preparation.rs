@@ -23,7 +23,11 @@ impl Clone for CountedTime {
         }
     }
 }
-struct Behavior;
+#[derive(Default)]
+struct Behavior {
+    keys: Rc<Cell<usize>>,
+    incremental: bool,
+}
 impl HorzScaleBehavior for Behavior {
     type Item = CountedTime;
     type InternalItem = CountedTime;
@@ -52,6 +56,7 @@ impl HorzScaleBehavior for Behavior {
         Ok(Clone::clone)
     }
     fn key(&self, item: &CountedTime) -> f64 {
+        self.keys.set(self.keys.get() + 1);
         item.value
     }
     fn cache_key(&self, item: &CountedTime) -> u64 {
@@ -71,6 +76,13 @@ impl HorzScaleBehavior for Behavior {
     fn max_tick_mark_weight(&self, marks: &[TimeMark]) -> TickMarkWeightValue {
         marks.iter().map(|m| m.weight).max().unwrap_or_default()
     }
+    fn append_weight(
+        &mut self,
+        _: Option<&CountedTime>,
+        _: &CountedTime,
+    ) -> Option<TickMarkWeightValue> {
+        self.incremental.then_some(TickMarkWeightValue::new(1))
+    }
     fn fill_weights_for_points(
         &mut self,
         points: &mut [TimeScalePoint<CountedTime, CountedTime>],
@@ -87,7 +99,7 @@ fn moving_viewport_clones_only_visible_cached_time_marks() {
     for count in [1_200, 100_000] {
         let clones = Rc::new(Cell::new(0));
         let mut scale = TimeScale::new(
-            Behavior,
+            Behavior::default(),
             HorzScaleOptions::default(),
             LocalizationOptions::new("en-US", ""),
         );
@@ -183,7 +195,7 @@ fn arbitrary_horizontal_behavior_keeps_the_full_context_append_fallback() {
             },
         ))
     };
-    let mut layer = DataLayer::new(Behavior);
+    let mut layer = DataLayer::new(Behavior::default());
     let id = SeriesId::new(1);
     layer
         .set_series_data(id, SeriesType::Line, vec![row(1.)])
@@ -197,4 +209,50 @@ fn arbitrary_horizontal_behavior_keeps_the_full_context_append_fallback() {
             .iter()
             .all(|point| point.time_weight == TickMarkWeightValue::new(1))
     );
+}
+
+#[test]
+fn native_style_tail_lookup_uses_constant_key_work() {
+    use feather_charts::model::{
+        data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem},
+        data_layer::{DataLayer, SeriesId},
+        series_options::SeriesType,
+    };
+    for count in [1200, 100_000] {
+        let keys = Rc::new(Cell::new(0));
+        let clones = Rc::new(Cell::new(0));
+        let mut layer = DataLayer::new(Behavior {
+            keys: keys.clone(),
+            incremental: true,
+        });
+        let row = |index| {
+            BuiltInSeriesDataItem::Line(LineDataItem::<_, ()>::Data(LineData {
+                time: CountedTime {
+                    value: index as f64,
+                    clones: clones.clone(),
+                },
+                value: 100.,
+                color: None,
+                custom_values: None,
+            }))
+        };
+        let id = SeriesId::new(1);
+        layer
+            .set_series_data(id, SeriesType::Line, (0..count).map(row).collect())
+            .unwrap();
+        keys.set(0);
+        clones.set(0);
+        let update = layer.update_series_data(id, row(count), false).unwrap();
+        assert!(update.time_scale.append.is_some());
+        assert!(
+            keys.get() <= 12,
+            "{count}: tail lookup evaluated {} keys",
+            keys.get()
+        );
+        assert!(
+            clones.get() <= 10,
+            "{count}: tail lookup cloned {} times",
+            clones.get()
+        );
+    }
 }

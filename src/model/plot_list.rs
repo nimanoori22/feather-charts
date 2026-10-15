@@ -74,7 +74,13 @@ impl<Row: PlotRowLike + Clone> PlotList<Row> {
     /// Applies one already-normalized row without cloning unchanged history.
     /// Returns whether fulfilled membership changed.
     pub fn update_row(&mut self, index: TimePointIndex, row: Option<Row>) -> bool {
-        let position = self.indices.partition_point(|candidate| *candidate < index);
+        let position = if self.indices.last().is_none_or(|last| *last < index) {
+            self.indices.len()
+        } else if self.indices.last() == Some(&index) {
+            self.indices.len() - 1
+        } else {
+            self.indices.partition_point(|candidate| *candidate < index)
+        };
         let exists = self.indices.get(position) == Some(&index);
         match (exists, row) {
             (true, Some(row)) => self.items[position] = row,
