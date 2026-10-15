@@ -1018,6 +1018,10 @@ fn main() -> iced::Result {
     } else {
         SeriesType::Candlestick
     };
+    if args.iter().any(|a| a == "--cached-geometry-check") {
+        software_drag_profile::check_cached(args.iter().any(|a| a == "--wgpu"));
+        return Ok(());
+    }
     if args.iter().any(|a| a == "--software-drag-profile") {
         software_drag_profile::run();
         return Ok(());

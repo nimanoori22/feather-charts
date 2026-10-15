@@ -54,9 +54,10 @@ impl PriceCoordinateTransform {
             return f64::NAN.into();
         };
         let h = self.internal_height - 1.;
-        if h <= 0. || range.length() == 0. {
+        if range.length() == 0. {
             return f64::NAN.into();
         }
+        // Upstream keeps the affine projection finite even when source margins exceed height.
         let ratio = (self.logical(price) - range.min_value()) / range.length();
         let y = self.bottom_margin + ratio * h;
         (if self.inverted {
@@ -1110,6 +1111,28 @@ mod tests {
             color_parsers: vec![],
         }
     }
+    #[test]
+    fn short_scale_preserves_finite_affine_coordinates() {
+        for inverted in [false, true] {
+            let mut scale = scale_with_range(PriceRangeImpl::new(10., 20.));
+            scale.options.invert_scale = inverted;
+            for height in [1., 2., 10., 100.] {
+                scale.set_height(height);
+                scale.source_margin_above = 8.;
+                scale.source_margin_below = 8.;
+                for price in [0., 10., 15., 20., 30.] {
+                    let internal = scale.internal_height() - 1.;
+                    let y = scale.bottom_margin_px() + internal * (price - 10.) / 10.;
+                    let expected = if inverted { y } else { height - 1. - y };
+                    assert_eq!(scale.price_to_coordinate(price, 1.).value(), expected);
+                }
+            }
+            assert!(scale.price_to_coordinate(f64::NAN, 1.).value().is_nan());
+            scale.set_price_range(None);
+            assert!(scale.price_to_coordinate(15., 1.).value().is_nan());
+        }
+    }
+
     #[test]
     fn coordinates_round_trip() {
         let mut s = PriceScale::new("right", PriceScaleOptions::default(), &layout());

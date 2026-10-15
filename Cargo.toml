@@ -9,6 +9,8 @@ chrono = { version = "0.4", features = ["unstable-locales"] }
 iced = { version = "0.14.0", features = ["canvas", "advanced"] }
 
 [dev-dependencies]
+# Verify the actual software renderer damage work, already locked transitively.
+iced_tiny_skia = "0.14.1"
 # Example-only timer subscriptions for hands-free interaction acceptance.
 iced = { version = "0.14.0", features = ["tokio"] }
 

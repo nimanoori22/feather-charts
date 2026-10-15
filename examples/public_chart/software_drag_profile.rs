@@ -66,7 +66,7 @@ pub(super) fn run() {
                 );
                 let raster = start.elapsed();
                 if let Some(first) = &pixels {
-                    assert_eq!(first, &rgba, "clipping must preserve pixels");
+                    assert!(first == &rgba, "clipping must preserve pixels");
                 } else {
                     pixels = Some(rgba);
                 }
@@ -82,4 +82,78 @@ pub(super) fn run() {
             }
         }
     }
+}
+
+pub(super) fn check_cached(wgpu: bool) {
+    use iced::widget::canvas::Program as _;
+    let backend = if wgpu { "wgpu" } else { "tiny-skia" };
+    let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
+        iced::Font::DEFAULT,
+        iced::Pixels(12.),
+        Some(backend),
+    ))
+    .unwrap();
+    let mut pairs = 0;
+    for kind in [
+        SeriesType::Histogram,
+        SeriesType::Line,
+        SeriesType::Area,
+        SeriesType::Baseline,
+        SeriesType::Bar,
+        SeriesType::Candlestick,
+    ] {
+        for size in [
+            Size::new(941., 900.8),
+            Size::new(420., 320.),
+            Size::new(300., 180.),
+            Size::new(300., 100.),
+        ] {
+            for ratio in [1., 1.25, 1.5, 2.] {
+                let mut app = App {
+                    size,
+                    ratio,
+                    ..App::new(kind)
+                };
+                let state = feather_charts::api::ChartState::default();
+                for (step, message) in [
+                    Message::Append,
+                    Message::MovePrimitive,
+                    Message::ToggleLast,
+                    Message::Append,
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    let _ = app.update(message);
+                    app.chart.prepare(size, ratio, Instant::now()).unwrap();
+                    let physical =
+                        Size::new((size.width * ratio) as u32, (size.height * ratio) as u32);
+                    renderer.reset(iced::Rectangle::with_size(size));
+                    let mut raw = iced::widget::canvas::Frame::new(&renderer, size);
+                    app.chart.multi_frame().unwrap().draw(&mut raw);
+                    renderer.draw_geometry(raw.into_geometry());
+                    let reference = renderer.screenshot(physical, ratio, iced::Color::BLACK);
+                    renderer.reset(iced::Rectangle::with_size(size));
+                    for geometry in app.chart.program(std::convert::identity).draw(
+                        &state,
+                        &renderer,
+                        &iced::Theme::Dark,
+                        iced::Rectangle::with_size(size),
+                        iced::mouse::Cursor::Unavailable,
+                    ) {
+                        renderer.draw_geometry(geometry);
+                    }
+                    let cached = renderer.screenshot(physical, ratio, iced::Color::BLACK);
+                    assert!(
+                        reference == cached,
+                        "cached geometry changed pixels: {kind:?} {size:?} ratio={ratio} step={step}"
+                    );
+                    pairs += 1;
+                }
+            }
+        }
+    }
+    println!(
+        "diagnostic_only=true backend={backend} cached_reference_pairs={pairs} all_identical=true"
+    );
 }

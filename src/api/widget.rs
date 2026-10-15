@@ -12,7 +12,7 @@ use crate::{
 };
 use iced::{
     Size, Theme,
-    widget::canvas::{self, Frame, Geometry},
+    widget::canvas::{self, Geometry},
 };
 use std::time::{Duration, Instant};
 impl Chart {
@@ -73,6 +73,7 @@ pub struct ChartProgram<'a, Message> {
 }
 #[derive(Default)]
 pub struct ChartState {
+    geometry: canvas::Cache,
     touch_input: super::touch_input::TouchInput,
     touch_epoch: Option<u64>,
     edit_input: super::primitive_edit_input::EditInput,
@@ -470,24 +471,27 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         bounds: iced::Rectangle,
         _cursor: iced::mouse::Cursor,
     ) -> Vec<Geometry> {
-        let mut frame = Frame::new(renderer, bounds.size());
-        if let Some(multi) = self.multi {
-            multi.draw(&mut frame);
-            if let Some(top) = _state.multi_input.hovered_divider
-                && let Some(region) = multi.layout.separators.get(top)
-            {
-                let hover = iced::Rectangle::new(
-                    iced::Point::new(0., region.origin.y as f32 - 4.),
-                    Size::new(region.size.width as f32, 9.),
-                );
-                frame.with_clip(hover, |frame| {
-                    frame.fill_rectangle(hover.position(), hover.size(), self.hover_color)
-                });
+        // Cached geometry gives the compositor one damage boundary for the chart.
+        _state.geometry.clear();
+        let geometry = _state.geometry.draw(renderer, bounds.size(), |frame| {
+            if let Some(multi) = self.multi {
+                multi.draw(frame);
+                if let Some(top) = _state.multi_input.hovered_divider
+                    && let Some(region) = multi.layout.separators.get(top)
+                {
+                    let hover = iced::Rectangle::new(
+                        iced::Point::new(0., region.origin.y as f32 - 4.),
+                        Size::new(region.size.width as f32, 9.),
+                    );
+                    frame.with_clip(hover, |frame| {
+                        frame.fill_rectangle(hover.position(), hover.size(), self.hover_color)
+                    });
+                }
+            } else {
+                self.snapshot.draw(frame);
             }
-        } else {
-            self.snapshot.draw(&mut frame);
-        }
-        vec![frame.into_geometry()]
+        });
+        vec![geometry]
     }
 }
 
