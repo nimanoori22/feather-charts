@@ -2,7 +2,7 @@
   "starting_checkpoint": "01391cb",
   "automated_acceptance": "OPEN",
   "production_engine_fix": null,
-  "tooling_fix": "Use distinct package identities for isolated source copies sharing a Cargo target directory.",
+  "tooling_fix": "Use distinct package identities and example target names for isolated diagnostic builds sharing a Cargo target directory.",
   "mouse_acceptance": {
     "device": "mouse",
     "backends": [
@@ -136,14 +136,21 @@
     "target/acceptance-resolution/ip-study/run-6-100000.log": "4c368d43e44b3210dd5ff6cab6b46c4bfd52f8cb6d1b050989ead4f064ee23a7",
     "target/acceptance-resolution/ip-study/run-6-100000.maps": "8d328d129399631d2cecb91fd65e1b3b68171cbe1602dd4fb9efea90dca664f7",
     "target/acceptance-resolution/ip-study/run-6-1200.log": "6ad6b9053a4f0ed90a82adad7bc5a792d4d7099b93633899d863e38f9c7a3612",
-    "target/acceptance-resolution/ip-study/run-6-1200.maps": "b399622135e2c999ecad8edeb1338a3fd79ebe56f77ffa9c37a3753539e4f206"
+    "target/acceptance-resolution/ip-study/run-6-1200.maps": "b399622135e2c999ecad8edeb1338a3fd79ebe56f77ffa9c37a3753539e4f206",
+    "target/acceptance-resolution/normal-example-restoration.json": "0b9f2d403477684612d44d4140a7e23c3a69c4f859d72f932f0cb838c6a14814",
+    "target/acceptance-resolution/ip-build-isolated-example/manifest.json": "c7ed1ac7b7d482eeffbe0c74e7cbc70a5b7b2a42523721000123b0950019495f",
+    "target/acceptance-resolution/example-name-mutation-red.log": "388b780b628a7817affdaad9222af8d5eb50ff4121183fe5731329e9a7245b70",
+    "target/acceptance-resolution/isolation-final-smoke/normal.log": "2729963b2d0d42d3cd645903f9e41b3368da4064bbd4b41f7812b051d6ef562c",
+    "target/acceptance-resolution/isolation-final-smoke/diagnostic.log": "748620b45da72557b501911879538fa93266d3208fc014f82857e72a4cf4ea74",
+    "target/acceptance-resolution/python-tests-final-2.log": "355717928ebbb7249e1a2fb43841b39116474fdd58cb71539319bce237d73e1a"
   },
   "validation": {
-    "python_tests": 34,
+    "python_tests": 35,
     "sampler_regression": "PASS",
     "sampler_strict_clippy": "PASS",
     "fresh_isolated_build_and_smoke": "PASS",
     "formatting": "PASS",
-    "strict_scheduling_record_recheck": "PASS"
+    "strict_scheduling_record_recheck": "PASS",
+    "normal_executable_preservation_and_execution": "PASS"
   }
 }

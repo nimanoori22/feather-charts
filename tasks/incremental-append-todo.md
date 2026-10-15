@@ -1,7 +1,7 @@
 # Incremental live-data append checklist
 
 Plan: [incremental-append-plan.md](incremental-append-plan.md).
-Foundation: `6c743ca`. Engine checkpoint: `27b543e`. Status: engine implemented; functional validation complete; performance acceptance open (23/24 history screens pass; see [follow-up](../docs/porting/live-append-acceptance.md)); physical acceptance in progress (GPU mouse checks passed; see device record).
+Foundation: `6c743ca`. Engine checkpoint: `27b543e`. Status: engine implemented; functional validation complete; performance acceptance open (see the [latest attribution report](../docs/porting/live-update-timing-attribution.md)); normal-build mouse checks passed on both backends; other physical devices remain untested.
 Earlier hardware gates and append-tail exceptions remain independently recorded.
 The remaining work is ordered in the
 [live-update acceptance roadmap](live-update-acceptance-plan.md) and its
@@ -93,7 +93,7 @@ The remaining work is ordered in the
 - [x] Fix duplicated pane preparation; preserve all geometry/hits and 984 identical renderer captures.
 - [x] Profile software drawing and eliminate fully occluded opaque rectangle work; preserve pixels ([follow-up](../docs/porting/render-update-follow-up.md)).
 - [x] Add optional allocation/hardware diagnostics to the actual update fixture, excluded from acceptance.
-- [ ] Pass revised acceptance: latest isolated update study 5/6; native 63/64 cohorts across two sets, including all 32 software cohorts. One GPU presentation failure stops set three. Exception remains open.
+- [ ] Pass revised acceptance: latest fixed update study INCONCLUSIVE; native acceptance stopped after 31/32 first-set cohorts passed. Earlier 5/6-update and 63/64-frame results remain historical evidence. Exception remains open.
 - [x] Investigate latest/middle tails with thread/hardware counters and three matched comparisons; earlier outliers do not recur, all evidence retained.
 - [x] Report phase/public-route, source-count, cold/capacity and global-cache costs.
 
@@ -107,13 +107,16 @@ The remaining work is ordered in the
 
 ## Physical acceptance
 
-Mouse only is available. GPU regular/half-size checks passed by user observation;
-a software problem was reported and awaits diagnosis. See the [device record](live-append-mouse-acceptance.md).
+Mouse only is available. Normal-build GPU and software checks passed at regular,
+half and earlier problem sizes, including short-height recovery. The original
+software lag is resolved. See the [device record](live-append-mouse-acceptance.md).
 
-- [ ] Live feed while using mouse/touchpad zoom, plot pan and price-axis controls.
-- [ ] Live feed during box editing, commit/cancel and fresh gestures afterward.
+- [x] Live feed while using mouse zoom, plot pan and price-axis controls on both backends.
+- [ ] Touchpad zoom, pan and price-axis controls with live feed.
+- [x] Mouse live feed during box editing, commit/cancel and fresh gestures afterward.
 - [ ] Touchscreen pan/pinch/tracking/flick during append and interruption.
-- [ ] Half-size/high-DPI checks on each available backend with device/scale/results.
+- [x] Mouse half-size and short-height recovery checks on both available backends.
+- [ ] High-DPI physical checks with device/scale/results.
 - [ ] Mark milestone accepted only after its automated, performance and physical gates pass.
 
 ## Follow-on

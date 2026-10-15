@@ -35,6 +35,12 @@ prints its compiled package version, which the study runner verifies against the
 build manifest. The existing real-Iced diagnostic builder uses the same helper.
 Production manifests, dependencies and acceptance policy are not changed.
 
+Diagnostic example targets also have distinct names, so building one cannot
+replace the normal example executable in the shared target directory. A real
+two-example build regression verifies that both executables keep their expected
+output; disabling the name isolation makes it fail. The earlier normal update
+executable was atomically restored from its frozen candidate and verified.
+
 A two-project executable regression reproduces Cargo returning the old value when
 package isolation is disabled, with source timestamps deliberately preserved. It
 returns both expected values with package isolation enabled. This tests actual
@@ -152,10 +158,11 @@ slow state. Neither currently justifies a production code change.
 
 ## Validation and retained summary
 
-Passed: 34 Python tests; the sampler's standalone wrap/record regression and
+Passed: 35 Python tests; the sampler's standalone wrap/record regression and
 strict all-target Clippy; a fresh isolated fixture build and smoke recording that
 verifies the executable's compiled identity, 120 raw update records and usable
-IP records; formatting and diff checks. Both retained scheduling traces also pass
+IP records; normal-example preservation and execution after a diagnostic build;
+formatting and diff checks. Both retained scheduling traces also pass
 the tightened switch-order validator. Full engine test results remain recorded
 at the earlier implementation checkpoint; this slice changes diagnostic tools
 and records the normal-build physical results.

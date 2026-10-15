@@ -25,6 +25,12 @@ def isolate_package(project):
     return version
 
 
+def isolate_example(project, name):
+    diagnostic = f'feather_diagnostic_{name}'
+    (project / f'examples/{name}.rs').rename(project / f'examples/{diagnostic}.rs')
+    return diagnostic
+
+
 def patch_debug(source, span_path):
     anchor = '#[cfg(any(not(feature = "enable"), target_arch = "wasm32"))]'
     before, after = source.split(anchor, 1) if source.count(anchor) == 1 else ('', '')
@@ -155,7 +161,8 @@ libc = "0.2"
         example = project / 'examples/preparation_profile.rs'
         example.write_text(replace_once(example.read_text(), 'fn main() {',
             'fn main() {\n    println!("diagnostic_only=true");'))
-    command = ['cargo', 'build', '--offline', '--release', '--example', args.example,
+    target = isolate_example(project, args.example)
+    command = ['cargo', 'build', '--offline', '--release', '--example', target,
                '--manifest-path', str(manifest), '--target-dir', str(ROOT / 'target')]
     for name, destination in patches.items():
         command += ['--config', f'patch.crates-io.{name}.path={json.dumps(str(destination))}']
@@ -167,7 +174,7 @@ libc = "0.2"
     with (output / 'build.log').open('w') as log:
         subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
     binary = output / (args.example.replace('_', '-') + '-diagnostic')
-    shutil.copy2(ROOT / f'target/release/examples/{args.example}', binary)
+    shutil.copy2(ROOT / f'target/release/examples/{target}', binary)
     snapshot['binary_sha256'] = hashlib.sha256(binary.read_bytes()).hexdigest()
     (output / 'manifest.json').write_text(json.dumps(snapshot, indent=2) + '\n')
     if not args.build_only:

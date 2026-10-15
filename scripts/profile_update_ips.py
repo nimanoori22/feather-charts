@@ -7,7 +7,7 @@ import platform
 import shutil
 import subprocess
 
-from profile_public_chart import ROOT, replace_once, isolate_package
+from profile_public_chart import ROOT, replace_once, isolate_package, isolate_example
 
 
 def instrument(source):
@@ -61,7 +61,8 @@ int main(void) { return 0; }
     version = isolate_package(project)
     example = project / 'examples/preparation_profile.rs'
     example.write_text(instrument(example.read_text()))
-    command = ['cargo', 'build', '--offline', '--release', '--example', 'preparation_profile',
+    target = isolate_example(project, 'preparation_profile')
+    command = ['cargo', 'build', '--offline', '--release', '--example', target,
                '--manifest-path', str(project / 'Cargo.toml'), '--target-dir', str(ROOT / 'target'),
                '--config', 'profile.release.package.feather-charts.debug=1']
     snapshot = dict(diagnostic_only=True, package_version=version, command=command,
@@ -71,7 +72,7 @@ int main(void) { return 0; }
     with (output / 'build.log').open('x') as log:
         subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True)
     binary = output / 'update-ip-diagnostic'
-    shutil.copy2(ROOT / 'target/release/examples/preparation_profile', binary)
+    shutil.copy2(ROOT / f'target/release/examples/{target}', binary)
     snapshot['binary_sha256'] = hashlib.sha256(binary.read_bytes()).hexdigest()
     (output / 'manifest.json').write_text(json.dumps(snapshot, indent=2))
     print(binary)

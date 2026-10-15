@@ -1,10 +1,38 @@
 """Patch only the expected dependency source; diagnostic evidence is not acceptance."""
 import unittest
 
-from profile_public_chart import replace_once, patch_debug, isolate_package
+from profile_public_chart import replace_once, patch_debug, isolate_package, isolate_example
 
 
 class DiagnosticPatchTests(unittest.TestCase):
+    def test_diagnostic_build_preserves_the_normal_example_executable(self):
+        from pathlib import Path
+        import shutil
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = root / 'original'
+            (original / 'src').mkdir(parents=True)
+            (original / 'src/lib.rs').write_text('')
+            (original / 'examples').mkdir()
+            (original / 'examples/scene.rs').write_text('fn main() { println!("normal"); }')
+            (original / 'Cargo.toml').write_text('[package]\nname="probe"\nversion = "0.1.0"\nedition="2024"\n')
+            def build(project, target):
+                subprocess.run(['cargo', 'build', '--offline', '--quiet', '--manifest-path',
+                                str(project / 'Cargo.toml'), '--example', target,
+                                '--target-dir', str(root / 'target')], check=True)
+            build(original, 'scene')
+            copy = root / 'copy'
+            shutil.copytree(original, copy)
+            isolate_package(copy)
+            target = isolate_example(copy, 'scene')
+            (copy / f'examples/{target}.rs').write_text('fn main() { println!("diagnostic"); }')
+            build(copy, target)
+            output = root / 'target/debug/examples'
+            self.assertEqual(subprocess.check_output([str(output / 'scene')], text=True).strip(), 'normal')
+            self.assertEqual(subprocess.check_output([str(output / target)], text=True).strip(), 'diagnostic')
+
     def test_copied_source_changes_reach_executables_in_a_shared_target(self):
         import os
         from pathlib import Path
