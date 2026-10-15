@@ -1,0 +1,607 @@
+{
+  "diagnostic_only": true,
+  "source_commit": "2f1f58a",
+  "acceptance": "OPEN",
+  "production_change_retained": false,
+  "flush": {
+    "runs": 12,
+    "rows": [
+      1200,
+      100000
+    ],
+    "samples": 2000,
+    "marks_per_update": 11,
+    "pane_recalculation": {
+      "all": {
+        "wall_ns": [
+          1475.0,
+          1597.5
+        ],
+        "instructions": [
+          7055.0,
+          7055.0
+        ],
+        "cycles": [
+          5739.5,
+          6239.0
+        ],
+        "cache_misses": [
+          30.0,
+          80.0
+        ]
+      },
+      "slow": {
+        "wall_ns": [
+          5714.5,
+          7282.5
+        ],
+        "instructions": [
+          7055.0,
+          7055.0
+        ],
+        "cycles": [
+          22231.0,
+          28204.5
+        ],
+        "cache_misses": [
+          390.5,
+          538.5
+        ]
+      }
+    }
+  },
+  "pane": {
+    "runs": 12,
+    "marks_per_update": 19,
+    "source_loop": {
+      "all": {
+        "wall_ns": [
+          997.0,
+          1080.5
+        ],
+        "instructions": [
+          6231.0,
+          6231.0
+        ],
+        "cycles": [
+          3879.0,
+          4219.0
+        ],
+        "cache_misses": [
+          23.0,
+          52.0
+        ]
+      },
+      "slow": {
+        "wall_ns": [
+          2883.0,
+          4002.0
+        ],
+        "instructions": [
+          6231.0,
+          6231.0
+        ],
+        "cycles": [
+          11231.5,
+          15567.0
+        ],
+        "cache_misses": [
+          196.0,
+          270.0
+        ]
+      }
+    }
+  },
+  "combined_query": {
+    "runs": 24,
+    "decision": "REJECT",
+    "analysis": {
+      "1200": {
+        "improvement_percent": [
+          {
+            "median_ms": 0.6873334268480792,
+            "p95_ms": 4.4558578567462455
+          },
+          {
+            "median_ms": 1.2726518190621119,
+            "p95_ms": 1.667818873142071
+          },
+          {
+            "median_ms": 2.878289473684212,
+            "p95_ms": 15.543818466353683
+          },
+          {
+            "median_ms": -4.154603358425013,
+            "p95_ms": -10.658881691101262
+          },
+          {
+            "median_ms": -8.21290599513521,
+            "p95_ms": -7.840756865371733
+          },
+          {
+            "median_ms": -1.5261731564684113,
+            "p95_ms": -6.817293069737132
+          }
+        ],
+        "baseline_median_range_ms": [
+          0.006908,
+          0.007296
+        ],
+        "combined_median_range_ms": [
+          0.00708,
+          0.007563
+        ],
+        "keep": false
+      },
+      "100000": {
+        "improvement_percent": [
+          {
+            "median_ms": -5.156319454734039,
+            "p95_ms": -0.5973715651134978
+          },
+          {
+            "median_ms": -1.2756598240469248,
+            "p95_ms": -7.412272471382989
+          },
+          {
+            "median_ms": 13.872832369942197,
+            "p95_ms": 29.262152217416556
+          },
+          {
+            "median_ms": 4.072717023675313,
+            "p95_ms": 20.736639572780465
+          },
+          {
+            "median_ms": -5.650611071171821,
+            "p95_ms": -8.169313105400496
+          },
+          {
+            "median_ms": -5.696678190290095,
+            "p95_ms": -10.423639667208576
+          }
+        ],
+        "baseline_median_range_ms": [
+          0.006653,
+          0.007958
+        ],
+        "combined_median_range_ms": [
+          0.006807,
+          0.007348
+        ],
+        "keep": false
+      },
+      "keep": false
+    }
+  },
+  "iced_runs": [
+    {
+      "name": "tiny-skia-narrow",
+      "directory": "runs",
+      "requested_size": [
+        420,
+        320
+      ],
+      "actual_sizes": [
+        [
+          941,
+          508
+        ],
+        [
+          950,
+          517
+        ]
+      ],
+      "size_matches": false,
+      "submitted": 479,
+      "discarded": 0,
+      "unresolved": 1,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": null,
+      "gesture_latency_p95_ns": 43704516,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 9494514,
+      "redraw_to_submit_p95_ns": 6914050,
+      "resolved_redraw_to_presentation_p95_ns": 33023355,
+      "measured_timer_delivery_p95_ns": 6672821,
+      "scheduled_to_presentation_estimate_p95_ns": 49178683
+    },
+    {
+      "name": "tiny-skia-regular",
+      "directory": "runs",
+      "requested_size": [
+        917,
+        871
+      ],
+      "actual_sizes": [
+        [
+          941,
+          508
+        ],
+        [
+          950,
+          517
+        ]
+      ],
+      "size_matches": false,
+      "submitted": 479,
+      "discarded": 0,
+      "unresolved": 1,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": null,
+      "gesture_latency_p95_ns": 42974231,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 8501184,
+      "redraw_to_submit_p95_ns": 7239555,
+      "resolved_redraw_to_presentation_p95_ns": 33064621,
+      "measured_timer_delivery_p95_ns": 2041252,
+      "scheduled_to_presentation_estimate_p95_ns": 43364882
+    },
+    {
+      "name": "wgpu-narrow",
+      "directory": "runs",
+      "requested_size": [
+        420,
+        320
+      ],
+      "actual_sizes": [
+        [
+          941,
+          508
+        ],
+        [
+          950,
+          517
+        ]
+      ],
+      "size_matches": false,
+      "submitted": 473,
+      "discarded": 0,
+      "unresolved": 1,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": null,
+      "gesture_latency_p95_ns": 38126268,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 4060017,
+      "redraw_to_submit_p95_ns": 2017406,
+      "resolved_redraw_to_presentation_p95_ns": 33023953,
+      "measured_timer_delivery_p95_ns": 1848176,
+      "scheduled_to_presentation_estimate_p95_ns": 38855812
+    },
+    {
+      "name": "wgpu-regular",
+      "directory": "runs",
+      "requested_size": [
+        917,
+        871
+      ],
+      "actual_sizes": [
+        [
+          941,
+          508
+        ],
+        [
+          950,
+          517
+        ]
+      ],
+      "size_matches": false,
+      "submitted": 451,
+      "discarded": 0,
+      "unresolved": 0,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": 33016088,
+      "gesture_latency_p95_ns": 45115577,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 10921722,
+      "redraw_to_submit_p95_ns": 2232225,
+      "resolved_redraw_to_presentation_p95_ns": 33016088,
+      "measured_timer_delivery_p95_ns": 2151789,
+      "scheduled_to_presentation_estimate_p95_ns": 45858996
+    },
+    {
+      "name": "tiny-skia-narrow",
+      "directory": "fixed-runs",
+      "requested_size": [
+        420,
+        320
+      ],
+      "actual_sizes": [
+        [
+          420,
+          320
+        ]
+      ],
+      "size_matches": true,
+      "submitted": 479,
+      "discarded": 0,
+      "unresolved": 0,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": 32990641,
+      "gesture_latency_p95_ns": 38044714,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 4648009,
+      "redraw_to_submit_p95_ns": 2651771,
+      "resolved_redraw_to_presentation_p95_ns": 32990641,
+      "measured_timer_delivery_p95_ns": 2015822,
+      "scheduled_to_presentation_estimate_p95_ns": 38730071
+    },
+    {
+      "name": "tiny-skia-regular",
+      "directory": "fixed-runs",
+      "requested_size": [
+        917,
+        871
+      ],
+      "actual_sizes": [
+        [
+          917,
+          871
+        ]
+      ],
+      "size_matches": true,
+      "submitted": 505,
+      "discarded": 0,
+      "unresolved": 2,
+      "input_events": {
+        "input_move": 910,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": null,
+      "gesture_latency_p95_ns": 39929272,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 5676108,
+      "redraw_to_submit_p95_ns": 11067875,
+      "resolved_redraw_to_presentation_p95_ns": 33017916,
+      "measured_timer_delivery_p95_ns": 5127949,
+      "scheduled_to_presentation_estimate_p95_ns": 41136891
+    },
+    {
+      "name": "wgpu-narrow",
+      "directory": "fixed-runs",
+      "requested_size": [
+        420,
+        320
+      ],
+      "actual_sizes": [
+        [
+          420,
+          320
+        ]
+      ],
+      "size_matches": true,
+      "submitted": 473,
+      "discarded": 0,
+      "unresolved": 0,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": 32944640,
+      "gesture_latency_p95_ns": 41252241,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 7626566,
+      "redraw_to_submit_p95_ns": 2023430,
+      "resolved_redraw_to_presentation_p95_ns": 32944640,
+      "measured_timer_delivery_p95_ns": 1927150,
+      "scheduled_to_presentation_estimate_p95_ns": 41885458
+    },
+    {
+      "name": "wgpu-regular",
+      "directory": "fixed-runs",
+      "requested_size": [
+        917,
+        871
+      ],
+      "actual_sizes": [
+        [
+          917,
+          871
+        ]
+      ],
+      "size_matches": true,
+      "submitted": 451,
+      "discarded": 0,
+      "unresolved": 0,
+      "input_events": {
+        "input_move": 0,
+        "input_down": 0,
+        "input_up": 0,
+        "input_wheel": 0
+      },
+      "refresh_millihertz": [
+        0,
+        60000
+      ],
+      "frame_pipeline_p95_ns": 32935705,
+      "gesture_latency_p95_ns": 35845638,
+      "gesture_missing_feedback": 0,
+      "queue_to_redraw_p95_ns": 1719446,
+      "redraw_to_submit_p95_ns": 2474578,
+      "resolved_redraw_to_presentation_p95_ns": 32935705,
+      "measured_timer_delivery_p95_ns": 2702279,
+      "scheduled_to_presentation_estimate_p95_ns": 36153943
+    }
+  ],
+  "limitations": [
+    "Counters perturb timing; cache-miss association does not identify a specific stalled instruction or establish causality.",
+    "Iced diagnostic uses normal demo with two sources, 120 initial rows, 4Hz feed and synthetic 60Hz gestures; not the 16-source native acceptance workload.",
+    "First four Iced runs did not obtain requested sizes and retain unresolved final feedback.",
+    "Fixed software regular run contains 910 native cursor moves and two unresolved feedback records. It is not an isolated script comparison.",
+    "Gesture/frame mapping is first following redraw after application mutation, not physical input-to-photon or a compositor/DRM identity join.",
+    "Timer payload is scheduled tick Instant; measured delivery includes startup backlog. Warmups remain unchanged.",
+    "Raw artifacts are local ignored target files, not distributed in Git."
+  ],
+  "artifact_sha256": {
+    "target/flush-isolation-study/build-combined.py": "fbca0adfdaa21bbeecd5cdc7ace8cbb2183456d2700be55dcd68598073da768f",
+    "target/flush-isolation-study/build-pane-v2/build.log": "da2287bb87944509ffd483203e28607b493dedfbec6c3f46ed87ec183659b9c7",
+    "target/flush-isolation-study/build-pane-v2/manifest.json": "1dcb9ce48c785a9125abb5d128c5ad8ec8a2d4010066bf67e5c1c22151d7dc45",
+    "target/flush-isolation-study/build-pane.py": "ec5bab46ac1d023a5106b796a6f2204e8cf5759ecce234972df5d4eb7519499d",
+    "target/flush-isolation-study/build.py": "f20bf6f8377c20e93eb1ac4f185bbcd5c02a780862f1bb1c4f4395be06ba3250",
+    "target/flush-isolation-study/build/build.log": "5177bff41a6c3aad8f8f1fe0d0df9eb8420a2d67ced2900740db7a70a6b57be0",
+    "target/flush-isolation-study/build/manifest.json": "5fe45afde21455a638023dec76e6acb48366b9e5c99128482d9cf2680922db51",
+    "target/flush-isolation-study/combined-build/build.log": "479ac471718613dbc485484ece78c11a1145fa36f2313544d5b01d18e4a78156",
+    "target/flush-isolation-study/combined-build/manifest.json": "1085f275b7e3eb0e64e7b07b9b4e9f5c4c6dbe4f2b27dd385bb6531d74c81208",
+    "target/flush-isolation-study/combined-runs/1-100000-baseline.log": "cc17328807976dc2dd021a37a1d5fc61f36f5ab277bb24415cbd25b7315139b7",
+    "target/flush-isolation-study/combined-runs/1-100000-combined.log": "7a35a4213097a86466fca79a5036138384f16067085744395ef11f283c71434b",
+    "target/flush-isolation-study/combined-runs/1-1200-baseline.log": "b0b16b4addfec82c38299b987e6fa381c3a51176bc2534c9b7cc3bb816ff8ca5",
+    "target/flush-isolation-study/combined-runs/1-1200-combined.log": "73d82b4f068c5d46cc5b036ef531da86b9c64899d1555b456a9e29a470998b1c",
+    "target/flush-isolation-study/combined-runs/2-100000-baseline.log": "fbcf346d16aa9117c225bc29121eb0815aa17b6501d3b9d64b1c063eea061a7b",
+    "target/flush-isolation-study/combined-runs/2-100000-combined.log": "8125fcb730a28425af924e166a360c1ee2a807fe62a973c5e1935395f1ab2d76",
+    "target/flush-isolation-study/combined-runs/2-1200-baseline.log": "845cbed2aa5a8a322a6d24fedeb140cf2d39f26fd2b3638176188e63263f9dbd",
+    "target/flush-isolation-study/combined-runs/2-1200-combined.log": "d36a1130396455c1a57feca19b27ba2775c8ae599bba0d99f695f948b60aaacb",
+    "target/flush-isolation-study/combined-runs/3-100000-baseline.log": "2bb9b7a21b2f10172b5c3785cf92ce9c6f404623cb8c336d02997b4eedd9b437",
+    "target/flush-isolation-study/combined-runs/3-100000-combined.log": "c1f7b24aafffbf5a302ee4a518a55d003835d71c45a58e4ea3554f7e8a0d1765",
+    "target/flush-isolation-study/combined-runs/3-1200-baseline.log": "6d7a69e333cfc09f67d5fa731d0921cf3e46d1710269a5d4c90858307333a18a",
+    "target/flush-isolation-study/combined-runs/3-1200-combined.log": "fc0fc2509585a9c740a12f9c309f4a52c972e476746b17c6a990d88e251317ea",
+    "target/flush-isolation-study/combined-runs/4-100000-baseline.log": "f677b1bab8261a32e8c2af5d1538b9a4296a94c8fa3191983c010370181329c8",
+    "target/flush-isolation-study/combined-runs/4-100000-combined.log": "7edd04ddaa45198d7635514155fed99b79d0767596ef976255d7d7a7a5fb4320",
+    "target/flush-isolation-study/combined-runs/4-1200-baseline.log": "4b2989bb38458d22a01daf7453dd7027bf2465b8db4ac8503c117517dd97ba1b",
+    "target/flush-isolation-study/combined-runs/4-1200-combined.log": "fd5dc4190c7fe176366bd5a1e8f5f7d02cd22fee6addb62bb1033ce32915e551",
+    "target/flush-isolation-study/combined-runs/5-100000-baseline.log": "806f821d052e71c3c41379dedb9c98d3862eb09c6debce057cec06743dcc53f3",
+    "target/flush-isolation-study/combined-runs/5-100000-combined.log": "1c5b4c4962694d58b4488e498bb28d1b3dc4070a2c45e43472e3db60e85d2701",
+    "target/flush-isolation-study/combined-runs/5-1200-baseline.log": "66336c365bdc7231227782d812e074d456addd666154982b50d4d8fa38041c6e",
+    "target/flush-isolation-study/combined-runs/5-1200-combined.log": "a81846cb3a77b3cf5c63176986d110c9f59b14fa64adf7aa41627354a62c746d",
+    "target/flush-isolation-study/combined-runs/6-100000-baseline.log": "3d49fccca1355c90c7a0e8f4128d3f5bd5a59487cebeee9327b38511395e434c",
+    "target/flush-isolation-study/combined-runs/6-100000-combined.log": "357e13bc6c9cac5df8cdf466ee6959d448bf64aa14860cee9ce6908cc1aca21b",
+    "target/flush-isolation-study/combined-runs/6-1200-baseline.log": "9b8896d5835c02234fa6672a5e591e73d31f9afe99a91d5c3a17764cb68ab86b",
+    "target/flush-isolation-study/combined-runs/6-1200-combined.log": "f2a26317e5c22ae50185e301f49d035f43ed06ea2f40a6c844c93263dcc94c3e",
+    "target/flush-isolation-study/combined-runs/analysis.json": "7563f885c223d4e955eed0a35c2cd562b23bb3d5c025cd7dceb9458ba4e75f7f",
+    "target/flush-isolation-study/combined-runs/protocol.json": "ce07c2abdcd7dbe72305bc397bdebd95f50b70284c69b699e3da37b3657c2818",
+    "target/flush-isolation-study/combined-runs/results.json": "8d70c4bf3d3a89866e334a36537203854943fa43b386efb5682cd28c0d8b1603",
+    "target/flush-isolation-study/combined-tests.log": "f22d8a007e7cab008ee1a190548ab554be66749d2da0c24c5aaca98ab74b0871",
+    "target/flush-isolation-study/curate.py": "72b90cf0c2e2a9167ce25f988aab31e29c11f7f6a5a97ade3177c7f5c8bb76d3",
+    "target/flush-isolation-study/pane-clippy.log": "407f2c52bbb690d25d6fd9cfe2d7eb5a24982fd7df374ce995ee8c7cd62c217f",
+    "target/flush-isolation-study/pane-runs/1-100000.log": "e73fd2ab7dddf8e19b5a12946153b994054e99059878d5f5cfdd904ddaead0eb",
+    "target/flush-isolation-study/pane-runs/1-1200.log": "7a7862a747dd657046957b6f90cea2db01cdf328fc057c2eb35fdf7cf7f0a436",
+    "target/flush-isolation-study/pane-runs/2-100000.log": "0cc0b886b3fa47a33dd7b5357b79ce11e17f09872f11e1b71829d19daf6171d8",
+    "target/flush-isolation-study/pane-runs/2-1200.log": "1d58344e5fc1da2bb3e930c632f6fd004b92e91df76f1e3e68f7ff8d477f416a",
+    "target/flush-isolation-study/pane-runs/3-100000.log": "41d3af81f63e073ea831f5650b45d3d9b2be937e5abd8ff897e5bd0123ffd068",
+    "target/flush-isolation-study/pane-runs/3-1200.log": "d3ba4fafd47fc678da797d870082fdf9bafa5a1e402f8094e20c0bdd41159028",
+    "target/flush-isolation-study/pane-runs/4-100000.log": "325c7c2a3314faf9d74ad2f65911423f4c8bf058cbdf3f3ac234b8331ee74457",
+    "target/flush-isolation-study/pane-runs/4-1200.log": "cde4905a6768ed8417a5a9c0008bc80048bce4fe833f7a0293574fb65ac8a4d6",
+    "target/flush-isolation-study/pane-runs/5-100000.log": "bbcec225dcbcf30de53ebf967a7914b7d9fadb8b1b1b94fd70f4be7c5c6f10ba",
+    "target/flush-isolation-study/pane-runs/5-1200.log": "6d4b7944856984c9b52784574c2a616fe5bc52895551a6a71f90355e73df0980",
+    "target/flush-isolation-study/pane-runs/6-100000.log": "40a5cc8a4e0b3e165fb553ba1a4168f66bab65437f410da203fb60d3a5601e8d",
+    "target/flush-isolation-study/pane-runs/6-1200.log": "325c3d4cee3c05d8dd097913835aa6825b18974adb948e9e1c7aa15149a42b83",
+    "target/flush-isolation-study/pane-runs/analysis.json": "68344f21d583c4920791c74c51295c39051f40cea4a40e60150ac5769bb037bb",
+    "target/flush-isolation-study/pane-runs/protocol.json": "cc5aaeca8f2af645905a98e9ff51cc574f3bfced156da7ca3674240903efc9cf",
+    "target/flush-isolation-study/pane-smoke.log": "233c634635d7cdc5aff40ca0fadb6b576bc00a4202dd968da0322da3bec6030e",
+    "target/flush-isolation-study/python-tests.log": "199ba496f288116d36c62f29346d4fbf0bd75745a1c893abfcbdaa4c6d5b1033",
+    "target/flush-isolation-study/run-combined.py": "0cf221683df27835651181967b6bc3f8ae8d2759aac184ec9fc8ed8113298a04",
+    "target/flush-isolation-study/run-pane.py": "7fd5a745ed2e34159facb235c928c912325de6e396093a955036cbaa56b7e64e",
+    "target/flush-isolation-study/run.py": "2249b15df1d6f2fc7c1c71189fd4f19944a326ce4b3165f970293f8bbc4faca3",
+    "target/flush-isolation-study/runs/1-100000.log": "573885b9646b85717c8e64f5bcd48c8fb81db359444cf72fd4ccd015629261f0",
+    "target/flush-isolation-study/runs/1-1200.log": "be6c3332be722aed90bf1653fdf7ed01d347533dcabbdf75b41daf012b4b23f1",
+    "target/flush-isolation-study/runs/2-100000.log": "3741d08ff4266dfd0c43010efecac661d6d5322365903895f3c332ce249b96a8",
+    "target/flush-isolation-study/runs/2-1200.log": "8d0748b3ab8e39fe283f391728bfcc5694c6f968c38056ca0c6263203585a596",
+    "target/flush-isolation-study/runs/3-100000.log": "8a80a79f482988d547476c8788e33ce859c67dc2bee199fda115b6618d5cef8b",
+    "target/flush-isolation-study/runs/3-1200.log": "7bc45f5b43aa0be093570aa9b6c5736fe929947fff07114a5b1b351af03ba0f6",
+    "target/flush-isolation-study/runs/4-100000.log": "5e1a01889c00dd27b0f83443e7c328641c1acb29ff0eaccec6aea3cc87e63ab6",
+    "target/flush-isolation-study/runs/4-1200.log": "1fe3684fafc4e118524f1ce24d728bfdf1689c80ecfb0658656cc11c68aa97f9",
+    "target/flush-isolation-study/runs/5-100000.log": "a8687071a6e9f20ce186a1915880393aea4e4a2c4208a9e8805180c50cceebbc",
+    "target/flush-isolation-study/runs/5-1200.log": "ed59cc063879ccb98551bd988c5490dc96175d88e85390e49ba529cea50ce1e7",
+    "target/flush-isolation-study/runs/6-100000.log": "15f45c488c78957ff039d1bee0be042e3b06ac93f55349b22d3c5f5b83938b3a",
+    "target/flush-isolation-study/runs/6-1200.log": "a43ba1d0521e8df331b4149d37dab046465b9291c7662bc13bdbc66955df5d8d",
+    "target/flush-isolation-study/runs/analysis.json": "3b3d308f8ef0e351625bad4e205f5716597774776e0b663acf52f14506f1ff81",
+    "target/flush-isolation-study/runs/protocol.json": "4d4bfb7be5ca59b8e90a0cd83a380aa2de01872b2529efc467396452453bd63d",
+    "target/flush-isolation-study/smoke.log": "06e04d5d383f2bfe0b080f3a74ffdfb54b03d4e1ad7f0e38a434241f589bfb0f",
+    "target/iced-scheduling-study/analysis.json": "b3d4d535188be4b947f72efaf588485ef3d9c472aa95a8bdf2b4c084e48cb2f4",
+    "target/iced-scheduling-study/analyze.py": "892d8efe578a1b32ec0281f4411acfab6dc431e6cf463abdc4530593b72375aa",
+    "target/iced-scheduling-study/build-v2/build.log": "32bbf1b2c92b17e2d3b22b25073b8a2d89db8f9964e6b26243c4c83bfed5daa0",
+    "target/iced-scheduling-study/build-v2/iced_debug/src/lib.rs": "3406404cc5d2bcff125f02cf8a569d857944ce4924c10af65cda5cbe4d3178d0",
+    "target/iced-scheduling-study/build-v2/iced_winit/src/lib.rs": "3022cf6bb710575bd0c82bf945da10e9a9ba2df86edc07c0356d1269699cf264",
+    "target/iced-scheduling-study/build-v2/iced_winit/src/window.rs": "3dc7737245835f190f730e7480148167dd115f0b1d785abd2dcd51b7cdd5bddc",
+    "target/iced-scheduling-study/build-v2/manifest.json": "9316a735e0354883a68645f6f24ca9b1a97d4376075e649a02f469e25db8d7fb",
+    "target/iced-scheduling-study/build-v3/build.log": "110bcc2c91cc9f8663db8aa1b813f71e8c593fbf9f16a4efecefbc3bb1f4d598",
+    "target/iced-scheduling-study/build-v3/iced_debug/src/lib.rs": "de60ca9763b0fa2e609d09f106b2cd635ec50af8b4628a3ebdf1607f13b4b58e",
+    "target/iced-scheduling-study/build-v3/iced_winit/src/lib.rs": "3022cf6bb710575bd0c82bf945da10e9a9ba2df86edc07c0356d1269699cf264",
+    "target/iced-scheduling-study/build-v3/iced_winit/src/window.rs": "3dc7737245835f190f730e7480148167dd115f0b1d785abd2dcd51b7cdd5bddc",
+    "target/iced-scheduling-study/build-v3/manifest.json": "18d7c4c2a3dac53432d6c0d5c787670ec518225ffcdb5fe23e1d80a1cdaf983c",
+    "target/iced-scheduling-study/build.py": "b50eae15aecf29ef2296d486aeae32f64d251319817ecca4c2687b0e7df21b60",
+    "target/iced-scheduling-study/fixed-runs/protocol.json": "9acb94649b7373d6bb2e25e54387ee9f403d7be6d9c08bd2e7c054014cb790fd",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-narrow.analysis.json": "d5cc7026e8c08cebfc3ea8afcabfaf5683a887ac7922245ee66b47526b6687db",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-narrow.csv": "151e9b5f8727c8c9e0b6bf1b9ee00c5ec783ba1659f379737f05fdf519e9dd6b",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-narrow.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-regular.analysis.json": "543f43401f3036119951dd7ac4bc969c041c5cc00f3eb02055349e8df3443ceb",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-regular.csv": "7f40236fcd5bce38395d388f0dcda7c2e51cffe68d0af510bcb849d7faf5d050",
+    "target/iced-scheduling-study/fixed-runs/tiny-skia-regular.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/fixed-runs/wgpu-narrow.analysis.json": "59596ce22cf798ac61f70e6196043eed202f845319796c0d532f7a378065d7c1",
+    "target/iced-scheduling-study/fixed-runs/wgpu-narrow.csv": "1e598682bec45de382cacdd526732f5c9e67ac7d4eb3344466642539d971c9dd",
+    "target/iced-scheduling-study/fixed-runs/wgpu-narrow.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/fixed-runs/wgpu-regular.analysis.json": "d5bf3979f0cc9f6e0ce249f3ce60c08d0e297663d07839d8e8588e0d4502f172",
+    "target/iced-scheduling-study/fixed-runs/wgpu-regular.csv": "11dc17668a99c537c7617cbf839a405affa9c22b60841f648ecc3b853ae9f190",
+    "target/iced-scheduling-study/fixed-runs/wgpu-regular.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/run-fixed.py": "b8f52fa478d0f0eb21aa08ce5bb9cae2082eaa4b7b04d6008afb0af67027a8be",
+    "target/iced-scheduling-study/run.py": "dfda6f15e812203d490c5806cddb2932779d411c39117459f008817cf384a176",
+    "target/iced-scheduling-study/runs/protocol.json": "eefcd6f53e08a57cdec6b7f0b309462cac0bcc6becda3d9a9f8c00fdb68940d6",
+    "target/iced-scheduling-study/runs/tiny-skia-narrow.analysis.json": "d878697117e7e1700ba1cd8989823cd7e660db119f295bdb3011112a96562806",
+    "target/iced-scheduling-study/runs/tiny-skia-narrow.csv": "eaaaba8b2474a516cc106b5bd8e82ae1a603ee93389cabf7a87eba3747bb7a86",
+    "target/iced-scheduling-study/runs/tiny-skia-narrow.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/runs/tiny-skia-regular.analysis.json": "f845ed3b2ca62ec51d5f35a1d7369efd6724864c7ee529779220a3c3103f56e4",
+    "target/iced-scheduling-study/runs/tiny-skia-regular.csv": "04b53e1a162db0b6fff5c01535ad1d2b468e1c40f5ca050dd780cdd6e2eb777c",
+    "target/iced-scheduling-study/runs/tiny-skia-regular.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/runs/wgpu-narrow.analysis.json": "b075e5e1486b7916c5c2a45137d1a86cd99fca40e65438dd60a0c312d6d8b50b",
+    "target/iced-scheduling-study/runs/wgpu-narrow.csv": "d4a2633651140ac0d85068be953ff3a119a35412476ed8a63d0975f5c16575dd",
+    "target/iced-scheduling-study/runs/wgpu-narrow.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/iced-scheduling-study/runs/wgpu-regular.analysis.json": "422ebb625244ac65acc186d97d9f1135f23cee8f95956c3b9ee4cd1f69c623c0",
+    "target/iced-scheduling-study/runs/wgpu-regular.csv": "19ea1ee385f30ab2dbe8d13e75f3455ddd60f0f88848a8de4f95f5c332df5ae9",
+    "target/iced-scheduling-study/runs/wgpu-regular.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

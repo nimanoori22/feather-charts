@@ -271,3 +271,16 @@ Active user-cycle growth with stable instruction counts narrows the update
 attribution without establishing a specific stall. No production remedy was
 retained, so tasks 6/8 and unchanged acceptance remain open. No acceptance
 retries, budget changes or conflation work followed these rejected candidates.
+
+## Flush isolation and real-Iced scheduling continuation
+
+The [follow-up report](../docs/porting/flush-and-iced-scheduling.md) records twelve
+flush and twelve finer pane diagnostic executions. Series autoscale aggregation
+is the largest isolated component of pane recalculation in the captured tails;
+instruction counts remain stable while generic cache misses increase. A combined
+source query passes 388 library tests but fails the fixed 24-run performance
+comparison and is rejected. Eight actual-Iced sessions retain size mismatches,
+startup timer backlog, cursor activity and unresolved feedback explicitly. Three
+fixed-size sessions have complete feedback; none substitutes for acceptance.
+No production remedy was retained. Tasks 6/8, unchanged timing acceptance,
+remaining device coverage and conflation remain open.
