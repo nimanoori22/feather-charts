@@ -1,10 +1,26 @@
 import struct
 import unittest
 
-from profile_frame_schedule import decode, off_cpu
+from profile_frame_schedule import decode, off_cpu, drain_ring
 
 
 class SchedulingTraceTests(unittest.TestCase):
+    def test_ring_wrap_bounds_and_tail_publication(self):
+        ring = bytearray(4096 + 32)
+        record = struct.pack('IHHIIQ', 14, 1 << 13, 24, 42, 42, 1234)
+        for i, value in enumerate(record):
+            ring[4096 + (20 + i) % 32] = value
+        struct.pack_into('QQQQ', ring, 1024, 44, 20, 4096, 32)
+        self.assertEqual(drain_ring(ring), decode(record))
+        self.assertEqual(struct.unpack_from('Q', ring, 1032)[0], 44)
+        self.assertEqual(drain_ring(ring), [])
+        struct.pack_into('Q', ring, 1024, 100)
+        with self.assertRaises(ValueError):
+            drain_ring(ring)
+        struct.pack_into('QQQQ', ring, 1024, 0, 0, 4096, 33)
+        with self.assertRaises(ValueError):
+            drain_ring(ring)
+
     def test_switches_preserve_preemption_and_reject_lost_or_malformed_data(self):
         def event(misc, timestamp):
             return struct.pack('IHHIIQ', 14, misc, 24, 42, 42, timestamp)
