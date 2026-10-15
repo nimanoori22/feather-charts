@@ -797,6 +797,10 @@ dependencies = [
  "chrono",
  "csscolorparser",
  "iced",
+ "libc",
+ "wayland-client",
+ "wayland-protocols",
+ "winit",
 ]
 
 [[package]]
