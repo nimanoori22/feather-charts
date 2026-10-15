@@ -17,6 +17,10 @@ appreciably during the longer run; starting sizes and complete series are report
 
 Artifacts and pre-run protocol: `target/incremental-append/histogram-tail-extended/`.
 
+The subsequent [cause investigation](histogram-window-cause.md) adds same-history
+controls and fresh hardware counters. The runner now reports all short windows
+and their controls without changing strict acceptance or discarding any failure.
+
 ## Results
 
 **All six extended pairs pass the unchanged 10% update median/p95 limit.**

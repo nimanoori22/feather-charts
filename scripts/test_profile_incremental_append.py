@@ -16,10 +16,11 @@ def arg(name, default):
 rows = int(arg('--rows', '10'))
 count = int(arg('--series', '1'))
 samples = int(arg('--samples', '1'))
+recorded_samples = samples - 1 if os.environ.get('FAKE_SHORT_RAW') else samples
 value = 2.0 if os.environ.get('FAKE_SLOW') and rows == 100000 else 1.0
 print('engine_sentinel tail_response_rows=1')
 for stage in ['update', 'snapshot', 'glyph']:
-    print(f'raw Histogram rows={rows} sources={count} phase=append/{stage} ms={[value] * samples}')
+    print(f'raw Histogram rows={rows} sources={count} phase=append/{stage} ms={[value] * recorded_samples}')
     print(f'Histogram rows={rows} sources={count} phase=append/{stage} median_ms={value:.6f} p95_ms={value:.6f}')
 '''
 
@@ -33,11 +34,14 @@ class HistogramTailRunnerTests(unittest.TestCase):
         artifact.write_text(FAKE)
         artifact.chmod(0o755)
 
-    def run_profile(self, slow=False):
+    def run_profile(self, slow=False, short_raw=False):
         env = os.environ.copy()
         env.pop('FAKE_SLOW', None)
+        env.pop('FAKE_SHORT_RAW', None)
         if slow:
             env['FAKE_SLOW'] = '1'
+        if short_raw:
+            env['FAKE_SHORT_RAW'] = '1'
         return subprocess.run(
             ['python3', str(RUNNER), '--histogram-tail', '--directory', str(self.root)],
             env=env, text=True, capture_output=True,
@@ -56,6 +60,10 @@ class HistogramTailRunnerTests(unittest.TestCase):
                    .read_text().splitlines() if line.startswith('raw '))
         self.assertEqual(len(ast.literal_eval(raw.split(' ms=', 1)[1])), 2000)
         self.assertIn('6/6', result.stdout)
+        analysis = json.loads((self.root / 'window-analysis.json').read_text())
+        self.assertEqual(analysis['attribution'], 'no_growth_observed')
+        self.assertEqual(len(analysis['history_windows']), 120)
+        self.assertEqual(len(analysis['control_windows']), 120)
         self.assertLess(result.stdout.index('run-2-current-histogram-100000-'),
                         result.stdout.index('run-2-current-histogram-1200-'))
         saved = (self.root / 'measurements.json').read_bytes()
@@ -70,6 +78,15 @@ class HistogramTailRunnerTests(unittest.TestCase):
         screens = json.loads((self.root / 'growth-screens.json').read_text())
         self.assertEqual(len(screens), 6)
         self.assertTrue(all(x['p95_growth'] == 1.0 for x in screens))
+        analysis = json.loads((self.root / 'window-analysis.json').read_text())
+        self.assertEqual(analysis['attribution'], 'history_growth_observed')
+        self.assertEqual(analysis['history_exceeded'], 120)
+
+    def test_truncated_raw_samples_cannot_satisfy_the_budget(self):
+        result = self.run_profile(short_raw=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(len(list(self.root.glob('run-*.log'))), 1)
+        self.assertFalse((self.root / 'growth-screens.json').exists())
 
     def test_original_full_matrix_keeps_its_budget(self):
         for name in ['baseline-profile', 'baseline-custom-profile', 'current-custom-profile']:
@@ -78,6 +95,7 @@ class HistogramTailRunnerTests(unittest.TestCase):
             artifact.chmod(0o755)
         env = os.environ.copy()
         env.pop('FAKE_SLOW', None)
+        env.pop('FAKE_SHORT_RAW', None)
         result = subprocess.run(
             ['python3', str(RUNNER), '--directory', str(self.root), '--baseline-tail-rows', '1'],
             env=env, text=True, capture_output=True,

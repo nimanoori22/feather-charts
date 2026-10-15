@@ -318,3 +318,7 @@ The [larger Histogram latency study](docs/porting/histogram-tail-follow-up.md)
 passes six predefined 2,000-sample comparisons. Repeat that controlled check with
 `scripts/profile_incremental_append.py --histogram-tail`; the original full-matrix
 failure remains recorded separately.
+
+The [short-window cause investigation](docs/porting/histogram-window-cause.md)
+records same-history controls and hardware counters. The focused runner reports
+these controls alongside every raw timing failure to qualify history attribution.

@@ -1,5 +1,6 @@
 """Run immutable baseline/current binaries serially; retain every timing sample."""
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -7,6 +8,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+
+from histogram_window_analysis import analyze_windows
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--directory', type=Path, default=Path('target/incremental-append'))
@@ -40,6 +43,7 @@ for version in artifact_versions:
 (root / 'identities.json').write_text(json.dumps(identities, indent=2) + '\n')
 pattern = re.compile(r'^(Line|Candlestick|Histogram|Custom) rows=(\d+) sources=(\d+) phase=(\w+)/(\w+) median_ms=([\d.]+) p95_ms=([\d.]+)$', re.M)
 results = []
+update_samples = {}
 cases = [(kind, rows, sources, 'append', [])
          for kind in ['line', 'candlestick', 'histogram', 'custom']
          for sources in [1, 16] for rows in [1200, 20_000, 100_000]]
@@ -71,6 +75,15 @@ for run in range(1, run_count + 1):
                 subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True)
             found = list(pattern.finditer((root / f'{name}.log').read_text()))
             assert len(found) == 3, name
+            if args.histogram_tail:
+                raw = re.search(
+                    rf'^raw Histogram rows={rows} sources=16 phase=append/update ms=(.+)$',
+                    (root / f'{name}.log').read_text(), re.M,
+                )
+                assert raw is not None, name
+                values = ast.literal_eval(raw.group(1))
+                assert len(values) == samples, (name, len(values))
+                update_samples.setdefault(run, {})[rows] = values
             for match in found:
                 _, n, count, _, stage, median, p95 = match.groups()
                 results.append(dict(run=run, version=version, kind=kind, rows=int(n), sources=int(count), case=case, stage=stage, median=float(median), p95=float(p95)))
@@ -90,4 +103,9 @@ print(f'{len(screens)-len(failed)}/{len(screens)} paired update median/p95 scree
 for failure in failed:
     print(json.dumps(failure), flush=True)
 if args.histogram_tail:
+    analysis = analyze_windows(update_samples)
+    (root / 'window-analysis.json').write_text(json.dumps(analysis, indent=2) + '\n')
+    print(f"100-sample windows: {analysis['history_exceeded']}/{len(analysis['history_windows'])} history screens exceed 10%; "
+          f"{analysis['control_exceeded']}/{len(analysis['control_windows'])} same-history controls exceed 10%; "
+          f"attribution={analysis['attribution']}. Descriptive controls do not alter strict acceptance.", flush=True)
     sys.exit(1 if failed else 0)
