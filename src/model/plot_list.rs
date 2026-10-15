@@ -5,6 +5,11 @@ use crate::model::{
     time_data::TimePointIndex,
 };
 
+#[cfg(test)]
+thread_local! {
+    pub(super) static MIN_MAX_ROWS_READ: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum MismatchDirection {
     NearestLeft,
@@ -109,6 +114,8 @@ impl<Row: PlotRowLike + Clone> PlotList<Row> {
             return None;
         }
         for row in &self.items[from..to] {
+            #[cfg(test)]
+            MIN_MAX_ROWS_READ.with(|reads| reads.set(reads.get() + 1));
             for plot in plots {
                 let value = row.values()[*plot as usize];
                 if value.is_nan() {
@@ -129,7 +136,11 @@ impl<Row: PlotRowLike + Clone> PlotList<Row> {
         result
     }
     fn position(&self, index: TimePointIndex, direction: MismatchDirection) -> Option<usize> {
-        let lower = self.indices.partition_point(|candidate| *candidate < index);
+        let lower = self.indices.partition_point(|candidate| {
+            #[cfg(test)]
+            super::series::FIRST_VALUE_SEARCH_READS.with(|reads| reads.set(reads.get() + 1));
+            *candidate < index
+        });
         if lower < self.indices.len() && self.indices[lower] == index {
             return Some(lower);
         }

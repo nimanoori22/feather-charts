@@ -9,6 +9,19 @@ pub mod line_pane_view;
 pub mod markers_pane_view;
 pub(crate) mod projection;
 
+#[cfg(test)]
+#[path = "series/min_max_cache_tests.rs"]
+mod min_max_cache_tests;
+
+#[cfg(test)]
+#[path = "series/first_value_cache_tests.rs"]
+mod first_value_cache_tests;
+
+#[cfg(test)]
+thread_local! {
+    pub(super) static FIRST_VALUE_SEARCH_READS: Cell<usize> = const { Cell::new(0) };
+}
+
 use crate::{
     formatters::{
         iprice_formatter::PriceValueFormatter, percentage_formatter::PercentageFormatter,
@@ -207,6 +220,79 @@ fn autoscale_plots(series_type: SeriesType) -> Option<&'static [PlotRowValueInde
     }
 }
 
+#[derive(Clone, Copy)]
+struct CachedAutoscaleRange {
+    start: TimePointIndex,
+    end: TimePointIndex,
+    values: Option<super::plot_list::MinMax>,
+}
+
+#[derive(Clone, Copy)]
+struct CachedFirstValue {
+    left: TimePointIndex,
+    value: Option<FirstValue>,
+}
+
+#[derive(Default)]
+struct SeriesDataCache {
+    range: Cell<Option<CachedAutoscaleRange>>,
+    first: Cell<Option<CachedFirstValue>>,
+}
+
+impl SeriesDataCache {
+    fn invalidate(&mut self, index: Option<TimePointIndex>) {
+        let Some(index) = index else {
+            self.range.set(None);
+            self.first.set(None);
+            return;
+        };
+        if self
+            .range
+            .get()
+            .is_some_and(|cached| cached.start <= index && index <= cached.end)
+        {
+            self.range.set(None);
+        }
+        if self.first.get().is_some_and(|cached| {
+            cached.left <= index && cached.value.is_none_or(|first| index <= first.time_point)
+        }) {
+            self.first.set(None);
+        }
+    }
+
+    fn first_value(
+        &self,
+        left: TimePointIndex,
+        compute: impl FnOnce() -> Option<FirstValue>,
+    ) -> Option<FirstValue> {
+        if let Some(cached) = self.first.get().filter(|cached| cached.left == left) {
+            return cached.value;
+        }
+        let value = compute();
+        self.first.set(Some(CachedFirstValue { left, value }));
+        value
+    }
+
+    fn raw_range(
+        &self,
+        start: TimePointIndex,
+        end: TimePointIndex,
+        compute: impl FnOnce() -> Option<super::plot_list::MinMax>,
+    ) -> Option<super::plot_list::MinMax> {
+        if let Some(cached) = self
+            .range
+            .get()
+            .filter(|cached| cached.start == start && cached.end == end)
+        {
+            return cached.values;
+        }
+        let values = compute();
+        self.range
+            .set(Some(CachedAutoscaleRange { start, end, values }));
+        values
+    }
+}
+
 /// Core state for a built-in Series. It deliberately has no model, pane, or
 /// renderer reference; its owner applies invalidation and layout effects.
 pub struct Series<I, O, M = ()> {
@@ -214,6 +300,7 @@ pub struct Series<I, O, M = ()> {
     series_type: SeriesType,
     options: SeriesOptionsMap,
     data: PlotList<SeriesPlotRow<I, O, (), M>>,
+    data_cache: SeriesDataCache,
     formatter: SeriesValueFormatter,
     pane_data_generation: u64,
     z_order: Cell<i32>,
@@ -264,6 +351,7 @@ where
             series_type,
             options,
             data: PlotList::new(),
+            data_cache: SeriesDataCache::default(),
             formatter,
             pane_data_generation: 0,
             z_order: Cell::new(0),
@@ -385,6 +473,7 @@ where
         rows: Vec<SeriesPlotRow<I, O, (), M>>,
         info: Option<SeriesUpdateInfo>,
     ) {
+        self.data_cache.invalidate(None);
         self.data.set_data(rows);
         self.last_update_info = info;
         self.invalidate_pane_data();
@@ -396,6 +485,7 @@ where
         changed_index: Option<TimePointIndex>,
     ) -> bool {
         if let Some(index) = changed_index {
+            self.data_cache.invalidate(Some(index));
             let changed = self.data.update_row(index, rows.pop());
             self.last_update_info = info;
             self.invalidate_pane_data();
@@ -414,10 +504,13 @@ where
             .search(visible.left(), MismatchDirection::NearestRight)
     }
     pub fn first_value(&self, visible: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue> {
-        let row = self.first_bar(visible)?;
-        Some(FirstValue {
-            value: PlotRowLike::values(row)[PlotRowValueIndex::Close as usize],
-            time_point: PlotRowLike::index(row),
+        let visible = visible?;
+        self.data_cache.first_value(visible.left(), || {
+            let row = self.first_bar(Some(visible))?;
+            Some(FirstValue {
+                value: PlotRowLike::values(row)[PlotRowValueIndex::Close as usize],
+                time_point: PlotRowLike::index(row),
+            })
         })
     }
     /// Computes the built-in price range without consulting a user provider.
@@ -431,10 +524,10 @@ where
         }
 
         let plots = autoscale_plots(self.series_type)?;
-        let mut range = self
-            .data
-            .min_max_on_range_cached(start, end, plots)
-            .map(|values| PriceRangeImpl::new(values.min, values.max));
+        let values = self.data_cache.raw_range(start, end, || {
+            self.data.min_max_on_range_cached(start, end, plots)
+        });
+        let mut range = values.map(|values| PriceRangeImpl::new(values.min, values.max));
 
         if let SeriesOptionsMap::Histogram(options) = &self.options {
             let baseline = PriceRangeImpl::new(options.style.base, options.style.base);
@@ -634,6 +727,7 @@ pub struct CustomSeries<I, O, D, M = ()> {
     id: SeriesId,
     options: CustomSeriesOptions,
     data: Vec<CustomPlotRow<I, O, D, M>>,
+    data_cache: SeriesDataCache,
     formatter: SeriesValueFormatter,
     pane_data_generation: u64,
     z_order: i32,
@@ -651,6 +745,7 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
             id,
             options,
             data: vec![],
+            data_cache: SeriesDataCache::default(),
             formatter,
             pane_data_generation: 0,
             z_order: 0,
@@ -676,6 +771,7 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         rows: Vec<CustomPlotRow<I, O, D, M>>,
         info: Option<SeriesUpdateInfo>,
     ) {
+        self.data_cache.invalidate(None);
         self.data = rows;
         self.last_update_info = info;
         self.invalidate_pane_data();
@@ -684,6 +780,7 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         if changes.indices_unchanged {
             return;
         }
+        self.data_cache.invalidate(None);
         for (row, index) in self.data.iter_mut().zip(&changes.indices) {
             row.base.index = *index;
         }
@@ -693,6 +790,7 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
         let mut removed = vec![];
         for index in indices {
             if let Some(position) = self.data.iter().position(|row| row.base.index == *index) {
+                self.data_cache.invalidate(Some(*index));
                 removed.push(self.data.remove(position));
             }
         }
@@ -711,6 +809,11 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
             changed_index,
             ..
         } = update;
+        self.data_cache.invalidate(if is_full_replacement {
+            None
+        } else {
+            changed_index
+        });
         if is_full_replacement {
             self.data = custom_rows;
         } else if let Some(index) = changed_index {
@@ -742,13 +845,17 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     }
     pub fn first_value(&self, visible: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue> {
         let visible = visible?;
-        let at = self
-            .data
-            .partition_point(|row| row.base.index < visible.left());
-        let row = self.data.get(at)?;
-        Some(FirstValue {
-            value: row.base.value[PlotRowValueIndex::Close as usize],
-            time_point: row.base.index,
+        self.data_cache.first_value(visible.left(), || {
+            let at = self.data.partition_point(|row| {
+                #[cfg(test)]
+                FIRST_VALUE_SEARCH_READS.with(|reads| reads.set(reads.get() + 1));
+                row.base.index < visible.left()
+            });
+            let row = self.data.get(at)?;
+            Some(FirstValue {
+                value: row.base.value[PlotRowValueIndex::Close as usize],
+                time_point: row.base.index,
+            })
         })
     }
     /// Computes the custom low/high envelope from its DataLayer-created OHLC
@@ -762,23 +869,33 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
             return None;
         }
 
-        let mut range: Option<PriceRangeImpl> = None;
-        let from = self.data.partition_point(|row| row.base.index < start);
-        let to = self.data.partition_point(|row| row.base.index <= end);
-        for row in &self.data[from..to.max(from)] {
-            for value in [
-                row.base.value[PlotRowValueIndex::Low as usize],
-                row.base.value[PlotRowValueIndex::High as usize],
-            ] {
-                if value.is_nan() {
-                    continue;
+        let values = self.data_cache.raw_range(start, end, || {
+            let mut range: Option<PriceRangeImpl> = None;
+            let from = self.data.partition_point(|row| row.base.index < start);
+            let to = self.data.partition_point(|row| row.base.index <= end);
+            for row in &self.data[from..to.max(from)] {
+                #[cfg(test)]
+                super::plot_list::MIN_MAX_ROWS_READ.with(|reads| reads.set(reads.get() + 1));
+                for value in [
+                    row.base.value[PlotRowValueIndex::Low as usize],
+                    row.base.value[PlotRowValueIndex::High as usize],
+                ] {
+                    if value.is_nan() {
+                        continue;
+                    }
+                    range = Some(match range {
+                        Some(current) => current.merge(Some(&PriceRangeImpl::new(value, value))),
+                        None => PriceRangeImpl::new(value, value),
+                    });
                 }
-                range = Some(match range {
-                    Some(current) => current.merge(Some(&PriceRangeImpl::new(value, value))),
-                    None => PriceRangeImpl::new(value, value),
-                });
             }
-        }
+
+            range.as_ref().map(|range| super::plot_list::MinMax {
+                min: range.min_value(),
+                max: range.max_value(),
+            })
+        });
+        let mut range = values.map(|values| PriceRangeImpl::new(values.min, values.max));
 
         let mut margins = self
             .marker_collections
