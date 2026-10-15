@@ -66,9 +66,10 @@ class NativeEvidenceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp)
             self.save(path, self.fixture(path))
-            with (path / 'metadata.txt').open('a') as file:
-                file.write('diagnostic_draw=no-rectangles\n')
-            self.assertEqual(read_execution(path, 'wgpu', 1200, False)['status'], 'INCONCLUSIVE')
+            original = (path / 'metadata.txt').read_text()
+            for mode in ['no-rectangles', 'schedule']:
+                (path / 'metadata.txt').write_text(original + f'diagnostic_draw={mode}\n')
+                self.assertEqual(read_execution(path, 'wgpu', 1200, False)['status'], 'INCONCLUSIVE')
 
     def test_runner_retains_failed_set_stops_and_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as temp:
