@@ -3,6 +3,9 @@
 Plan: [incremental-append-plan.md](incremental-append-plan.md).
 Foundation: `6c743ca`. Engine checkpoint: `27b543e`. Status: engine implemented; functional validation complete; performance acceptance open (23/24 history screens pass; see [follow-up](../docs/porting/live-append-acceptance.md)); physical acceptance in progress (GPU mouse checks passed; see device record).
 Earlier hardware gates and append-tail exceptions remain independently recorded.
+The remaining work is ordered in the
+[live-update acceptance roadmap](live-update-acceptance-plan.md) and its
+[execution checklist](live-update-acceptance-todo.md).
 
 ## 0. Source contract and design
 
