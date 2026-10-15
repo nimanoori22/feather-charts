@@ -284,3 +284,16 @@ startup timer backlog, cursor activity and unresolved feedback explicitly. Three
 fixed-size sessions have complete feedback; none substitutes for acceptance.
 No production remedy was retained. Tasks 6/8, unchanged timing acceptance,
 remaining device coverage and conflation remain open.
+
+## Controlled autoscale cache continuation
+
+The [cache study](../docs/porting/autoscale-cache-study.md) isolates autoscaling
+without rendering. Twelve executions compare seven interleaved cache conditions
+at both history sizes; selected data-line eviction increases median operation
+time from 0.530–0.536 to 2.723–3.162 microseconds with identical results. Groups
+overlap and cannot assign independent field costs or explain every old failure.
+A boxed-options layout passes all 387 library tests but makes cold autoscaling
+slower in 11/12 paired comparisons and fails its fixed gate. It remains rejected
+in an isolated copy. Normal update comparison and acceptance were not advanced
+after that rejection. Production timing fixes, device coverage and conflation
+remain open; deliberate prewarming is not proposed as an engine fix.

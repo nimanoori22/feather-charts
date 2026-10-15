@@ -1,0 +1,320 @@
+{
+  "diagnostic_only": true,
+  "source_commit": "44753a6",
+  "production_change_retained": false,
+  "acceptance": "OPEN",
+  "controlled_cache_test": {
+    "runs": 12,
+    "rows": [
+      1200,
+      100000
+    ],
+    "sources": 16,
+    "samples_per_condition": 2000,
+    "warmups_per_condition": 20,
+    "conditions_per_run": 7,
+    "records_per_run": 14140,
+    "rendering": "none",
+    "clflush_line_size": 64,
+    "cold_warm_rule_met": true,
+    "median_ranges": {
+      "warm": {
+        "wall_ns": [
+          530.0,
+          536.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          2429.0,
+          2485.0
+        ],
+        "cache-misses": [
+          0.0,
+          0.0
+        ]
+      },
+      "adapters": {
+        "wall_ns": [
+          1530.0,
+          1824.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          6318.0,
+          7473.0
+        ],
+        "cache-misses": [
+          26.0,
+          30.0
+        ]
+      },
+      "decoration": {
+        "wall_ns": [
+          1496.0,
+          1723.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          6197.0,
+          7098.0
+        ],
+        "cache-misses": [
+          45.0,
+          49.0
+        ]
+      },
+      "options": {
+        "wall_ns": [
+          1672.0,
+          1969.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          6875.0,
+          8052.0
+        ],
+        "cache-misses": [
+          44.0,
+          50.0
+        ]
+      },
+      "range_cache": {
+        "wall_ns": [
+          1532.0,
+          1747.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          6335.0,
+          7173.0
+        ],
+        "cache-misses": [
+          61.0,
+          66.0
+        ]
+      },
+      "scale": {
+        "wall_ns": [
+          600.0,
+          608.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          2702.0,
+          2763.5
+        ],
+        "cache-misses": [
+          2.0,
+          2.0
+        ]
+      },
+      "all": {
+        "wall_ns": [
+          2723.0,
+          3162.0
+        ],
+        "instructions": [
+          6940.0,
+          6940.0
+        ],
+        "cycles": [
+          10972.0,
+          12720.5
+        ],
+        "cache-misses": [
+          139.0,
+          154.0
+        ]
+      }
+    },
+    "limitation": "Selective groups overlap physical cache lines; no attribution to individual fields or every historical failure. Prewarming/eviction excluded from operation timing. Deliberate cache eviction is diagnostic only."
+  },
+  "layout_candidate": {
+    "runs": 24,
+    "decision": "REJECT",
+    "comparison": {
+      "1200": {
+        "pairs": [
+          {
+            "pair": 1,
+            "cold_median_gain_percent": -22.162645218945485,
+            "warm_median_gain_percent": -3.3582089552238736,
+            "warm_p95_gain_percent": -4.262877442273538
+          },
+          {
+            "pair": 2,
+            "cold_median_gain_percent": -36.006761833208124,
+            "warm_median_gain_percent": -2.8037383177569986,
+            "warm_p95_gain_percent": -7.104795737122549
+          },
+          {
+            "pair": 3,
+            "cold_median_gain_percent": -21.259259259259267,
+            "warm_median_gain_percent": -3.1894934333958735,
+            "warm_p95_gain_percent": -4.472271914132375
+          },
+          {
+            "pair": 4,
+            "cold_median_gain_percent": -22.46959775491113,
+            "warm_median_gain_percent": -2.4074074074074137,
+            "warm_p95_gain_percent": -3.5087719298245723
+          },
+          {
+            "pair": 5,
+            "cold_median_gain_percent": -8.909871244635204,
+            "warm_median_gain_percent": -4.511278195488733,
+            "warm_p95_gain_percent": -4.618117229129659
+          },
+          {
+            "pair": 6,
+            "cold_median_gain_percent": -26.485002940599877,
+            "warm_median_gain_percent": -3.5781544256120457,
+            "warm_p95_gain_percent": -5.035971223021574
+          }
+        ],
+        "inline_cold_median_range_ns": [
+          2550.5,
+          2912.5
+        ],
+        "boxed_cold_median_range_ns": [
+          3172.0,
+          3620.5
+        ],
+        "keep": false
+      },
+      "100000": {
+        "pairs": [
+          {
+            "pair": 1,
+            "cold_median_gain_percent": -23.833452979181622,
+            "warm_median_gain_percent": -3.564727954971847,
+            "warm_p95_gain_percent": -4.099821746880572
+          },
+          {
+            "pair": 2,
+            "cold_median_gain_percent": 3.4056139417320774,
+            "warm_median_gain_percent": -3.183520599250933,
+            "warm_p95_gain_percent": 0.8445945945945943
+          },
+          {
+            "pair": 3,
+            "cold_median_gain_percent": -26.150779267850677,
+            "warm_median_gain_percent": -3.9399624765478425,
+            "warm_p95_gain_percent": -4.0925266903914626
+          },
+          {
+            "pair": 4,
+            "cold_median_gain_percent": -37.73017662532882,
+            "warm_median_gain_percent": -3.4514925373134275,
+            "warm_p95_gain_percent": -7.540394973070019
+          },
+          {
+            "pair": 5,
+            "cold_median_gain_percent": -26.487072862050255,
+            "warm_median_gain_percent": -3.3898305084745672,
+            "warm_p95_gain_percent": -4.847396768402157
+          },
+          {
+            "pair": 6,
+            "cold_median_gain_percent": -27.330115113256582,
+            "warm_median_gain_percent": -3.7735849056603765,
+            "warm_p95_gain_percent": -5.967450271247743
+          }
+        ],
+        "inline_cold_median_range_ns": [
+          2661.0,
+          3758.5
+        ],
+        "boxed_cold_median_range_ns": [
+          3429.0,
+          3665.0
+        ],
+        "keep": false
+      },
+      "keep": false
+    },
+    "library_tests_passed": 387,
+    "production_update_comparison_run": false,
+    "reason": "Failed the prespecified synthetic gate; do not advance this candidate to normal timing or acceptance."
+  },
+  "artifact_sha256": {
+    "target/autoscale-cache-study/boxed-tests-corrected.log": "6c0be1c653f008fd7405aaf82968d251992f34e0b1fea3b00ba980243d9b47a5",
+    "target/autoscale-cache-study/boxed-tests.log": "41702a6b9de172ae04da6650545f3a947572a3b2181b7699a4814e62881e7d3f",
+    "target/autoscale-cache-study/build/build.log": "ab922e4e24b348102e85da7d9c295028cc927cc9da68b124bc316b1bf4e368cc",
+    "target/autoscale-cache-study/build/manifest.json": "f5fa77f3b4685b3e6323cd8456b10234fb7a6078a0ca38171687afd61eb65f50",
+    "target/autoscale-cache-study/build-boxed.py": "762659277624b20104765dd07319a0a348a2aa4df334344625ae27d4a37dab07",
+    "target/autoscale-cache-study/build-v2/build.log": "5aa7deddb99aed71b2d6c2079a10202dd633ee2e1406bb9533fbe8c24bd0eaca",
+    "target/autoscale-cache-study/build-v2/manifest.json": "a544cd04c94cb9f19349725f545e1625f770c492f2793d831d96d1f7585a2ae2",
+    "target/autoscale-cache-study/build.py": "57ff0256fb1991b012fcd4732e39ef3a79cb38333b655e3e350eea52407bd9e3",
+    "target/autoscale-cache-study/curate.py": "c2164740aa95e41054d3000286f0359f28e6cfeb7de38c5ca8c9409133ac4fa6",
+    "target/autoscale-cache-study/example.rs": "93c41e16519248433dcb8fc2b1043b8e560ef1d98c81adb28bc11a25e9c89cf9",
+    "target/autoscale-cache-study/layout-boxed-v2/build.log": "cbad9356bef90855a1b524765eb383d15d7c94d5f80858c9c5027451a898e6ca",
+    "target/autoscale-cache-study/layout-boxed-v2/manifest.json": "84f58a3d7ec7a307ba4d219042dbbf47adc2065736a0f1d4ec170c630ff62448",
+    "target/autoscale-cache-study/layout-boxed-v3/build.log": "cc2154573b667a72b29a4d3e6a766b4daab8a0219525abc208c5b221fa8638fc",
+    "target/autoscale-cache-study/layout-boxed-v3/manifest.json": "aedc5c00c1fd58350d598709d6a786f9d7aa1faf7c4687008d6913af5ad1f963",
+    "target/autoscale-cache-study/layout-boxed-v3/project/src/model/series/min_max_cache_tests.rs": "acb8d62494cedc8a9fe39c1be7c6afffb7ac9e945ff1de32799b0d9fdf93e34a",
+    "target/autoscale-cache-study/layout-inline/build.log": "7c103f51a7ad1ff36589ae2e5f3e46244bcc575db5123c625aa61b69cbcb92fd",
+    "target/autoscale-cache-study/layout-inline/manifest.json": "f1f5f4315a0590de4099c30df6ac559a68d07dd58065ad53c025d523628ff9a8",
+    "target/autoscale-cache-study/layout-runs/1-100000-boxed.log": "fce41ffa401a75774a4715d82629e2bae2eb737e39a2a7d542457290a478ebc4",
+    "target/autoscale-cache-study/layout-runs/1-100000-inline.log": "9b0a9a5ecba3f4336e414400589fdc491803079e765f0e94ce8e49d778cc9fe9",
+    "target/autoscale-cache-study/layout-runs/1-1200-boxed.log": "bef031febbffa17e89e1f1695ae6de5140936497ff0cced7cabc0b718c694716",
+    "target/autoscale-cache-study/layout-runs/1-1200-inline.log": "b8daf2ff3f43c07b2471c152de2240b884a229dbdd3df8df151a4a01bace6335",
+    "target/autoscale-cache-study/layout-runs/2-100000-boxed.log": "c28f79073a8724528b7cfa19f32773e347aa0af378d9918299fd326b89664960",
+    "target/autoscale-cache-study/layout-runs/2-100000-inline.log": "215142fecf2df809e311d75b5b20bcd64c417f71ae1419482b922c02379f9797",
+    "target/autoscale-cache-study/layout-runs/2-1200-boxed.log": "64d769530481ecdb7b006bbe2fff9be906acdbba0e5732e57fa911ebc7bc5e72",
+    "target/autoscale-cache-study/layout-runs/2-1200-inline.log": "7abcd2efff960ece512c1462ca0a778e9966fbcfb83da9d6f27e7e35ffdede32",
+    "target/autoscale-cache-study/layout-runs/3-100000-boxed.log": "adc02c9e751f0518169aa17cb4148fba25b9e0f925bf2469c3be8f84fed3c589",
+    "target/autoscale-cache-study/layout-runs/3-100000-inline.log": "8b85d2d674af0a05426be144f260ff6c3dd504aaa6e5210c143fb59ff5e921ab",
+    "target/autoscale-cache-study/layout-runs/3-1200-boxed.log": "e495c6a031aa9e5b0ba2bbbb89e6ccb787735f95c847baee6405a4259386e6b6",
+    "target/autoscale-cache-study/layout-runs/3-1200-inline.log": "eecb709a8189dca3f8e5aaf3fed6493724cfd1df8dedf4029f45bbd3fd26cc92",
+    "target/autoscale-cache-study/layout-runs/4-100000-boxed.log": "48ea15086864588281a3ff6524f7cb1e40e5f0810a4eea5423b26bf61e5de77c",
+    "target/autoscale-cache-study/layout-runs/4-100000-inline.log": "96572e730f59a9c72702277d1a460bf8bfe4e0ed0e50d5bb68286540a498d950",
+    "target/autoscale-cache-study/layout-runs/4-1200-boxed.log": "39b9955c88dd330799d8fe868aaa11e83ee7a056f65accbef729032896d577ce",
+    "target/autoscale-cache-study/layout-runs/4-1200-inline.log": "e7db64a4bcf1e12164d4ee66caaa5e0706f027547ef8fc1fc2bc349f5f18ad76",
+    "target/autoscale-cache-study/layout-runs/5-100000-boxed.log": "a45dda4b521565b24783b106b0b1abe772c258b1b956813eec754d6d86a6f938",
+    "target/autoscale-cache-study/layout-runs/5-100000-inline.log": "687a42eef1312070d2d9d2f316aefdceb8069294ce6ce92fc81d13c1bb54e57d",
+    "target/autoscale-cache-study/layout-runs/5-1200-boxed.log": "fcfaaddf93630284455776d4dee2f4c8429a5797f00b359f10e50272aac15529",
+    "target/autoscale-cache-study/layout-runs/5-1200-inline.log": "24e3240c4cc472821abddbad5e73321439916a9f7d9377206c3bd7176ef65b97",
+    "target/autoscale-cache-study/layout-runs/6-100000-boxed.log": "bfd4eb1f1a9a69bb90fcaeaee096bd6cd5e4850f883610b8c637ec915d0df70d",
+    "target/autoscale-cache-study/layout-runs/6-100000-inline.log": "3e67716836191184df39249b574503b9195f474fe22ba198118eb3bab8585da5",
+    "target/autoscale-cache-study/layout-runs/6-1200-boxed.log": "aa14868ae11bfbaafb2603a3aa9dd93a747830092efa29c7fe0dd6ea3778b977",
+    "target/autoscale-cache-study/layout-runs/6-1200-inline.log": "48c19a32cdb2efac70e57182753ef6ea2cecd4e2c14017dd9d7c9e7e17984f5a",
+    "target/autoscale-cache-study/layout-runs/analysis.json": "286caa6c384a768b9481173f363043074e316f43a8a6da8c93f51cff09ee9747",
+    "target/autoscale-cache-study/layout-runs/protocol.json": "5421b322470c7953af28cd00ebdd025c2f39d74006cae55f7a6c95c36631396b",
+    "target/autoscale-cache-study/run-layout.py": "a97f3d069399463454dc9559d2ce1e43f9a0f5e971e179b9335c3f5d5d0470ba",
+    "target/autoscale-cache-study/run.py": "78c12867387bab2e963158a420895c7b56b6de8b108456b50945fc167f402149",
+    "target/autoscale-cache-study/runs/1-100000.log": "8877422080618b370dc32820ddf24de7d94f26dba54f6b098c6a11c1fe4e510a",
+    "target/autoscale-cache-study/runs/1-1200.log": "f663e2645cdae46280f9b0c90edbc1c3a11729d64c0f0ef1454beec749a1b3da",
+    "target/autoscale-cache-study/runs/2-100000.log": "ee2b70ab69cfe8c0fc90f3c282232a6d7d0cc4cc493e3b65b44c02e5917089ec",
+    "target/autoscale-cache-study/runs/2-1200.log": "b2fe58a69867911bffef8b57a2c6c0aaf2f430a3087384cd6d2a2e908e540751",
+    "target/autoscale-cache-study/runs/3-100000.log": "4505c0bb8c1a83da2fd92cc9266f7b4f111a0035afa680d84e0833c2abd60293",
+    "target/autoscale-cache-study/runs/3-1200.log": "ade73ef719c4bb274569078e8daa77cc0ece3b4767033f9bc7fc4225763ed103",
+    "target/autoscale-cache-study/runs/4-100000.log": "74d2d058aa74c5ec32cdce9636ef69ecc66b412e520884009c55e8042e45e5a9",
+    "target/autoscale-cache-study/runs/4-1200.log": "aae5223cd49dd45f18d30404e0586d79ad9b6500b0d4c2507a35de91bb408f44",
+    "target/autoscale-cache-study/runs/5-100000.log": "6cb5e12afc9d10f7c8cc8a2dd1bdec238c82133b2e41fa5544849896ea15188a",
+    "target/autoscale-cache-study/runs/5-1200.log": "9ba0cea6a0e786c0673ada6707192e99b43885b4cf063ebeaa5631bb4d33348a",
+    "target/autoscale-cache-study/runs/6-100000.log": "78082526836ba6901ff939073261646c9b1f04c19d8dce624d8e55f13c5e18b5",
+    "target/autoscale-cache-study/runs/6-1200.log": "6eb9d7af50e7cea1d39abd8d5ada5db3a3e327be77adffb50c02d86634080133",
+    "target/autoscale-cache-study/runs/analysis.json": "f6be2bd4a4c8734810a2fae84d647d2208d8cd30fdc9211c6c2a2c8023471b48",
+    "target/autoscale-cache-study/runs/protocol.json": "9571f13602b870a8d6a701bfd03c96ee7fb62d8c387593e3cf655c780eceed19",
+    "target/autoscale-cache-study/smoke.log": "bf875c6899cb907878da88c9f7920f89020aacacd34a3d6c6259bc7bed05d70a"
+  }
+}
