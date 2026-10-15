@@ -1449,16 +1449,10 @@ where
             return;
         }
         let visible = self.time_scale.visible_strict_range();
-        let mut redraw = false;
         for pane in &mut self.panes {
-            let effects = pane.recalculate(visible.as_ref());
-            // Pane emits RecalculateAllPanes when its range changes; this pass
-            // already visits every scale with the same viewport snapshot.
-            redraw |= effects.contains(&PaneEffect::LightUpdate);
+            pane.invalidate_autoscale(visible.as_ref());
         }
-        if redraw {
-            self.light_update();
-        }
+        self.light_update();
         self.refresh_crosshair();
     }
     fn refresh_grids(&mut self) {

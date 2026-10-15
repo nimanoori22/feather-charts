@@ -297,3 +297,19 @@ slower in 11/12 paired comparisons and fails its fixed gate. It remains rejected
 in an isolated copy. Normal update comparison and acceptance were not advanced
 after that rejection. Production timing fixes, device coverage and conflation
 remain open; deliberate prewarming is not proposed as an engine fix.
+
+
+## Source-driven autoscale invalidation parity
+
+The [source audit and implementation](../docs/porting/lazy-autoscale.md) found a
+real ordering difference: the Rust flush eagerly calculated ranges, whereas
+TradingView defers them until a range/coordinate query. Normal flushes now
+invalidate; consecutive unread updates coalesce. Ten behavioral regressions,
+the actual-source oracle, full target tests, check and strict Clippy pass.
+Explicit low-level eager recalculation APIs remain compatible.
+
+The frozen 24-execution comparison misses its predefined improvement rule at
+both histories (3/6 and 4/6 pairs improve update median by at least 10%; ranges
+overlap). One total-work p95 regression is retained. This corrects behavior but
+does not establish a performance remedy. Unchanged acceptance was not retried;
+the timing exception, remaining device checks and conflation gate remain open.

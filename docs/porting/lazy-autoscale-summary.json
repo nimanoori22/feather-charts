@@ -1,0 +1,223 @@
+{
+  "source_baseline": "e148fde",
+  "behavioral_correction_retained": true,
+  "performance_rule": "NOT MET",
+  "acceptance": "OPEN \u2014 not rerun after failed improvement rule",
+  "decision": {
+    "1200": {
+      "pairs": [
+        {
+          "pair": 1,
+          "update_median_gain": -6.16067028094136e-05,
+          "total_median_growth": 0.030241948802642415,
+          "total_p95_growth": 0.016623526475883388
+        },
+        {
+          "pair": 2,
+          "update_median_gain": 0.0804233436976799,
+          "total_median_growth": 0.0022951501695667176,
+          "total_p95_growth": -0.033765764242987495
+        },
+        {
+          "pair": 3,
+          "update_median_gain": -0.20081894249599452,
+          "total_median_growth": 0.03647665939314071,
+          "total_p95_growth": 0.05371441718096359
+        },
+        {
+          "pair": 4,
+          "update_median_gain": 0.12027287557467004,
+          "total_median_growth": -0.010342466880189027,
+          "total_p95_growth": 0.034447429497981075
+        },
+        {
+          "pair": 5,
+          "update_median_gain": 0.1513761467889908,
+          "total_median_growth": -0.006236987014122342,
+          "total_p95_growth": -0.042548649090611845
+        },
+        {
+          "pair": 6,
+          "update_median_gain": 0.12215382333308622,
+          "total_median_growth": -0.001179874994278629,
+          "total_p95_growth": -0.049085931184127185
+        }
+      ],
+      "baseline_update_median_range_ms": [
+        0.0067415,
+        0.008425499999999999
+      ],
+      "candidate_update_median_range_ms": [
+        0.0057350000000000005,
+        0.010117500000000001
+      ],
+      "primary_met": false,
+      "total_guard_flags": 0
+    },
+    "100000": {
+      "pairs": [
+        {
+          "pair": 1,
+          "update_median_gain": 0.13033392344789696,
+          "total_median_growth": -0.022647639237876938,
+          "total_p95_growth": -0.06724259224306617
+        },
+        {
+          "pair": 2,
+          "update_median_gain": 0.08388271488667043,
+          "total_median_growth": -0.02290143275391432,
+          "total_p95_growth": -0.053611155224277174
+        },
+        {
+          "pair": 3,
+          "update_median_gain": 0.28404692082111427,
+          "total_median_growth": -0.05171262865235138,
+          "total_p95_growth": -0.49945921779717095
+        },
+        {
+          "pair": 4,
+          "update_median_gain": -0.5815526518063026,
+          "total_median_growth": 0.08992330431702689,
+          "total_p95_growth": 0.3210184528682094
+        },
+        {
+          "pair": 5,
+          "update_median_gain": 0.1505898163356727,
+          "total_median_growth": -0.008715351969871388,
+          "total_p95_growth": -0.00954939361781304
+        },
+        {
+          "pair": 6,
+          "update_median_gain": 0.13231177250626192,
+          "total_median_growth": -0.005921140189530938,
+          "total_p95_growth": -0.03278786206896567
+        }
+      ],
+      "baseline_update_median_range_ms": [
+        0.006505,
+        0.008525
+      ],
+      "candidate_update_median_range_ms": [
+        0.0056885,
+        0.010287999999999999
+      ],
+      "primary_met": false,
+      "total_guard_flags": 1
+    },
+    "ready_for_acceptance": false
+  },
+  "validation": {
+    "library_tests": 397,
+    "new_regressions": 10,
+    "all_targets_tests": "PASS",
+    "check": "PASS",
+    "clippy_warnings_denied": "PASS",
+    "fmt": "PASS",
+    "upstream_oracle": "PASS",
+    "cached_direct_pixel_pairs": 768,
+    "baseline_candidate_identical_captures": 24
+  },
+  "artifacts": {
+    "target/lazy-autoscale/all-tests-final.log": "c26ce1e498cb6b924145e0b65fa5e9228bb54ce6c1f2f9ee92a6c34f76c99cec",
+    "target/lazy-autoscale/all-tests.log": "a0825fc545c818de40a907dd0dd8438010987320d9344c35b76aa073f7bf9533",
+    "target/lazy-autoscale/baseline/build.log": "4889a064c8c0f65d9a68030335f8824cc10c3291026156716b387f1a449a0ba5",
+    "target/lazy-autoscale/baseline/manifest.json": "62a4b3335ad4feed01331dbee73792d7fafaac8093153a9c613003fd89e56619",
+    "target/lazy-autoscale/candidate/manifest.json": "c8169cbf6cf2b8d69ca5b9d2749235f7a405917bc96251ba8a26edfc617a2ac4",
+    "target/lazy-autoscale/captures/baseline.log": "3aac0cc70ffefec72e1e428bfcd8566ba633dd00c9604429fb9ab52ae2d549cb",
+    "target/lazy-autoscale/captures/candidate.log": "3aac0cc70ffefec72e1e428bfcd8566ba633dd00c9604429fb9ab52ae2d549cb",
+    "target/lazy-autoscale/captures-wgpu/baseline.log": "c980402dfcc1e72ecdef6bd24405d1f65ea58c337aff49cdb25c0614f9adf830",
+    "target/lazy-autoscale/captures-wgpu/candidate.log": "c980402dfcc1e72ecdef6bd24405d1f65ea58c337aff49cdb25c0614f9adf830",
+    "target/lazy-autoscale/check-validated.log": "5602e2460b3f7960ffd8b921fe5a1a1f770c3526063b375a7eef750a747436c5",
+    "target/lazy-autoscale/check.log": "01a588243bd9615f74182b362166957c6cd5288528d92c2069a343fbed5c4425",
+    "target/lazy-autoscale/clippy-validated.log": "bd7c22aed60f13984c8fed5d5a5d6e28011245cccd0c04136098f4e8188cada8",
+    "target/lazy-autoscale/clippy.log": "95a10d5c0186a211b518f17e40ac332c4a0c0735bb56264283b88350db6b7a25",
+    "target/lazy-autoscale/compare.py": "f8fa660e6974bf20fd2f8a6fafff53617bd2215ca1554524481dd3a9ce2435e9",
+    "target/lazy-autoscale/comparison/1-100000-baseline.log": "115328690f38c5475729fb8f0a0ef0d8f7c7e07376ee914ab99f07d431911d78",
+    "target/lazy-autoscale/comparison/1-100000-candidate.log": "7b4d2661aeb9bd20d36f48e210215b65eee1d80c26afea79f3cc149c8e4df56a",
+    "target/lazy-autoscale/comparison/1-1200-baseline.log": "de9f2f171eadde80f250018a1f7ad52353af28978e9b265fe6d50e408e239b49",
+    "target/lazy-autoscale/comparison/1-1200-candidate.log": "121d5d8f2a2eb6e9c30b22218afce9c74f55eb1c23ee6bdea54e6ba76e7663ca",
+    "target/lazy-autoscale/comparison/2-100000-baseline.log": "c06f14bfded55f0710954d0d6f61e3dd13df28aeef625b8ba63667b836e0280d",
+    "target/lazy-autoscale/comparison/2-100000-candidate.log": "8f02b3edb745e883e0cd81ae2b791aff997a38270eb2e25f11326bfb0f8612d8",
+    "target/lazy-autoscale/comparison/2-1200-baseline.log": "3309ef99b235ce55fb77d7f95c0951ac8a06ad001cdb04382fbd520b9eac2de6",
+    "target/lazy-autoscale/comparison/2-1200-candidate.log": "63311f4d1effbe2e568c2829714a93733bad067cacca9e46626d5d240ba06829",
+    "target/lazy-autoscale/comparison/3-100000-baseline.log": "9181d62f1753a7104cb207b70beb76a75e0fcd3b30a21f32d9a56be8403ff597",
+    "target/lazy-autoscale/comparison/3-100000-candidate.log": "5578c20de869be687e261cd5ac85c38559af0923861403a9ba2975dd7190e2bb",
+    "target/lazy-autoscale/comparison/3-1200-baseline.log": "26dd8c3e4a46c46af8c57f280a838b0cb2ac070f948ff53a505008202a858750",
+    "target/lazy-autoscale/comparison/3-1200-candidate.log": "234c3986d8a78ae1fff2e3bc38734cf116f6b1a773569972834a32b37bb380a9",
+    "target/lazy-autoscale/comparison/4-100000-baseline.log": "577b5d9ecc63b8e3ec92a350b38cd7828f9199bdcbf57fc8dd3d8e354e2b4d87",
+    "target/lazy-autoscale/comparison/4-100000-candidate.log": "b78b85b08cd52fecb26df7b0a9d7e27cde275c562c0fe3cd65ebbb35b248744a",
+    "target/lazy-autoscale/comparison/4-1200-baseline.log": "0924ed83bd7f4440ebd9affc9cfdfe9fad788eb6badf698f07e179daac656e2f",
+    "target/lazy-autoscale/comparison/4-1200-candidate.log": "d8fbaf702fde4a7b10cfa4226337c3281d3cdb075f6f173d026e2a06fcfe8a33",
+    "target/lazy-autoscale/comparison/5-100000-baseline.log": "f63e0ae6aad71e938ceba05ced224c8c445e2eecd1d49084549d84c4d04f0598",
+    "target/lazy-autoscale/comparison/5-100000-candidate.log": "1af8b35e3327726572e13381b1532e668d61bebc9fc948b000cf83665cb84e9c",
+    "target/lazy-autoscale/comparison/5-1200-baseline.log": "e902404dd82705583630204fc321678433965f1938ca3543d57e034061ee1dfb",
+    "target/lazy-autoscale/comparison/5-1200-candidate.log": "3b492a38ff1c143a1e85a12297a6190143bc92d0175a419df61f03911a8a3838",
+    "target/lazy-autoscale/comparison/6-100000-baseline.log": "4c5dbf4a6d2ac053427d6dfe404829717898e8db1d4a530f1628d9995fc0f0eb",
+    "target/lazy-autoscale/comparison/6-100000-candidate.log": "8208899d1078d8f0eab44c043a3b8e019a72ef6719e9d99b2274c7b068a1cf70",
+    "target/lazy-autoscale/comparison/6-1200-baseline.log": "0979d1eca878fc270fd6c5c59cdebb28cd0fdd39d62d98718e4fe74eedc4d8f0",
+    "target/lazy-autoscale/comparison/6-1200-candidate.log": "913f79e86b3b06d84edb5dfaeeffc0a8e567757c3223f38e983f94318e6463ba",
+    "target/lazy-autoscale/comparison/analysis.json": "c860b14672853ad06ab0860aab8c69a5613800cb899a7be1aedf92e2694852b3",
+    "target/lazy-autoscale/comparison/protocol.json": "4ae969055b50e30d6fecaf5895321b6adb37cef0b7d6226d40ab6e24d78f6d06",
+    "target/lazy-autoscale/comparison-corrected.log": "cdffa14df3e72ebd8467cccb376f9d8d889aca6dbccf447dc915a29188a57501",
+    "target/lazy-autoscale/comparison-parser-abort/1-1200-baseline.log": "7059e77524b3b0c8d9ce6e56760a02a9e5b5ff25f06f28d84a270e5208e93bfe",
+    "target/lazy-autoscale/comparison-parser-abort/protocol.json": "4ae969055b50e30d6fecaf5895321b6adb37cef0b7d6226d40ab6e24d78f6d06",
+    "target/lazy-autoscale/comparison.log": "e2d68189a4c4894da704a3ea0cd9470047e1d0a10327748bf93b35f724f28d36",
+    "target/lazy-autoscale/first-green.log": "28fd71fd347bfa8a57c348e82b7cb101ac0c0f3a75d969c7abfbb413000eb37e",
+    "target/lazy-autoscale/focused-final.log": "36ee2ef91af5e41eefad60d34cb3e8d7026c11b99adcb7661a386fec11cf637e",
+    "target/lazy-autoscale/green-2.log": "108ea864fef9ca6b7c8f56232c3c15b720bc496dc8bf43d0aaaf865ea82b0805",
+    "target/lazy-autoscale/implement.py": "fdebbbe2562e1e4215ca3c41ba284c7a933b0b8481528cd9274227c971eae494",
+    "target/lazy-autoscale/red.log": "5a4adf741804a44bf2bfaea480f6692488442c92be47a0259bb2b8ce93d91a51",
+    "target/lazy-autoscale/release-build.log": "1ac877911f4384a7f867c7ddb1c9b3287f88672d7d7102ed9dc6ce7099826a11",
+    "target/lazy-autoscale/source-oracle-final.log": "e3bfbc9888d17663972b7193739d7274df3b057c21cc00d4998febba77c04cf9",
+    "target/lazy-autoscale/source-oracle.log": "e3bfbc9888d17663972b7193739d7274df3b057c21cc00d4998febba77c04cf9",
+    "target/lazy-autoscale/tests-validated.log": "575bd417294d0b90411ee2236456be23b669af3a3feef96fd34c74085dd4d604",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-wgpu-1.ppm": "a8a229ba34a5206ac178bf04a6ac4dc3710e1e1688e771593e668075cbbdf1c6",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-wgpu-1.25.ppm": "577655fc1ce796917e9d17388f00e3e158f1e4d3ab13e9f9cf9cd704a5136b76",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-wgpu-1.5.ppm": "b971ff6c8b892f9bae2d2e091afd7c6ca29be9bb4e9bfc82fcb140058cd00e60",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-wgpu-2.ppm": "e78dc48b545e7be31792c71d28c795a8a9cbcbc9cff73b980e69838fc74644a5",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-narrow-wgpu-1.ppm": "50f21bb79273121960bf077a87d2bbd4c0a37e7d217f8af522885221ccca49f7",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-narrow-wgpu-1.25.ppm": "6ffd45f4b7fdeb9926c1723f361f04db646d747e4f89853c3977ecc27a2fff77",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-narrow-wgpu-1.5.ppm": "59f26cab3ad7a9d687c6f675ba3b4dd38f2aa43f370929c3ad1a860321008a38",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-narrow-wgpu-2.ppm": "29de9a9b5a96a859d20f44146c09e61127ddd1096f03b0e2f247169f4a8c4a40",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-burst-wgpu-1.ppm": "bda856ecb96fd2fd41f4355c9874c19b59f3e19b90b22c73ea13fe62dd8eed96",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-burst-wgpu-1.25.ppm": "4317de552e881124de24f0990f4f4676c782257473b437d44b011b1bfc5af8fe",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-burst-wgpu-1.5.ppm": "c8435575dd321dfb1e455f9926c9e6e59fcb2204211aac69c733533ad6886faf",
+    "target/lazy-autoscale/captures-wgpu/baseline/live-burst-wgpu-2.ppm": "597e3f6675de5a3d0206155620451b358917e70625e96b4064438575dac5a30f",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-wgpu-1.ppm": "a8a229ba34a5206ac178bf04a6ac4dc3710e1e1688e771593e668075cbbdf1c6",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-wgpu-1.25.ppm": "577655fc1ce796917e9d17388f00e3e158f1e4d3ab13e9f9cf9cd704a5136b76",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-wgpu-1.5.ppm": "b971ff6c8b892f9bae2d2e091afd7c6ca29be9bb4e9bfc82fcb140058cd00e60",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-wgpu-2.ppm": "e78dc48b545e7be31792c71d28c795a8a9cbcbc9cff73b980e69838fc74644a5",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-narrow-wgpu-1.ppm": "50f21bb79273121960bf077a87d2bbd4c0a37e7d217f8af522885221ccca49f7",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-narrow-wgpu-1.25.ppm": "6ffd45f4b7fdeb9926c1723f361f04db646d747e4f89853c3977ecc27a2fff77",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-narrow-wgpu-1.5.ppm": "59f26cab3ad7a9d687c6f675ba3b4dd38f2aa43f370929c3ad1a860321008a38",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-narrow-wgpu-2.ppm": "29de9a9b5a96a859d20f44146c09e61127ddd1096f03b0e2f247169f4a8c4a40",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-burst-wgpu-1.ppm": "bda856ecb96fd2fd41f4355c9874c19b59f3e19b90b22c73ea13fe62dd8eed96",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-burst-wgpu-1.25.ppm": "4317de552e881124de24f0990f4f4676c782257473b437d44b011b1bfc5af8fe",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-burst-wgpu-1.5.ppm": "c8435575dd321dfb1e455f9926c9e6e59fcb2204211aac69c733533ad6886faf",
+    "target/lazy-autoscale/captures-wgpu/candidate/live-burst-wgpu-2.ppm": "597e3f6675de5a3d0206155620451b358917e70625e96b4064438575dac5a30f",
+    "target/lazy-autoscale/captures/baseline/live-tiny-skia-1.ppm": "4769a260e83f49ce54f3b8cd00b41f9ed547ee989db51abbdd07b8b7ef36ef75",
+    "target/lazy-autoscale/captures/baseline/live-tiny-skia-1.25.ppm": "99339a98c0df0a628a65e6245d2636821a6e3be04a5251adc04bf6f2e9dff20d",
+    "target/lazy-autoscale/captures/baseline/live-tiny-skia-1.5.ppm": "2a17acdf58ab362dee88e8d81948be238efd229992726a1fd7446212dea8673a",
+    "target/lazy-autoscale/captures/baseline/live-tiny-skia-2.ppm": "c9c86fa3b11e42b8fb4962baff998efa46fc5acc810b0ebb0bdf02fbe813c66f",
+    "target/lazy-autoscale/captures/baseline/live-narrow-tiny-skia-1.ppm": "11496ac064c4a8430246470c984b1acca2883de817f20628d76b16fb7bdeff26",
+    "target/lazy-autoscale/captures/baseline/live-narrow-tiny-skia-1.25.ppm": "19d68083e9ff8a6101dc3327c24c438642686d66e04382f0ce2df6516349cab4",
+    "target/lazy-autoscale/captures/baseline/live-narrow-tiny-skia-1.5.ppm": "a3e4242bb597a9cfd54ba63c262946824c56ad1171f53119c9a07448219edec4",
+    "target/lazy-autoscale/captures/baseline/live-narrow-tiny-skia-2.ppm": "5558af7b3ac2e8c7e0c126aa0842e9d45d3fb4866fa27811c5325d933bfb8134",
+    "target/lazy-autoscale/captures/baseline/live-burst-tiny-skia-1.ppm": "d49948c87a6d9f04e4c85d8683e54690be041fafd445f29570ea9f933477e549",
+    "target/lazy-autoscale/captures/baseline/live-burst-tiny-skia-1.25.ppm": "edd77b83125b375e82f401a00b4841718464acf427b4ff08f45c220f84023159",
+    "target/lazy-autoscale/captures/baseline/live-burst-tiny-skia-1.5.ppm": "8c55b75072195d41c99e15031dfd0d3bb491bcdc7d7a54e3d4b9766ef8e2a341",
+    "target/lazy-autoscale/captures/baseline/live-burst-tiny-skia-2.ppm": "76c68970f09f5e8a9b8f8a5a25fd951e143c9772374b2cd1ed31280a5ac6d901",
+    "target/lazy-autoscale/captures/candidate/live-tiny-skia-1.ppm": "4769a260e83f49ce54f3b8cd00b41f9ed547ee989db51abbdd07b8b7ef36ef75",
+    "target/lazy-autoscale/captures/candidate/live-tiny-skia-1.25.ppm": "99339a98c0df0a628a65e6245d2636821a6e3be04a5251adc04bf6f2e9dff20d",
+    "target/lazy-autoscale/captures/candidate/live-tiny-skia-1.5.ppm": "2a17acdf58ab362dee88e8d81948be238efd229992726a1fd7446212dea8673a",
+    "target/lazy-autoscale/captures/candidate/live-tiny-skia-2.ppm": "c9c86fa3b11e42b8fb4962baff998efa46fc5acc810b0ebb0bdf02fbe813c66f",
+    "target/lazy-autoscale/captures/candidate/live-narrow-tiny-skia-1.ppm": "11496ac064c4a8430246470c984b1acca2883de817f20628d76b16fb7bdeff26",
+    "target/lazy-autoscale/captures/candidate/live-narrow-tiny-skia-1.25.ppm": "19d68083e9ff8a6101dc3327c24c438642686d66e04382f0ce2df6516349cab4",
+    "target/lazy-autoscale/captures/candidate/live-narrow-tiny-skia-1.5.ppm": "a3e4242bb597a9cfd54ba63c262946824c56ad1171f53119c9a07448219edec4",
+    "target/lazy-autoscale/captures/candidate/live-narrow-tiny-skia-2.ppm": "5558af7b3ac2e8c7e0c126aa0842e9d45d3fb4866fa27811c5325d933bfb8134",
+    "target/lazy-autoscale/captures/candidate/live-burst-tiny-skia-1.ppm": "d49948c87a6d9f04e4c85d8683e54690be041fafd445f29570ea9f933477e549",
+    "target/lazy-autoscale/captures/candidate/live-burst-tiny-skia-1.25.ppm": "edd77b83125b375e82f401a00b4841718464acf427b4ff08f45c220f84023159",
+    "target/lazy-autoscale/captures/candidate/live-burst-tiny-skia-1.5.ppm": "8c55b75072195d41c99e15031dfd0d3bb491bcdc7d7a54e3d4b9766ef8e2a341",
+    "target/lazy-autoscale/captures/candidate/live-burst-tiny-skia-2.ppm": "76c68970f09f5e8a9b8f8a5a25fd951e143c9772374b2cd1ed31280a5ac6d901"
+  }
+}

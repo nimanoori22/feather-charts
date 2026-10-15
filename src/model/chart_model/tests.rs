@@ -3,6 +3,7 @@ mod axis_snapshots;
 mod candlesticks;
 mod chart_layout;
 mod complete_display;
+mod lazy_autoscale;
 mod navigation;
 mod price_axis;
 mod price_interaction;

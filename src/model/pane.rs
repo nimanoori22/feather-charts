@@ -596,6 +596,28 @@ where
         self.update_after_price_interaction(left_changed || right_changed)
     }
 
+    pub(crate) fn invalidate_autoscale(&mut self, visible: Option<&RangeImpl<TimePointIndex>>) {
+        self.set_visible_range(visible);
+        let mut positions = vec![PriceScalePosition::Left, PriceScalePosition::Right];
+        positions.extend(
+            self.overlay_price_scales
+                .keys()
+                .cloned()
+                .map(PriceScalePosition::Overlay),
+        );
+        for position in positions {
+            let has_sources = self.attached_to(&position);
+            let scale = self
+                .price_scale_mut_existing(&position)
+                .expect("registered price scale");
+            if let Some(visible) = visible.filter(|_| has_sources) {
+                scale.invalidate_price_range(*visible);
+            } else {
+                scale.set_price_range(None);
+            }
+        }
+    }
+
     pub fn recalculate(&mut self, visible: Option<&RangeImpl<TimePointIndex>>) -> Vec<PaneEffect> {
         self.set_visible_range(visible);
         let mut positions = vec![PriceScalePosition::Left, PriceScalePosition::Right];

@@ -9,7 +9,10 @@ use crate::{
         range_impl::RangeImpl, time_data::TimePointIndex,
     },
 };
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 pub type PriceSourceHandle = Rc<RefCell<dyn PriceScaleDataSource>>;
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum PriceScaleMode {
@@ -188,12 +191,14 @@ pub struct PriceScale {
     id: String,
     options: PriceScaleOptions,
     height: f64,
-    range: Option<PriceRangeImpl>,
+    range: Cell<Option<PriceRangeImpl>>,
+    pending_range: Cell<Option<RangeImpl<TimePointIndex>>>,
+    marks_dirty: Cell<bool>,
     sources: Vec<PriceSourceHandle>,
     selected_formatter_source: Option<PriceSourceHandle>,
     mark_builder: PriceTickMarkBuilder,
     marks_cache: Option<Vec<PriceMark>>,
-    marks_generation: u64,
+    marks_generation: Cell<u64>,
     marks_changed: Delegate<()>,
     log_formula: LogFormula,
     layout_font_size: f64,
@@ -201,8 +206,8 @@ pub struct PriceScale {
     scroll_start: Option<Coordinate>,
     price_range_snapshot: Option<PriceRangeImpl>,
     is_custom_price_range: bool,
-    source_margin_above: f64,
-    source_margin_below: f64,
+    source_margin_above: Cell<f64>,
+    source_margin_below: Cell<f64>,
     mode_changed: Delegate<PriceScaleModeChange>,
 }
 impl PriceScale {
@@ -220,12 +225,14 @@ impl PriceScale {
             id: id.into(),
             options,
             height: 0.,
-            range: None,
+            range: Cell::new(None),
+            pending_range: Cell::new(None),
+            marks_dirty: Cell::new(false),
             sources: vec![],
             selected_formatter_source: None,
             mark_builder,
             marks_cache: None,
-            marks_generation: 0,
+            marks_generation: Cell::new(0),
             marks_changed: Delegate::new(),
             log_formula: DEFAULT_LOG_FORMULA,
             layout_font_size,
@@ -233,8 +240,8 @@ impl PriceScale {
             scroll_start: None,
             price_range_snapshot: None,
             is_custom_price_range: false,
-            source_margin_above: 0.,
-            source_margin_below: 0.,
+            source_margin_above: Cell::new(0.),
+            source_margin_below: Cell::new(0.),
             mode_changed: Delegate::new(),
         }
     }
@@ -333,9 +340,10 @@ impl PriceScale {
         }
     }
     pub fn internal_height(&self) -> f64 {
+        self.ensure_price_range();
         self.height * (1. - self.options.scale_margins.top - self.options.scale_margins.bottom)
-            - self.source_margin_above
-            - self.source_margin_below
+            - self.source_margin_above.get()
+            - self.source_margin_below.get()
     }
     pub fn font_size(&self) -> f64 {
         self.layout_font_size
@@ -364,12 +372,14 @@ impl PriceScale {
         &self.marks_changed
     }
     pub fn marks_generation(&self) -> u64 {
-        self.marks_generation
+        self.ensure_price_range();
+        self.marks_generation.get()
     }
     pub fn is_custom_price_range(&self) -> bool {
         self.is_custom_price_range
     }
     pub fn set_auto_scale(&mut self, enabled: bool) -> bool {
+        self.ensure_price_range();
         if self.options.auto_scale == enabled {
             return false;
         }
@@ -387,17 +397,20 @@ impl PriceScale {
         self.options.mode == PriceScaleMode::IndexedTo100
     }
     pub fn price_range(&self) -> Option<PriceRangeImpl> {
-        self.range
+        self.ensure_price_range();
+        self.range.get()
     }
     pub fn is_empty(&self) -> bool {
-        self.height <= 0.0 || self.range.is_none_or(|range| range.is_empty())
+        self.ensure_price_range();
+        self.height <= 0.0 || self.range.get().is_none_or(|range| range.is_empty())
     }
     pub fn is_inverted(&self) -> bool {
         self.options.invert_scale
     }
     pub fn set_price_range(&mut self, range: Option<PriceRangeImpl>) {
-        if self.range != range {
-            self.range = range;
+        self.pending_range.set(None);
+        if self.range.get() != range {
+            self.range.set(range);
             self.invalidate_marks();
         }
     }
@@ -406,6 +419,7 @@ impl PriceScale {
         self.is_custom_price_range = range.is_some();
     }
     pub fn set_mode(&mut self, patch: PriceScaleStatePatch) -> PriceScaleModeChange {
+        self.ensure_price_range();
         let old = self.mode();
         if let Some(auto_scale) = patch.auto_scale {
             self.options.auto_scale = auto_scale;
@@ -413,8 +427,11 @@ impl PriceScale {
 
         let mode_changed = patch.mode.is_some_and(|mode| mode != old.mode);
         if mode_changed && old.mode == PriceScaleMode::Logarithmic {
-            if can_convert_price_range_from_log(self.range, self.log_formula) {
-                self.range = convert_price_range_from_log(self.range, self.log_formula);
+            if can_convert_price_range_from_log(self.range.get(), self.log_formula) {
+                self.range.set(convert_price_range_from_log(
+                    self.range.get(),
+                    self.log_formula,
+                ));
             } else {
                 self.options.auto_scale = true;
             }
@@ -431,7 +448,10 @@ impl PriceScale {
         }
 
         if mode_changed && self.options.mode == PriceScaleMode::Logarithmic {
-            self.range = convert_price_range_to_log(self.range, self.log_formula);
+            self.range.set(convert_price_range_to_log(
+                self.range.get(),
+                self.log_formula,
+            ));
         }
         if let Some(inverted) = patch.inverted {
             self.options.invert_scale = inverted;
@@ -479,14 +499,37 @@ impl PriceScale {
             })
             .map(|v| v.value)
     }
+    pub(crate) fn invalidate_price_range(&mut self, visible: RangeImpl<TimePointIndex>) {
+        if self.is_auto_scale() {
+            self.pending_range.set(Some(visible));
+        }
+    }
+
+    fn ensure_price_range(&self) {
+        // Consume before callbacks, as upstream does, so nested reads see the previous settled range.
+        if let Some(visible) = self.pending_range.take() {
+            self.calculate_price_range(&visible, true);
+        }
+    }
+
+    fn invalidate_range_marks(&self) {
+        if !self.marks_dirty.replace(true) && self.marks_cache.is_some() {
+            self.marks_generation
+                .set(self.marks_generation.get().wrapping_add(1));
+            self.marks_changed.emit(&());
+        }
+    }
+
     pub fn recalculate_price_range(&mut self, visible: &RangeImpl<TimePointIndex>) -> bool {
+        self.pending_range.set(None);
         self.calculate_price_range(visible, true)
     }
     pub fn recalculate_price_range_forced(&mut self, visible: &RangeImpl<TimePointIndex>) -> bool {
+        self.pending_range.set(None);
         self.calculate_price_range(visible, false)
     }
     fn calculate_price_range(
-        &mut self,
+        &self,
         visible: &RangeImpl<TimePointIndex>,
         respect_auto_scale: bool,
     ) -> bool {
@@ -496,8 +539,11 @@ impl PriceScale {
         if respect_auto_scale && !self.options.auto_scale {
             return false;
         }
-        let old_range = self.range;
-        let old_margins = (self.source_margin_above, self.source_margin_below);
+        let old_range = self.range.get();
+        let old_margins = (
+            self.source_margin_above.get(),
+            self.source_margin_below.get(),
+        );
         let mut range = None;
         let mut above: f64 = 0.0;
         let mut below: f64 = 0.0;
@@ -548,13 +594,12 @@ impl PriceScale {
             }
             range = Some(r);
         }
-        self.range = range;
-        self.source_margin_above = above;
-        self.source_margin_below = below;
-        let changed = self.range != old_range || (above, below) != old_margins;
+        self.range.set(range);
+        self.source_margin_above.set(above);
+        self.source_margin_below.set(below);
+        let changed = self.range.get() != old_range || (above, below) != old_margins;
         if changed {
-            self.rebuild_tick_mark_builder();
-            self.invalidate_marks();
+            self.invalidate_range_marks();
         }
         changed
     }
@@ -595,7 +640,7 @@ impl PriceScale {
         {
             return false;
         }
-        let Some(range) = self.range else {
+        let Some(range) = self.range.get() else {
             return false;
         };
         self.scale_start = Some(Coordinate::new(self.height - pointer.value()));
@@ -633,8 +678,8 @@ impl PriceScale {
         }
         let mut range = snapshot;
         range.scale_around_center(coefficient);
-        let changed = self.range != Some(range);
-        self.range = Some(range);
+        let changed = self.range.get() != Some(range);
+        self.range.set(Some(range));
         if changed {
             self.invalidate_marks();
         }
@@ -661,7 +706,10 @@ impl PriceScale {
         if self.is_empty() {
             return false;
         }
-        let range = self.range.expect("a non-empty price scale has a range");
+        let range = self
+            .range
+            .get()
+            .expect("a non-empty price scale has a range");
         self.scroll_start = Some(pointer);
         self.price_range_snapshot = Some(range);
         true
@@ -691,8 +739,8 @@ impl PriceScale {
         }
         let mut range = snapshot;
         range.shift(pixel_delta * price_units_per_pixel);
-        let changed = self.range != Some(range);
-        self.range = Some(range);
+        let changed = self.range.get() != Some(range);
+        self.range.set(Some(range));
         if changed {
             self.invalidate_marks();
         }
@@ -714,10 +762,11 @@ impl PriceScale {
         self.coordinate_transform(base).unlogical(value)
     }
     pub fn coordinate_transform(&self, base: f64) -> PriceCoordinateTransform {
+        self.ensure_price_range();
         PriceCoordinateTransform {
             mode: self.options.mode,
             log_formula: self.log_formula,
-            range: self.range,
+            range: self.range.get(),
             height: self.height,
             internal_height: self.internal_height(),
             bottom_margin: self.bottom_margin_px(),
@@ -733,9 +782,9 @@ impl PriceScale {
     }
     fn bottom_margin_px(&self) -> f64 {
         if self.options.invert_scale {
-            self.height * self.options.scale_margins.top + self.source_margin_above
+            self.height * self.options.scale_margins.top + self.source_margin_above.get()
         } else {
-            self.height * self.options.scale_margins.bottom + self.source_margin_below
+            self.height * self.options.scale_margins.bottom + self.source_margin_below.get()
         }
     }
     pub fn format_price(&self, price: f64, base: f64) -> String {
@@ -775,6 +824,11 @@ impl PriceScale {
         }
     }
     pub fn marks(&mut self) -> &[PriceMark] {
+        self.ensure_price_range();
+        if self.marks_dirty.replace(false) {
+            self.marks_cache = None;
+            self.rebuild_tick_mark_builder();
+        }
         if self.marks_cache.is_none() {
             self.marks_cache = Some(self.build_marks());
         }
@@ -784,7 +838,7 @@ impl PriceScale {
     }
 
     fn build_marks(&self) -> Vec<PriceMark> {
-        let (Some(range), Some(first)) = (self.range, self.first_value()) else {
+        let (Some(range), Some(first)) = (self.range.get(), self.first_value()) else {
             return Vec::new();
         };
         if self.is_empty() || self.internal_height() <= 0.0 {
@@ -865,8 +919,13 @@ impl PriceScale {
     }
 
     fn invalidate_marks(&mut self) {
-        if self.marks_cache.take().is_some() {
-            self.marks_generation = self.marks_generation.wrapping_add(1);
+        let already_invalid = self.marks_dirty.replace(false);
+        if already_invalid {
+            self.rebuild_tick_mark_builder();
+        }
+        if self.marks_cache.take().is_some() && !already_invalid {
+            self.marks_generation
+                .set(self.marks_generation.get().wrapping_add(1));
             self.marks_changed.emit(&());
         }
     }
@@ -998,6 +1057,9 @@ impl PriceScale {
     }
 }
 #[cfg(test)]
+#[path = "price_scale/lazy_tests.rs"]
+mod lazy_tests;
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::{
@@ -1118,8 +1180,8 @@ mod tests {
             scale.options.invert_scale = inverted;
             for height in [1., 2., 10., 100.] {
                 scale.set_height(height);
-                scale.source_margin_above = 8.;
-                scale.source_margin_below = 8.;
+                scale.source_margin_above.set(8.);
+                scale.source_margin_below.set(8.);
                 for price in [0., 10., 15., 20., 30.] {
                     let internal = scale.internal_height() - 1.;
                     let y = scale.bottom_margin_px() + internal * (price - 10.) / 10.;
