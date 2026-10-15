@@ -17,6 +17,14 @@ def replace_once(source, old, new):
     return source.replace(old, new, 1)
 
 
+def isolate_package(project):
+    # Cargo shares artifact names for equal package IDs across copied manifests.
+    version = '0.1.0+probe.' + hashlib.sha256(str(project.resolve()).encode()).hexdigest()[:16]
+    manifest = project / 'Cargo.toml'
+    manifest.write_text(replace_once(manifest.read_text(), 'version = "0.1.0"', f'version = "{version}"'))
+    return version
+
+
 def patch_debug(source, span_path):
     anchor = '#[cfg(any(not(feature = "enable"), target_arch = "wasm32"))]'
     before, after = source.split(anchor, 1) if source.count(anchor) == 1 else ('', '')
@@ -57,6 +65,7 @@ def main():
         shutil.copy2(ROOT / name, project / name)
     for name in ['src', 'examples']:
         shutil.copytree(ROOT / name, project / name)
+    version = isolate_package(project)
     manifest = project / 'Cargo.toml'
     manifest.write_text(replace_once(manifest.read_text(), '[dependencies]',
                                     '[dependencies]\niced_debug = "0.14.0"'))
@@ -150,7 +159,7 @@ libc = "0.2"
                '--manifest-path', str(manifest), '--target-dir', str(ROOT / 'target')]
     for name, destination in patches.items():
         command += ['--config', f'patch.crates-io.{name}.path={json.dumps(str(destination))}']
-    snapshot = dict(diagnostic_only=True, backend=args.backend, build_command=command,
+    snapshot = dict(diagnostic_only=True, package_version=version, backend=args.backend, build_command=command,
                     original_dependency_hashes=original_hashes,
                     sources={str(p.relative_to(project)): hashlib.sha256(p.read_bytes()).hexdigest()
                              for p in project.rglob('*.rs')})

@@ -1,10 +1,49 @@
 """Patch only the expected dependency source; diagnostic evidence is not acceptance."""
 import unittest
 
-from profile_public_chart import replace_once, patch_debug
+from profile_public_chart import replace_once, patch_debug, isolate_package
 
 
 class DiagnosticPatchTests(unittest.TestCase):
+    def test_copied_source_changes_reach_executables_in_a_shared_target(self):
+        import os
+        from pathlib import Path
+        import shutil
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            original = root / 'original.rs'
+            original.write_text('fn main() { println!("1"); }')
+            for name in ['before', 'after']:
+                project = root / name
+                project.mkdir()
+                (project / 'src').mkdir()
+                (project / 'Cargo.toml').write_text('[package]\nname="probe"\nversion = "0.1.0"\nedition="2024"\n')
+                shutil.copy2(original, project / 'src/main.rs')
+                if name == 'after':
+                    (project / 'src/main.rs').write_text('fn main() { println!("2"); }')
+                    stamp = original.stat()
+                    os.utime(project / 'src/main.rs', ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+                isolate_package(project)
+                subprocess.run(['cargo', 'build', '--offline', '--quiet', '--manifest-path',
+                                str(project / 'Cargo.toml'), '--target-dir', str(root / 'target')], check=True)
+                actual = subprocess.check_output([str(root / 'target/debug/probe')], text=True).strip()
+                self.assertEqual(actual, '1' if name == 'before' else '2')
+
+    def test_copied_projects_have_distinct_package_ids(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as directory:
+            versions = []
+            for name in ['before', 'after']:
+                project = Path(directory) / name
+                project.mkdir()
+                (project / 'Cargo.toml').write_text('[package]\nversion = "0.1.0"\n')
+                versions.append(isolate_package(project))
+                self.assertIn(versions[-1], (project / 'Cargo.toml').read_text())
+            self.assertNotEqual(*versions)
+
     def test_patch_refuses_missing_or_ambiguous_source(self):
         for source in ['unrelated', 'old old']:
             with self.assertRaises(ValueError):
