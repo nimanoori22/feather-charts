@@ -3,6 +3,17 @@
 use crate::model::time_data::{TickMarkWeightValue, TimePointIndex};
 use std::collections::{BTreeMap, BTreeSet};
 
+fn suffix_start<T>(items: &[T], since: usize, mut index: impl FnMut(&T) -> f64) -> usize {
+    if since == 0 {
+        return 0;
+    }
+    // Append invalidation touches the tail; avoid cold historical cache lines.
+    items
+        .iter()
+        .rposition(|item| index(item) < since as f64)
+        .map_or(0, |at| at + 1)
+}
+
 /// A selectable horizontal-axis tick mark.
 #[derive(Clone, Debug, PartialEq)]
 pub struct TickMark<InternalItem, OriginalItem> {
@@ -183,13 +194,13 @@ where
                         since = 0;
                     }
                     let mut selected = old.unwrap_or_default();
-                    selected.truncate(selected.partition_point(|&index| index < since));
+                    selected.truncate(suffix_start(&selected, since, |&index| index as f64));
                     let mut left = selected
                         .last()
                         .map_or(f64::NEG_INFINITY, |&index| index as f64);
-                    let mut at = previous.partition_point(|&index| index < since);
-                    for mark in &candidates
-                        [candidates.partition_point(|mark| mark.index.value() < since as f64)..]
+                    let mut at = suffix_start(&previous, since, |&index| index as f64);
+                    for mark in
+                        &candidates[suffix_start(candidates, since, |mark| mark.index.value())..]
                     {
                         let index = mark.index.value() as usize;
                         while at < previous.len() && previous[at] < index {
@@ -215,20 +226,27 @@ where
                     previous = selected;
                     previous_weight = Some(weight);
                 }
-                cache.marks.truncate(
-                    cache
-                        .marks
-                        .partition_point(|mark| mark.index.value() < since as f64),
-                );
-                for &index in &previous[previous.partition_point(|&index| index < since)..] {
+                cache
+                    .marks
+                    .truncate(suffix_start(&cache.marks, since, |mark| mark.index.value()));
+                for &index in &previous[suffix_start(&previous, since, |&index| index as f64)..] {
                     let mark = self
                         .marks_by_weight
                         .values()
                         .find_map(|bucket| {
-                            bucket
-                                .binary_search_by_key(&index, |mark| mark.index.value() as usize)
-                                .ok()
-                                .map(|at| &bucket[at])
+                            if since > 0 {
+                                let at = suffix_start(bucket, index, |mark| mark.index.value());
+                                bucket
+                                    .get(at)
+                                    .filter(|mark| mark.index.value() == index as f64)
+                            } else {
+                                bucket
+                                    .binary_search_by_key(&index, |mark| {
+                                        mark.index.value() as usize
+                                    })
+                                    .ok()
+                                    .map(|at| &bucket[at])
+                            }
                         })
                         .expect("selected index must have a tick mark");
                     cache.marks.push(mark.clone());
@@ -393,6 +411,41 @@ mod tests {
         members.insert(100);
         let expected = marks.build_marks_impl(10, true, &members);
         assert_eq!(marks.build(1., 10., true, &members, 1), expected);
+    }
+
+    #[test]
+    fn suffix_bound_search_visits_only_the_changed_tail() {
+        for count in [1200, 100_000] {
+            let items = (0..count).collect::<Vec<_>>();
+            let mut visits = 0;
+            let at = super::suffix_start(&items, count - 10, |&index| {
+                visits += 1;
+                index as f64
+            });
+            assert_eq!(at, count - 10);
+            assert!(visits <= 12, "{count}: visited {visits} retained indexes");
+            for since in [0, 1, count / 2, count, count + 1] {
+                assert_eq!(
+                    super::suffix_start(&items, since, |&index| index as f64),
+                    items.partition_point(|&index| index < since)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn suffix_bounds_match_binary_search_for_empty_and_sparse_buckets() {
+        assert_eq!(
+            super::suffix_start::<usize>(&[], 10, |&index| index as f64),
+            0
+        );
+        let items = [2, 5, 20, 200];
+        for since in 0..=201 {
+            assert_eq!(
+                super::suffix_start(&items, since, |&index| index as f64),
+                items.partition_point(|&index| index < since)
+            );
+        }
     }
 
     #[test]
