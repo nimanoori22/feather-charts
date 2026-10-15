@@ -26,9 +26,10 @@ class UpdateEvidenceTests(unittest.TestCase):
             self.assertEqual(json.loads(passing.stdout)['status'], 'PASS')
             marked = root / 'run-1-current-histogram-1200-16-append.log'
             original = marked.read_text()
-            marked.write_text('diagnostic_counters=enabled\n' + original)
-            diagnostic = subprocess.run(command, text=True, capture_output=True)
-            self.assertEqual(json.loads(diagnostic.stdout)['status'], 'INCONCLUSIVE')
+            for marker in ['diagnostic_counters=enabled', 'diagnostic_only=true']:
+                marked.write_text(marker + '\n' + original)
+                diagnostic = subprocess.run(command, text=True, capture_output=True)
+                self.assertEqual(json.loads(diagnostic.stdout)['status'], 'INCONCLUSIVE')
             marked.write_text(original)
             (root / 'run-6-current-histogram-100000-16-append.log').write_text(
                 'raw Histogram rows=100000 sources=16 phase=append/update ms=[.01]\n')

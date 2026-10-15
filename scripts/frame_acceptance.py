@@ -88,7 +88,7 @@ def main():
             runs[run] = {}
             for rows in [1200, 100000]:
                 log = (root / f'run-{run}-current-histogram-{rows}-16-append.log').read_text()
-                if 'diagnostic_counters=enabled' in log:
+                if 'diagnostic_counters=enabled' in log or 'diagnostic_only=true' in log:
                     raise ValueError('instrumented diagnostics cannot establish acceptance')
                 matches = re.findall(rf'^raw Histogram rows={rows} sources=16 phase=append/update ms=(.+)$', log, re.M)
                 if len(matches) != 1:
