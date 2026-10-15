@@ -29,7 +29,7 @@ fn date(point: &TimePoint) -> Result<chrono::DateTime<chrono::Utc>, TimeConversi
         .ok_or(TimeConversionError::InvalidTimestamp)
 }
 
-fn weight_by_time(
+pub(super) fn weight_by_time(
     current: &TimePoint,
     previous: &TimePoint,
 ) -> Result<TickMarkWeight, TimeConversionError> {

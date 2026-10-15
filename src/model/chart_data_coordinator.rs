@@ -107,6 +107,14 @@ where
         B::Key: PartialOrd,
         B::CacheKey: Eq + std::hash::Hash,
     {
+        if let Some(append) = &update.time_scale.append {
+            assert!(
+                update.time_scale.points.is_none()
+                    && update.time_scale.first_changed_point_index.is_none()
+                    && time_scale.can_append(append),
+                "invalid or replayed time-scale append"
+            );
+        }
         // Must happen before TimeScale changes logical indexes.
         for id in update.series.keys().chain(update.custom.keys()) {
             if let Some(target) = self.targets.get_mut(id) {
@@ -115,7 +123,11 @@ where
         }
 
         let old_first = time_scale.index_to_time(TimePointIndex::new(0.0)).cloned();
-        let replaced_whitespace = update.time_scale.first_changed_point_index.is_none();
+        let replaced_whitespace = update.time_scale.first_changed_point_index.is_none()
+            && update.time_scale.append.is_none();
+        if let Some(append) = update.time_scale.append {
+            time_scale.append_point(append);
+        }
         if let (Some(points), Some(first_changed_point_index)) = (
             update.time_scale.points,
             update.time_scale.first_changed_point_index,
@@ -173,7 +185,17 @@ where
             }
         }
 
-        if membership_changed {
+        if let Some((index, fulfilled)) = update.time_scale.membership {
+            let changed = if fulfilled {
+                self.fulfilled_indices.insert(index)
+            } else {
+                self.fulfilled_indices.remove(&index)
+            };
+            if changed {
+                self.fulfilled_indices_version = self.fulfilled_indices_version.wrapping_add(1);
+            }
+            time_scale.update_index_with_data(index, fulfilled, self.fulfilled_indices_version);
+        } else if membership_changed {
             self.refresh_fulfilled_indices(time_scale);
         }
 
@@ -252,6 +274,8 @@ mod tests {
                     ),
                 )]),
                 time_scale: TimeScaleChanges {
+                    append: None,
+                    membership: None,
                     points: None,
                     first_changed_point_index: None,
                     base_index: Some(0.0.into()),
@@ -294,6 +318,8 @@ mod tests {
             )]),
             custom: BTreeMap::new(),
             time_scale: TimeScaleChanges {
+                append: None,
+                membership: None,
                 points: Some(vec![TimeScalePoint {
                     time_weight: TickMarkWeightValue::default(),
                     time: point,

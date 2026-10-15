@@ -130,6 +130,9 @@ fn custom_public_lifecycle_keeps_typed_data_and_frozen_frames() {
     chart
         .update_custom_data(&handle, datum(2., 30.), false)
         .unwrap();
+    chart
+        .update_custom_data(&handle, datum(3., 40.), false)
+        .unwrap();
     let new = chart
         .prepare_snapshot(Size::new(640., 480.), 1.25, Instant::now())
         .unwrap();
@@ -154,7 +157,7 @@ fn custom_public_lifecycle_keeps_typed_data_and_frozen_frames() {
     new.panes[0]
         .plot
         .draw(&mut Frame::new(&renderer, Size::new(640., 480.)));
-    assert_eq!(*draws.borrow(), vec![10., 20., 10., 30.]);
+    assert_eq!(*draws.borrow(), vec![10., 20., 10., 30., 40.]);
     drop(chart);
     assert_eq!(*destroyed.borrow(), 1);
 }
@@ -516,8 +519,24 @@ fn different_custom_types_share_reindexed_time_without_sharing_payloads() {
         .unwrap();
     assert_eq!(frame.panes.len(), 2);
     assert!(frame.panes.iter().all(|pane| pane.plot.custom.is_some()));
+    chart.update_custom_data(&a, datum(4., 40.), false).unwrap();
+    let CustomSeriesDataItem::Data(mut tail) = box_whisker::sample(1) else {
+        unreachable!()
+    };
+    tail.time = UtcTimestamp::new(5.).into();
+    chart
+        .update_custom_data(&b, CustomSeriesDataItem::Data(tail), false)
+        .unwrap();
+    assert_eq!(a.data_at(3.0.into()).unwrap().median, 40.);
+    assert_eq!(
+        b.data_at(4.0.into()).unwrap().time,
+        UtcTimestamp::new(5.).into()
+    );
     chart.remove_series(b.id()).unwrap();
     assert_eq!(a.data_at(1.0.into()).unwrap().median, 30.);
+    assert_eq!(a.data_at(2.0.into()).unwrap().median, 40.);
+    chart.update_custom_data(&a, datum(6., 60.), false).unwrap();
+    assert_eq!(a.data_at(3.0.into()).unwrap().median, 60.);
 }
 
 #[test]
@@ -571,5 +590,14 @@ fn custom_preparation_and_existing_time_updates_copy_only_visible_payloads() {
     assert!(
         updated <= 4,
         "existing-time update copied {updated} payloads"
+    );
+    COPIES.with(|copies| copies.set(0));
+    chart
+        .update_custom_data(&handle, datum(100_001., 102.), false)
+        .unwrap();
+    let appended = COPIES.with(|copies| copies.get());
+    assert!(
+        appended <= 4,
+        "tail append copied {appended} custom payloads"
     );
 }

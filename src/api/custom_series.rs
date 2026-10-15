@@ -303,7 +303,6 @@ impl Chart {
             self.layer
                 .update_custom_series_data(handle.id, data, &Builder(view), historical)?;
         self.model.apply_custom_data_update(&handle.model, update)?;
-        self.revision += 1;
         Ok(())
     }
     pub fn replace_custom_view_options<V>(

@@ -169,6 +169,48 @@ where
         self.correct_offset();
         self.update_conflation_factor();
     }
+    pub fn can_append(
+        &self,
+        append: &crate::model::data_layer::TimeScaleAppend<B::InternalItem, B::Item>,
+    ) -> bool {
+        append.index == self.points.len()
+            && self.points.last().is_none_or(|last| {
+                self.behavior
+                    .key(&last.time)
+                    .partial_cmp(&self.behavior.key(&append.point.time))
+                    == Some(std::cmp::Ordering::Less)
+            })
+    }
+    pub fn append_point(
+        &mut self,
+        append: crate::model::data_layer::TimeScaleAppend<B::InternalItem, B::Item>,
+    ) {
+        assert!(
+            self.can_append(&append),
+            "invalid or replayed time-scale append"
+        );
+        self.data_generation = self.data_generation.wrapping_add(1);
+        self.visible_range_invalidated = true;
+        self.time_marks_cache = None;
+        self.tick_marks.append_point(append.index, &append.point);
+        self.points.push(append.point);
+        self.correct_offset();
+        self.update_conflation_factor();
+    }
+    pub fn update_index_with_data(&mut self, index: usize, fulfilled: bool, version: u64) {
+        let changed = if fulfilled {
+            self.indices_with_data.insert(index)
+        } else {
+            self.indices_with_data.remove(&index)
+        };
+        if changed {
+            self.tick_marks.update_membership(index, version);
+        }
+        if changed || self.indices_with_data_version != version {
+            self.indices_with_data_version = version;
+            self.time_marks_cache = None;
+        }
+    }
     pub fn set_localization_options(&mut self, localization: LocalizationOptions<B::Item>) {
         self.localization = localization;
         self.behavior.update_formatter(&self.localization);

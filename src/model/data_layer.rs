@@ -45,7 +45,16 @@ pub struct SeriesChanges<I, O, D = (), M = ()> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub struct TimeScaleAppend<I, O> {
+    pub index: usize,
+    pub point: TimeScalePoint<I, O>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub struct TimeScaleChanges<I, O> {
+    pub append: Option<TimeScaleAppend<I, O>>,
+    /// Authoritative aggregate membership at one unchanged/new logical index.
+    pub membership: Option<(usize, bool)>,
     pub points: Option<Vec<TimeScalePoint<I, O>>>,
     pub first_changed_point_index: Option<usize>,
     pub base_index: Option<TimePointIndex>,
@@ -248,6 +257,7 @@ where
     series_types: BTreeMap<SeriesId, SeriesType>,
     custom_series: BTreeSet<SeriesId>,
     last_time_by_series: BTreeMap<SeriesId, B::InternalItem>,
+    fulfilled_indices: BTreeSet<usize>,
 }
 
 impl<B, M> DataLayer<B, M>
@@ -266,6 +276,7 @@ where
             series_types: BTreeMap::new(),
             custom_series: BTreeSet::new(),
             last_time_by_series: BTreeMap::new(),
+            fulfilled_indices: BTreeSet::new(),
         }
     }
     pub fn behavior(&self) -> &B {
@@ -449,7 +460,8 @@ where
             return Err(DataLayerError::HistoricalUpdateMissingPoint);
         }
         let affects_time_scale = point_index.is_none();
-        let old_keys = affects_time_scale.then(|| self.keys());
+        let append_weight = self.tail_weight(&internal_time, affects_time_scale);
+        let old_keys = (affects_time_scale && append_weight.is_none()).then(|| self.keys());
         let row = create_custom_plot_row(
             internal_time.clone(),
             TimePointIndex::default(),
@@ -461,6 +473,7 @@ where
         let point_index = point_index.unwrap_or_else(|| {
             self.ensure_point(internal_time.clone(), row.original_time().clone())
         });
+        self.points[point_index].index = TimePointIndex::new(point_index as f64);
         let mut membership = custom_membership_from_row(&row);
         membership.index = self.points[point_index].index;
         let membership_changed = self.points[point_index]
@@ -477,6 +490,7 @@ where
         self.points[point_index]
             .custom_rows
             .insert(series, membership);
+        let aggregate_membership = self.refresh_point_membership(point_index);
         if !historical_update {
             self.last_time_by_series.insert(series, internal_time);
         }
@@ -484,9 +498,10 @@ where
             historical_update,
             last_bar_updated_or_new_bars_added_to_the_right: fulfilled,
         });
-        let response = if affects_time_scale {
+        let response = if affects_time_scale && append_weight.is_none() {
             self.finish_mutation(old_keys.unwrap(), series, info)?
         } else {
+            let append = append_weight.map(|weight| self.append_descriptor(point_index, weight));
             DataUpdateResponse {
                 series: BTreeMap::new(),
                 custom: BTreeMap::from([(
@@ -494,6 +509,8 @@ where
                     CustomSeriesChanges::unchanged(info, membership_changed),
                 )]),
                 time_scale: TimeScaleChanges {
+                    append,
+                    membership: Some((point_index, aggregate_membership)),
                     points: None,
                     first_changed_point_index: None,
                     base_index: self.base_index(),
@@ -567,19 +584,25 @@ where
             return Err(DataLayerError::HistoricalUpdateMissingPoint);
         }
         let affects_time_scale = point_index.is_none();
-        let old_keys = affects_time_scale.then(|| self.keys());
-        let point_index = point_index
-            .unwrap_or_else(|| self.ensure_point(internal_time.clone(), original_time.clone()));
-        let row = create_builtin_plot_row(
+        let append_weight = self.tail_weight(&internal_time, affects_time_scale);
+        let old_keys = (affects_time_scale && append_weight.is_none()).then(|| self.keys());
+        let mut row = create_builtin_plot_row(
             series_type,
             internal_time.clone(),
-            self.points[point_index].index,
+            TimePointIndex::default(),
             item,
             original_time,
         )
         .map_err(DataLayerError::PlotRow)?;
+        let point_index = point_index.unwrap_or_else(|| {
+            self.ensure_point(internal_time.clone(), row.original_time().clone())
+        });
+        let index = TimePointIndex::new(point_index as f64);
+        self.points[point_index].index = index;
+        row.set_index(index);
         let fulfilled = row.is_fulfilled();
         self.points[point_index].rows.insert(series, row);
+        let membership = self.refresh_point_membership(point_index);
         if !historical_update {
             self.last_time_by_series.insert(series, internal_time);
         }
@@ -587,9 +610,10 @@ where
             historical_update,
             last_bar_updated_or_new_bars_added_to_the_right: fulfilled,
         };
-        if affects_time_scale {
+        if affects_time_scale && append_weight.is_none() {
             self.finish_mutation(old_keys.unwrap(), series, Some(info))
         } else {
+            let append = append_weight.map(|weight| self.append_descriptor(point_index, weight));
             let point = &self.points[point_index];
             let rows = match &point.rows[&series] {
                 SeriesDataRow::Value(row) => vec![row.clone()],
@@ -606,6 +630,8 @@ where
                 )]),
                 custom: BTreeMap::new(),
                 time_scale: TimeScaleChanges {
+                    append,
+                    membership: Some((point_index, membership)),
                     points: None,
                     first_changed_point_index: None,
                     base_index: self.base_index(),
@@ -753,6 +779,7 @@ where
         (old.len() != self.points.len()).then_some(common)
     }
     fn reindex(&mut self) {
+        self.fulfilled_indices.clear();
         for (index, point) in self.points.iter_mut().enumerate() {
             point.index = TimePointIndex::new(index as f64);
             for row in point.rows.values_mut() {
@@ -761,7 +788,51 @@ where
             for row in point.custom_rows.values_mut() {
                 row.index = point.index;
             }
+            if point.rows.values().any(SeriesDataRow::is_fulfilled)
+                || point.custom_rows.values().any(|row| row.fulfilled)
+            {
+                self.fulfilled_indices.insert(index);
+            }
         }
+    }
+    fn tail_weight(&mut self, time: &B::InternalItem, is_new: bool) -> Option<TickMarkWeightValue> {
+        if !is_new
+            || self
+                .points
+                .last()
+                .is_some_and(|point| self.compare_time(time, &point.time) != Ordering::Greater)
+        {
+            return None;
+        }
+        self.behavior
+            .append_weight(self.points.last().map(|point| &point.time), time)
+    }
+    fn append_descriptor(
+        &mut self,
+        index: usize,
+        weight: TickMarkWeightValue,
+    ) -> TimeScaleAppend<B::InternalItem, B::Item> {
+        let point = &mut self.points[index];
+        point.weight = weight;
+        TimeScaleAppend {
+            index,
+            point: TimeScalePoint {
+                time: point.time.clone(),
+                original_time: point.original_time.clone(),
+                time_weight: weight,
+            },
+        }
+    }
+    fn refresh_point_membership(&mut self, index: usize) -> bool {
+        let point = &self.points[index];
+        let fulfilled = point.rows.values().any(SeriesDataRow::is_fulfilled)
+            || point.custom_rows.values().any(|row| row.fulfilled);
+        if fulfilled {
+            self.fulfilled_indices.insert(index);
+        } else {
+            self.fulfilled_indices.remove(&index);
+        }
+        fulfilled
     }
     fn refill_weights(&mut self, start: usize) {
         let mut scale_points = self
@@ -848,6 +919,8 @@ where
             series,
             custom,
             time_scale: TimeScaleChanges {
+                append: None,
+                membership: None,
                 points,
                 first_changed_point_index: first_changed,
                 base_index: self.base_index(),
@@ -896,18 +969,9 @@ where
             .collect()
     }
     fn base_index(&self) -> Option<TimePointIndex> {
-        // The base is the last value-bearing point, not trailing whitespace.
-        self.points
-            .iter()
-            .rev()
-            .find(|point| {
-                point
-                    .rows
-                    .values()
-                    .any(|row| matches!(row, SeriesDataRow::Value(_)))
-                    || point.custom_rows.values().any(|row| row.fulfilled)
-            })
-            .map(|point| point.index)
+        self.fulfilled_indices
+            .last()
+            .map(|&index| TimePointIndex::new(index as f64))
             .or_else(|| (!self.last_time_by_series.is_empty()).then_some(TimePointIndex::default()))
     }
     fn refresh_last_fulfilled_time(&mut self, series: SeriesId) {
@@ -967,6 +1031,8 @@ where
             series: BTreeMap::new(),
             custom: BTreeMap::new(),
             time_scale: TimeScaleChanges {
+                append: None,
+                membership: None,
                 points: None,
                 first_changed_point_index: None,
                 base_index: self.base_index(),
@@ -1091,7 +1157,7 @@ mod tests {
             )
             .unwrap();
         let response = layer.update_series_data(id, line(4., 4.), false).unwrap();
-        assert_eq!(response.time_scale.first_changed_point_index, Some(3));
+        assert_eq!(response.time_scale.append.as_ref().unwrap().index, 3);
         assert!(matches!(
             layer.update_series_data(id, line(2.5, 1.), false),
             Err(DataLayerError::OutOfOrderUpdate)
@@ -1437,7 +1503,7 @@ mod tests {
         let appended = second
             .update_data(&mut layer, custom(2., vec![3.], "appended"), false)
             .unwrap();
-        assert_eq!(appended.time_scale.first_changed_point_index, Some(1));
+        assert_eq!(appended.time_scale.append.as_ref().unwrap().index, 1);
         assert_eq!(appended.custom_rows[0].base.index, 1.0.into());
     }
 }

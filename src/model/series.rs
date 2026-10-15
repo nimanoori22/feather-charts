@@ -1564,6 +1564,8 @@ mod tests {
             }],
             custom: BTreeMap::from([(id, CustomSeriesChanges::new(vec![2.0.into()], None))]),
             time_scale: TimeScaleChanges {
+                append: None,
+                membership: None,
                 points: None,
                 first_changed_point_index: None,
                 base_index: None,

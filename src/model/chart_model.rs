@@ -59,6 +59,7 @@ pub enum ChartModelError {
     UnknownSeries(SeriesId),
     InvalidPane(usize),
     InvalidDimensions,
+    InvalidTimeScaleUpdate,
     InvalidTypography,
     InvalidPriceInteraction,
     Construction(SeriesConstructionError),
@@ -1103,6 +1104,8 @@ where
         let time_scale = std::mem::replace(
             &mut update.time_scale,
             TimeScaleChanges {
+                append: None,
+                membership: None,
                 points: None,
                 first_changed_point_index: None,
                 base_index: None,
@@ -1129,6 +1132,13 @@ where
         update: &BuiltInDataUpdate<B::InternalItem, B::Item, M>,
         removed: Option<SeriesId>,
     ) -> Result<(), ChartModelError> {
+        if update.time_scale.append.as_ref().is_some_and(|append| {
+            update.time_scale.points.is_some()
+                || update.time_scale.first_changed_point_index.is_some()
+                || !self.time_scale.can_append(append)
+        }) {
+            return Err(ChartModelError::InvalidTimeScaleUpdate);
+        }
         for id in update.series.keys().chain(update.custom.keys()) {
             if Some(*id) != removed && !self.series.contains_key(id) {
                 return Err(ChartModelError::UnknownSeries(*id));

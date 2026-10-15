@@ -671,3 +671,40 @@ fn editing_hides_the_crosshair_and_focus_loss_does_not_leave_stale_hover_labels(
     prepare(&mut chart);
     assert!(chart.model().crosshair().position().is_none());
 }
+
+#[test]
+fn fixed_viewport_live_append_preserves_an_edit_until_commit() {
+    let (mut chart, _, _) = setup_edit();
+    chart.set_logical_range(feather_charts::model::time_data::LogicalRange {
+        from: 20.0.into(),
+        to: 80.0.into(),
+    });
+    prepare(&mut chart);
+    let mut state = ChartState::default();
+    let message = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+    let ChartMessage::PrimitiveEdit(begin) = &message else {
+        panic!("expected edit")
+    };
+    let token = begin.id;
+    chart.update(message).unwrap();
+    let series = chart.series_ids().next().unwrap();
+    chart
+        .update_data(
+            series,
+            BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+                time: UtcTimestamp::new(2000.).into(),
+                value: 105.,
+                color: None,
+                custom_values: None,
+            })),
+            false,
+        )
+        .unwrap();
+    prepare(&mut chart);
+    chart.preview_primitive_update(token).unwrap();
+    let message = native(&chart, &mut state, &release(), Point::new(65., 70.)).unwrap();
+    assert!(
+        matches!(&message,ChartMessage::PrimitiveEdit(edit) if edit.phase == PrimitiveEditPhase::Commit && edit.id == token)
+    );
+    chart.update(message).unwrap();
+}

@@ -18,6 +18,7 @@ struct MarksCache<InternalItem, OriginalItem> {
     indices_with_data_id: u64,
     check_indices_for_data: bool,
     marks: Vec<TickMark<InternalItem, OriginalItem>>,
+    stages: BTreeMap<TickMarkWeightValue, Vec<usize>>,
 }
 
 /// Incrementally maintained tick marks, selected by weight and available
@@ -31,6 +32,7 @@ pub struct TickMarks<InternalItem, OriginalItem> {
     marks_by_weight: BTreeMap<TickMarkWeightValue, Vec<TickMark<InternalItem, OriginalItem>>>,
     cache: Option<MarksCache<InternalItem, OriginalItem>>,
     uniform_distribution: bool,
+    dirty_since: Option<usize>,
 }
 
 impl<InternalItem, OriginalItem> Default for TickMarks<InternalItem, OriginalItem> {
@@ -39,6 +41,7 @@ impl<InternalItem, OriginalItem> Default for TickMarks<InternalItem, OriginalIte
             marks_by_weight: BTreeMap::new(),
             cache: None,
             uniform_distribution: false,
+            dirty_since: None,
         }
     }
 }
@@ -78,6 +81,34 @@ where
         }
     }
 
+    pub fn append_point(
+        &mut self,
+        index: usize,
+        point: &crate::model::time_data::TimeScalePoint<InternalItem, OriginalItem>,
+    ) {
+        self.marks_by_weight
+            .entry(point.time_weight)
+            .or_default()
+            .push(TickMark {
+                index: TimePointIndex::new(index as f64),
+                time: point.time.clone(),
+                weight: point.time_weight,
+                original_time: point.original_time.clone(),
+            });
+        self.invalidate_index(index);
+    }
+
+    pub fn update_membership(&mut self, index: usize, version: u64) {
+        if let Some(cache) = &mut self.cache {
+            cache.indices_with_data_id = version;
+        }
+        self.invalidate_index(index);
+    }
+
+    pub fn invalidate_index(&mut self, index: usize) {
+        self.dirty_since = Some(self.dirty_since.map_or(index, |old| old.min(index)));
+    }
+
     /// Builds the currently drawable marks. Higher-weight marks take
     /// precedence, and every returned pair is separated by at least
     /// `ceil(max_label_width / bar_spacing)` logical indexes.
@@ -102,24 +133,113 @@ where
         );
 
         let max_indexes_per_mark = (max_label_width / bar_spacing).ceil() as usize;
-        let cache_is_current = self.cache.as_ref().is_some_and(|cache| {
+        let same_layout = self.cache.as_ref().is_some_and(|cache| {
             cache.max_indexes_per_mark == max_indexes_per_mark
-                && cache.indices_with_data_id == indices_with_data_id
                 && cache.check_indices_for_data == check_indices_for_data
         });
-
-        if !cache_is_current {
-            let marks = self.build_marks_impl(
-                max_indexes_per_mark,
-                check_indices_for_data,
-                indices_with_data,
-            );
-            self.cache = Some(MarksCache {
-                max_indexes_per_mark,
-                indices_with_data_id,
-                check_indices_for_data,
-                marks,
-            });
+        let same_membership = self
+            .cache
+            .as_ref()
+            .is_some_and(|cache| cache.indices_with_data_id == indices_with_data_id);
+        if !same_layout || !same_membership || self.dirty_since.is_some() {
+            if self.uniform_distribution {
+                self.cache = Some(MarksCache {
+                    max_indexes_per_mark,
+                    indices_with_data_id,
+                    check_indices_for_data,
+                    marks: self.build_marks_impl(
+                        max_indexes_per_mark,
+                        check_indices_for_data,
+                        indices_with_data,
+                    ),
+                    stages: BTreeMap::new(),
+                });
+            } else {
+                let incremental = same_layout && same_membership && self.dirty_since.is_some();
+                let mut cache = self
+                    .cache
+                    .take()
+                    .filter(|_| incremental)
+                    .unwrap_or_else(|| MarksCache {
+                        max_indexes_per_mark,
+                        indices_with_data_id,
+                        check_indices_for_data,
+                        marks: Vec::new(),
+                        stages: BTreeMap::new(),
+                    });
+                let mut since = if incremental {
+                    self.dirty_since.unwrap()
+                } else {
+                    0
+                };
+                let mut previous = Vec::new();
+                let mut previous_weight = None;
+                for (&weight, candidates) in self.marks_by_weight.iter().rev() {
+                    // A higher-priority change can displace this group's marks
+                    // only within one label spacing to its left.
+                    since = since.saturating_sub(max_indexes_per_mark);
+                    let old = cache.stages.remove(&weight);
+                    if old.is_none() {
+                        since = 0;
+                    }
+                    let mut selected = old.unwrap_or_default();
+                    selected.truncate(selected.partition_point(|&index| index < since));
+                    let mut left = selected
+                        .last()
+                        .map_or(f64::NEG_INFINITY, |&index| index as f64);
+                    let mut at = previous.partition_point(|&index| index < since);
+                    for mark in &candidates
+                        [candidates.partition_point(|mark| mark.index.value() < since as f64)..]
+                    {
+                        let index = mark.index.value() as usize;
+                        while at < previous.len() && previous[at] < index {
+                            left = previous[at] as f64;
+                            selected.push(previous[at]);
+                            at += 1;
+                        }
+                        let right = previous
+                            .get(at)
+                            .map_or(f64::INFINITY, |&index| index as f64);
+                        if right - index as f64 >= max_indexes_per_mark as f64
+                            && index as f64 - left >= max_indexes_per_mark as f64
+                            && (!check_indices_for_data || indices_with_data.contains(&index))
+                        {
+                            selected.push(index);
+                            left = index as f64;
+                        }
+                    }
+                    selected.extend_from_slice(&previous[at..]);
+                    if let Some(weight) = previous_weight {
+                        cache.stages.insert(weight, previous);
+                    }
+                    previous = selected;
+                    previous_weight = Some(weight);
+                }
+                cache.marks.truncate(
+                    cache
+                        .marks
+                        .partition_point(|mark| mark.index.value() < since as f64),
+                );
+                for &index in &previous[previous.partition_point(|&index| index < since)..] {
+                    let mark = self
+                        .marks_by_weight
+                        .values()
+                        .find_map(|bucket| {
+                            bucket
+                                .binary_search_by_key(&index, |mark| mark.index.value() as usize)
+                                .ok()
+                                .map(|at| &bucket[at])
+                        })
+                        .expect("selected index must have a tick mark");
+                    cache.marks.push(mark.clone());
+                }
+                if let Some(weight) = previous_weight {
+                    cache.stages.insert(weight, previous);
+                }
+                cache.indices_with_data_id = indices_with_data_id;
+                self.cache = Some(cache);
+            }
+            self.dirty_since = None;
         }
 
         &self
@@ -223,6 +343,56 @@ mod tests {
             time: index,
             original_time: index,
         }
+    }
+
+    #[test]
+    fn appended_selection_matches_global_reference_across_weights_and_membership_changes() {
+        for uniform in [false, true] {
+            for spacing in [0., 1., 3., 13.] {
+                for filter in [false, true] {
+                    let mut marks = TickMarks::default();
+                    marks.set_uniform_distribution(uniform);
+                    let mut members = BTreeSet::new();
+                    let mut random = 17_u64;
+                    for index in 0..300 {
+                        random = random.wrapping_mul(6364136223846793005).wrapping_add(1);
+                        marks
+                            .append_point(index, &point(index as i32, ((random >> 32) % 7) as i32));
+                        if random & 3 != 0 {
+                            members.insert(index);
+                        }
+                        if index > 20 && index % 11 == 0 {
+                            let changed = index - 17;
+                            if !members.remove(&changed) {
+                                members.insert(changed);
+                            }
+                            marks.invalidate_index(changed);
+                        }
+                        marks.update_membership(index, index as u64);
+                        let expected = marks.build_marks_impl(spacing as usize, filter, &members);
+                        assert_eq!(
+                            marks.build(1., spacing, filter, &members, index as u64),
+                            expected,
+                            "uniform={uniform} spacing={spacing} filter={filter} index={index}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn unknown_membership_version_rebuilds_the_prefix_even_with_a_pending_append() {
+        let mut marks = TickMarks::default();
+        let points = (0..100).map(|index| point(index, 1)).collect::<Vec<_>>();
+        marks.set_time_scale_points(&points, 0);
+        let mut members = (0..100).collect::<BTreeSet<_>>();
+        marks.build(1., 10., true, &members, 0);
+        marks.append_point(100, &point(100, 1));
+        members.remove(&0);
+        members.insert(100);
+        let expected = marks.build_marks_impl(10, true, &members);
+        assert_eq!(marks.build(1., 10., true, &members, 1), expected);
     }
 
     #[test]

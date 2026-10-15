@@ -132,3 +132,69 @@ fn moving_viewport_clones_only_visible_cached_time_marks() {
         }
     }
 }
+
+#[test]
+fn warmed_tick_append_copies_only_a_bounded_selection_suffix() {
+    use feather_charts::model::tick_marks::TickMarks;
+    for count in [1200, 100_000] {
+        let clones = Rc::new(Cell::new(0));
+        let point = |index| TimeScalePoint {
+            time: CountedTime {
+                value: index as f64,
+                clones: clones.clone(),
+            },
+            original_time: CountedTime {
+                value: index as f64,
+                clones: clones.clone(),
+            },
+            time_weight: TickMarkWeightValue::new(1),
+        };
+        let mut marks = TickMarks::default();
+        let points = (0..count).map(point).collect::<Vec<_>>();
+        marks.set_time_scale_points(&points, 0);
+        marks.build(6., 60., false, &Default::default(), 0);
+        clones.set(0);
+        marks.append_point(count, &point(count));
+        marks.build(6., 60., false, &Default::default(), 0);
+        assert!(
+            clones.get() <= 12,
+            "{count}: {} tick payload clones",
+            clones.get()
+        );
+    }
+}
+
+#[test]
+fn arbitrary_horizontal_behavior_keeps_the_full_context_append_fallback() {
+    use feather_charts::model::{
+        data_consumer::{BuiltInSeriesDataItem, LineDataItem, WhitespaceData},
+        data_layer::{DataLayer, SeriesId},
+        series_options::SeriesType,
+    };
+    let clones = Rc::new(Cell::new(0));
+    let row = |value| {
+        BuiltInSeriesDataItem::Line(LineDataItem::<CountedTime, ()>::Whitespace(
+            WhitespaceData {
+                time: CountedTime {
+                    value,
+                    clones: clones.clone(),
+                },
+                custom_values: None,
+            },
+        ))
+    };
+    let mut layer = DataLayer::new(Behavior);
+    let id = SeriesId::new(1);
+    layer
+        .set_series_data(id, SeriesType::Line, vec![row(1.)])
+        .unwrap();
+    let update = layer.update_series_data(id, row(2.), false).unwrap();
+    assert!(update.time_scale.append.is_none());
+    let points = update.time_scale.points.unwrap();
+    assert_eq!(points.len(), 2);
+    assert!(
+        points
+            .iter()
+            .all(|point| point.time_weight == TickMarkWeightValue::new(1))
+    );
+}

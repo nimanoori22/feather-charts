@@ -248,6 +248,20 @@ impl HorzScaleBehavior for HorzScaleBehaviorTime {
         }
     }
 
+    fn append_weight(
+        &mut self,
+        previous: Option<&Self::InternalItem>,
+        current: &Self::InternalItem,
+    ) -> Option<TickMarkWeightValue> {
+        Some(
+            previous.map_or_else(TickMarkWeightValue::default, |previous| {
+                super::time_scale_point_weight_generator::weight_by_time(current, previous)
+                    .expect("time-scale points must contain valid normalized UTC timestamps")
+                    .into()
+            }),
+        )
+    }
+
     fn fill_weights_for_points(
         &mut self,
         points: &mut [TimeScalePoint<Self::InternalItem, Self::Item>],

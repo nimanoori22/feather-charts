@@ -78,6 +78,16 @@ pub trait HorzScaleBehavior {
         start_index: usize,
     );
 
+    /// Opts into tail weighting with bounded predecessor context. None keeps
+    /// the full-context path for behaviors that need the complete history.
+    fn append_weight(
+        &mut self,
+        _previous: Option<&Self::InternalItem>,
+        _current: &Self::InternalItem,
+    ) -> Option<TickMarkWeightValue> {
+        None
+    }
+
     /// Returns whether cached tick labels must be recalculated for this set.
     fn should_reset_tickmark_labels(
         &self,

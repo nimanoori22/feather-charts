@@ -1435,3 +1435,40 @@ fn rejected_dimensions_and_unknown_removal_leave_the_chart_unchanged() {
 
 mod histogram;
 mod multi_pane;
+
+#[test]
+fn append_handoffs_reject_replay_wrong_index_and_order_before_mutation() {
+    let (mut layer, mut model, id) = fixture();
+    let append = layer.update_series_data(id, line(21., 21.), false).unwrap();
+    let original_base = model.time_scale.base_index();
+    for variant in 0..3 {
+        let mut invalid = append.clone();
+        match variant {
+            0 => invalid.time_scale.append.as_mut().unwrap().index += 1,
+            1 => {
+                invalid
+                    .time_scale
+                    .append
+                    .as_mut()
+                    .unwrap()
+                    .point
+                    .time
+                    .timestamp = UtcTimestamp::new(19.)
+            }
+            _ => invalid.time_scale.points = Some(vec![]),
+        }
+        assert_eq!(
+            model.apply_data_update(invalid),
+            Err(ChartModelError::InvalidTimeScaleUpdate)
+        );
+        assert_eq!(model.time_scale.base_index(), original_base);
+        assert_eq!(model.series(id).unwrap().bars().size(), 20);
+    }
+    model.apply_data_update(append.clone()).unwrap();
+    assert_eq!(
+        model.apply_data_update(append),
+        Err(ChartModelError::InvalidTimeScaleUpdate)
+    );
+    assert_eq!(model.series(id).unwrap().bars().size(), 21);
+    assert_eq!(model.time_scale.base_index(), Some(20.0.into()));
+}
