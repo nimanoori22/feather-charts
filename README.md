@@ -301,3 +301,15 @@ The strict timing screen and physical-device acceptance remain open.
 cargo run --example public_chart -- --line --append-captures-only --capture-dir target/append-captures
 cargo run --release --example preparation_profile -- --rows 100000 --series 16 --kind line --phase append --fixed-last-price
 ```
+
+For hands-free interaction checks, both demos have a **Start/Stop live feed**
+control. Start with the feed already running:
+
+```sh
+cargo run --example public_chart -- --line --primitives --live-feed
+cargo run --example custom_series -- --live-feed
+```
+
+The synthetic feed appends four bars per second. You can zoom, pan, use the price
+axis, or edit a box while it runs. See the [acceptance investigation](docs/porting/live-append-acceptance.md)
+for diagnostic evidence and remaining checks.

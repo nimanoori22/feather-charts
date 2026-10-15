@@ -2,6 +2,10 @@
 
 Foundation: `6c743ca`. Implementation and acceptance results follow below.
 
+Latest status: the [cache and live-feed follow-up](live-append-acceptance.md)
+passes 23/24 history screens; performance and physical acceptance remain open.
+The original implementation measurements below are preserved as historical evidence.
+
 ## Contract and consumers
 
 The behavioral reference is Lightweight Charts `data-layer.ts`, its row creator,
@@ -326,3 +330,11 @@ To repeat the runner, build the same profiler sources against the two engine rev
 The engine and automated behavior/source/renderer validation are implemented. The append history and established-workload performance gates remain open. Physical mouse/touchpad/touchscreen acceptance during live appends, box editing and half-size/high-DPI operation remains unchecked. The milestone is not marked accepted, and conflation rendering is not started.
 
 The next performance task is to isolate the remaining 16-source append tails and the latest/middle outliers with per-phase CPU/allocation/cache evidence, then rerun the unchanged screens. Avoid adding another cache or changing map representation without a reproduced cost. Device acceptance can proceed independently using the checklist.
+
+
+## Acceptance follow-up (2026-10-15)
+
+The [live-append investigation](live-append-acceptance.md) preserves the historical
+results above and records subsequent cache fixes, matched measurements and native
+live-feed controls. The latest complete comparison passes **23/24** unchanged
+history screens; one Histogram16 p95 pair and physical-device acceptance remain open.
