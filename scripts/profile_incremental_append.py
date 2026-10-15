@@ -10,6 +10,8 @@ import subprocess
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--directory', type=Path, default=Path('target/incremental-append'))
 parser.add_argument('--cpu', type=int, help='CPU used by this process and its children')
+parser.add_argument('--baseline-tail-rows', type=int, choices=[1, 4], default=4,
+                    help='Response sentinel: 4 for the original engine, 1 for an incremental baseline')
 args = parser.parse_args()
 root = args.directory.resolve()
 root.mkdir(parents=True, exist_ok=True)
@@ -23,7 +25,7 @@ if hasattr(os, 'sched_getaffinity'):
 artifacts = {f'{version}{suffix}': root / f'{version}{suffix}-profile'
              for version in ['baseline', 'current'] for suffix in ['', '-custom']}
 identities = {key: hashlib.sha256(path.read_bytes()).hexdigest() for key, path in artifacts.items()}
-for version, expected in [('baseline', 4), ('current', 1)]:
+for version, expected in [('baseline', args.baseline_tail_rows), ('current', 1)]:
     identity = subprocess.check_output([str(artifacts[version]), '--rows', '10', '--series', '1', '--kind', 'line', '--phase', 'append', '--samples', '1'], text=True)
     assert f'tail_response_rows={expected}\n' in identity, (version, identity)
 (root / 'identities.json').write_text(json.dumps(identities, indent=2) + '\n')

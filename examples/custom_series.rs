@@ -278,10 +278,9 @@ fn main() -> iced::Result {
     }
     let live = arguments.iter().any(|a| a == "--live-feed");
     iced::application(
-        move || {
-            let mut app = App::default();
-            app.live_since = live.then(Instant::now);
-            app
+        move || App {
+            live_since: live.then(Instant::now),
+            ..App::default()
         },
         App::update,
         App::view,
