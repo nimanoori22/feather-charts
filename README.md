@@ -285,5 +285,19 @@ fresh mouse/touchpad acceptance remain pending. See the
 [touch report](docs/porting/touch-navigation.md) and
 [roadmap checklist](tasks/custom-series-todo.md).
 
-Preparation/update measurements and remaining append costs are recorded in the
+Earlier preparation/update measurements are recorded in the
 [performance report](docs/porting/preparation-performance.md).
+
+## Incremental live updates
+
+Native time-series updates now append one shared time point and one changed row
+for built-in and typed custom series. Unchanged peer histories stay in place;
+shared middle insertions retain full reindexing. Custom live updates preserve
+mouse drags. See the [append report](docs/porting/incremental-append.md) and
+[acceptance checklist](tasks/incremental-append-todo.md) for validation and limits.
+The strict timing screen and physical-device acceptance remain open.
+
+```sh
+cargo run --example public_chart -- --line --append-captures-only --capture-dir target/append-captures
+cargo run --release --example preparation_profile -- --rows 100000 --series 16 --kind line --phase append --fixed-last-price
+```
