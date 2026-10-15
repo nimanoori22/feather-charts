@@ -284,6 +284,42 @@ mod tests {
             coordinator.apply_with_rows(&mut time_scale, update, || {});
         }
         assert_eq!(scans.get(), 1);
+        for index in 0..1000 {
+            let time = UtcTimestamp::new(index as f64 + 1.);
+            coordinator.apply(
+                &mut time_scale,
+                DataUpdateResponse {
+                    series: BTreeMap::new(),
+                    custom: BTreeMap::from([(
+                        id,
+                        crate::model::data_layer::CustomSeriesChanges::unchanged(None, true),
+                    )]),
+                    time_scale: TimeScaleChanges {
+                        append: Some(crate::model::data_layer::TimeScaleAppend {
+                            index,
+                            point: TimeScalePoint {
+                                time: TimePoint {
+                                    timestamp: time,
+                                    business_day: None,
+                                },
+                                original_time: time.into(),
+                                time_weight: TickMarkWeightValue::default(),
+                            },
+                        }),
+                        membership: Some((index, true)),
+                        points: None,
+                        first_changed_point_index: None,
+                        base_index: Some((index as f64).into()),
+                    },
+                },
+            );
+        }
+        assert_eq!(
+            scans.get(),
+            1,
+            "single-point membership must not collect target histories"
+        );
+        assert_eq!(coordinator.fulfilled_indices().len(), 1000);
     }
 
     #[test]

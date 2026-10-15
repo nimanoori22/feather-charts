@@ -779,21 +779,23 @@ where
         (old.len() != self.points.len()).then_some(common)
     }
     fn reindex(&mut self) {
-        self.fulfilled_indices.clear();
-        for (index, point) in self.points.iter_mut().enumerate() {
-            point.index = TimePointIndex::new(index as f64);
-            for row in point.rows.values_mut() {
-                row.set_index(point.index);
-            }
-            for row in point.custom_rows.values_mut() {
-                row.index = point.index;
-            }
-            if point.rows.values().any(SeriesDataRow::is_fulfilled)
-                || point.custom_rows.values().any(|row| row.fulfilled)
-            {
-                self.fulfilled_indices.insert(index);
-            }
-        }
+        self.fulfilled_indices = self
+            .points
+            .iter_mut()
+            .enumerate()
+            .filter_map(|(index, point)| {
+                point.index = TimePointIndex::new(index as f64);
+                for row in point.rows.values_mut() {
+                    row.set_index(point.index);
+                }
+                for row in point.custom_rows.values_mut() {
+                    row.index = point.index;
+                }
+                (point.rows.values().any(SeriesDataRow::is_fulfilled)
+                    || point.custom_rows.values().any(|row| row.fulfilled))
+                .then_some(index)
+            })
+            .collect();
     }
     fn tail_weight(&mut self, time: &B::InternalItem, is_new: bool) -> Option<TickMarkWeightValue> {
         if !is_new
