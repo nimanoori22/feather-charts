@@ -15,6 +15,17 @@ fn extend_count(offset: i64, pmc: u64, width: u16) -> io::Result<u64> {
     let shift = 64 - width;
     Ok(offset.wrapping_add(((pmc << shift) as i64) >> shift) as u64)
 }
+fn monotonic_ns() -> u64 {
+    let mut time = libc::timespec {
+        tv_sec: 0,
+        tv_nsec: 0,
+    };
+    assert_eq!(
+        unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut time) },
+        0
+    );
+    time.tv_sec as u64 * 1_000_000_000 + time.tv_nsec as u64
+}
 struct Counter {
     page: *mut u8,
     length: usize,
@@ -104,7 +115,7 @@ pub struct FastDiagnostics {
     counters: [Counter; 3],
     before: Option<[HardwareCount; 3]>,
     records: Vec<(usize, Duration, [HardwareCount; 3])>,
-    marks: Vec<(usize, &'static str, Instant, [HardwareCount; 3])>,
+    marks: Vec<(usize, &'static str, u64, [HardwareCount; 3])>,
 }
 impl FastDiagnostics {
     pub fn new(samples: usize) -> io::Result<Self> {
@@ -141,10 +152,25 @@ impl FastDiagnostics {
         self.before = Some(self.snapshot().expect("RDPMC snapshot"));
     }
     pub fn enable_phases(&mut self, samples: usize) {
-        self.marks.reserve((samples + 20) * 4);
+        // Touch trace storage before timing so its own first writes cannot masquerade as engine faults.
+        self.marks.resize(
+            (samples + 20) * 4,
+            (
+                0,
+                "",
+                0,
+                [HardwareCount {
+                    count: 0,
+                    enabled_ns: 0,
+                    running_ns: 0,
+                }; 3],
+            ),
+        );
+        std::hint::black_box(self.marks.as_slice());
+        self.marks.clear();
     }
     pub fn mark(&mut self, stage: &'static str) {
-        let now = Instant::now();
+        let now = monotonic_ns();
         let counts = self.snapshot().expect("phase RDPMC snapshot");
         assert!(
             self.marks.len() < self.marks.capacity(),
@@ -179,13 +205,15 @@ impl FastDiagnostics {
             }
             let counts: [HardwareCount; 3] = std::array::from_fn(|i| end.3[i].since(begin.3[i]));
             println!(
-                "fast_phase sample={} phase={} wall_ns={} instructions={} cycles={} cache_misses={}",
+                "fast_phase sample={} phase={} wall_ns={} instructions={} cycles={} cache_misses={} start_ns={} end_ns={}",
                 end.0,
                 end.1,
-                (end.2 - begin.2).as_nanos(),
+                end.2 - begin.2,
                 counts[0].count,
                 counts[1].count,
-                counts[2].count
+                counts[2].count,
+                begin.2,
+                end.2
             );
         }
     }
