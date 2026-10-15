@@ -295,7 +295,11 @@ for built-in and typed custom series. Unchanged peer histories stay in place;
 shared middle insertions retain full reindexing. Custom live updates preserve
 mouse drags. See the [append report](docs/porting/incremental-append.md) and
 [acceptance checklist](tasks/incremental-append-todo.md) for validation and limits.
-The strict timing screen and physical-device acceptance remain open.
+The timing exception remains open. Opaque-bar occlusion reduced software render
+CPU p95 from about 24.6 ms to 5.0–5.4 ms in the diagnostic pilot. The latest
+automated study passes 5/6 update comparisons and 63/64 native phase cohorts;
+see the [current report](docs/porting/render-update-follow-up.md) and
+[mouse checks](tasks/live-append-mouse-acceptance.md).
 
 ```sh
 cargo run --example public_chart -- --line --append-captures-only --capture-dir target/append-captures

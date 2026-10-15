@@ -1,7 +1,7 @@
 # Incremental live-data append checklist
 
 Plan: [incremental-append-plan.md](incremental-append-plan.md).
-Foundation: `6c743ca`. Engine checkpoint: `27b543e`. Status: engine implemented; functional validation complete; performance acceptance open (23/24 history screens pass; see [follow-up](../docs/porting/live-append-acceptance.md)); physical acceptance pending.
+Foundation: `6c743ca`. Engine checkpoint: `27b543e`. Status: engine implemented; functional validation complete; performance acceptance open (23/24 history screens pass; see [follow-up](../docs/porting/live-append-acceptance.md)); physical acceptance in progress (GPU mouse checks passed; see device record).
 Earlier hardware gates and append-tail exceptions remain independently recorded.
 
 ## 0. Source contract and design
@@ -86,6 +86,11 @@ Earlier hardware gates and append-tail exceptions remain independently recorded.
 - [ ] Pass the unchanged 10% steady-state history-growth screen for eligible updates (23/24 pass; one Histogram16 p95 pair fails; three focused repeats pass).
 - [x] Complete the predefined larger Histogram investigation: six 2,000-sample pairs pass; add a repeatable guard and preserve the original exception ([evidence](../docs/porting/histogram-tail-follow-up.md)).
 - [x] Investigate short-window flags with same-history controls and 8,000 fresh counter samples; report confounded attribution without filtering failures ([cause and fix](../docs/porting/histogram-window-cause.md)).
+- [x] Adopt explicit update/frame acceptance rules and measure real presentation during append/zoom/pan/price-axis input ([results](../docs/porting/native-frame-acceptance.md)).
+- [x] Fix duplicated pane preparation; preserve all geometry/hits and 984 identical renderer captures.
+- [x] Profile software drawing and eliminate fully occluded opaque rectangle work; preserve pixels ([follow-up](../docs/porting/render-update-follow-up.md)).
+- [x] Add optional allocation/hardware diagnostics to the actual update fixture, excluded from acceptance.
+- [ ] Pass revised acceptance: latest isolated update study 5/6; native 63/64 cohorts across two sets, including all 32 software cohorts. One GPU presentation failure stops set three. Exception remains open.
 - [x] Investigate latest/middle tails with thread/hardware counters and three matched comparisons; earlier outliers do not recur, all evidence retained.
 - [x] Report phase/public-route, source-count, cold/capacity and global-cache costs.
 
@@ -98,6 +103,9 @@ Earlier hardware gates and append-tail exceptions remain independently recorded.
 - [x] Update README/checklist; close only performance gates actually demonstrated.
 
 ## Physical acceptance
+
+Mouse only is available. GPU regular/half-size checks passed by user observation;
+a software problem was reported and awaits diagnosis. See the [device record](live-append-mouse-acceptance.md).
 
 - [ ] Live feed while using mouse/touchpad zoom, plot pan and price-axis controls.
 - [ ] Live feed during box editing, commit/cancel and fresh gestures afterward.

@@ -1,0 +1,62 @@
+{
+  "note": "Only a demo diagnostic module/flag added after frozen acceptance; production renderer and frozen acceptance binaries match the acceptance snapshot.",
+  "changed_frozen_sources": [
+    "examples/public_chart.rs"
+  ],
+  "sha256": {
+    "examples/public_chart.rs": "476cee5e769e52d228194cdd3f1bbc0392eab07a882cc05e46b84bd2da0ccc2e",
+    "examples/public_chart/software_drag_profile.rs": "4fc4d9427bc18b2134d49d1d1f3b1910f8df556f469c075ab80fc0fb465c8310",
+    "target/release/examples/public_chart": "cf3ca4bba91697b5ec4e0cd7c89e3f40136863350b67adfb8a39ebd28f572f3c",
+    "target/render-update-follow-up/mouse-software-stacks.log": "ad3fcaa3ba4575f9edc2d800f97517e675897c6edd7ddee345a5672445f6bbfd",
+    "target/render-update-follow-up/sample-mouse.gdb": "f54856da6a0430bb989533139079b0524069bcaba6bade102f607fb981cb52bb",
+    "target/render-update-follow-up/software-drag-clipping-4.csv": "1e4f1991783b19e18cce4b3726e6a75a239ba4d28d3a10ea44d4152c6acb2780",
+    "target/render-update-follow-up/software-drag-clipping-summary.json": "e46ea5eeba9dc2ba35714e8a24376306302f0ebd4ce0215e230749ed68f4b6ad"
+  },
+  "physical_case": {
+    "backend": "tiny-skia",
+    "device": "mouse",
+    "live_feed": true,
+    "size": "approximately one-third regular; exact pixels unrecorded",
+    "gesture": "plot drag or price-axis drag",
+    "result": "lag reproduced by user"
+  },
+  "sample_counts": {
+    "event_wait": 35,
+    "software_primitives": 19,
+    "text": 3,
+    "other": 3
+  },
+  "raster_diagnostic": [
+    {
+      "size": "800x500",
+      "variant": "original",
+      "samples": 100,
+      "median_ms": 7.4527715,
+      "p95_ms": 7.847955
+    },
+    {
+      "size": "800x500",
+      "variant": "clipped",
+      "samples": 100,
+      "median_ms": 7.406566,
+      "p95_ms": 7.956855
+    },
+    {
+      "size": "300x500",
+      "variant": "original",
+      "samples": 100,
+      "median_ms": 3.7837695,
+      "p95_ms": 3.914593
+    },
+    {
+      "size": "300x500",
+      "variant": "clipped",
+      "samples": 100,
+      "median_ms": 3.7841899999999997,
+      "p95_ms": 3.897871
+    }
+  ],
+  "pixel_pairs_matched": 240,
+  "conclusion": "No production clipping change: measured neutral. Physical software acceptance remains failed.",
+  "short_height_attempts": "300x100 and 300x180 failed Histogram(NonFiniteCoordinates), retained separately from successful diagnostic."
+}

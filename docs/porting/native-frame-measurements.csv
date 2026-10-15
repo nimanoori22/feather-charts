@@ -1,0 +1,33 @@
+backend,rows,size,phase,status,reason,work_p95_ns,presentation_p95_ns,discarded_count
+tiny-skia,1200,regular,append,FAIL,frame budget exceeded,26654660,49724332,0
+tiny-skia,1200,regular,zoom,FAIL,frame budget exceeded,29085228,49772200,0
+tiny-skia,1200,regular,pan,FAIL,frame budget exceeded,27930828,49712394,0
+tiny-skia,1200,regular,price,FAIL,frame budget exceeded,26943961,49716327,0
+tiny-skia,1200,narrow,append,PASS,budgets satisfied,11646914,30585887,0
+tiny-skia,1200,narrow,zoom,PASS,budgets satisfied,13594542,33014528,0
+tiny-skia,1200,narrow,pan,PASS,budgets satisfied,13707873,32956986,0
+tiny-skia,1200,narrow,price,PASS,budgets satisfied,11450023,30579939,0
+tiny-skia,100000,regular,append,FAIL,frame budget exceeded,26495023,47953038,0
+tiny-skia,100000,regular,zoom,FAIL,frame budget exceeded,28286248,47944849,0
+tiny-skia,100000,regular,pan,FAIL,frame budget exceeded,27503639,47940469,0
+tiny-skia,100000,regular,price,FAIL,frame budget exceeded,26151090,47937073,0
+tiny-skia,100000,narrow,append,PASS,budgets satisfied,11105477,33062810,0
+tiny-skia,100000,narrow,zoom,FAIL,frame budget exceeded,16326996,35464980,0
+tiny-skia,100000,narrow,pan,PASS,budgets satisfied,12858118,33078130,0
+tiny-skia,100000,narrow,price,PASS,budgets satisfied,11732902,33076089,0
+wgpu,1200,regular,append,PASS,budgets satisfied,4019370,25482909,0
+wgpu,1200,regular,zoom,PASS,budgets satisfied,5865519,32956197,0
+wgpu,1200,regular,pan,PASS,budgets satisfied,6213478,33020737,0
+wgpu,1200,regular,price,PASS,budgets satisfied,5533661,25475650,0
+wgpu,1200,narrow,append,PASS,budgets satisfied,3462276,31529607,0
+wgpu,1200,narrow,zoom,PASS,budgets satisfied,5560021,31526620,0
+wgpu,1200,narrow,pan,PASS,budgets satisfied,5294043,31525765,0
+wgpu,1200,narrow,price,PASS,budgets satisfied,5051769,31523519,0
+wgpu,100000,regular,append,PASS,budgets satisfied,4240436,33058787,0
+wgpu,100000,regular,zoom,PASS,budgets satisfied,5706781,33023513,0
+wgpu,100000,regular,pan,PASS,budgets satisfied,6133927,33012822,0
+wgpu,100000,regular,price,PASS,budgets satisfied,5681223,33001859,0
+wgpu,100000,narrow,append,PASS,budgets satisfied,3194827,32996255,0
+wgpu,100000,narrow,zoom,PASS,budgets satisfied,8622128,33042543,0
+wgpu,100000,narrow,pan,PASS,budgets satisfied,5295286,33032603,0
+wgpu,100000,narrow,price,PASS,budgets satisfied,4399962,33042914,0

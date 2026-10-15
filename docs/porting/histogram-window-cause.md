@@ -108,3 +108,11 @@ operation whose removal improves latency while preserving behavior.
 The original full matrix remains 23/24; supplemental extended evidence remains
 6/6. Short-window microsecond variation remains observable. Its attribution is now
 qualified by a control, rather than presented as an established history-size bug.
+
+Subsequent work adopts explicit acceptance rules, fixes repeated pane preparation
+and measures real native presentation. See [the initial native acceptance report](native-frame-acceptance.md)
+for the failed gates and the decision to keep the exception open. The results
+above remain the historical evidence for this investigation.
+
+The [latest software-rendering and update follow-up](render-update-follow-up.md)
+records the occlusion fix, inline diagnostics and fresh acceptance results.
