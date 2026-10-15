@@ -57,7 +57,6 @@ def off_cpu(records, pid):
     return intervals, pending
 
 
-@contextmanager
 def switch_events(pid):
     attr = (ctypes.c_uint64 * 16)()
     attr[0] = (128 << 32) | 1
@@ -65,6 +64,22 @@ def switch_events(pid):
     attr[3] = 6  # PERF_SAMPLE_TID | PERF_SAMPLE_TIME
     attr[5] = (1 << 5) | (1 << 6) | (1 << 18) | (1 << 25) | (1 << 26)
     ctypes.cast(ctypes.byref(attr, 92), ctypes.POINTER(ctypes.c_int32))[0] = 1
+    return perf_ring(pid, attr)
+
+
+def fault_events(pid, major=False):
+    attr = (ctypes.c_uint64 * 16)()
+    attr[0] = (128 << 32) | 1
+    attr[1] = 6 if major else 5  # PERF_COUNT_SW_PAGE_FAULTS_MAJ/MIN
+    attr[2] = 1
+    attr[3] = 7  # IP, TID, TIME from the faulting user context
+    attr[5] = (1 << 5) | (1 << 6) | (1 << 25)
+    ctypes.cast(ctypes.byref(attr, 92), ctypes.POINTER(ctypes.c_int32))[0] = 1
+    return perf_ring(pid, attr)
+
+
+@contextmanager
+def perf_ring(pid, attr):
     libc = ctypes.CDLL(None, use_errno=True)
     fd = libc.syscall(298, ctypes.byref(attr), pid, -1, -1, 8)
     if fd < 0:
@@ -94,6 +109,19 @@ def drain_ring(ring):
     return records
 
 
+def wait_for_observer(ready, client_pid, compositor_pid, timeout=600):
+    deadline = time.monotonic() + timeout
+    while True:
+        if ready.exists():
+            metadata = json.loads(ready.read_text())
+            if (metadata.get('client_pid'), metadata.get('pid'), metadata.get('clock_id')) != (client_pid, compositor_pid, 1):
+                raise ValueError('observer did not acknowledge the owned client and compositor')
+            return metadata
+        if time.monotonic() >= deadline:
+            raise TimeoutError('observer acknowledgement missing; owned child was not resumed')
+        time.sleep(.05)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True)
@@ -103,7 +131,13 @@ def main():
     parser.add_argument('--narrow', action='store_true')
     parser.add_argument('--compositor-pid', type=int)
     parser.add_argument('--client-pid-file', type=Path)
+    parser.add_argument('--observer-ready', type=Path)
     args = parser.parse_args()
+    if args.observer_ready is not None:
+        if args.client_pid_file is None or args.compositor_pid is None:
+            parser.error('--observer-ready requires --client-pid-file and --compositor-pid')
+        if args.observer_ready.exists():
+            raise ValueError('fresh observer acknowledgement required')
     if (platform.system(), platform.machine()) != ('Linux', 'x86_64'):
         raise ValueError('requires Linux x86_64 perf ABI and memory ordering')
     if args.compositor_pid is not None:
@@ -127,10 +161,14 @@ def main():
             if args.client_pid_file is not None:
                 with args.client_pid_file.open('x') as file:
                     file.write(str(process.pid))
+            manifest['pid'] = process.pid
+            if args.observer_ready is not None:
+                print(f'Waiting for observer acknowledgement for chart PID {process.pid}', flush=True)
+                manifest['observer'] = wait_for_observer(args.observer_ready, process.pid, args.compositor_pid)
             ring = resources.enter_context(switch_events(process.pid))
             compositor = (resources.enter_context(switch_events(args.compositor_pid))
                           if args.compositor_pid is not None else None)
-            manifest.update(pid=process.pid, attached_ns=time.monotonic_ns())
+            manifest['attached_ns'] = time.monotonic_ns()
             os.kill(process.pid, signal.SIGCONT)
             deadline = time.monotonic() + 75
             while True:
@@ -139,7 +177,8 @@ def main():
                     compositor_records.extend(drain_ring(compositor))
                 if process.poll() is not None:
                     # The producer has exited; drain its final publication once more.
-                    if struct.unpack_from('QQ', ring, 1024)[0] == struct.unpack_from('QQ', ring, 1024)[1]:
+                    head, tail = struct.unpack_from('QQ', ring, 1024)
+                    if head == tail:
                         break
                 if time.monotonic() >= deadline:
                     raise TimeoutError('native diagnostic exceeded 75 seconds')

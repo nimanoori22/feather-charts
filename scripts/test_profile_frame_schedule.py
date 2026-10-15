@@ -1,10 +1,25 @@
 import struct
 import unittest
+import json
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from profile_frame_schedule import decode, off_cpu, drain_ring
+from profile_frame_schedule import decode, off_cpu, drain_ring, wait_for_observer
 
 
 class SchedulingTraceTests(unittest.TestCase):
+    def test_observer_acknowledges_exact_client_and_compositor_before_resume(self):
+        with TemporaryDirectory() as directory:
+            ready = Path(directory) / 'ready.json'
+            with self.assertRaises(TimeoutError):
+                wait_for_observer(ready, 42, 1172, timeout=0)
+            ready.write_text(json.dumps(dict(client_pid=42, pid=1172, clock_id=1)))
+            self.assertEqual(wait_for_observer(ready, 42, 1172)['client_pid'], 42)
+            with self.assertRaises(ValueError):
+                wait_for_observer(ready, 43, 1172)
+            with self.assertRaises(ValueError):
+                wait_for_observer(ready, 42, 1173)
+
     def test_ring_wrap_bounds_and_tail_publication(self):
         ring = bytearray(4096 + 32)
         record = struct.pack('IHHIIQ', 14, 1 << 13, 24, 42, 42, 1234)

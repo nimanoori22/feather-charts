@@ -17,6 +17,9 @@ class WirePatchTests(unittest.TestCase):
         self.assertIn('self.connection.flush().unwrap();', source)
         self.assertIn('_window: Arc<Window>', source)
         self.assertIn('impl Drop for Presentation', source)
+        extended = instrument_probe(original, 2880)
+        self.assertIn('Vec::with_capacity(2880)', extended)
+        self.assertIn('requests.len() < 2880', extended)
         with self.assertRaises(ValueError):
             instrument_probe('unknown source')
 
