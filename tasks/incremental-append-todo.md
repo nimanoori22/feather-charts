@@ -84,6 +84,7 @@ Earlier hardware gates and append-tail exceptions remain independently recorded.
 - [x] Pass bounded old-row/index/weight/membership operation guards.
 - [x] Run three isolated alternating baseline/current sets with 20 warmups/100 samples.
 - [ ] Pass the unchanged 10% steady-state history-growth screen for eligible updates (23/24 pass; one Histogram16 p95 pair fails; three focused repeats pass).
+- [x] Complete the predefined larger Histogram investigation: six 2,000-sample pairs pass; add a repeatable guard and preserve the original exception ([evidence](../docs/porting/histogram-tail-follow-up.md)).
 - [x] Investigate latest/middle tails with thread/hardware counters and three matched comparisons; earlier outliers do not recur, all evidence retained.
 - [x] Report phase/public-route, source-count, cold/capacity and global-cache costs.
 

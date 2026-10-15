@@ -5,6 +5,10 @@ Starting engine `27b543e`, evidence/checklist checkpoint `066fda5`.
 Live-feed checkpoint `79eb94c`; shared-cache checkpoint `f69bd11`.
 The original 10% screens and all failed samples remain unchanged and retained.
 
+The [larger Histogram study](histogram-tail-follow-up.md) subsequently passes
+six predefined 2,000-sample pairs. It records the distinction between the original
+23/24 matrix and supplemental 6/6 evidence; no historical result is discarded.
+
 ## Diagnosis before changes
 
 The Linux-only `update_latency_probe` uses the exact public-route profiler fixture,

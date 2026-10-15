@@ -313,3 +313,8 @@ cargo run --example custom_series -- --live-feed
 The synthetic feed appends four bars per second. You can zoom, pan, use the price
 axis, or edit a box while it runs. See the [acceptance investigation](docs/porting/live-append-acceptance.md)
 for diagnostic evidence and remaining checks.
+
+The [larger Histogram latency study](docs/porting/histogram-tail-follow-up.md)
+passes six predefined 2,000-sample comparisons. Repeat that controlled check with
+`scripts/profile_incremental_append.py --histogram-tail`; the original full-matrix
+failure remains recorded separately.
