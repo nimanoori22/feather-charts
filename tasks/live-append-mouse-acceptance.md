@@ -30,8 +30,10 @@ width/height and repeat. Keep the live feed enabled throughout:
 | --- | --- | --- | --- | --- | --- |
 | wgpu / regular | Pass | Pass | Pass | Pass | Pass |
 | wgpu / half size | Pass | Pass | Pass | Pass | Pass |
-| tiny-skia / regular | Unresolved* | Unresolved* | Unresolved* | Unresolved* | Unresolved* |
-| tiny-skia / half size | Unresolved* | Unresolved* | Unresolved* | Unresolved* | Unresolved* |
+| wgpu / problem size | Pass | Pass | Pass | Pass | Pass |
+| tiny-skia / regular | Pass | Pass | Pass | Pass | Pass |
+| tiny-skia / half size | Pass | Pass | Pass | Pass | Pass |
+| tiny-skia / problem size | Pass | Pass | Pass | Pass | Pass |
 
 Record backend, approximate size, device/monitor scale, pass/fail and a concrete
 reproduction for any failure. High-DPI physical coverage remains pending unless
@@ -42,16 +44,15 @@ input-to-photon measurement is claimed without an external measurement setup.
 GPU result: the user reported “All checks passed at both sizes” on 2026-10-15,
 using the mouse in the live-feed Histogram/box scene.
 
-Software failure: with the live feed running at approximately one-third of the
+Historical software failure before the canvas damage fix: with the live feed running at approximately one-third of the
 regular window size, dragging the plot or vertical price axis becomes slightly
-laggy. The user reproduced this in the subsequent debugger session. Other
-software gestures/sizes are not individually accepted. The measured fix and retest
-are recorded below.
+laggy. The user reproduced this in the subsequent debugger session. At that stage, other software gestures/sizes were not individually accepted.
+The measured fix and later complete normal-build retest are recorded below.
 The 60-stack diagnostic contains 19 software primitive drawing samples, 35 event
 waits, three text samples and three other samples. Debugger pauses perturb timing;
 this is hotspot evidence, not acceptance latency.
 
-*The failing software case is now identified above; no software cell is accepted.
+The original software cells remained unresolved until the complete retest below.
 High-DPI and input-to-photon acceptance remain untested.
 
 ## Software diagnostic retest after canvas damage fix
@@ -63,6 +64,21 @@ with the live feed running at the same problem size and reported:
 11.179 ms; all 1,049 after submissions resolved with zero discards.
 
 This accepts the observed feel of these two diagnostic gestures at that size.
-It does not fill the unresolved normal-build regular/half-size table above.
-Full software zoom, box edit/cancel, capture/release and short-height recovery
-checks still need individual results. See the [implementation report](../docs/porting/live-update-interaction-acceptance.md).
+At that stage it did not complete the normal-build regular/half-size checks.
+Those remaining checks subsequently passed in the normal-build retest below. See the [implementation report](../docs/porting/live-update-interaction-acceptance.md).
+
+## Complete normal-build mouse retest
+
+The user tested the normal release build separately on software and GPU with
+Histogram, box primitives and live feed. On each backend the user confirmed:
+**“All checks passed at all three sizes; short-height recovery passed; window closed.”**
+
+The regular, half and earlier problem sizes covered wheel zoom, diagonal plot
+pan, price-axis wheel/drag, box move/resize, cancelling an edit and release outside
+the chart. Shrinking to a short chart and enlarging it also recovered correctly.
+Both sessions exited normally. Exact dimensions were not instrumented in these
+normal-build sessions. The current table above records these observed mouse passes.
+
+Touchpad, touchscreen and high-DPI hardware remain untested. Automated timing
+acceptance remains separate and open. See the
+[timing attribution follow-up](../docs/porting/live-update-timing-attribution.md).

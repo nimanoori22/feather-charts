@@ -301,6 +301,9 @@ The timing exception remains open. The latest update study is inconclusive;
 native acceptance stopped after 31/32 passing cohorts in its first set.
 Earlier occlusion improvements and the prior 5/6-update, 63/64-frame study remain
 in the [historical report](docs/porting/render-update-follow-up.md).
+The [timing attribution follow-up](docs/porting/live-update-timing-attribution.md)
+records further diagnostics and full normal-build mouse passes on both backends.
+Touchpad, touchscreen and high-DPI checks remain pending.
 See the [mouse checks](tasks/live-append-mouse-acceptance.md) for physical coverage.
 
 ```sh

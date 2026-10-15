@@ -1,0 +1,149 @@
+{
+  "starting_checkpoint": "01391cb",
+  "automated_acceptance": "OPEN",
+  "production_engine_fix": null,
+  "tooling_fix": "Use distinct package identities for isolated source copies sharing a Cargo target directory.",
+  "mouse_acceptance": {
+    "device": "mouse",
+    "backends": [
+      "tiny-skia",
+      "wgpu"
+    ],
+    "sizes": [
+      "regular",
+      "half",
+      "earlier problem size"
+    ],
+    "short_height_recovery": "PASS",
+    "result": "PASS",
+    "exact_dimensions_recorded": false,
+    "untested": [
+      "touchpad",
+      "touchscreen",
+      "high-DPI",
+      "external input-to-photon"
+    ]
+  },
+  "update_sampling": {
+    "diagnostic_only": true,
+    "pairs": 6,
+    "samples_per_execution": 2000,
+    "warmups": 20,
+    "cpu": 5,
+    "cache_miss_period": 512,
+    "precise_ip_requested": 0,
+    "measured_ips": 3375,
+    "kernel_skid_ips": 13,
+    "throttle_records": 12,
+    "unthrottle_records": 12,
+    "median_ns_range": [
+      6489.0,
+      7003.0
+    ],
+    "p95_ns_range": [
+      10313,
+      11685
+    ],
+    "conclusion": "Incomplete, non-precise hotspot leads; no causal engine defect established."
+  },
+  "native_diagnostics": {
+    "schedule-software": {
+      "diagnostic_only": true,
+      "switch_records": 3611,
+      "complete_off_cpu_intervals": 1805,
+      "unmatched_final_out": null,
+      "frames": 480,
+      "discarded": 0,
+      "unresolved": 0,
+      "measured_individual_presentation_misses": [
+        {
+          "frame": 274,
+          "phase": "pan",
+          "work_ms": 17.777286,
+          "cpu_ms": 13.146717,
+          "presentation_ms": 46.45855,
+          "off_cpu_ms": 4.469785,
+          "preempted_ms": 4.469785
+        },
+        {
+          "frame": 324,
+          "phase": "pan",
+          "work_ms": 9.873642,
+          "cpu_ms": 9.814027,
+          "presentation_ms": 36.59273,
+          "off_cpu_ms": 0.0,
+          "preempted_ms": 0.0
+        },
+        {
+          "frame": 331,
+          "phase": "pan",
+          "work_ms": 9.011655,
+          "cpu_ms": 8.869769,
+          "presentation_ms": 36.597901,
+          "off_cpu_ms": 0.015088,
+          "preempted_ms": 0.015088
+        }
+      ]
+    },
+    "schedule-gpu": {
+      "diagnostic_only": true,
+      "switch_records": 7217,
+      "complete_off_cpu_intervals": 3608,
+      "unmatched_final_out": null,
+      "frames": 480,
+      "discarded": 0,
+      "unresolved": 0,
+      "measured_individual_presentation_misses": []
+    }
+  },
+  "artifacts": {
+    "target/acceptance-resolution/ip-study/protocol.json": "d0305bcf6526c8296c39c7e063f0dd4549dec95e646fd4d07ec0f462728bfe1e",
+    "target/acceptance-resolution/ip-study/analysis.json": "7282a6725104173345efe5c0e620016c044b02311d9ba5dd3108b2b6e75146f3",
+    "target/acceptance-resolution/ip-study/symbols.json": "fa5e4ea920639c1c0d5617af76b417ecadf0e88ac7511daf5b5e4b9d68cac690",
+    "target/acceptance-resolution/schedule-software/manifest.json": "55238ec732a4a4fb6ec028777d47e020003993e9c743cea5baf1997c660d29f5",
+    "target/acceptance-resolution/schedule-software/switches.json": "1fbe4bc97c001281d01a707033264328cf9ef39c951e771e7e200dd62f081aaa",
+    "target/acceptance-resolution/schedule-software/frames/frames.csv": "6a07a364467ef4266b34d5e89aa9e03ab7dd5bda2fcb8dce6b8a6f882f07722d",
+    "target/acceptance-resolution/schedule-gpu/manifest.json": "d709e7d455b4da795a1c6ca595aac1a169df4f2f852a0be4f4b59b289eca2bba",
+    "target/acceptance-resolution/schedule-gpu/switches.json": "4f3fe41984cc6c55582997cece080ac2b9ebaae93104ced9ae4d21bf13a407d7",
+    "target/acceptance-resolution/schedule-gpu/frames/frames.csv": "a60c3856d305ee126951e24aa520b3fb6132b2211867677d27b19cf3719edda1",
+    "target/acceptance-resolution/ip-build-7/manifest.json": "308482f1cd6887fc3f7f6311a1425b7d6c3e6dde8e35d35ecb53d698de7531e6",
+    "target/acceptance-resolution/ip-build-final/manifest.json": "3b9480259a87dd0d88b6e5ad2b6ca709d0933f171af310641fc2a810eb25f7dc",
+    "target/acceptance-resolution/copied-build-mutation-red.log": "bb3fa271113eb43d3097196b5ec1f9818a894b090e708c6deb0364548a909013",
+    "target/acceptance-resolution/copied-build-green.log": "49982ad3d9ec25f28832e6876db39710a74aa49eb373929fbf6a4cc4b5eba175",
+    "target/acceptance-resolution/software-physical.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/acceptance-resolution/gpu-physical.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/release/examples/public_chart": "173536199aac2d5337cceafd9e208883915bf07d92f98cacd6a7c2bea4b69757",
+    "target/acceptance-resolution/ip-study/run-1-100000.log": "49a6c33f934e989398198c5b7ced86e9e1f8126cf7de13a2169b5099f376fd0f",
+    "target/acceptance-resolution/ip-study/run-1-100000.maps": "ec4e0e796b2324a06c5ecd958e3207ea228839eac68a7e4a3fa8553b4cd93601",
+    "target/acceptance-resolution/ip-study/run-1-1200.log": "2f9b1c5f71e65a8a28e6e5292baa75be29d5338a7151083363ec652c6b81b7e0",
+    "target/acceptance-resolution/ip-study/run-1-1200.maps": "e0f1f90cf6c63394422c4ddd773779e7fc6790128c4136d2c17bc2139c9619ef",
+    "target/acceptance-resolution/ip-study/run-2-100000.log": "6ed50bacdf36b93e41a311ec5b867ba9f4a597d7716d1649bdae8f86a1c832d8",
+    "target/acceptance-resolution/ip-study/run-2-100000.maps": "48b4d714a0332e63ac6ac2eb0db5909a795879b3e57c9fdf34e720830834d082",
+    "target/acceptance-resolution/ip-study/run-2-1200.log": "9159b30e557fe2c830ff06943b2451b0ea66d2c5b8dbb8a0f8a1d8c4eb70d6ec",
+    "target/acceptance-resolution/ip-study/run-2-1200.maps": "dd34bde3fdde0bc15955e9525d15c4b01f76bfd3d3d7feaa0a8c50c817023ba4",
+    "target/acceptance-resolution/ip-study/run-3-100000.log": "221fcc6b0edc2abcf44850b0a9852eefd74e725db74c1f397fbacd4f2bd7f004",
+    "target/acceptance-resolution/ip-study/run-3-100000.maps": "2cc78e85075e1517667d54737bb8760ff975ec92cd95e95ce97bc6d7e80ff092",
+    "target/acceptance-resolution/ip-study/run-3-1200.log": "4e4d57eb163cc55f8d767324bd5186bbfb02dc8b4b0b1f965a049f902d4648cd",
+    "target/acceptance-resolution/ip-study/run-3-1200.maps": "af2624118a3769712c1403da281d4f926d497bb334eed0c1ba16b5cd384fb3c9",
+    "target/acceptance-resolution/ip-study/run-4-100000.log": "7bed2ec9fd2f5b1afc1f1b884dedca8b8562d8f55f5c315ad0c89a08adc6bc2f",
+    "target/acceptance-resolution/ip-study/run-4-100000.maps": "d15264e4457f74e80a20c2a6b0cfe7a4e0e0bbef8d75007edde56cdaa18d8a20",
+    "target/acceptance-resolution/ip-study/run-4-1200.log": "2cd5c748c560a3e4d45326384ae59f92a04b8a590e2809e5b2d12a5cbecf7e83",
+    "target/acceptance-resolution/ip-study/run-4-1200.maps": "93f7d0be76bf844678fde6df8a3a1e98bf2fa05e4ecd4f236e40d2b78a7dbebf",
+    "target/acceptance-resolution/ip-study/run-5-100000.log": "1aa7a464dd193e80f5210a5c131aa6e37c6cab2dd5791da2780374c9da20cc3a",
+    "target/acceptance-resolution/ip-study/run-5-100000.maps": "2489afa6c707369311cffbe96cfd67ff87209c16c99519b5982101c1c6850270",
+    "target/acceptance-resolution/ip-study/run-5-1200.log": "1fed7941ce1fcd48ff880952cdf105ecc6ff60373733fe316f357c400474f0ef",
+    "target/acceptance-resolution/ip-study/run-5-1200.maps": "9f3672508dc2accf03ad944e1470348e70a84e9b89af0cb0a38204e021a91653",
+    "target/acceptance-resolution/ip-study/run-6-100000.log": "4c368d43e44b3210dd5ff6cab6b46c4bfd52f8cb6d1b050989ead4f064ee23a7",
+    "target/acceptance-resolution/ip-study/run-6-100000.maps": "8d328d129399631d2cecb91fd65e1b3b68171cbe1602dd4fb9efea90dca664f7",
+    "target/acceptance-resolution/ip-study/run-6-1200.log": "6ad6b9053a4f0ed90a82adad7bc5a792d4d7099b93633899d863e38f9c7a3612",
+    "target/acceptance-resolution/ip-study/run-6-1200.maps": "b399622135e2c999ecad8edeb1338a3fd79ebe56f77ffa9c37a3753539e4f206"
+  },
+  "validation": {
+    "python_tests": 34,
+    "sampler_regression": "PASS",
+    "sampler_strict_clippy": "PASS",
+    "fresh_isolated_build_and_smoke": "PASS",
+    "formatting": "PASS",
+    "strict_scheduling_record_recheck": "PASS"
+  }
+}

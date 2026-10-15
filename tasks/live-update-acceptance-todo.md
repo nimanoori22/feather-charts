@@ -83,7 +83,7 @@ the public demo resizes down and back without an error or stale frame.
 `examples/support/preparation_diagnostics.rs`, `examples/support/update_counters.rs`,
 a focused analysis artifact/report.
 
-- [ ] Reuse the actual timed fixture and matched same-history controls to localize
+- [x] Reuse the actual timed fixture and matched same-history controls to localize
   the cost behind the unresolved p95 comparison; preserve allocation/cache evidence.
 - [x] Distinguish useful cache/memory/scheduling evidence from an identified engine
   defect; document any measurement limitations or permissions needed.
@@ -113,11 +113,11 @@ operation guards pass. An unproven cause does not complete this task.
 **Likely files:** `examples/frame_latency_profile/native.rs`, `presentation.rs`,
 existing diagnostic reader and report; inspect exact Iced runtime before changing it.
 
-- [ ] Reproduce/analyze narrow/100k/pan with correlated wall/CPU times, presentation
+- [x] Reproduce/analyze narrow/100k/pan with correlated wall/CPU times, presentation
   feedback, frame deadlines, buffer waits and scheduling evidence where available.
-- [ ] Separate rendering cost from waiting/descheduling and validate clock/feedback
+- [x] Separate rendering cost from waiting/descheduling and validate clock/feedback
   semantics; report gaps without substituting submission return for presentation.
-- [ ] Identify an actionable frame/runtime defect or retain explicit unresolved
+- [x] Identify an actionable frame/runtime defect or retain explicit unresolved
   attribution; do not erase the 43.006836 ms failed result.
 
 **Verification:** Diagnostic trace accounts for frame identities and discarded/
@@ -169,12 +169,12 @@ missing data/backend fallback/discards are handled by the fixed policy.
 **Likely files:** `tasks/live-append-mouse-acceptance.md`, new acceptance report,
 `tasks/incremental-append-todo.md` and README links.
 
-- [ ] User tests both backends at recorded regular/half/problem sizes with live
+- [x] User tests both backends at recorded regular/half/problem sizes with live
   feed: zoom, diagonal pan, price-axis wheel/drag, box edit/cancel, release/capture
   and stable layout; short-height recovery included. Record concrete results.
 - [x] Record mouse, touchpad, touchscreen and high-DPI coverage separately;
   unavailable hardware remains untested and external input-to-photon is not inferred.
-- [ ] Close only demonstrated gates and publish the remaining scope. Full hardware
+- [x] Close only demonstrated gates and publish the remaining scope. Full hardware
   acceptance requires its devices, or an explicit user decision narrowing scope.
 
 **Verification:** Every accepted device/backend/size row has observed evidence;
@@ -212,3 +212,18 @@ planned behavioral check; no conflation implementation is started in this roadma
   1,200-row pan presentation p95 was 43.722392 ms. All 16 GPU cohorts passed.
 - No actionable remaining update/presentation defect has been established.
   Tasks 6/8, full physical acceptance and conflation remain blocked by their gates.
+
+## Timing attribution continuation and final mouse result
+
+The [follow-up report](../docs/porting/live-update-timing-attribution.md) records
+cache-miss IP sampling, correlated native scheduling and their limitations.
+Copied diagnostic builds now have distinct package identities; a real executable
+regression catches stale Cargo reuse. One software delay contains 4.47 ms of
+involuntary preemption, while two other delays have almost no off-CPU frame work.
+There is still no justified additional engine/presentation fix, so tasks 6/8 and
+unchanged automated acceptance remain open.
+
+The user passed all normal-build mouse checks on both backends at regular, half
+and problem sizes, including short-height recovery. Exact sizes were not logged
+by the normal build. Touchpad, touchscreen and high-DPI coverage remain untested;
+Checkpoint C and conflation remain open.

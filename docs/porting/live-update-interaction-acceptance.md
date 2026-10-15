@@ -247,3 +247,10 @@ The final Python recheck passes all 30 tests after the pacing prototype is remov
 The production diffs were reviewed against the source contract and actual renderer
 ownership/damage behavior; no additional blocker was identified in those fixes.
 The unresolved acceptance outcomes above remain blockers for the milestone.
+
+## Later continuation
+
+The [timing attribution and normal-build mouse follow-up](live-update-timing-attribution.md)
+records the diagnostic build-reuse fix, additional cache/scheduling evidence and
+complete mouse passes on both normal backends. It supersedes the earlier pending
+mouse items above. Automated acceptance and unavailable-device coverage stay open.
