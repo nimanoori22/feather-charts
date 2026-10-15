@@ -1,4 +1,13 @@
 //! Phase timings for fixed-visible-range preparation and incremental data updates.
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+#[path = "support/preparation_diagnostics.rs"]
+mod preparation_diagnostics;
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+#[path = "support/update_allocations.rs"]
+mod update_allocations;
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+#[path = "support/update_counters.rs"]
+mod update_counters;
 use feather_charts::{
     api::Chart,
     model::{
@@ -159,6 +168,11 @@ fn main() {
         ]
     };
     let samples = number("--samples", 100);
+    let diagnostic = args.iter().any(|arg| arg == "--diagnostic-counters");
+    assert!(
+        !diagnostic || cfg!(all(target_os = "linux", target_arch = "x86_64")),
+        "diagnostic counters require Linux x86_64"
+    );
     let fixed_last_price = args.iter().any(|arg| arg == "--fixed-last-price");
     let auxiliary = args.iter().any(|arg| arg == "--auxiliary-probes");
     let whitespace_tail = number("--whitespace-tail", 0);
@@ -183,6 +197,10 @@ fn main() {
     }));
     assert!(samples > 0);
     if args.iter().any(|arg| arg == "--model-phases") {
+        assert!(
+            !diagnostic,
+            "diagnostic counters require the public preparation fixture"
+        );
         model_phases(&histories, &counts, &kinds, samples, selected_phase);
         return;
     }
@@ -298,11 +316,18 @@ fn main() {
                             .map_or(0, |axes| axes.right.labels.len())
                     );
                     if auxiliary {
+                        assert!(
+                            !diagnostic,
+                            "diagnostic counters require the public preparation fixture"
+                        );
                         auxiliary_probes(&mut chart, ids[0], samples);
                         continue;
                     }
                     let fonts = AxisFontResolver::default();
                     let mut phases = [Vec::new(), Vec::new(), Vec::new()];
+                    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+                    let mut diagnostics =
+                        preparation_diagnostics::Diagnostics::new(diagnostic, samples);
                     for sample in 0..samples + 20 {
                         let reload = (phase == "reload").then(|| {
                             (0..rows)
@@ -344,6 +369,8 @@ fn main() {
                                 }
                             })
                             .collect::<Vec<_>>();
+                        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+                        let before = diagnostics.before();
                         let start = Instant::now();
                         if let Some(data) = reload {
                             chart.set_data(ids[0], data).unwrap();
@@ -355,6 +382,8 @@ fn main() {
                             chart.update_data(ids[0], item, false).unwrap();
                         }
                         let updated = Instant::now();
+                        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+                        diagnostics.after(before, sample, updated - start);
                         let snapshot = chart.prepare_snapshot(size, 1.25, updated).unwrap();
                         let prepared = Instant::now();
                         black_box(
@@ -374,6 +403,8 @@ fn main() {
                             phases[2].push((converted - prepared).as_secs_f64() * 1000.);
                         }
                     }
+                    #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+                    diagnostics.report();
                     for (name, mut timings) in
                         ["update", "snapshot", "glyph"].into_iter().zip(phases)
                     {

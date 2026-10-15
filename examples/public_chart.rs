@@ -36,6 +36,9 @@ mod primitive_demo;
 mod tests;
 use marker_demo::sample_markers;
 
+#[path = "public_chart/software_drag_profile.rs"]
+mod software_drag_profile;
+
 struct App {
     primitive_scene: Option<primitive_demo::Scene>,
     annotations: Option<MarkerCollectionId>,
@@ -1015,6 +1018,10 @@ fn main() -> iced::Result {
     } else {
         SeriesType::Candlestick
     };
+    if args.iter().any(|a| a == "--software-drag-profile") {
+        software_drag_profile::run();
+        return Ok(());
+    }
     if args.iter().any(|a| a == "--primitive-edit-profile") {
         primitive_demo::profile();
         return Ok(());
