@@ -1,6 +1,7 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
 mod markers;
+mod pane_management;
 mod price_lines;
 mod primitives;
 
@@ -1052,20 +1053,7 @@ where
             && self.panes[pane].attached_source_ids().is_empty()
             && !self.panes[pane].preserve_empty_pane()
         {
-            self.panes.remove(pane);
-            self.crosshair.origin = None;
-            for (index, remaining) in self.panes.iter_mut().enumerate() {
-                remaining.set_index(index);
-            }
-            for entry in self.series.values_mut() {
-                if entry.pane > pane {
-                    entry.pane -= 1;
-                }
-            }
-            if let Some(pending) = &mut self.pending {
-                pending.remove_pane(pane);
-            }
-            self.full_update();
+            self.remove_empty_pane(pane);
         }
         let effects = self.coordinator.apply(&mut self.time_scale, update);
         self.consume_data_effects(effects);

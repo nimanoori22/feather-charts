@@ -243,7 +243,7 @@ impl<B: ChartBehavior> Chart<B> {
     pub fn series_ids(&self) -> impl Iterator<Item = SeriesId> + '_ {
         self.kinds.keys().copied()
     }
-    fn kind(&self, id: SeriesId) -> Result<SeriesType, ChartError> {
+    pub(super) fn kind(&self, id: SeriesId) -> Result<SeriesType, ChartError> {
         self.kinds
             .get(&id)
             .copied()
@@ -330,11 +330,7 @@ impl<B: ChartBehavior> Chart<B> {
             views.retain(|(other, _)| *other != id);
         }
         if self.views.len() != self.model.panes().len() {
-            // Model removes an unpreserved pane when its final series is removed.
-            self.views.remove(pane);
-            let removed = self.primitive_panes.remove(pane);
-            self.primitives
-                .retain(|a| a.owner != super::PrimitiveOwner::Pane(removed));
+            self.removed_pane_views(pane);
         }
         self.revision += 1;
         Ok(())

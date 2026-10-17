@@ -18,6 +18,12 @@ pub trait PriceScaleDataSource {
         end: TimePointIndex,
     ) -> Option<AutoscaleInfoImpl>;
     fn update_all_views(&mut self);
+    /// Pane-owned adapters rebind this snapshot when their series changes pane.
+    fn rebind_visible_range(
+        &mut self,
+        _visible: crate::model::price_scale_visible_range::PriceScaleVisibleRange,
+    ) {
+    }
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FirstValue {

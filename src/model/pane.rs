@@ -99,6 +99,9 @@ where
         self.series.borrow().autoscale_info(start, end)
     }
     fn update_all_views(&mut self) {}
+    fn rebind_visible_range(&mut self, visible: PriceScaleVisibleRange) {
+        self.visible = visible;
+    }
 }
 
 struct AttachedSource {
@@ -466,6 +469,38 @@ where
 
     pub fn detach_series(&mut self, id: SeriesId) -> Result<Vec<PaneEffect>, PaneError> {
         self.detach_source(id)
+    }
+
+    pub(crate) fn transfer_source_to(
+        &mut self,
+        id: SeriesId,
+        target: &mut Self,
+    ) -> Result<Vec<PaneEffect>, PaneError> {
+        let index = self.source_index(id).ok_or(PaneError::UnknownSeries(id))?;
+        if target.contains_source(id) {
+            return Err(PaneError::SeriesAlreadyAttached(id));
+        }
+        let source = self.attached_sources[index].source.clone();
+        let position = self.attached_sources[index].position.clone();
+        let mut effects = self.detach_source(id)?;
+        {
+            let mut adapter = source.borrow_mut();
+            adapter.rebind_visible_range(target.visible_range.clone());
+            adapter.set_z_order(target.attached_sources.len() as i32);
+        }
+        target
+            .price_scale_mut(&position)
+            .add_data_source(source.clone());
+        target.attached_sources.push(AttachedSource {
+            id,
+            source,
+            position: position.clone(),
+        });
+        target.invalidate_source_order_cache();
+        effects.extend(target.invalidate());
+        let visible = target.visible_range.get();
+        effects.extend(target.recalculate_price_scale(position, visible.as_ref()));
+        Ok(deduplicate_effects(effects))
     }
 
     pub fn detach_custom_series(&mut self, id: SeriesId) -> Result<Vec<PaneEffect>, PaneError> {

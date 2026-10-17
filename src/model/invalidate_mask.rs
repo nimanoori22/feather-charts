@@ -188,6 +188,13 @@ impl InvalidateMask {
             .collect();
     }
 
+    pub(crate) fn reorder_panes(&mut self, mapping: &[usize]) {
+        self.panes = std::mem::take(&mut self.panes)
+            .into_iter()
+            .map(|(index, request)| (mapping[index], request))
+            .collect();
+    }
+
     fn remove_animation(&mut self) {
         if let Some(index) = self
             .time_scale

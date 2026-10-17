@@ -1086,6 +1086,9 @@ where
         self.series.borrow().autoscale_info(start, end)
     }
     fn update_all_views(&mut self) {}
+    fn rebind_visible_range(&mut self, visible: PriceScaleVisibleRange) {
+        self.visible = visible;
+    }
 }
 
 pub struct CustomSeriesTarget<I, O, D, M = ()> {

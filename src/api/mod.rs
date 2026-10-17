@@ -1,6 +1,7 @@
 //! Synchronous chart ownership and the reusable Iced component.
 mod behavior;
 mod chart;
+mod pane_management;
 pub use behavior::ChartBehavior;
 mod conflation;
 mod custom_series;

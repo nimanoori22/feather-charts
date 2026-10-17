@@ -281,6 +281,39 @@ impl YieldCurveChart {
     pub fn add_pane(&mut self) -> usize {
         self.core.add_pane()
     }
+    pub fn move_pane(&mut self, from: usize, to: usize) -> Result<(), ChartError> {
+        self.core.move_pane(from, to)
+    }
+    pub fn swap_panes(&mut self, first: usize, second: usize) -> Result<(), ChartError> {
+        self.core.swap_panes(first, second)
+    }
+    pub fn move_series_to_pane(&mut self, id: SeriesId, target: usize) -> Result<(), ChartError> {
+        self.core.move_series_to_pane(id, target)
+    }
+    pub fn remove_pane(&mut self, pane: usize) -> Result<(), ChartError> {
+        if self.core.model.panes().len() == 1 {
+            return Ok(());
+        }
+        self.core.model.validate_pane(pane)?;
+        if self.core.model.pane_for_series(self.support) == Some(pane) {
+            // Support is chart infrastructure, not a publicly removable series.
+            self.core.cancel_interaction();
+            self.core.model.set_preserve_empty_pane(pane, true)?;
+            self.core
+                .model
+                .move_series_to_pane(self.support, if pane == 0 { 1 } else { 0 })?;
+        }
+        self.core.remove_pane(pane)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn set_preserve_empty_pane(
+        &mut self,
+        pane: usize,
+        preserve: bool,
+    ) -> Result<(), ChartError> {
+        self.core.set_preserve_empty_pane(pane, preserve)
+    }
     pub fn set_pane_stretch_factor(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
         self.core.set_pane_stretch_factor(pane, factor)
     }
