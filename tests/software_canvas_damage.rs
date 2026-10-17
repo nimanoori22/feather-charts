@@ -19,6 +19,19 @@ use std::time::Instant;
 
 #[test]
 fn changing_chart_damage_is_one_region_and_keeps_fresh_pixels() {
+    check_damage(false, Size::new(941., 1030.));
+}
+#[test]
+fn image_chart_keeps_one_damage_region_at_all_acceptance_sizes() {
+    for size in [
+        Size::new(941., 1030.),
+        Size::new(420., 320.),
+        Size::new(300., 180.),
+    ] {
+        check_damage(true, size);
+    }
+}
+fn check_damage(with_image: bool, size: Size) {
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
         iced::Font::DEFAULT,
         iced::Pixels(12.),
@@ -48,9 +61,22 @@ fn changing_chart_damage_is_one_region_and_keeps_fresh_pixels() {
                 .collect(),
         )
         .unwrap();
+    if with_image {
+        chart
+            .add_pane_primitive(
+                0,
+                feather_charts::api::ImageWatermark::from_rgba(
+                    1,
+                    1,
+                    vec![255, 0, 0, 128],
+                    Default::default(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+    }
     chart.fit_content();
     let state = ChartState::default();
-    let size = Size::new(941., 1030.);
     let bounds = Rectangle::with_size(size);
     let mut previous: Option<Vec<iced_tiny_skia::Layer>> = None;
     let mut previous_pixels = None;
@@ -88,7 +114,11 @@ fn changing_chart_damage_is_one_region_and_keeps_fresh_pixels() {
             );
         }
         previous = Some(layers);
-        let pixels = renderer.screenshot(Size::new(941, 1030), 1., Color::BLACK);
+        let pixels = renderer.screenshot(
+            Size::new(size.width as u32, size.height as u32),
+            1.,
+            Color::BLACK,
+        );
         if let Some(previous) = previous_pixels {
             assert_ne!(pixels, previous, "draw reused stale geometry");
         }

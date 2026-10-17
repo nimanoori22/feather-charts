@@ -1,0 +1,11 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "files": {
+    "src/plugins/image-watermark/options.ts": "f166683723a881e3f80acd4d80fbecc77641d35105db9d0b2a356262bf802582",
+    "src/plugins/image-watermark/pane-renderer.ts": "f62741fb8076709e36e57f5032273b2d0ff95c22f197866f9d3614c24eb32a4f",
+    "src/plugins/image-watermark/pane-view.ts": "3ec33c1438bad57ce252b946506476478dac22188bb249856051f35109186ca1",
+    "src/plugins/image-watermark/primitive.ts": "76f855d9a2af10bcc412884649b6a0aaca2213198a6d0fcc52510fae09e2a421",
+    "src/gui/pane-widget.ts": "48c6c9285f3ec00ec146be5ad01f735d39b541f61eb1483279a4fa8f2f11eda7",
+    "src/plugins/pane-primitive-wrapper.ts": "fe144b35dd8f0fa23401a926086cf02754eb3d029a2e7cefb50348145383bba8"
+  }
+}

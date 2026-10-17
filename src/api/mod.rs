@@ -40,3 +40,6 @@ mod text_watermark;
 pub use text_watermark::{
     TextWatermark, TextWatermarkError, TextWatermarkLine, TextWatermarkOptions,
 };
+
+mod image_watermark;
+pub use image_watermark::{ImageWatermark, ImageWatermarkError, ImageWatermarkOptions};
