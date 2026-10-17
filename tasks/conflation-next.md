@@ -3,6 +3,9 @@
 Date: 2026-10-17. Development priority after the bounded
 [timing/load check](../docs/porting/histogram-timing-load.md).
 
+Detailed implementation roadmap: [conflation-plan.md](conflation-plan.md).
+Ordered execution checklist: [conflation-todo.md](conflation-todo.md).
+
 The user asked to move toward remaining features. Further timing investigation
 is deferred; existing acceptance failures, budgets and device gaps remain OPEN.
 This supersedes the old roadmap's requirement to finish timing acceptance before
