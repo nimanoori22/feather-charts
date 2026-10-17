@@ -1,0 +1,124 @@
+{
+  "diagnostic_only": true,
+  "source_commit": "ae067e2",
+  "date": "2026-10-17",
+  "decisions": {
+    "phase": "snapshot preparation",
+    "cpu_branch": "profiled with frame pointers",
+    "overhead": "INCONCLUSIVE: one guard failure in each fixed control batch",
+    "historical_regression_cause": "INCONCLUSIVE",
+    "production_engine_changed": false,
+    "acceptance": "OPEN; not rerun",
+    "native_presentation": "NOT RUN in this headless CPU investigation"
+  },
+  "workloads": {
+    "retained_executions": 24,
+    "control_executions": 48,
+    "profile_executions": 24,
+    "samples_per_execution": 2000,
+    "warmups": 20,
+    "histories": [
+      1200,
+      100000
+    ],
+    "sources": 16,
+    "cpu": 5
+  },
+  "retained_snapshot_tail_share_range": [
+    0.8956630438158445,
+    0.9341531720827361
+  ],
+  "flagged_controls": {
+    "overhead": [
+      {
+        "pair": 2,
+        "rows": 1200,
+        "version": "candidate",
+        "median": 0.04030633890795898,
+        "p95": 0.12011769414345652,
+        "flagged": true
+      }
+    ],
+    "overhead-minimal": [
+      {
+        "pair": 2,
+        "rows": 1200,
+        "version": "baseline",
+        "median": 0.016958284574547067,
+        "p95": 0.07292352418250414,
+        "flagged": true
+      }
+    ]
+  },
+  "dwarf_quality": {
+    "snapshot/tail": {
+      "samples": 476,
+      "missing_callchain": 397,
+      "unknown_leaf": 93,
+      "multiple_frames": 0,
+      "caller_tags": {}
+    },
+    "snapshot/normal": {
+      "samples": 5185,
+      "missing_callchain": 4351,
+      "unknown_leaf": 776,
+      "multiple_frames": 0,
+      "caller_tags": {}
+    }
+  },
+  "frame_pointer_quality": {
+    "snapshot/tail": {
+      "samples": 476,
+      "missing_callchain": 0,
+      "unknown_leaf": 82,
+      "multiple_frames": 476,
+      "caller_tags": {
+        "formatting": 39,
+        "font_or_text": 142,
+        "histogram_projection": 77,
+        "dash_path": 40
+      }
+    },
+    "snapshot/normal": {
+      "samples": 5525,
+      "missing_callchain": 0,
+      "unknown_leaf": 893,
+      "multiple_frames": 5525,
+      "caller_tags": {
+        "font_or_text": 1999,
+        "histogram_projection": 418,
+        "dash_path": 410,
+        "formatting": 719
+      }
+    }
+  },
+  "frame_pointer_snapshot_tail_cpu_wall_ratio_range": [
+    0.9727984935059432,
+    0.9794428046457525
+  ],
+  "interpretation": "Caller tags overlap, are sample counts rather than exact time shares, and do not establish the cause of the historical regression. Frame-pointer codegen/profiling differs from original acceptance.",
+  "validation": {
+    "python_tests": 58,
+    "diagnostic_release_builds": "PASS",
+    "diagnostic_clippy_warnings_denied": "PASS",
+    "rustfmt": "PASS"
+  },
+  "artifact_index": {
+    "path": "target/frame-phase-investigation/artifact-index.json",
+    "sha256": "73dc63e8e797d25f694572ab35b461e93151d6e0412085103fc845527a3cfdae",
+    "files": 343
+  },
+  "key_artifacts": {
+    "target/frame-phase-investigation/environment.json": "42018ffd31bb366867118740b2babda68bcadd57982c1d2c4808c33e2d74846a",
+    "target/frame-phase-investigation/retained/analysis.json": "c649ab09fb3ec6944b266cec7f880bcd6c5e1435e133a09ee57c5ed82c177ef8",
+    "target/frame-phase-investigation/overhead/protocol.json": "6f0238a93f25fd9dfaf2e781924ffa165473cf5196ac4e82270f6b1ad3f65de5",
+    "target/frame-phase-investigation/overhead/overhead.json": "1b9b383debc7616fb88f4e0e59424d55fabaadd627f8e9c404a5e416733c35c8",
+    "target/frame-phase-investigation/overhead-minimal/protocol.json": "e2f5d515a7278057fd765b6a605979aa16c9f0f2953ceb9afa123072b5ecea1e",
+    "target/frame-phase-investigation/overhead-minimal/overhead.json": "db37b472d6f3907f7a8e6e60a9ce40ae61a0497757340a44295a3153ea8c9cda",
+    "target/frame-phase-investigation/profiles/protocol.json": "1dff077fb8e9989cb4267cb4496b534dfff04f6e15b22eaf89c68a5c64df6736",
+    "target/frame-phase-investigation/profiles-fp/protocol.json": "26c98f5355aed506500dd55ba4a209820b7487c10c6c9dd3eee7226d7d58149a",
+    "target/frame-phase-investigation/stack-analysis-fp/analysis.json": "6cf5d7164a772d8f561530512224fe98cb4c2d759266ec287ac1156154a09ad7",
+    "target/frame-phase-investigation/diagnostic-clippy.log": "b9cd3d6a75aefb21b7d3bf6b09df935629fd12e186a2bcb8da58672a4623c93a",
+    "target/frame-phase-investigation/python-tests-final.log": "523be60bcc23877965bc7981c2f9ae51c3424b342c2c73c10fb535eb45dcffbc"
+  }
+}

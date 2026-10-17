@@ -313,3 +313,16 @@ both histories (3/6 and 4/6 pairs improve update median by at least 10%; ranges
 overlap). One total-work p95 regression is retained. This corrects behavior but
 does not establish a performance remedy. Unchanged acceptance was not retried;
 the timing exception, remaining device checks and conflation gate remain open.
+
+
+## Slow-frame phase attribution and profiling
+
+The [investigation](../docs/porting/frame-phase-profiling.md) reconstructs all
+24 retained executions and locates 89.6–93.4% of total-tail time in snapshot
+preparation. Two fixed overhead batches retain one >5% control flag each.
+DWARF call-chain gaps led to an isolated frame-pointer build: all 6,001 measured
+snapshot samples have multiple frames, with unresolved libc leaf symbols reported.
+Histogram projection is enriched in the sampled tail; font work is substantial
+in both normal and slow frames. Neither is established as the cause of the old
+regression. No production engine change or acceptance retry followed. Remaining
+scheduler/native attribution, device coverage and conflation gates stay open.
