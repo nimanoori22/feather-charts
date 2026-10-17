@@ -1,6 +1,7 @@
 # Custom series on numeric horizontal axes
 
-Status: proposed; production implementation has not started. Baseline: `2a32573`.
+Status: implemented; automated verification and software/GPU mouse acceptance passed
+on 2026-10-17. Baseline: `2a32573`.
 Tasks: [numeric-custom-series-todo.md](numeric-custom-series-todo.md).
 These feature-specific documents preserve the existing plans and acceptance records.
 
