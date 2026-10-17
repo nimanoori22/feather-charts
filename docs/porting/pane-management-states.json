@@ -1,0 +1,241 @@
+{
+  "states": [
+    {
+      "name": "initial",
+      "panes": [
+        0,
+        1,
+        2
+      ],
+      "series": [
+        0,
+        1,
+        2
+      ],
+      "order": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ]
+      ]
+    },
+    {
+      "name": "move",
+      "panes": [
+        1,
+        2,
+        0
+      ],
+      "series": [
+        2,
+        0,
+        1
+      ],
+      "order": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          0
+        ]
+      ]
+    },
+    {
+      "name": "swap",
+      "panes": [
+        0,
+        2,
+        1
+      ],
+      "series": [
+        0,
+        2,
+        1
+      ],
+      "order": [
+        [
+          0
+        ],
+        [
+          2
+        ],
+        [
+          1
+        ]
+      ]
+    },
+    {
+      "name": "transfer_cleanup",
+      "panes": [
+        0,
+        2
+      ],
+      "series": [
+        0,
+        0,
+        1
+      ],
+      "order": [
+        [
+          0,
+          1
+        ],
+        [
+          2
+        ]
+      ]
+    },
+    {
+      "name": "append_clamped",
+      "panes": [
+        0,
+        2,
+        -1
+      ],
+      "series": [
+        2,
+        0,
+        1
+      ],
+      "order": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          0
+        ]
+      ]
+    },
+    {
+      "name": "same",
+      "panes": [
+        0,
+        2,
+        -1
+      ],
+      "series": [
+        2,
+        0,
+        1
+      ],
+      "order": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          0
+        ]
+      ]
+    }
+  ],
+  "removal": [
+    {
+      "index": 0,
+      "destroyed": [
+        0,
+        0,
+        0
+      ],
+      "detached": [
+        0,
+        0,
+        1
+      ],
+      "panes": [
+        [
+          1
+        ],
+        [
+          2
+        ]
+      ],
+      "data": [
+        2,
+        2,
+        2
+      ],
+      "membership": [
+        "error:Value is null",
+        0,
+        1
+      ]
+    },
+    {
+      "index": 1,
+      "destroyed": [
+        0,
+        0,
+        0
+      ],
+      "detached": [
+        0,
+        0,
+        1
+      ],
+      "panes": [
+        [
+          0
+        ],
+        [
+          2
+        ]
+      ],
+      "data": [
+        2,
+        2,
+        2
+      ],
+      "membership": [
+        0,
+        "error:Value is null",
+        1
+      ]
+    },
+    {
+      "index": 2,
+      "destroyed": [
+        0,
+        0,
+        0
+      ],
+      "detached": [
+        0,
+        0,
+        1
+      ],
+      "panes": [
+        [
+          0
+        ],
+        [
+          1
+        ]
+      ],
+      "data": [
+        2,
+        2,
+        2
+      ],
+      "membership": [
+        0,
+        1,
+        "error:Value is null"
+      ]
+    }
+  ],
+  "finalPane": 1
+}
