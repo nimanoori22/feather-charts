@@ -1,0 +1,23 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "files": {
+    "src/api/chart-api.ts": "091d5c5739a68a87dc213a92df12e643823107105691af9ff656fe33fcda815d",
+    "src/api/yield-chart-api.ts": "f80fbeafa3f8abe1dc589aedb7255aa0a98ac8ee6765b1325b4198b902f40e36",
+    "src/api/create-options-chart.ts": "8103a103321cce866a465461c9fdc5a25c3bfb8f8383d4b44f77ecac8ceed44b",
+    "src/api/options/series-options-defaults.ts": "7586f1d2d4ea5697be256e9c68b9d4481a2bb9dff794fcfdff0162d6bb5d1edc",
+    "src/model/icustom-series.ts": "01c254d26a2c0723f2740dfab65c53d547905c42c82c91d7d6970a5937ae2eea",
+    "src/model/series/custom-series.ts": "9d042352d0cb9671a7c6f6681a480da42410698442fba5eda6dae4b4645ea6b5",
+    "src/model/series/custom-pane-view.ts": "5278d244882b2cc6c129922ab517b2feddb1c85ed734f5a7316a24309bc88db9",
+    "src/model/data-conflater.ts": "56c2b69724cb50bea2dc31c155dd334c5968ce4313dcf3094b0465c2880a666e",
+    "src/model/conflation/constants.ts": "fd374baf408da456c11a712f381a29d7f96143515bd1fb7e39ca308c337b1874",
+    "src/model/data-layer.ts": "2bf838ef145b007ddd33e0dabe6eb598c56945fced5f7cc2e6e45cab54f2ed83",
+    "src/model/data-consumer.ts": "5d229692ee62b7860890183d718846c4b29595a1850d213c2842d2f5b0dfa61d",
+    "src/model/get-series-plot-row-creator.ts": "dea9dd2baed0543b9107e799b9b07d9781ecc4ad8498ff67cfdcc33396c53703",
+    "src/model/yield-curve-horz-scale-behavior/yield-curve-horz-scale-behavior.ts": "b3593d22902df3c4f630554c13b51be9da37189da6eaba84a070704a63a6b0b6",
+    "src/model/horz-scale-behavior-price/horz-scale-behaviour-price.ts": "624aeeec1267879fde3a139b622e748677b8f022bc4f3e6d9d8b074ac8cc9bda",
+    "src/helpers/delegate.ts": "c8c3a9df811fac14cbd64da174dfeec504bcc90d3ead8f083c3110bc7a66dcff",
+    "src/helpers/strict-type-checks.ts": "c1b79b8ca418df9d8d4e48fea5a19181bf49c660ad635d4885cedf14868012b4",
+    "src/helpers/algorithms.ts": "60ae4f69f002e80354320e14f2e43cd0491882acd8c5e56404176490387f2d40",
+    "tests/type-checks/non-time-based-custom-series.ts": "8b79e2ca942007f84d827f7826dc8ddbc79dfb90bf9f9453e096934d7528e179"
+  }
+}

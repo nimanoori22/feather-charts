@@ -370,3 +370,5 @@ fn yield_defaults(
 
 #[cfg(test)]
 mod tests;
+
+mod custom_series;

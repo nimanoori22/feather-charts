@@ -36,6 +36,26 @@ impl<V: CustomSeriesPaneView<Frame>> Drop for OwnedView<V> {
 
 /// A typed identity and data owner. Chart operations reject detached/foreign
 /// handles. Reading retained data does not keep the pane view attached.
+///
+/// Calendar handles cannot be passed to price-based chart mutators:
+/// ```compile_fail
+/// use feather_charts::{api::*, model::{icustom_series::CustomSeriesPaneView,
+///     horz_scale_behavior_time::types::{Time, TimePoint}}};
+/// use iced::widget::canvas::Frame;
+/// fn wrong<V>(chart: &mut OptionsChart, handle: &CustomSeriesHandle<V>, options: V::Options)
+/// where V: CustomSeriesPaneView<Frame, Item=Time, InternalTime=TimePoint, Metadata=()> {
+///     chart.replace_custom_view_options(handle, options).unwrap();
+/// }
+/// ```
+/// Price events cannot expose maturity payloads:
+/// ```compile_fail
+/// use feather_charts::{api::*, model::icustom_series::CustomSeriesPaneView};
+/// use iced::widget::canvas::Frame;
+/// fn wrong<V>(event: &PointerEvent<HorizontalPrice>, handle: &CustomSeriesHandle<V>)
+/// where V: CustomSeriesPaneView<Frame, Item=Maturity, InternalTime=Maturity, Metadata=()>, V::Data: 'static {
+///     event.custom_data(handle);
+/// }
+/// ```
 pub struct CustomSeriesHandle<V>
 where
     V: CustomSeriesPaneView<Frame, Metadata = ()>,

@@ -122,6 +122,7 @@ impl MinMax for f64 {
     }
 }
 pub struct View<T, I> {
+    pub observed: Rc<RefCell<Vec<(f64, Vec<f64>)>>>,
     pub renderer: Renderer<T>,
     pub destroyed: Rc<Cell<usize>>,
     pub reductions: Rc<Cell<usize>>,
@@ -134,6 +135,7 @@ pub struct View<T, I> {
 impl<T, I> Default for View<T, I> {
     fn default() -> Self {
         Self {
+            observed: Default::default(),
             renderer: Renderer {
                 data: None,
                 hover: true,
@@ -159,6 +161,10 @@ impl<T: Clone, I: Clone> CustomSeriesPaneView<Frame> for View<T, I> {
         &self.renderer
     }
     fn update(&mut self, d: PaneRendererCustomData<Datum<T>>, hover: &bool) {
+        self.observed.borrow_mut().push((
+            d.conflation_factor,
+            d.bars.iter().map(|b| b.original_data.value).collect(),
+        ));
         self.renderer.data = Some(Rc::new(d));
         self.renderer.hover = *hover;
     }
