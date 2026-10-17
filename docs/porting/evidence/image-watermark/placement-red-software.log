@@ -1,0 +1,6 @@
+
+thread 'main' (3) panicked at examples/image_ordering.rs:62:13:
+assertion `left == right` failed: tiny-skia cached=false: image must precede later vector fill
+  left: [0, 0, 255, 255]
+ right: [0, 255, 0, 255]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

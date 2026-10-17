@@ -1,0 +1,10 @@
+{
+  "raw_log_sha256": "b3bf5a73122af48ceb7146b467b98ed0891e87161d1d331134c274e4cf555744",
+  "raw_log_path": "/tmp/image-watermark-public-red.log",
+  "summary": [
+    "thread 'public_image_watermark_draws_visible_pixels' (372) panicked at tests/image_watermark.rs:65:19:",
+    "assertion `left != right` failed: image watermark must draw visible pixels",
+    "test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s"
+  ],
+  "note": "The raw log contains large pixel arrays; only its summary and hash are committed."
+}

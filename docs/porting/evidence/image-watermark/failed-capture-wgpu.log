@@ -1,0 +1,4 @@
+
+thread 'main' (224939) panicked at examples/public_chart/image_watermark.rs:171:21:
+image drew nothing: wgpu empty 300 90 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

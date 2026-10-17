@@ -1,0 +1,6 @@
+{
+  "baseline": "f4f5f63",
+  "binary_sha256": "2a37292013e9bdcbd7d50d7dee89754f418f2c8f52032999874196eaa32378bd",
+  "command": "public_chart --line --conflation --watermark-captures <backend-dir> [--wgpu]",
+  "note": "Retained default-*.rgba (12/backend) are the 24 default-off comparisons; other scenes are text-watermark regressions."
+}

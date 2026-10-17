@@ -155,6 +155,40 @@ through the host's Iced setup before preparing the watermark; recreate/replace i
 if font availability changes later. Native fallback and glyph metrics can differ
 from browser fonts. See the [watermark port report](docs/porting/text-watermark.md).
 
+## Image watermarks
+
+Attach an image from decoded RGBA pixels using the existing pane primitive API:
+
+```rust
+use feather_charts::api::{ImageWatermark, ImageWatermarkOptions};
+
+let mut options = ImageWatermarkOptions {
+    alpha: 0.5,
+    padding: 20.,
+    max_width: Some(400.),
+    ..Default::default()
+};
+let watermark = ImageWatermark::from_rgba(width, height, rgba_pixels, options.clone())?;
+let id = chart.add_pane_primitive(0, watermark.clone())?;
+options.alpha = 0.75;
+chart.replace_primitive(id, watermark.with_options(options)?)?;
+chart.remove_primitive(id)?;
+```
+
+Images stay centered in their pane, preserve aspect ratio and can enlarge to fit.
+Optional maximum dimensions constrain fitting; zero means no maximum. Alpha zero
+hides the image. Images use the bottom layer, below the grid and series, and add no
+hit target, autoscale contribution or animation. Options updates share pixel data.
+The host owns image fetching/decoding; the chart accepts decoded pixels only.
+
+```sh
+cargo run --example public_chart -- --line --image-watermark --text-watermark --live-feed --primitives
+```
+
+The demo provides opacity, padding, limits and image replacement controls. Append
+`--wgpu` for GPU rendering. See the [port report](docs/porting/image-watermark.md)
+for verification and the small local Iced rendering patches needed for draw order.
+
 ## Dense data and conflation
 
 All six built-in families support optional conflation: aggregate drawing rows when

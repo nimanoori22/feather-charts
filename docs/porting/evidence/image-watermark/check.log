@@ -1,0 +1,7 @@
+    Checking iced_tiny_skia v0.14.1 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts/vendor/iced_tiny_skia-0.14.1)
+    Checking iced_wgpu v0.14.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts/vendor/iced_wgpu-0.14.0)
+    Checking iced_renderer v0.14.0
+    Checking iced_widget v0.14.2
+    Checking iced v0.14.0
+    Checking feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.79s

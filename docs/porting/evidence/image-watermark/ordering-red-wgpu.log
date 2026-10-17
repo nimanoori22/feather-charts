@@ -1,0 +1,6 @@
+
+thread 'main' (214392) panicked at examples/image_ordering.rs:16:2:
+assertion `left == right` failed: wgpu cached=false: image must precede later vector fill
+  left: [255, 0, 0, 255]
+ right: [0, 255, 0, 255]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

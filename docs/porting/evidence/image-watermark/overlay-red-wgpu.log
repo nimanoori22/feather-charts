@@ -1,0 +1,4 @@
+
+thread 'main' (243687) panicked at examples/image_ordering.rs:143:5:
+canvas text must retain its overlay semantics
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

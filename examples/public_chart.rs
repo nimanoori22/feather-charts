@@ -36,12 +36,15 @@ mod primitive_demo;
 mod tests;
 use marker_demo::sample_markers;
 
+#[path = "public_chart/image_watermark.rs"]
+mod image_watermark_demo;
 #[path = "public_chart/software_drag_profile.rs"]
 mod software_drag_profile;
 #[path = "public_chart/watermark.rs"]
 mod watermark_demo;
 
 struct App {
+    image_watermark: Option<image_watermark_demo::Scene>,
     watermark: Option<watermark_demo::Scene>,
     primitive_scene: Option<primitive_demo::Scene>,
     annotations: Option<MarkerCollectionId>,
@@ -61,6 +64,10 @@ struct App {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    ImageOpacity,
+    ImagePadding,
+    ImageLimits,
+    ImageReplace,
     ToggleWatermark,
     WatermarkAlignment,
     WatermarkText,
@@ -184,7 +191,11 @@ impl App {
         let watermark = std::env::args()
             .any(|a| a == "--text-watermark")
             .then(|| watermark_demo::Scene::new(&mut chart));
+        let image_watermark = std::env::args()
+            .any(|a| a == "--image-watermark")
+            .then(|| image_watermark_demo::Scene::new(&mut chart));
         Self {
+            image_watermark,
             watermark,
             primitive_scene,
             annotations,
@@ -208,6 +219,15 @@ impl App {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ImageOpacity
+            | Message::ImagePadding
+            | Message::ImageLimits
+            | Message::ImageReplace => {
+                if let Some(scene) = &mut self.image_watermark {
+                    scene.change(&mut self.chart, &message);
+                }
+                self.prepare();
+            }
             Message::ToggleWatermark
             | Message::WatermarkAlignment
             | Message::WatermarkText
@@ -512,6 +532,19 @@ impl App {
                     button("Watermark alignment").on_press(Message::WatermarkAlignment),
                     button("Watermark text").on_press(Message::WatermarkText),
                     button("Watermark style").on_press(Message::WatermarkStyle)
+                ]
+                .spacing(8),
+            )
+        } else {
+            content
+        };
+        let content = if self.image_watermark.is_some() {
+            content.push(
+                row![
+                    button("Image opacity").on_press(Message::ImageOpacity),
+                    button("Image padding").on_press(Message::ImagePadding),
+                    button("Image limits").on_press(Message::ImageLimits),
+                    button("Replace image").on_press(Message::ImageReplace)
                 ]
                 .spacing(8),
             )
@@ -1081,6 +1114,13 @@ fn main() -> iced::Result {
     } else {
         SeriesType::Candlestick
     };
+    if let Some(index) = args.iter().position(|a| a == "--image-watermark-captures") {
+        image_watermark_demo::capture(
+            std::path::Path::new(args.get(index + 1).expect("capture directory")),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(index) = args.iter().position(|a| a == "--watermark-captures") {
         watermark_demo::capture(
             std::path::Path::new(args.get(index + 1).expect("capture directory")),

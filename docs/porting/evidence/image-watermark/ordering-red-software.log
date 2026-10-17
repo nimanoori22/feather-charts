@@ -1,0 +1,23 @@
+   Compiling pxfm v0.1.27
+   Compiling byteorder-lite v0.1.0
+   Compiling mutate_once v0.1.2
+   Compiling kamadak-exif v0.6.1
+   Compiling moxcms v0.7.10
+   Compiling image v0.25.9
+   Compiling iced_graphics v0.14.0
+   Compiling iced_wgpu v0.14.0
+   Compiling iced_tiny_skia v0.14.1
+   Compiling iced_program v0.14.0
+   Compiling iced_winit v0.14.1
+   Compiling iced_renderer v0.14.0
+   Compiling iced_widget v0.14.2
+   Compiling iced v0.14.0
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.94s
+     Running `target/debug/examples/image_ordering`
+
+thread 'main' (3) panicked at examples/image_ordering.rs:16:2:
+assertion `left == right` failed: tiny-skia cached=false: image must precede later vector fill
+  left: [255, 0, 0, 255]
+ right: [0, 255, 0, 255]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

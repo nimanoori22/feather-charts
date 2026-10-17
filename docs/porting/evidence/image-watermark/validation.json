@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-17",
+  "baseline": "f4f5f63",
+  "tests_passed": 636,
+  "format": "pass",
+  "all_target_check": "pass",
+  "strict_clippy": "pass",
+  "source_oracles": [
+    "image: 112 valid placements and lifecycle",
+    "text",
+    "last-price-animation",
+    "conflation"
+  ],
+  "renderer_order_alpha_clipping": "pass on both backends; image/vector/image insertion order, scaled placement, direct/cached image removal/restoration, intrinsic-alpha times opacity, clipping and canvas text overlay",
+  "software_damage_regions": 1,
+  "acceptance_sizes": [
+    [
+      941,
+      1030
+    ],
+    [
+      420,
+      320
+    ],
+    [
+      300,
+      180
+    ]
+  ],
+  "native_captures": 120,
+  "unchanged_default_off_comparisons": 24,
+  "visual_inspection": [
+    "software empty pane",
+    "GPU limits",
+    "GPU mixed overlap"
+  ],
+  "physical_mouse": {
+    "tiny-skia": {
+      "user_response": "All checks passed; window closed",
+      "sizes": [
+        "regular",
+        "narrow",
+        "earlier problem size"
+      ],
+      "watermark_controls": [
+        "opacity including hidden",
+        "padding",
+        "limits",
+        "replace"
+      ],
+      "gestures": [
+        "wheel zoom",
+        "diagonal dragging",
+        "price-axis wheel/drag",
+        "box moving/resizing"
+      ],
+      "short_height_recovery": "pass",
+      "live_feed_text_watermark_price_pulse": "enabled",
+      "final_placement_fix_retest": "All checks passed; window closed"
+    },
+    "wgpu": {
+      "user_response": "All checks passed; window closed",
+      "sizes": [
+        "regular",
+        "narrow",
+        "earlier problem size"
+      ],
+      "watermark_controls": [
+        "opacity including hidden",
+        "padding",
+        "limits",
+        "replace"
+      ],
+      "gestures": [
+        "wheel zoom",
+        "diagonal dragging",
+        "price-axis wheel/drag",
+        "box moving/resizing"
+      ],
+      "short_height_recovery": "pass",
+      "live_feed_text_watermark_price_pulse": "enabled"
+    }
+  },
+  "untested_devices": [
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI"
+  ],
+  "historical_timing": "OPEN/deferred; unchanged",
+  "input_scope": "decoded RGBA; host handles loading/decoding",
+  "dependency_maintenance": "two exact Iced backend versions vendored; 159-line zero-context effective patch in 6 files",
+  "test_cohorts": [
+    412,
+    0,
+    3,
+    1,
+    4,
+    14,
+    7,
+    14,
+    6,
+    12,
+    3,
+    9,
+    1,
+    2,
+    13,
+    9,
+    12,
+    10,
+    2,
+    7,
+    4,
+    10,
+    3,
+    0,
+    0,
+    0,
+    0,
+    16,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    16,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    16,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    16,
+    0,
+    0,
+    13,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "final_capture_directory": "target/image-watermark/final"
+}
