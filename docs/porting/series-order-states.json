@@ -1,0 +1,200 @@
+{
+  "states": [
+    {
+      "name": "initial",
+      "order": [
+        [
+          0,
+          1,
+          2
+        ]
+      ],
+      "indices": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "name": "custom_back",
+      "order": [
+        [
+          2,
+          0,
+          1
+        ]
+      ],
+      "indices": [
+        1,
+        2,
+        0
+      ]
+    },
+    {
+      "name": "area_front",
+      "order": [
+        [
+          2,
+          1,
+          0
+        ]
+      ],
+      "indices": [
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "middle",
+      "order": [
+        [
+          2,
+          1,
+          0
+        ]
+      ],
+      "indices": [
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "same",
+      "order": [
+        [
+          2,
+          1,
+          0
+        ]
+      ],
+      "indices": [
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "transfer",
+      "order": [
+        [
+          2,
+          0
+        ],
+        [
+          1
+        ]
+      ],
+      "indices": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "name": "custom_transfer",
+      "order": [
+        [
+          0
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "indices": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "name": "target_back",
+      "order": [
+        [
+          0
+        ],
+        [
+          2,
+          1
+        ]
+      ],
+      "indices": [
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "remove",
+      "order": [
+        [
+          0
+        ],
+        [
+          2
+        ]
+      ],
+      "indices": [
+        0,
+        null,
+        0
+      ]
+    },
+    {
+      "name": "append",
+      "order": [
+        [
+          0
+        ],
+        [
+          2,
+          3
+        ]
+      ],
+      "indices": [
+        0,
+        null,
+        0,
+        1
+      ]
+    }
+  ],
+  "yieldOrders": [
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "detachedOrder": -1,
+  "formats": {
+    "left": [
+      "A12.5",
+      "B12.50",
+      "B12.50"
+    ],
+    "right": [
+      "A12.5",
+      "B12.50",
+      "B12.50"
+    ],
+    "overlay": [
+      "A12.5",
+      "A12.5",
+      "A12.5"
+    ]
+  }
+}
