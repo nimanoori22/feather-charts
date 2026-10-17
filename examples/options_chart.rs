@@ -6,7 +6,6 @@ use feather_charts::{
             BuiltInSeriesDataItem, HistogramData, HistogramDataItem, LineData, LineDataItem,
         },
         data_layer::SeriesId,
-        horz_scale_behavior_price::HorzScaleBehaviorPrice,
         pane::PriceScalePosition,
         series_options::{
             HistogramSeriesOptions, LastPriceAnimationMode, LineSeriesOptions, SeriesOptionsMap,
@@ -157,7 +156,7 @@ impl App {
                 .unwrap(),
             )
             .unwrap();
-        let region = region::Scene::new(&mut chart, line);
+        let region = region::Scene::new(&mut chart, line, 3.0..7.0);
         chart.fit_content();
         Self {
             chart,

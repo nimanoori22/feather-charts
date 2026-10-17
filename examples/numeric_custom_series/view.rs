@@ -120,19 +120,21 @@ impl<T> CustomSeriesPaneRenderer<Frame> for Renderer<T> {
         })
     }
 }
-pub struct View<T> {
+pub struct View<T, I = T> {
     renderer: Renderer<T>,
+    internal: std::marker::PhantomData<I>,
 }
-impl<T> Default for View<T> {
+impl<T, I> Default for View<T, I> {
     fn default() -> Self {
         Self {
             renderer: Default::default(),
+            internal: std::marker::PhantomData,
         }
     }
 }
-impl<T: Clone> CustomSeriesPaneView<Frame> for View<T> {
+impl<T: Clone, I: Clone> CustomSeriesPaneView<Frame> for View<T, I> {
     type Item = T;
-    type InternalTime = T;
+    type InternalTime = I;
     type Data = Datum<T>;
     type Metadata = ();
     type Options = Options;
@@ -155,8 +157,8 @@ impl<T: Clone> CustomSeriesPaneView<Frame> for View<T> {
     }
     fn conflate(
         &self,
-        a: &CustomConflationContext<Datum<T>, T, T>,
-        b: &CustomConflationContext<Datum<T>, T, T>,
+        a: &CustomConflationContext<Datum<T>, T, I>,
+        b: &CustomConflationContext<Datum<T>, T, I>,
     ) -> Option<Datum<T>> {
         Some(Datum {
             time: a.original_time.clone(),
