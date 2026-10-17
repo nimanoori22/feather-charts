@@ -1,0 +1,1 @@
+112 valid placement states match actual TS; load/update/detach/default bottom-layer checks pass. Eight nonpositive drawable cases follow the explicit native skip policy.

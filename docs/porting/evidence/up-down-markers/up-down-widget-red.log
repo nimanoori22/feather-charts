@@ -1,0 +1,31 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.66s
+     Running tests/up_down_markers.rs (target/debug/deps/up_down_markers-dc4caa33d6c29287)
+
+running 4 tests
+test managed_updates_compare_to_the_seeded_baseline ... ok
+test automatic_markers_expire_at_the_exact_deadline ... FAILED
+test idle_widget_requests_one_deadline_then_publishes_tick_and_stops ... FAILED
+test manual_markers_draw_visible_pixels ... ok
+
+failures:
+
+---- automatic_markers_expire_at_the_exact_deadline stdout ----
+
+thread 'automatic_markers_expire_at_the_exact_deadline' (90) panicked at tests/up_down_markers.rs:135:5:
+due markers must expire without sleeps
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- idle_widget_requests_one_deadline_then_publishes_tick_and_stops stdout ----
+
+thread 'idle_widget_requests_one_deadline_then_publishes_tick_and_stops' (91) panicked at tests/up_down_markers.rs:150:150:
+idle marker needs a scheduled redraw
+
+
+failures:
+    automatic_markers_expire_at_the_exact_deadline
+    idle_widget_requests_one_deadline_then_publishes_tick_and_stops
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+
+error: test failed, to rerun pass `--test up_down_markers`

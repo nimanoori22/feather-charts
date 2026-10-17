@@ -1,0 +1,1016 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.07s
+     Running unittests src/lib.rs (target/debug/deps/feather_charts-4ab6a597a8984957)
+
+running 416 tests
+test api::text_watermark::tests::canvas_ascii_whitespace_is_normalized_before_native_shaping ... ok
+test api::touch_input::tests::mouse_suppression_covers_held_fingers_and_expires_after_release ... ok
+test api::touch_input::tests::primary_move_prevents_later_pinch_and_remaining_primary_can_pan ... ok
+test api::image_watermark::tests::options_share_pixels_and_unchanged_preparation_reuses_snapshot ... ok
+test api::touch_input::tests::tracking_uses_applied_origin_and_clamps_inside_owning_pane ... ok
+test api::touch_input::tests::zero_distance_loss_and_unknown_ids_do_not_invent_navigation ... ok
+test api::touch_input::tests::pinch_freezes_anchor_suspends_third_finger_and_restarts_pair ... ok
+test formatters::date_time_formatter::tests::joins_configured_date_and_time_tokens ... ok
+test formatters::format_date::tests::formats_leap_day_in_english_and_french ... ok
+test formatters::format_date::tests::preserves_negative_fractional_timestamps ... ok
+test api::up_down_markers::tests::up_down_markers_source_timeline ... ok
+test formatters::percentage_formatter::tests::appends_a_percent_sign_after_decimal_formatting ... ok
+test formatters::price_formatter::tests::formats_decimal_prices_with_source_rounding_and_unicode_minus ... ok
+test formatters::price_formatter::tests::validates_and_pads_leading_zero_values ... ok
+test formatters::volume_formatter::tests::compacts_volume_boundaries ... ok
+test formatters::time_formatter::tests::formats_utc_midnight_and_year_rollover ... ok
+test formatters::volume_formatter::tests::preserves_integer_zeroes_and_zero_in_axis_labels ... ok
+test helpers::algorithms::tests::finds_equal_run_boundaries ... ok
+test helpers::delegate::tests::cross_delegate_emit_is_allowed ... ok
+test helpers::delegate::tests::dropping_subscription_after_delegate_is_safe ... ok
+test helpers::delegate::tests::dropping_pane_event_subscription_group_detaches_both_listeners ... ok
+test helpers::delegate::tests::dropping_subscription_stops_delivery ... ok
+test helpers::delegate::tests::has_listeners_tracks_subscription_drop_and_one_shot_removal ... ok
+test helpers::delegate::tests::panic_during_listener_resets_reentrancy_state ... ok
+test helpers::delegate::tests::same_delegate_reentrancy_panics_clearly - should panic ... ok
+test helpers::delegate::tests::subscribe_during_emit_waits_until_next_emit ... ok
+test helpers::delegate::tests::subscribe_once_fires_once_and_is_removed_before_the_second_emit ... ok
+test helpers::delegate::tests::subscribe_then_emit_runs_callback ... ok
+test helpers::delegate::tests::unsubscribe_during_emit_may_still_run_snapshotted_listener ... ok
+test helpers::delegate::tests::weak_one_shot_subscription_is_removed_before_a_second_emit ... ok
+test helpers::delegate::tests::weak_subscriptions_do_not_keep_owners_alive ... ok
+test helpers::make_font::tests::formats_optional_style_and_uses_the_default_family ... ok
+test model::autoscale_info_impl::tests::raw_round_trip_preserves_optional_values ... ok
+test model::axis_snapshots::tests::axis_snapshots_use_behavior_threshold_instead_of_numeric_maximum ... ok
+test model::bar::tests::keeps_prices_and_coordinates_as_distinct_typed_data ... ok
+test model::chart_data_coordinator::tests::preserves_source_order_updates_time_scale_and_returns_effects ... ok
+test helpers::strict_type_checks::tests::uses_typed_clone_and_option_helpers ... ok
+test model::chart_model::tests::animation_replay_keeps_origin_and_unrelated_redraw_preserves_continuation ... ok
+test model::chart_model::tests::append_follows_last_bar_only_when_visible_and_enabled ... ok
+test model::chart_model::tests::append_handoffs_reject_replay_wrong_index_and_order_before_mutation ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_copy_scale_marks_and_share_grid_coordinates ... ok
+test model::chart_data_coordinator::tests::stable_custom_membership_does_not_rescan_fulfilled_history ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_do_not_consume_invalidation_or_modify_previous_snapshots ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_empty_removal_and_zero_dimensions_clear_old_marks ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_follow_historical_updates_resize_and_animation_samples ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_invalid_panes_and_options_are_atomic ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_prepare_independent_left_and_right_scales ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_font_size_changes_refresh_price_and_time_mark_caches ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_preserve_gradient_and_time_bottom_fill_policy ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_preserve_all_price_modes_and_formatted_labels ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_resolve_overrides_and_source_spacing_and_size_policies ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_preserve_visibility_flags_without_filtering_labels ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_time_alignment_and_priority_survive_bold_disabled ... ok
+test model::chart_model::tests::behavior_configuration_and_options_notifications_need_no_clone_behavior ... ok
+test model::chart_model::tests::candlesticks::candle_colors_whitespace_and_options_refresh_independently ... ok
+test model::chart_model::tests::axis_snapshots::axis_snapshots_ui_frame_shares_viewport_at_fractional_device_scales ... ok
+test model::chart_model::tests::candlesticks::candle_history_whitespace_conflation_and_failed_frame_clear_output ... ok
+test model::chart_model::tests::candlesticks::candle_magnet_compares_selected_scales_and_excludes_hidden_and_overlay_sources ... ok
+test model::chart_model::tests::candlesticks::candle_magnet_uses_close_or_ohlc_and_never_line_markers ... ok
+test model::chart_model::tests::candlesticks::candle_refresh_clears_stale_output_and_rejects_wrong_types ... ok
+test model::chart_model::tests::candlesticks::conflated_candles_keep_first_raw_direction_and_overrides ... ok
+test model::chart_model::tests::candlesticks::strict_visible_candles_share_ohlc_scale_coordinates ... ok
+test model::chart_model::tests::chart_layout::alternating_measurements_settle_without_shrinking_inside_a_frame ... ok
+test model::chart_model::tests::chart_layout::animation_samples_once_per_frame_survives_resize_and_navigation_cancels_continuation ... ok
+test model::chart_model::tests::chart_layout::connected_dimensions_minima_history_empty_removal_and_reload ... ok
+test model::chart_model::tests::chart_layout::corner_background_border_getter_and_fractional_geometry_match_source ... ok
+test model::chart_model::tests::chart_layout::fit_and_range_commands_replay_at_final_measured_width_without_draining_new_work ... ok
+test model::chart_model::tests::chart_layout::invalid_inputs_leave_pending_commands_and_dimensions_untouched ... ok
+test model::chart_model::tests::chart_layout::light_frames_grow_but_full_frames_can_shrink_and_hidden_axes_release_space ... ok
+test model::chart_model::tests::chart_layout::pass_limit_is_explicit_and_does_not_publish_unsettled_geometry ... ok
+test model::chart_model::tests::chart_layout::replay_preserves_command_order_and_does_not_accumulate_duplicate_spacing_commands ... ok
+test model::chart_model::tests::complete_display::complete_display_magnitude_typography_visibility_and_new_bar_policies ... ok
+test api::up_down_markers::tests::up_down_markers_update_storage_is_bounded_by_active_keys_not_history_updates ... ok
+test model::chart_model::tests::complete_display::complete_display_updates_clear_whitespace_remove_and_reload ... ok
+test model::chart_model::tests::complete_display::completed_animation_does_not_return_after_resize_or_unrelated_redraw ... ok
+test model::chart_model::tests::cursor_masks_do_not_execute_deferred_scale_commands ... ok
+test model::chart_model::tests::custom_handle_with_matching_id_cannot_update_another_registered_instance ... ok
+test model::chart_model::tests::custom_incremental_updates_preserve_payloads_and_shared_axis ... ok
+test model::chart_model::tests::custom_payloads_stay_typed_and_reindex_with_built_in_series ... ok
+test model::chart_model::tests::deferred_commands_are_ordered_and_replay_after_layout_changes ... ok
+test model::chart_model::tests::dropping_model_releases_series_without_cycles ... ok
+test model::chart_model::tests::earlier_history_reindexes_rows_without_append_compensation ... ok
+test model::chart_model::tests::first_series_requests_full_redraw_and_new_panes_request_autoscale ... ok
+test model::chart_model::tests::frame_validation_does_not_mutate_model_for_invalid_layout_or_wrong_pane ... ok
+test model::chart_model::tests::histogram::histogram_colors_whitespace_and_options_refresh_independently ... ok
+test model::chart_model::tests::histogram::histogram_extended_range_and_selected_scale_projection ... ok
+test api::text_watermark::tests::unchanged_preparation_and_resize_do_not_reshape_text ... ok
+test model::chart_model::tests::histogram::histogram_refresh_clears_stale_output_and_rejects_wrong_types ... ok
+test model::chart_model::tests::historical_and_latest_bar_updates_recalculate_price_range_without_shifting ... ok
+test model::chart_model::tests::lazy_autoscale::active_crosshair_still_demands_autoscale_during_an_update ... ok
+test model::chart_model::tests::lazy_autoscale::coordinate_reads_between_updates_observe_each_new_range ... ok
+test model::chart_model::tests::lazy_autoscale::offscreen_updates_coalesce_until_a_range_is_requested ... ok
+test model::chart_model::tests::lazy_autoscale::offscreen_updates_requery_unchanged_sources_at_the_next_demand ... ok
+test model::chart_model::tests::lazy_autoscale::primitive_and_custom_callbacks_settle_after_offscreen_builtin_update ... ok
+test model::chart_model::tests::line_options_and_marker_defaults_refresh_without_a_cache ... ok
+test model::chart_model::tests::line_preparation_rejects_non_line_and_accepts_enabled_conflation ... ok
+test model::chart_model::tests::line_snapshot_connects_across_whitespace_and_uses_row_color_fallback ... ok
+test model::chart_model::tests::line_snapshot_matches_selected_scale_and_extends_both_visible_edges ... ok
+test model::chart_model::tests::histogram::histogram_frame_failure_conflation_empty_and_history_refresh ... ok
+test model::chart_model::tests::line_snapshot_uses_percentage_indexed_log_and_left_scale_coordinates ... ok
+test model::chart_model::tests::loaded_series_fit_resize_and_price_coordinates_use_shared_state ... ok
+test model::chart_model::tests::line_view_clears_stale_output_for_hidden_empty_zero_size_and_unknown_series ... ok
+test model::chart_model::tests::momentary_autoscale_updates_both_manual_scales ... ok
+test model::chart_model::tests::multi_pane::multi_pane_animation_samples_once_across_layout_passes_and_failure_clears_views ... ok
+test model::chart_model::tests::multi_pane::multi_pane_rejects_mismatched_membership_before_draining_invalidation ... ok
+test model::chart_model::tests::navigation::crosshair_hidden_mode_and_invalid_options_preserve_raw_state ... ok
+test model::chart_model::tests::navigation::crosshair_tracks_raw_pointer_and_clears_after_data_removal ... ok
+test model::chart_model::tests::navigation::magnet_compares_coordinates_across_scales_and_excludes_overlays ... ok
+test model::chart_model::tests::navigation::magnet_uses_exact_visible_values_and_recomputes_after_updates ... ok
+test model::chart_model::tests::navigation::navigation_preserves_anchor_recalculates_and_ends_drag ... ok
+test model::chart_model::tests::navigation::whitespace_has_no_magnet_candidate_and_optional_index_search_prefers_left_tie ... ok
+test model::chart_model::tests::navigation::zoom_respects_right_bar_policy_and_invalid_inputs ... ok
+test model::chart_model::tests::navigation_before_ui_adopts_animation_descriptors_cancels_them ... ok
+test model::chart_model::tests::navigation_cancels_animation_without_resurrection ... ok
+test model::chart_model::tests::prepared_ui_frames_retain_replay_mask_align_animation_and_clear_on_removal ... ok
+test model::chart_model::tests::preserve_empty_pane_and_final_series_removal_leave_valid_empty_state ... ok
+test model::chart_model::tests::price_axis::price_axis_rendering_real_model_preserves_all_mode_labels_and_grid_y ... ok
+test model::chart_model::tests::price_axis::price_axis_rendering_real_model_resize_append_history_and_removal ... ok
+test model::chart_model::tests::price_axis::price_axis_two_series_can_be_removed_sequentially_without_stale_ids ... ok
+test model::chart_model::tests::price_interaction::axis_scaling_uses_source_snapshot_coefficient_and_preserves_time ... ok
+test model::chart_model::tests::price_interaction::axis_wheel_is_reversible_and_does_not_interrupt_an_existing_drag ... ok
+test model::chart_model::tests::price_interaction::manual_price_pan_tracks_pixels_preserves_span_and_stops_after_end ... ok
+test model::chart_model::tests::price_interaction::rejected_price_pan_does_not_modify_a_scale_or_disable_autoscale ... ok
+test model::chart_model::tests::price_interaction::unsupported_modes_and_invalid_price_input_leave_range_unchanged ... ok
+test model::chart_model::tests::registration_errors_leave_no_partial_state ... ok
+test model::chart_model::tests::rejected_dimensions_and_unknown_removal_leave_the_chart_unchanged ... ok
+test model::chart_model::tests::removing_empty_pane_reindexes_associations_and_pending_autoscale ... ok
+test model::chart_model::tests::rendering_snapshots_rebuild_on_resize_append_and_historical_updates ... ok
+test model::chart_model::tests::replacing_existing_whitespace_honors_both_shift_options ... ok
+test model::chart_model::tests::second_series_and_removal_reindex_surviving_rows_and_fulfilled_indices ... ok
+test model::chart_model::tests::startup_empty_data_and_zero_width_resize_are_supported ... ok
+test model::chart_model::tests::time_axis::connected_time_axis_fit_resize_updates_removal_and_owned_frames ... ok
+test model::chart_model::tests::time_axis::fixed_edges_zero_width_frames_keep_spacing_and_offsets_finite ... ok
+test model::chart_model::tests::time_axis::time_axis_animation_and_typography_use_the_same_settled_frame ... ok
+test model::chart_model::tests::ui_frame_driver_starts_descriptors_once_and_carries_progress ... ok
+test model::chart_model::tests::unknown_update_is_rejected_before_changing_model ... ok
+test model::chart_model::tests::whitespace_only_data_has_a_time_axis_but_no_price_range ... ok
+test model::colors::tests::generates_contrast_colors_ignoring_background_alpha ... ok
+test model::colors::tests::interpolates_source_gradient_examples ... ok
+test model::colors::tests::reports_unparseable_colors ... ok
+test model::colors::tests::supports_css_colors_and_preserves_transparent_alpha_behavior ... ok
+test model::colors::tests::uses_initial_cache_and_custom_display_p3_parser_then_caches_the_result ... ok
+test model::coordinate::tests::preserves_fractional_chart_coordinates ... ok
+test model::data_conflater::tests::bounded_builds_and_latest_repair_match_fresh_results ... ok
+test model::data_conflater::tests::dense_counts_storage_and_factor_source_cases ... ok
+test model::data_conflater::tests::recursive_remainders_counts_identity_and_extremes ... ok
+test model::data_conflater::tests::source_oracle ... ok
+test model::data_consumer::tests::classifies_whitespace_without_shape_checks ... ok
+test model::data_consumer::tests::exposes_time_for_behavior_preprocessing ... ok
+test model::data_consumer::tests::keeps_ohlc_values_and_metadata_typed ... ok
+test model::data_layer::tests::custom_empty_values_are_rejected_and_whitespace_remains_a_time_point ... ok
+test model::data_layer::tests::custom_price_builder_runs_once_per_fulfilled_input ... ok
+test model::data_layer::tests::custom_rows_remain_typed_while_shared_timestamps_stay_in_the_layer ... ok
+test model::data_layer::tests::custom_series_share_points_and_append_with_a_time_scale_update ... ok
+test model::data_layer::tests::custom_updates_validate_history_and_pop_without_storing_custom_payloads ... ok
+test model::data_layer::tests::existing_custom_point_updates_handoff_only_the_changed_row ... ok
+test model::data_layer::tests::incremental_and_pop_updates_preserve_whitespace_and_reject_invalid_history ... ok
+test model::data_layer::tests::rejected_custom_append_does_not_create_a_shared_point ... ok
+test model::data_layer::tests::rejected_custom_replacement_preserves_all_shared_memberships ... ok
+test model::data_layer::tests::replacement_preserves_original_business_day_strings_and_shared_removal ... ok
+test model::data_layer::tests::replacement_reindexes_overlapping_series_and_updates_time_scale ... ok
+test model::data_layer::tests::replacement_reports_directional_update_info_and_historical_updates_reuse_points ... ok
+test model::data_layer::tests::time_scale_response_is_directly_consumable_by_the_viewport_model ... ok
+test model::data_layer::tests::unordered_custom_replacement_keeps_the_previous_series ... ok
+test model::formatted_labels_cache::tests::evicts_by_insertion_order_not_by_recent_reads ... ok
+test model::formatted_labels_cache::tests::formats_a_key_only_once_while_it_is_cached ... ok
+test model::formatted_labels_cache::tests::rejects_zero_capacity - should panic ... ok
+test model::get_series_plot_row_creator::tests::builds_every_remaining_builtin_style ... ok
+test model::get_series_plot_row_creator::tests::builds_ohlc_and_rejects_runtime_mismatches ... ok
+test model::get_series_plot_row_creator::tests::builds_single_value_styles_and_preserves_metadata ... ok
+test model::get_series_plot_row_creator::tests::custom_projection_rejects_invalid_builder_values_before_reducing_them ... ok
+test model::get_series_plot_row_creator::tests::custom_projection_rejects_invalid_row_color ... ok
+test model::get_series_plot_row_creator::tests::custom_rows_use_source_ohlc_projection_and_reject_empty_values ... ok
+test model::grid::tests::owns_one_invalidatable_view ... ok
+test model::horz_scale_behavior_time::default_tick_mark_formatter::tests::formats_each_default_tick_mark_variant_in_utc ... ok
+test model::horz_scale_behavior_time::horz_scale_behavior_time::tests::normalizes_business_days_formats_ticks_and_reduces_intraday_bold_weight ... ok
+test model::horz_scale_behavior_time::horz_scale_behavior_time::tests::switches_item_formatting_when_time_visibility_changes ... ok
+test model::horz_scale_behavior_time::time_scale_point_weight_generator::tests::assigns_calendar_and_intraday_transition_weights ... ok
+test model::horz_scale_behavior_time::time_scale_point_weight_generator::tests::leaves_the_unaffected_prefix_untouched_for_incremental_updates ... ok
+test model::horz_scale_behavior_time::time_utils::tests::preprocesses_strings_and_rejects_mixed_time_kinds ... ok
+test model::horz_scale_behavior_time::time_utils::tests::validates_and_converts_business_days_at_utc_midnight ... ok
+test model::horz_scale_behavior_time::types::tests::distinguishes_all_supported_user_time_forms ... ok
+test model::horz_scale_behavior_time::types::tests::preserves_timestamp_seconds_and_normalized_business_day ... ok
+test model::horz_scale_behavior_time::types::tests::tick_values_match_time_scale_weighting_contract ... ok
+test model::icustom_series::tests::custom_view_contract_covers_rendering_whitespace_and_conflation ... ok
+test model::ihorz_scale_behavior::tests::behavior_contract_supports_conversion_formatting_and_weighting ... ok
+test model::invalidate_mask::tests::all_level_pairs_merge_by_priority_globally_and_per_pane ... ok
+test model::invalidate_mask::tests::animation_lives_until_the_last_request_is_dropped ... ok
+test model::invalidate_mask::tests::direct_stop_retains_markers_but_merged_stop_only_removes_animation ... ok
+test model::invalidate_mask::tests::empty_masks_and_constructors_have_no_commands ... ok
+test model::invalidate_mask::tests::every_command_setter_preserves_redraw_priority_and_pane_requests ... ok
+test model::invalidate_mask::tests::fit_range_and_reset_replace_the_entire_sequence_even_during_merge ... ok
+test model::invalidate_mask::tests::incoming_stop_then_animation_preserves_the_new_animation ... ok
+test model::invalidate_mask::tests::layout_replay_keeps_incoming_requests_and_animation_origin ... ok
+test model::invalidate_mask::tests::merge_direction_changes_the_result ... ok
+test model::invalidate_mask::tests::merge_keeps_spacing_and_offset_order_and_payloads ... ok
+test model::invalidate_mask::tests::new_animation_replaces_old_animation_and_moves_to_end ... ok
+test model::invalidate_mask::tests::pane_requests_are_independent_and_inherit_global_level ... ok
+test model::invalidate_mask::tests::replaying_spacing_twice_retains_both_operations ... ok
+test model::invalidate_mask::tests::spacing_fit_offset_normalizes_without_raising_redraw_level ... ok
+test model::last_price_animation::tests::historical_flag_and_clear_do_not_restart_continuous_origin ... ok
+test model::last_price_animation::tests::source_samples ... ok
+test model::last_price_animation::tests::source_transitions ... ok
+test model::localization_options::tests::retains_locale_and_optional_time_formatter ... ok
+test model::magnet::tests::ties_empty_and_invalid_candidates ... ok
+test model::pane::tests::creates_resizes_attaches_moves_and_removes_sources ... ok
+test model::pane::tests::custom_provider_range_reaches_the_price_scale ... ok
+test model::pane::tests::custom_sources_attach_merge_move_and_clean_up_overlays ... ok
+test model::pane::tests::falls_back_to_overlay_or_preferred_empty_scale ... ok
+test model::pane::tests::formatter_leader_changes_invalidate_only_the_affected_price_scale_marks ... ok
+test model::pane::tests::forwards_scale_and_scroll_interactions_without_a_ui_runtime ... ok
+test model::pane::tests::grid_snapshot_uses_default_scale_marks_and_is_invalidated_by_resize ... ok
+test model::pane::tests::interaction_requests_for_missing_overlays_are_explicit_errors ... ok
+test model::pane::tests::mode_transitions_preserve_pane_interaction_rules ... ok
+test model::pane::tests::orders_mixed_sources_and_renumbers_concrete_series ... ok
+test model::pane::tests::provider_range_flows_through_the_pane_source_adapter ... ok
+test model::pane::tests::recalculates_default_and_overlay_ranges_from_the_visible_interval ... ok
+test model::pane::tests::reset_and_momentary_auto_scale_use_the_visible_snapshot ... ok
+test model::pane::tests::selects_default_scales_from_preference_visibility_and_sources ... ok
+test model::pane::tests::source_order_cache_refreshes_after_move_and_detach ... ok
+test model::plot_list::tests::incremental_rows_preserve_neighbors_and_report_membership_changes ... ok
+test model::plot_list::tests::range_queries_visit_only_intersecting_sorted_rows ... ok
+test model::plot_list::tests::searches_exact_and_neighbors_and_skips_nan ... ok
+test model::price_range_impl::tests::merges_finite_values_and_handles_non_finite_bounds ... ok
+test model::price_range_impl::tests::scales_shifts_and_round_trips_raw_ranges ... ok
+test model::price_scale::lazy_tests::latest_viewport_wins_and_marks_invalidation_is_not_emitted_twice ... ok
+test model::price_scale::lazy_tests::lazy_range_and_margins_invalidate_cached_marks_once ... ok
+test model::price_scale::lazy_tests::manual_transition_settles_pending_range_and_forced_calculation_remains_eager ... ok
+test model::price_scale::lazy_tests::nested_range_read_uses_settled_value_without_reentering_provider ... ok
+test model::price_scale::lazy_tests::removal_and_drop_do_not_invoke_stale_pending_sources ... ok
+test model::price_scale::tests::auto_scale_blocks_scrolling_and_forced_recalculation_preserves_manual_mode ... ok
+test model::price_scale::tests::coordinates_round_trip ... ok
+test model::price_scale::tests::edge_marks_are_deduplicated_and_marks_notifications_follow_cache_lifecycle ... ok
+test model::price_scale::tests::forced_recalculation_keeps_a_manual_custom_range_intact ... ok
+test model::price_scale::tests::formatter_leader_uses_visible_lowest_z_order_and_stable_ties ... ok
+test model::price_scale::tests::invalid_log_range_falls_back_to_auto_scale_when_leaving_log_mode ... ok
+test model::price_scale::tests::inversion_retains_the_range_and_mode_delegate_fires_for_every_set_mode_call ... ok
+test model::price_scale::tests::logical_formatting_follows_each_price_scale_mode ... ok
+test model::price_scale::tests::marks_cache_invalidates_for_geometry_tick_options_and_formatter_changes ... ok
+test model::price_scale::tests::mode_state_and_custom_ranges_are_explicit ... ok
+test model::price_scale::tests::mode_transitions_convert_ranges_and_special_modes_enable_auto_scale ... ok
+test model::price_scale::tests::patches_are_transactional_for_margins_and_change_only_named_fields ... ok
+test model::price_scale::tests::rejects_scale_interactions_for_special_modes_and_empty_ranges ... ok
+test model::price_scale::tests::scales_from_a_snapshot_and_clamps_the_coefficient ... ok
+test model::price_scale::tests::scrolls_in_normal_and_inverted_directions_and_respects_lifecycle ... ok
+test model::price_scale::tests::short_scale_preserves_finite_affine_coordinates ... ok
+test model::price_scale_visible_range::tests::clones_share_the_current_snapshot ... ok
+test model::range_impl::tests::count_preserves_fractional_logical_range_semantics ... ok
+test model::range_impl::tests::range_equality_includes_absence_semantics ... ok
+test model::range_impl::tests::rejects_reversed_endpoints - should panic ... ok
+test model::range_impl::tests::rejects_unordered_endpoints - should panic ... ok
+test model::range_impl::tests::retains_typed_inclusive_endpoints ... ok
+test model::series::first_value_cache_tests::builtin_cached_missing_first_value_becomes_available_after_a_later_append ... ok
+test model::series::first_value_cache_tests::builtin_first_value_invalidates_only_mutations_that_can_change_the_answer ... ok
+test model::series::first_value_cache_tests::builtin_repeated_first_value_search_keys_only_the_visible_left_edge ... ok
+test model::series::first_value_cache_tests::custom_cached_missing_first_value_becomes_available_after_a_later_append ... ok
+test model::series::first_value_cache_tests::custom_first_value_invalidates_only_mutations_that_can_change_the_answer ... ok
+test model::series::first_value_cache_tests::custom_raw_range_reuses_only_unchanged_prices_and_keeps_primitive_contributions_fresh ... ok
+test model::series::first_value_cache_tests::custom_reindex_pop_and_full_replacements_refresh_the_cached_first_value ... ok
+test model::series::first_value_cache_tests::custom_repeated_first_value_search_keys_only_the_visible_left_edge ... ok
+test model::series::min_max_cache_tests::cached_empty_interval_is_invalidated_when_it_receives_its_first_row ... ok
+test model::series::min_max_cache_tests::histogram_base_is_applied_after_the_cached_raw_prices ... ok
+test model::series::min_max_cache_tests::inclusive_visible_boundaries_invalidate_the_raw_range ... ok
+test model::series::min_max_cache_tests::marker_margins_recalculate_without_rescanning_prices ... ok
+test model::series::min_max_cache_tests::primitive_provider_executes_for_each_query_and_is_not_part_of_the_raw_cache ... ok
+test model::series::min_max_cache_tests::public_autoscale_provider_can_call_default_repeatedly_and_change_its_result ... ok
+test model::series::min_max_cache_tests::randomized_mutations_match_uncached_ranges_for_every_builtin ... ok
+test model::series::min_max_cache_tests::repeated_visible_queries_and_outside_updates_do_not_rescan_old_rows ... ok
+test model::series::min_max_cache_tests::visible_replacement_removal_insertion_and_range_changes_recompute_correct_extrema ... ok
+test model::series::tests::autoscale_provider_can_adjust_or_suppress_the_default_result ... ok
+test model::series::tests::autoscale_provider_may_supply_a_range_when_the_default_is_none ... ok
+test model::series::tests::autoscale_uses_close_for_line_and_distinguishes_empty_intervals ... ok
+test model::series::tests::autoscale_uses_low_and_high_for_bar_rows_and_skips_nan ... ok
+test model::series::tests::custom_autoscale_uses_projected_low_high_without_touching_payloads ... ok
+test model::series::tests::custom_options_refresh_formatter_visibility_and_pane_data ... ok
+test model::series::tests::custom_series_keeps_typed_rows_and_returns_popped_rows ... ok
+test model::series::tests::custom_series_uses_sparse_first_value_and_provider_result ... ok
+test model::series::tests::custom_update_moves_non_clone_payload_without_copying_it ... ok
+test model::series::tests::histogram_autoscale_always_includes_its_baseline ... ok
+test model::series::tests::invalidation_and_price_scale_source_are_owner_independent ... ok
+test model::series::tests::price_scale_consumes_the_provider_range_from_an_owned_series_source ... ok
+test model::series::tests::price_scale_source_forwards_series_autoscale_info ... ok
+test model::series::tests::price_scale_source_preserves_builtin_range_and_empty_interval_semantics ... ok
+test model::series::tests::series_price_labels_round_to_configured_precision_and_minimum_move ... ok
+test model::series::tests::validates_options_replaces_data_and_queries_the_first_visible_value ... ok
+test model::series_data::tests::value_and_whitespace_rows_share_mutable_index_access ... ok
+test model::series_options::tests::precision_matches_min_move_contract ... ok
+test model::series_options::tests::runtime_patch_merges_fields_derives_precision_and_clears_provider ... ok
+test model::series_options::tests::shared_candlestick_colors_override_directional_colors ... ok
+test model::text_width_cache::tests::caches_fifo_and_does_not_refresh_entries_on_hits ... ok
+test model::text_width_cache::tests::nonempty_zero_width_text_is_not_cached_but_empty_text_is ... ok
+test model::text_width_cache::tests::normalizes_numeric_labels_and_allows_custom_normalization ... ok
+test model::text_width_cache::tests::returns_vertical_centering_correction_and_reset_forgets_measurements ... ok
+test api::up_down_markers::tests::up_down_markers_share_live_state_but_frozen_frames_do_not_retain_it ... ok
+test model::tick_marks::tests::filters_whitespace_indices_and_rebuilds_when_the_data_id_changes ... ok
+test model::tick_marks::tests::replacing_a_point_suffix_removes_stale_marks ... ok
+test model::tick_marks::tests::selects_higher_weight_marks_before_lower_weight_marks ... ok
+test model::tick_marks::tests::suffix_bound_search_visits_only_the_changed_tail ... ok
+test model::tick_marks::tests::suffix_bounds_match_binary_search_for_empty_and_sparse_buckets ... ok
+test model::tick_marks::tests::uniform_distribution_keeps_the_previous_weight_group_when_one_mark_cannot_fit ... ok
+test model::tick_marks::tests::unknown_membership_version_rebuilds_the_prefix_even_with_a_pending_append ... ok
+test model::time_data::tests::finds_visible_values_and_optional_edge_neighbors ... ok
+test model::time_data::tests::keeps_custom_tick_weights_typed ... ok
+test model::time_scale::tests::applies_spacing_before_pixel_offset_and_emits_options_effect ... ok
+test model::time_scale::tests::emits_effects_and_clamps_spacing ... ok
+test model::time_scale::tests::fits_content_and_converts_ranges_using_nearest_time_points ... ok
+test model::time_scale::tests::maps_coordinates_and_visible_range ... ok
+test model::time_scale::tests::notifications_are_ordered_and_silent_for_noop_visible_reads ... ok
+test model::time_scale::tests::options_delegate_and_edge_label_alignment_follow_model_state ... ok
+test model::time_scale::tests::whitespace_snapshots_and_conflation_only_change_when_their_inputs_change ... ok
+test model::time_scale_host::tests::only_snapshots_fulfilled_indexes_when_whitespace_filtering_is_enabled ... ok
+test model::time_scale_host::tests::scroll_animation_is_pure_data_for_the_ui_to_schedule ... ok
+test model::time_scale_host::tests::viewport_mutations_request_recalculation_then_redraw ... ok
+test model::time_scale_visible_range::tests::expands_fractional_logical_boundaries_to_cover_visible_bars ... ok
+test model::time_scale_visible_range::tests::invalid_range_has_no_logical_or_strict_range ... ok
+test renderers::area_renderer::tests::fill_changes_independently_and_closes_to_inverted_edge ... ok
+test renderers::bars_renderer::tests::invalid_inputs_and_empty_ranges_are_safe ... ok
+test renderers::bars_renderer::tests::ticks_stems_compression_and_inversion_follow_source ... ok
+test renderers::baseline_renderer::tests::bad_inputs_empty_and_degenerate_bounds_are_safe ... ok
+test renderers::baseline_renderer::tests::crossings_share_ordered_gradient_stops_and_close_at_base ... ok
+test renderers::candlesticks_renderer::tests::invalid_inputs_and_empty_ranges_are_safe ... ok
+test renderers::candlesticks_renderer::tests::layers_doji_and_narrow_bodies_follow_source ... ok
+test renderers::crosshair_renderer::tests::source_bitmap_alignment_and_independent_visibility ... ok
+test renderers::draw_line::tests::accepts_only_the_supported_widths ... ok
+test renderers::grid_renderer::tests::emits_pixel_snapped_vertical_and_horizontal_commands ... ok
+test renderers::grid_renderer::tests::omits_disabled_or_empty_line_directions ... ok
+test renderers::histogram_renderer::tests::baseline_and_both_sides_remain_visible ... ok
+test renderers::histogram_renderer::tests::invalid_and_empty_data ... ok
+test renderers::image_watermark_renderer::tests::actual_source_placement_fixtures ... ok
+test renderers::iprice_axis_view_renderer::tests::contract_supports_backend_owned_text_measurement ... ok
+test renderers::line_hit_test::tests::source_segments_points_and_single_row_boundaries ... ok
+test renderers::line_renderer::tests::markers_are_independent_reverse_order_and_bitmap_snapped ... ok
+test renderers::price_axis_renderer::tests::floating_label_reserves_extremes_and_keeps_price_coordinate ... ok
+test renderers::price_axis_renderer::tests::gradient_owned_replay_and_zero_bounds_do_not_retain_commands ... ok
+test renderers::price_axis_renderer::tests::invalid_inputs_return_typed_errors ... ok
+test renderers::price_axis_renderer::tests::missing_ink_metrics_have_zero_vertical_correction ... ok
+test renderers::price_axis_renderer::tests::source_endpoint_width_fallback_minimum_and_even_rounding ... ok
+test renderers::price_axis_renderer::tests::source_negative_half_coordinates_round_towards_positive_infinity ... ok
+test renderers::price_axis_renderer::tests::source_snapping_at_fractional_and_nonuniform_ratios ... ok
+test renderers::price_axis_renderer::tests::source_text_anchors_order_color_and_measured_y_alignment ... ok
+test renderers::price_axis_renderer::tests::source_visibility_combinations_keep_labels_and_tick_spacing ... ok
+test renderers::price_axis_renderer_options_provider::tests::derives_lightweight_charts_defaults_and_typography ... ok
+test renderers::price_axis_renderer_options_provider::tests::recomputes_typography_when_font_changes ... ok
+test renderers::price_axis_renderer_options_provider::tests::refreshes_colors_without_changing_cached_typography ... ok
+test renderers::range_hit_test::tests::gap_slots_and_inverted_vertical_ranges_follow_source ... ok
+test renderers::text_watermark_renderer::tests::source_layout_cases ... ok
+test renderers::time_axis_renderer::tests::bottom_background_color_and_owned_measurement_survive_mutation ... ok
+test renderers::time_axis_renderer::tests::floating_time_label_aligns_background_without_moving_tick ... ok
+test renderers::time_axis_renderer::tests::fractional_snapping_keeps_ticks_unshifted_and_text_logical ... ok
+test renderers::time_axis_renderer::tests::height_minimum_rounding_typography_and_hidden_empty_output ... ok
+test renderers::time_axis_renderer::tests::invalid_snapshot_metrics_bounds_and_ratios_are_typed_errors ... ok
+test renderers::time_axis_renderer::tests::narrow_axes_preserve_labels_and_source_one_sided_clamping ... ok
+test renderers::time_axis_renderer::tests::priority_order_font_metrics_and_edge_alignment_match_source ... ok
+test renderers::time_axis_renderer::tests::tick_visibility_preserves_labels_and_reserved_spacing ... ok
+test renderers::up_down_markers_renderer::tests::up_down_markers_geometry_reference ... ok
+test renderers::walk_line::tests::curves_use_full_neighbors_and_source_distance_estimate ... ok
+test renderers::walk_line::tests::simple_changes_style_at_endpoint_with_fractional_phase ... ok
+test renderers::walk_line::tests::single_item_and_empty_ranges ... ok
+test renderers::walk_line::tests::steps_change_at_corner_before_vertical_leg ... ok
+test ui::chart_input::pan_tests::price_label_width_changes_do_not_cancel_or_shift_a_plot_pan ... ok
+test ui::chart_input::tests::divider_priority_clamps_minimum_and_survives_own_height_changes ... ok
+test ui::chart_input::tests::drag_threshold_outside_release_and_cancellation ... ok
+test ui::chart_input::tests::empty_redraws_do_not_publish_forever ... ok
+test ui::chart_input::tests::independent_wheel_options_and_focus_loss_during_resize ... ok
+test ui::chart_input::tests::multi_pane_routes_once_and_keeps_drag_owner ... ok
+test ui::chart_input::tests::stationary_cursor_replay_settles_after_enter_move_and_drag ... ok
+test ui::chart_input::tests::wheel_units_and_axis_exclusion ... ok
+test ui::chart_input::tests::wheel_zoom_preserves_fractional_input_pixels_and_horizontal_scroll ... ok
+test ui::chart_layout::tests::invalid_layout_inputs_return_errors ... ok
+test ui::chart_layout::tests::normalized_minima_are_not_hinted_twice_and_growth_can_release_hidden_axes ... ok
+test ui::chart_layout::tests::regions_share_edges_for_every_visibility_and_fractional_ratio ... ok
+test ui::chart_layout::tests::source_tiny_pane_overflow_and_explicit_empty_layouts ... ok
+test ui::dashed_path::tests::fractional_offset_and_polyline_corners_are_preserved ... ok
+test ui::dashed_path::tests::solid_cubic_remains_cubic_and_dashed_cubic_is_finite ... ok
+test ui::line_chart::rectangle_clipping_tests::clips_each_boundary_at_fractional_nonzero_plot_origin_without_mutating_input ... ok
+test ui::line_chart::rectangle_clipping_tests::empty_rectangles_or_empty_clip_bounds_produce_no_drawing ... ok
+test ui::line_chart::rectangle_clipping_tests::enormous_offscreen_baseline_is_reduced_to_visible_plot_area ... ok
+test ui::line_chart::rectangle_clipping_tests::fully_outside_or_merely_touching_rectangles_have_no_visible_area ... ok
+test ui::line_chart::rectangle_clipping_tests::visible_rectangle_and_alpha_remain_unchanged ... ok
+test ui::line_chart::series_drawing::tests::empty_immediate_next_pass_does_not_search_past_an_intervening_source ... ok
+test ui::line_chart::series_drawing::tests::occluder_follows_actual_hover_raised_draw_order_and_preserves_source_geometry ... ok
+test ui::line_chart::series_drawing::tests::opaque_different_color_can_cover_only_the_visible_part_of_an_offscreen_bar ... ok
+test ui::line_chart::series_drawing::tests::partial_coverage_and_translucent_later_rectangles_must_not_cull ... ok
+test ui::line_chart::series_paint::tests::duplicate_stops_survive_conversion_and_degenerate_paint_is_transparent ... ok
+test ui::line_chart::series_paint::tests::nonfinite_backend_geometry_and_gradient_offsets_are_rejected ... ok
+test ui::line_chart::tests::adapter_converts_once_and_preserves_fractional_phase_at_multiple_ratios ... ok
+test ui::line_chart::tests::candle_rectangles_preserve_signed_extents_and_reject_invalid_canvas_values ... ok
+test ui::line_chart::tests::marker_fill_runs_preserve_style_identity_and_translucent_overlap ... ok
+test ui::multi_pane_layout::tests::shared_width_weighted_heights_and_empty_bounds ... ok
+test ui::price_axis::tests::adapter_clips_allocated_bounds_without_cropping_glyph_paths ... ok
+test model::chart_model::tests::candlesticks::candle_frames_settle_and_remain_owned_across_navigation_and_lifecycle ... ok
+test ui::price_axis::tests::adapter_preserves_gradient_background_and_empty_hidden_output ... ok
+test ui::price_axis::tests::adapter_prepares_paths_once_and_keeps_text_logical_at_fractional_ratios ... ok
+test ui::price_axis::tests::named_font_registration_and_css_generic_fallbacks_do_not_leak_names ... ok
+test ui::price_axis::tests::real_iced_measurement_uses_font_size_and_no_fake_ink_metrics ... ok
+test ui::price_axis::tests::cached_text_preserves_glyphs_and_reuses_positions_without_mixing_styles ... ok
+test model::tick_marks::tests::appended_selection_matches_global_reference_across_weights_and_membership_changes ... ok
+test ui::price_axis::watermark_anchor_tests::top_and_center_paths_match_native_text_and_do_not_share_a_cache_entry ... ok
+test ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text ... ok
+test ui::price_axis_input::tests::axis_drag_owns_pointer_outside_scale_and_suppresses_replay ... ok
+test ui::price_axis_input::tests::double_click_resets_only_same_axis ... ok
+test ui::price_axis_input::tests::own_label_width_changes_keep_drag_but_resize_focus_and_disable_cancel ... ok
+test ui::price_axis_input::tests::wheels_normalize_pixels_and_lines_and_ignore_invalid_and_hidden_input ... ok
+test ui::price_axis::tests::text_path_cache_evicts_old_labels_and_keeps_prepared_geometry_owned ... ok
+test ui::time_axis::tests::empty_hidden_zero_bounds_and_font_errors_do_not_keep_glyphs ... ok
+test ui::time_axis::tests::actual_measurement_and_glyph_paths_share_normal_and_bold_fonts ... ok
+test views::pane::grid_pane_view::tests::lazily_builds_a_snapshot_with_only_mark_coordinates ... ok
+test views::time_scale_animation::tests::replayed_masks_do_not_restart_the_scroll_animation ... ok
+test views::time_scale_animation::tests::samples_and_completes ... ok
+test views::time_scale_animation::tests::ui_can_cancel_an_active_animation_after_manual_navigation ... ok
+test views::time_scale_animation::tests::zero_duration_scroll_finishes_at_its_target ... ok
+test ui::time_axis::tests::immutable_clipped_glyphs_remain_logical_at_fractional_scales ... ok
+test model::chart_model::tests::complete_display::complete_display_targeted_matrix_and_owned_frames ... ok
+test api::interaction::tests::mouse_kinetic_navigation_uses_supplied_time_and_is_opt_in ... ok
+test model::chart_model::tests::multi_pane::multi_pane_frames_share_time_and_keep_price_labels_local ... ok
+test ui::price_axis::tests::repeated_marker_labels_shape_once_per_font_style ... ok
+
+test result: ok. 416 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
+
+     Running unittests src/main.rs (target/debug/deps/feather_charts-56631e923180cb5e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/area_chart.rs (target/debug/deps/area_chart-c8abcad378a652df)
+
+running 3 tests
+test area_invalid_options_and_row_colors_preserve_working_state ... ok
+test area_public_lifecycle_and_fill_visibility ... ok
+test area_row_style_markers_and_scale_modes_follow_public_frames ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
+
+     Running tests/bar_chart.rs (target/debug/deps/bar_chart-fb250ec41a03ec19)
+
+running 1 test
+test bars_public_ohlc_options_labels_and_lifecycle ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+
+     Running tests/baseline_chart.rs (target/debug/deps/baseline_chart-9b50be8081cdb046)
+
+running 4 tests
+test whitespace_has_no_geometry_or_nearest_row_event_payload ... ok
+test new_series_compose_owned_frames_and_preserve_exact_event_rows ... ok
+test baseline_crossings_options_validation_and_lifecycle ... ok
+test baseline_scale_projection_and_decoration_colors_follow_source ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+     Running tests/chart_api.rs (target/debug/deps/chart_api-11b38118ff977e49)
+
+running 14 tests
+test invalid_replacement_preserves_existing_data_and_future_updates ... ok
+test incremental_whitespace_transitions_keep_other_rows_and_shared_indexes ... ok
+test malformed_public_messages_do_not_partially_resize_or_pan ... ok
+test composed_series_share_one_pane_and_empty_removal_leaves_no_geometry ... ok
+test price_line_lifecycle_validation_and_series_cleanup ... ok
+test custom_price_labels_visibility_live_updates_and_pane_isolation ... ok
+test public_data_lifecycle_and_foreign_ids ... ok
+test native_wheel_detent_changes_time_spacing_by_ten_percent ... ok
+test pane_lifecycle_and_mixed_geometry_follow_model_membership ... ok
+test canvas_emits_clicks_but_never_after_a_drag ... ok
+test price_lines_and_last_labels_use_different_source_selection ... ok
+test last_value_scale_modes_display_modes_and_color_precedence ... ok
+test public_events_report_exact_rows_and_original_whitespace_time ... ok
+test visible_last_line_and_collision_alignment_preserve_price_coordinates ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+
+     Running tests/conflation.rs (target/debug/deps/conflation-cb17405c08fa724e)
+
+running 7 tests
+test historical_rejection_uses_effective_level_and_preserves_data ... ok
+test dense_line_reduces_geometry_without_changing_canonical_rows ... ok
+test shared_time_reindex_invalidates_warm_aggregates ... ok
+test exact_events_and_series_override_survive_dense_dpr_transitions ... ok
+test optional_warmup_yields_between_frames_and_cancels_old_data ... ok
+test dense_families_recover_from_short_sizes_and_preserve_price_modes ... ok
+test every_builtin_reduces_work_and_live_cache_matches_fresh ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.41s
+
+     Running tests/hover_selection.rs (target/debug/deps/hover_selection-8a4fd7070e824387)
+
+running 14 tests
+test failed_preparation_clears_selection_without_a_reconciliation_loop ... ok
+test custom_price_line_identity_visibility_and_lifecycle ... ok
+test marker_foreground_beats_own_price_line_but_higher_source_wins ... ok
+test built_in_levels_duplicate_external_ids_and_clipped_lines_keep_distinct_identity ... ok
+test raised_line_does_not_stick_at_equal_overlap_and_exit_clears_hover ... ok
+test offscreen_history_is_not_retained_as_hover_geometry ... ok
+test ordinary_hover_order_is_temporary_and_filled_sources_split_without_repeating_fills ... ok
+test raw_hover_is_independent_of_magnet_and_reconciles_after_navigation ... ok
+test settled_line_hit_is_owned_and_public_click_reports_it ... ok
+test every_family_hits_its_source_geometry_at_fractional_ratios ... ok
+test stationary_pointer_reconciles_price_line_removal_once ... ok
+test visible_ohlc_hits_preserve_logical_indexes_across_whitespace_gaps ... ok
+test native_widget_reports_all_families_and_price_lines_before_draw ... ok
+test selection_tracks_modes_visibility_resize_and_independent_panes ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.85s
+
+     Running tests/image_watermark.rs (target/debug/deps/image_watermark-3b29148178ac42e2)
+
+running 6 tests
+test multiple_images_follow_pane_identity_and_empty_pane_lifecycle ... ok
+test public_image_watermark_draws_visible_pixels ... ok
+test animation_only_ticks_do_not_prepare_the_watermark ... ok
+test invalid_inputs_cannot_replace_working_image ... ok
+test bottom_image_does_not_cover_later_vectors_or_text_watermark ... ok
+test replacements_opacity_and_removal_keep_old_frames_and_chart_state ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running tests/incremental_append.rs (target/debug/deps/incremental_append-ab7603317a9eeec8)
+
+running 12 tests
+test append_preserves_business_day_original_time_and_metadata_across_later_reindex ... ok
+test global_middle_insertion_reindexes_peers_even_when_it_is_the_owners_latest_time ... ok
+test custom_pop_and_replacement_then_append_omit_unaffected_builtin_history ... ok
+test rejected_new_time_wrong_kind_does_not_leave_an_orphan_time_point ... ok
+test pop_remove_and_full_replacement_restore_later_append_indexes ... ok
+test failed_custom_tail_builder_is_atomic_and_owner_destroys_once ... ok
+test shared_fulfilled_membership_survives_until_the_final_owner_becomes_whitespace ... ok
+test tail_append_does_not_fan_out_unaffected_peer_histories ... ok
+test tail_append_clones_only_changed_row_metadata ... ok
+test mixed_custom_and_builtin_tails_keep_typed_rows_and_fulfilled_membership ... ok
+test public_append_and_whitespace_membership_work_for_every_builtin_kind ... ok
+test native_mouse_pan_survives_builtin_and_custom_tail_updates ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.60s
+
+     Running tests/kinetic_navigation.rs (target/debug/deps/kinetic_navigation-13947fce393a5e1d)
+
+running 3 tests
+test kinetic_decay_uses_source_milliseconds_and_finishes_without_clamping_position ... ok
+test kinetic_ignores_slow_stale_and_invalid_gestures_but_replaces_equal_time ... ok
+test kinetic_reversal_uses_only_the_recent_direction_and_caps_speed ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/last_price_animation.rs (target/debug/deps/last_price_animation-70946e8b8a40d39b)
+
+running 9 tests
+test enabling_last_price_animation_changes_prepared_output ... ok
+test price_pulses_do_not_starve_scroll_or_conflation_warmup ... ok
+test source_update_flags ... ok
+test dot_follows_line_width_even_when_the_line_is_hidden ... ok
+test rejected_updates_and_shared_reindex_preserve_the_existing_pulse ... ok
+test top_markers_cover_animation_and_do_not_change_hits ... ok
+test animation_ticks_do_no_axis_formatting_and_keep_base_geometry ... ok
+test scale_modes_visibility_option_changes_and_multi_pane_ticks ... ok
+test all_families_canonical_endpoint_dpr_expiry_and_retained_frames ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.42s
+
+     Running tests/pane_preparation_work.rs (target/debug/deps/pane_preparation_work-eab8059e25815fb4)
+
+running 1 test
+test composed_pane_formatting_does_not_multiply_work_for_every_series ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+
+     Running tests/preparation_performance.rs (target/debug/deps/preparation_performance-eb7a1ba96121953e)
+
+running 2 tests
+test existing_timestamp_replacement_does_not_clone_unchanged_metadata ... ok
+test line_preparation_retains_only_visible_rows_and_curve_neighbors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests/primitive_editing.rs (target/debug/deps/primitive_editing-f810baef50678ab9)
+
+running 13 tests
+test continuous_coordinates_round_trip_fractional_and_offscreen_bounds ... ok
+test editable_drag_captures_before_pan_and_commits_once_without_lifecycle_churn ... ok
+test captured_cursor_clears_immediately_after_removal_and_manual_autoscale_policy_is_retained ... ok
+test editing_hides_the_crosshair_and_focus_loss_does_not_leave_stale_hover_labels ... ok
+test fixed_viewport_live_append_preserves_an_edit_until_commit ... ok
+test owner_specific_transforms_cover_left_overlay_and_pane_attachments ... ok
+test invalid_edit_input_and_empty_data_cannot_leave_an_active_session ... ok
+test wheel_is_suspended_during_edit_and_external_manual_policy_survives_cancellation ... ok
+test update_notifications_preserve_attachment_lifetime_and_validate_owner ... ok
+test cancellation_releases_capture_and_navigation_resumes_without_stuck_cursor ... ok
+test widening_labels_and_autoscale_contributions_keep_viewport_fixed_until_commit ... ok
+test external_updates_removal_and_resize_cancel_once_and_reject_old_preview_tokens ... ok
+test owned_transform_survives_scale_restoration_and_resize_in_every_mode ... ok
+
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.00s
+
+     Running tests/public_custom_series.rs (target/debug/deps/public_custom_series-bda50f59a183a7d7)
+
+running 9 tests
+test box_example_reducer_keeps_last_box_and_combined_whiskers ... ok
+test custom_errors_and_whitespace_keep_the_typed_owner_intact ... ok
+test custom_price_lines_and_markers_share_the_actual_owner ... ok
+test custom_public_lifecycle_keeps_typed_data_and_frozen_frames ... ok
+test different_custom_types_share_reindexed_time_without_sharing_payloads ... ok
+test custom_warmup_is_bounded_releases_model_borrows_and_drops_with_owner ... ok
+test custom_pointer_payload_and_selected_hit_are_owned_and_typed ... ok
+test custom_conflation_preserves_reduction_order_and_no_reducer_passthrough ... ok
+test custom_preparation_and_existing_time_updates_copy_only_visible_payloads ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/public_primitives.rs (target/debug/deps/public_primitives-5a5f461aa04abb39)
+
+running 12 tests
+test attachment_ids_are_owner_checked_and_not_reused ... ok
+test all_backgrounds_precede_foregrounds_in_each_layer ... ok
+test pane_keys_survive_index_shifts_and_cleanup_occurs_once ... ok
+test invalid_extension_output_cannot_poison_autoscale_or_create_hits ... ok
+test autoscale_merges_ranges_last_margins_win_and_removal_restores_builtin ... ok
+test foreground_and_background_primitive_hits_follow_source_order ... ok
+test retained_frames_keep_old_geometry_without_keeping_attachment_active ... ok
+test pane_hit_has_owned_identity_and_removal_reconciles_once ... ok
+test primitive_cursor_is_available_before_draw_and_resets_outside_the_plot ... ok
+test primitive_labels_settle_axis_width_and_axis_views_are_clipped_and_drawn ... ok
+test native_primitive_click_drag_update_and_focus_loss_follow_navigation_contract ... ok
+test primitive_coordinates_follow_scale_modes_and_viewport_and_clear_on_empty_data ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.79s
+
+     Running tests/series_markers.rs (target/debug/deps/series_markers-7d4bdee45233e230)
+
+running 10 tests
+test independent_marker_attachments_validate_replace_clear_and_detach ... ok
+test marker_margins_add_to_configured_scale_padding_and_clear_restores_it ... ok
+test equal_total_margin_changes_reproject_other_collections_and_disabled_margins_restore ... ok
+test native_canvas_clicks_markers_and_redraw_reconciles_stationary_cursor ... ok
+test annotations_render_and_hit_on_all_six_families_in_independent_panes ... ok
+test public_frames_place_stack_and_clear_markers_without_modifying_retained_frames ... ok
+test overlapping_marker_hits_use_reverse_series_order_then_first_attachment_and_item ... ok
+test public_click_and_hover_identify_text_and_clear_stale_hits ... ok
+test marker_projection_tracks_shared_time_reindexing_history_whitespace_and_reload ... ok
+test markers_follow_supported_scale_modes_and_manual_navigation_at_fractional_ratios ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.00s
+
+     Running tests/software_canvas_damage.rs (target/debug/deps/software_canvas_damage-eb798c851eb0e7a9)
+
+running 3 tests
+test changing_chart_damage_is_one_region_and_keeps_fresh_pixels ... ok
+test image_chart_keeps_one_damage_region_at_all_acceptance_sizes ... ok
+test up_down_updates_keep_one_damage_region_and_fresh_pixels ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+
+     Running tests/text_watermark.rs (target/debug/deps/text_watermark-55da9bfc15f77a9a)
+
+running 7 tests
+test pane_identity_survives_index_shifts_and_preserved_empty_panes ... ok
+test actual_pane_removal_drops_its_watermark ... ok
+test animation_only_ticks_do_not_prepare_the_watermark ... ok
+test invalid_options_do_not_replace_a_working_attachment ... ok
+test public_watermark_adds_visible_text ... ok
+test watermark_normal_layer_precedes_series_primitives_and_has_no_hit ... ok
+test replacements_visibility_removal_and_retained_frames_preserve_chart_state ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/time_mark_preparation.rs (target/debug/deps/time_mark_preparation-0b4a065b5cdec52e)
+
+running 4 tests
+test arbitrary_horizontal_behavior_keeps_the_full_context_append_fallback ... ok
+test moving_viewport_clones_only_visible_cached_time_marks ... ok
+test warmed_tick_append_copies_only_a_bounded_selection_suffix ... ok
+test native_style_tail_lookup_uses_constant_key_work ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/touch_navigation.rs (target/debug/deps/touch_navigation-b15e6a35f82664ee)
+
+running 10 tests
+test native_tap_emits_one_click_without_moving_the_crosshair_or_mouse_duplication ... ok
+test native_resize_precedes_a_due_long_press_deadline ... ok
+test native_pinch_zooms_and_disabled_direction_is_delegated ... ok
+test native_pan_keeps_primary_identity_and_cancels_on_loss ... ok
+test touch_scroll_waits_for_second_move_then_inertia_uses_one_controller_and_finishes ... ok
+test wheel_outside_canvas_does_not_discard_a_captured_touch_pan ... ok
+test ordinary_live_update_keeps_touch_capture_and_options_cancel_stale_fingers ... ok
+test long_press_tracks_and_exit_modes_use_the_existing_redraw_deadline ... ok
+test pan_stays_with_its_pane_outside_the_plot ... ok
+test kinetic_defaults_and_all_viewport_interruptions_stop_animation ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.16s
+
+     Running tests/up_down_markers.rs (target/debug/deps/up_down_markers-dc4caa33d6c29287)
+
+running 12 tests
+test automatic_markers_expire_at_the_exact_deadline ... ok
+test manual_and_existing_lifetimes_are_independent_of_new_options ... ok
+test managed_updates_compare_to_the_seeded_baseline ... ok
+test historical_conflation_rejection_preserves_markers_and_deadline ... ok
+test pane_index_shifts_and_series_removal_cancel_all_controller_work ... ok
+test replacing_the_generic_attachment_invalidates_the_controller_id ... ok
+test zero_negative_and_rejected_data_updates_preserve_the_native_contract ... ok
+test idle_widget_requests_one_deadline_then_publishes_tick_and_stops ... ok
+test pulse_fast_path_keeps_marker_geometry_until_expiration_is_due ... ok
+test manual_markers_draw_visible_pixels ... ok
+test color_replacement_updates_marker_pixels_and_old_frames_stay_frozen ... ok
+test missing_times_hidden_series_and_unsupported_kinds_are_safe ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+
+     Running tests/update_allocations.rs (target/debug/deps/update_allocations-ff737418320f9cad)
+
+running 3 tests
+test counts_real_allocations_reallocations_and_deallocations ... ok
+test finish_disables_tracking_and_new_sessions_reset_counts ... ok
+test another_threads_large_allocation_is_excluded_from_the_active_owner ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running unittests examples/append_allocations.rs (target/debug/examples/append_allocations-797df424fd3551bb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/area_reference.rs (target/debug/examples/area_reference-7384e1e2e5a39d13)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/bar_reference.rs (target/debug/examples/bar_reference-7fcc442fa4e5d03f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/baseline_reference.rs (target/debug/examples/baseline_reference-da5bbc2c12bc9320)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/candlestick_chart.rs (target/debug/examples/candlestick_chart-2719809b01e4d828)
+
+running 16 tests
+test chart_demo::tests::axis_drag_redraw_does_not_route_plot_input_when_label_width_changes ... ok
+test chart_demo::tests::axis_crossing_does_not_steal_plot_drag_and_data_removal_ends_axis_drag ... ok
+test chart_demo::tests::cursor_replay_and_redraw_settle_without_rebuilding_frames_forever ... ok
+test chart_demo::tests::native_plot_drag_pans_price_and_time_in_all_demos ... ok
+test chart_demo::tests::native_price_axis_wheel_changes_only_the_hovered_scale ... ok
+test chart_demo::tests::plot_pan_keeps_origin_pane_when_crossing_volume_and_ends_on_removal ... ok
+test chart_demo::tests::price_volume_native_input_resize_updates_and_cursor_replay ... ok
+test chart_demo::tests::native_event_sequence_navigation_crosshair_labels_and_cancel ... ok
+test chart_demo::tests::explicit_display_scenarios_prepare_without_global_argument_state ... ok
+test chart_demo::tests::replacing_pane_membership_cancels_an_old_gesture_even_at_same_count ... ok
+test chart_demo::tests::vertical_plot_drag_preserves_time_horizontal_drag_preserves_autoscale_and_focus_ends_both ... ok
+test chart_demo::tests::connected_demo_operations ... ok
+test chart_demo::tests::native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes ... ok
+test chart_demo::tests::profile_candle_zoom_frame_stages ... ok
+test chart_demo::tests::profile_zoom_frame_stages ... ok
+test chart_demo::tests::profile_price_volume_zoom ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.79s
+
+     Running unittests examples/candlestick_reference.rs (target/debug/examples/candlestick_reference-e6592146e8e50301)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/chart_layout_reference.rs (target/debug/examples/chart_layout_reference-429b72c1f3b1d525)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/conflation_profile.rs (target/debug/examples/conflation_profile-c56d3fdea469f7bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/custom_series.rs (target/debug/examples/custom_series-7fabaa5a6f9edd64)
+
+running 1 test
+test live_tests::custom_live_feed_pauses_and_stops_when_owner_is_removed ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running unittests examples/custom_series_profile.rs (target/debug/examples/custom_series_profile-b0a519e0b40e888c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/custom_series_reference.rs (target/debug/examples/custom_series_reference-2fdf726ef4380d2a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/frame_latency_profile.rs (target/debug/examples/frame_latency_profile-dad89da21587234e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/histogram_chart.rs (target/debug/examples/histogram_chart-788fa13409453565)
+
+running 16 tests
+test chart_demo::tests::axis_drag_redraw_does_not_route_plot_input_when_label_width_changes ... ok
+test chart_demo::tests::axis_crossing_does_not_steal_plot_drag_and_data_removal_ends_axis_drag ... ok
+test chart_demo::tests::cursor_replay_and_redraw_settle_without_rebuilding_frames_forever ... ok
+test chart_demo::tests::native_price_axis_wheel_changes_only_the_hovered_scale ... ok
+test chart_demo::tests::native_plot_drag_pans_price_and_time_in_all_demos ... ok
+test chart_demo::tests::plot_pan_keeps_origin_pane_when_crossing_volume_and_ends_on_removal ... ok
+test chart_demo::tests::native_event_sequence_navigation_crosshair_labels_and_cancel ... ok
+test chart_demo::tests::price_volume_native_input_resize_updates_and_cursor_replay ... ok
+test chart_demo::tests::explicit_display_scenarios_prepare_without_global_argument_state ... ok
+test chart_demo::tests::replacing_pane_membership_cancels_an_old_gesture_even_at_same_count ... ok
+test chart_demo::tests::connected_demo_operations ... ok
+test chart_demo::tests::vertical_plot_drag_preserves_time_horizontal_drag_preserves_autoscale_and_focus_ends_both ... ok
+test chart_demo::tests::native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes ... ok
+test chart_demo::tests::profile_candle_zoom_frame_stages ... ok
+test chart_demo::tests::profile_zoom_frame_stages ... ok
+test chart_demo::tests::profile_price_volume_zoom ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.45s
+
+     Running unittests examples/histogram_reference.rs (target/debug/examples/histogram_reference-a75d425ef3767bd4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/hover_selection_reference.rs (target/debug/examples/hover_selection_reference-dbd720c22a8acadc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/image_ordering.rs (target/debug/examples/image_ordering-1cc75338bcc96aa7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/incremental_append_reference.rs (target/debug/examples/incremental_append_reference-2eae39504cc03833)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/interaction_reference.rs (target/debug/examples/interaction_reference-9963e4e5d77da5e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/kinetic_reference.rs (target/debug/examples/kinetic_reference-bc976efb93550e85)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/last_price_animation_profile.rs (target/debug/examples/last_price_animation_profile-1ef890c375b1cdfc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/line_chart.rs (target/debug/examples/line_chart-607786dcff8919fe)
+
+running 16 tests
+test chart_demo::tests::axis_drag_redraw_does_not_route_plot_input_when_label_width_changes ... ok
+test chart_demo::tests::axis_crossing_does_not_steal_plot_drag_and_data_removal_ends_axis_drag ... ok
+test chart_demo::tests::cursor_replay_and_redraw_settle_without_rebuilding_frames_forever ... ok
+test chart_demo::tests::native_plot_drag_pans_price_and_time_in_all_demos ... ok
+test chart_demo::tests::native_price_axis_wheel_changes_only_the_hovered_scale ... ok
+test chart_demo::tests::plot_pan_keeps_origin_pane_when_crossing_volume_and_ends_on_removal ... ok
+test chart_demo::tests::native_event_sequence_navigation_crosshair_labels_and_cancel ... ok
+test chart_demo::tests::price_volume_native_input_resize_updates_and_cursor_replay ... ok
+test chart_demo::tests::explicit_display_scenarios_prepare_without_global_argument_state ... ok
+test chart_demo::tests::connected_demo_operations ... ok
+test chart_demo::tests::replacing_pane_membership_cancels_an_old_gesture_even_at_same_count ... ok
+test chart_demo::tests::vertical_plot_drag_preserves_time_horizontal_drag_preserves_autoscale_and_focus_ends_both ... ok
+test chart_demo::tests::native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes ... ok
+test chart_demo::tests::profile_candle_zoom_frame_stages ... ok
+test chart_demo::tests::profile_zoom_frame_stages ... ok
+test chart_demo::tests::profile_price_volume_zoom ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.77s
+
+     Running unittests examples/line_reference.rs (target/debug/examples/line_reference-bbe6820d3eb7f478)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/multi_pane_interaction_reference.rs (target/debug/examples/multi_pane_interaction_reference-6b6a28bf7a2adaa2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/multi_pane_layout_reference.rs (target/debug/examples/multi_pane_layout_reference-042647a4b3236f89)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/preparation_profile.rs (target/debug/examples/preparation_profile-4f3c0276e307192c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/price_axis_reference.rs (target/debug/examples/price_axis_reference-138888a0f269c1cc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/price_lines_reference.rs (target/debug/examples/price_lines_reference-5565468179cb66f8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/price_volume_chart.rs (target/debug/examples/price_volume_chart-44e4e13e11ac47a4)
+
+running 16 tests
+test chart_demo::tests::axis_drag_redraw_does_not_route_plot_input_when_label_width_changes ... ok
+test chart_demo::tests::axis_crossing_does_not_steal_plot_drag_and_data_removal_ends_axis_drag ... ok
+test chart_demo::tests::cursor_replay_and_redraw_settle_without_rebuilding_frames_forever ... ok
+test chart_demo::tests::native_plot_drag_pans_price_and_time_in_all_demos ... ok
+test chart_demo::tests::native_price_axis_wheel_changes_only_the_hovered_scale ... ok
+test chart_demo::tests::plot_pan_keeps_origin_pane_when_crossing_volume_and_ends_on_removal ... ok
+test chart_demo::tests::native_event_sequence_navigation_crosshair_labels_and_cancel ... ok
+test chart_demo::tests::price_volume_native_input_resize_updates_and_cursor_replay ... ok
+test chart_demo::tests::explicit_display_scenarios_prepare_without_global_argument_state ... ok
+test chart_demo::tests::connected_demo_operations ... ok
+test chart_demo::tests::replacing_pane_membership_cancels_an_old_gesture_even_at_same_count ... ok
+test chart_demo::tests::vertical_plot_drag_preserves_time_horizontal_drag_preserves_autoscale_and_focus_ends_both ... ok
+test chart_demo::tests::native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes ... ok
+test chart_demo::tests::profile_candle_zoom_frame_stages ... ok
+test chart_demo::tests::profile_zoom_frame_stages ... ok
+test chart_demo::tests::profile_price_volume_zoom ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.83s
+
+     Running unittests examples/primitive_reference.rs (target/debug/examples/primitive_reference-5987faad79cdee81)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/public_api_profile.rs (target/debug/examples/public_api_profile-4f8437385a99af57)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/public_chart.rs (target/debug/examples/public_chart-8e1cd0eb81dc6b50)
+
+running 14 tests
+test primitive_demo::editing::tests::selected_handles_and_edges_have_directional_cursors_and_interior_moves ... ok
+test image_watermark_demo::tests::controls_preserve_owner_through_short_height_recovery ... ok
+test primitive_demo::editing::tests::crossing_edges_clamps_without_changing_handle_and_nonfinite_preview_is_rejected ... ok
+test primitive_demo::editing_tests::box_selection_exposes_handles_and_native_drag_moves_fractional_bounds ... ok
+test tests::live_feed_ticks_append_only_while_running_and_ignore_old_sessions ... ok
+test primitive_demo::editing_tests::focus_loss_restores_original_box_and_empty_click_deselects ... ok
+test primitive_demo::editing::tests::every_handle_changes_only_its_edges_in_all_price_modes_and_inversions ... ok
+test tests::short_chart_keeps_manual_price_modes_and_source_identity ... ok
+test up_down_demo::tests::controls_and_idle_expiration_work_on_line_and_area_after_short_height_recovery ... ok
+test watermark_demo::tests::demo_controls_preserve_pane_ownership_and_narrow_bounds ... ok
+test tests::primitive_controls_and_hover_keep_narrow_chart_bounds_stable ... ok
+test tests::hover_status_keeps_chart_bounds_stable_in_narrow_windows ... ok
+test tests::live_demo_damage_does_not_fragment_chart_redraws ... ok
+test tests::short_chart_resizes_and_recovers_during_live_append ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.28s
+
+     Running unittests examples/series_markers_reference.rs (target/debug/examples/series_markers_reference-3280655864578251)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/time_axis_reference.rs (target/debug/examples/time_axis_reference-aeea461c875f50a0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/touch_navigation_profile.rs (target/debug/examples/touch_navigation_profile-48e4991d84b9b1fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/touch_reference.rs (target/debug/examples/touch_reference-b925123f962bfb3f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests examples/update_latency_probe.rs (target/debug/examples/update_latency_probe-b32b4151db7bd397)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

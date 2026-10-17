@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-17",
+  "software": {
+    "backend_environment": "ICED_BACKEND=tiny-skia",
+    "result": "All checks passed; idle expiry passed; window closed",
+    "sizes": [
+      "regular",
+      "narrow",
+      "earlier problem size"
+    ],
+    "checks": [
+      "latest/historical/manual/clear/color/lifetime controls",
+      "wheel zoom",
+      "diagonal dragging",
+      "price-axis wheel/drag",
+      "box edits",
+      "short-height recovery",
+      "five-second idle expiration",
+      "manual persistence"
+    ],
+    "process_exit": 0
+  },
+  "gpu": {
+    "backend_environment": "ICED_BACKEND=wgpu",
+    "result": "All checks passed; idle expiry passed; window closed",
+    "sizes": [
+      "regular",
+      "narrow",
+      "earlier problem size"
+    ],
+    "checks": [
+      "latest/historical/manual/clear/color/lifetime controls",
+      "wheel zoom",
+      "diagonal dragging",
+      "price-axis wheel/drag",
+      "box edits",
+      "short-height recovery",
+      "five-second idle expiration",
+      "manual persistence"
+    ],
+    "process_exit": 0
+  },
+  "excluded_run": "Initial window had no explicit backend; no renderer-specific acceptance credited.",
+  "untested": [
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI"
+  ],
+  "historical_timing_acceptance": "OPEN/deferred"
+}

@@ -1,0 +1,58 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+warning: unused imports: `AreaDataItem` and `LineDataItem`
+  --> src/api/up_down_markers.rs:14:58
+   |
+14 | use crate::model::data_consumer::{BuiltInSeriesDataItem, LineDataItem, AreaDataItem, TimedData};
+   |                                                          ^^^^^^^^^^^^  ^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `collections::BTreeMap`
+  --> src/api/up_down_markers.rs:17:5
+   |
+17 |     collections::BTreeMap,
+   |     ^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `TimedData`
+  --> src/api/up_down_markers.rs:14:86
+   |
+14 | use crate::model::data_consumer::{BuiltInSeriesDataItem, LineDataItem, AreaDataItem, TimedData};
+   |                                                                                      ^^^^^^^^^
+
+warning: field `expires` is never read
+  --> src/api/up_down_markers.rs:60:5
+   |
+57 | struct Active {
+   |        ------ field in this struct
+...
+60 |     expires: Option<Instant>,
+   |     ^^^^^^^
+   |
+   = note: `Active` has derived impls for the traits `Debug` and `Clone`, but these are intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `feather-charts` (lib) generated 4 warnings (run `cargo fix --lib -p feather-charts` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.14s
+     Running tests/up_down_markers.rs (target/debug/deps/up_down_markers-dc4caa33d6c29287)
+
+running 2 tests
+test managed_updates_compare_to_the_seeded_baseline ... FAILED
+test manual_markers_draw_visible_pixels ... ok
+
+failures:
+
+---- managed_updates_compare_to_the_seeded_baseline stdout ----
+
+thread 'managed_updates_compare_to_the_seeded_baseline' (365) panicked at tests/up_down_markers.rs:94:49:
+assertion `left == right` failed: managed update must create a marker
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    managed_updates_compare_to_the_seeded_baseline
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+error: test failed, to rerun pass `--test up_down_markers`

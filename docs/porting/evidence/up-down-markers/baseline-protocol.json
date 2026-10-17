@@ -1,0 +1,7 @@
+{
+  "baseline": "16f3622",
+  "binary_sha256": "e118ac0a143e4cf1a405724748d9febd80c3fccd2d7e9a6a5cb6632fbaac7ba6",
+  "retained_from": "target/image-watermark/final/protocol.json",
+  "original_protocol_sha256": "ecfb11a8acc949d6ee20c54cdb24a32535264d22fe0ab39dcb24fff42ff984d7",
+  "note": "24 accepted default-off images reused before feature edits; current binary identity matches."
+}

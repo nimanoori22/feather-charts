@@ -1,0 +1,4 @@
+58 source timing states and 4 DPR renderer cases match.
+9 actual DataLayer update/full replacement/whitespace/clear flags match.
+12 Rust canonical endpoint/DPR payloads match the actual source renderer.
+Actual source alpha multiplication, transparency and canonical family color rules verified.

@@ -1,0 +1,22 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.71s
+     Running tests/up_down_markers.rs (target/debug/deps/up_down_markers-dc4caa33d6c29287)
+
+running 1 test
+test replacing_the_generic_attachment_invalidates_the_controller_id ... FAILED
+
+failures:
+
+---- replacing_the_generic_attachment_invalidates_the_controller_id stdout ----
+
+thread 'replacing_the_generic_attachment_invalidates_the_controller_id' (104) panicked at tests/up_down_markers.rs:234:2:
+stale controller must not remove the replacement primitive
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    replacing_the_generic_attachment_invalidates_the_controller_id
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--test up_down_markers`

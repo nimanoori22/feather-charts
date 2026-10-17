@@ -1,0 +1,10 @@
+[
+  {
+    "backend": "tiny-skia",
+    "exit": 124
+  },
+  {
+    "backend": "wgpu",
+    "exit": 124
+  }
+]
