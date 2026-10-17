@@ -1,5 +1,7 @@
 //! Synchronous chart ownership and the reusable Iced component.
+mod behavior;
 mod chart;
+pub use behavior::ChartBehavior;
 mod conflation;
 mod custom_series;
 pub use custom_series::{CustomHitData, CustomSeriesEventData, CustomSeriesHandle};

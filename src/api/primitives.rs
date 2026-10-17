@@ -1,5 +1,5 @@
 //! Application extensions prepare owned geometry; drawing never reads live state.
-use super::{Chart, ChartError};
+use super::{Chart, ChartBehavior, ChartError};
 use crate::model::{
     autoscale_info_impl::AutoscaleInfo, chart_model::ChartModel, data_layer::SeriesId,
     horz_scale_behavior_time::horz_scale_behavior_time::HorzScaleBehaviorTime,
@@ -33,12 +33,12 @@ pub(crate) fn pane_id() -> PrimitivePaneId {
 }
 
 /// Borrowed only during preparation. A pane attachment has no price converter.
-pub struct PrimitiveContext<'a> {
+pub struct PrimitiveContext<'a, B: ChartBehavior = HorzScaleBehaviorTime> {
     pub owner: PrimitiveOwner,
     pub pane: usize,
     pub size: Size,
     pub pixel_ratio: f32,
-    pub model: &'a ChartModel<HorzScaleBehaviorTime>,
+    pub model: &'a ChartModel<B>,
     pub visible_range: Option<crate::model::range_impl::RangeImpl<TimePointIndex>>,
 }
 /// Copyable, start-of-gesture conversions; contains no live Chart references.
@@ -66,7 +66,7 @@ impl PrimitiveCoordinateTransform {
         (y.is_finite() && price.is_finite()).then_some(price)
     }
 }
-impl PrimitiveContext<'_> {
+impl<B: ChartBehavior> PrimitiveContext<'_, B> {
     pub fn coordinate_transform(&self) -> Option<PrimitiveCoordinateTransform> {
         let price = match self.owner {
             PrimitiveOwner::Series(id) => self
@@ -118,11 +118,8 @@ impl PrimitiveContext<'_> {
         let price = scale.coordinate_to_price(y.into(), first.value);
         (y.is_finite() && price.is_finite()).then_some(price)
     }
-    pub fn time_to_coordinate(
-        &self,
-        time: &crate::model::horz_scale_behavior_time::types::Time,
-    ) -> Option<f64> {
-        let time = crate::model::horz_scale_behavior_time::time_utils::convert_time(time).ok()?;
+    pub fn time_to_coordinate(&self, time: &B::Item) -> Option<f64> {
+        let time = self.model.time_scale().behavior().to_internal(time).ok()?;
         let index = self.model.time_scale().time_to_index(&time, false)?;
         self.logical_to_coordinate(index.value())
     }
@@ -158,8 +155,10 @@ impl PrimitiveContext<'_> {
 }
 
 /// Return renderers owning copied geometry. Do not capture mutable live state in them.
-pub trait DrawingPrimitive: std::fmt::Debug + 'static {
-    fn prepare(&self, context: &PrimitiveContext<'_>) -> PreparedPrimitive;
+pub trait DrawingPrimitive<B: ChartBehavior = HorzScaleBehaviorTime>:
+    std::fmt::Debug + 'static
+{
+    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive;
     fn autoscale_info(
         &self,
         _start: TimePointIndex,
@@ -244,13 +243,13 @@ pub struct PreparedAttachment {
     pub output: PreparedPrimitive,
     pub price_side: Option<crate::model::axis_snapshots::PriceAxisSide>,
 }
-pub(crate) struct Attachment {
+pub(crate) struct Attachment<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub order: u64,
     pub id: PrimitiveId,
     pub owner: PrimitiveOwner,
-    pub primitive: Rc<dyn DrawingPrimitive>,
+    pub primitive: Rc<dyn DrawingPrimitive<B>>,
 }
-impl Drop for Attachment {
+impl<B: ChartBehavior> Drop for Attachment<B> {
     fn drop(&mut self) {
         self.primitive.detached();
     }

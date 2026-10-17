@@ -25,8 +25,8 @@ pub enum MarkerSign {
     Positive,
 }
 #[derive(Clone, Debug, PartialEq)]
-pub struct UpDownMarker {
-    pub time: Time,
+pub struct UpDownMarker<T = Time> {
+    pub time: T,
     pub value: f64,
     pub sign: MarkerSign,
 }

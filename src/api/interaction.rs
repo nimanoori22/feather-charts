@@ -25,7 +25,7 @@ pub enum ChartMessage {
     Click { pane: usize, position: iced::Point },
 }
 #[derive(Clone, Debug)]
-pub struct PointerEvent {
+pub struct PointerEvent<T = Time> {
     pub custom_series_data: Vec<super::CustomSeriesEventData>,
     pub custom_hit: Option<super::CustomHitData>,
     pub primitive: Option<super::PrimitiveHit>,
@@ -34,18 +34,15 @@ pub struct PointerEvent {
     pub pane: Option<usize>,
     pub point: Option<iced::Point>,
     pub logical: Option<crate::model::time_data::TimePointIndex>,
-    pub time: Option<Time>,
+    pub time: Option<T>,
     pub price: Option<f64>,
-    pub series_data: Vec<(
-        crate::model::data_layer::SeriesId,
-        BuiltInSeriesDataItem<Time>,
-    )>,
+    pub series_data: Vec<(crate::model::data_layer::SeriesId, BuiltInSeriesDataItem<T>)>,
 }
 #[derive(Clone, Debug)]
-pub enum ChartEvent {
+pub enum ChartEvent<T = Time> {
     PrimitiveEdit(super::PrimitiveEditEvent),
-    Click(PointerEvent),
-    CrosshairMoved(PointerEvent),
+    Click(PointerEvent<T>),
+    CrosshairMoved(PointerEvent<T>),
 }
 pub(crate) struct PlotPan {
     pub pane: usize,
