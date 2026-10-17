@@ -42,6 +42,12 @@ fn setup() -> (Chart, feather_charts::model::data_layer::SeriesId) {
         )
         .unwrap();
     }
+    c.add_series(
+        SeriesOptionsMap::Line(Default::default()),
+        0,
+        PriceScalePosition::Right,
+    )
+    .unwrap();
     c.fit_content();
     c.prepare(Size::new(800., 500.), 1., Instant::now())
         .unwrap();
@@ -64,7 +70,7 @@ fn input(c: &mut Chart, state: &mut ChartState, event: Event, point: Point) {
 
 #[test]
 fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
-    for operation in 0..4 {
+    for operation in 0..5 {
         for gesture in 0..3 {
             let (mut c, id) = setup();
             let mut state = ChartState::default();
@@ -103,7 +109,8 @@ fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
                 0 => c.move_pane(0, 1),
                 1 => c.swap_panes(0, 1),
                 2 => c.move_series_to_pane(id, 1),
-                _ => c.remove_pane(0),
+                3 => c.remove_pane(0),
+                _ => c.set_series_order(id, usize::MAX),
             }
             .unwrap();
             assert!(!c.is_panning());
@@ -170,6 +177,14 @@ fn rejected_and_identity_operations_preserve_active_drag() {
     c.move_pane(0, 0).unwrap();
     c.swap_panes(1, 1).unwrap();
     c.move_series_to_pane(id, 0).unwrap();
+    c.set_series_order(id, 0).unwrap();
+    assert!(
+        c.set_series_order(
+            feather_charts::model::data_layer::SeriesId::new(u64::MAX),
+            0
+        )
+        .is_err()
+    );
     assert!(c.is_panning());
     let before = c.model().time_scale().right_offset();
     let moved = Point::new(250., 120.);
@@ -320,7 +335,7 @@ fn transfer_keeps_update_marker_deadlines_and_idle_expiration() {
 #[test]
 fn pane_changes_stop_touch_and_kinetic_state() {
     use std::time::Duration;
-    for operation in 0..4 {
+    for operation in 0..5 {
         let (mut c, id) = setup();
         let now = Instant::now();
         for (ms, start, x) in [
@@ -351,7 +366,8 @@ fn pane_changes_stop_touch_and_kinetic_state() {
             0 => c.move_pane(0, 1),
             1 => c.swap_panes(0, 1),
             2 => c.move_series_to_pane(id, 1),
-            _ => c.remove_pane(0),
+            3 => c.remove_pane(0),
+            _ => c.set_series_order(id, usize::MAX),
         }
         .unwrap();
         c.prepare(Size::new(800., 500.), 1., now + Duration::from_millis(100))

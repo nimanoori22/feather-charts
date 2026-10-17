@@ -217,11 +217,18 @@ fn pane_operations_cancel_captured_edits_once_and_reject_stale_tokens() {
     use feather_charts::api::{
         ChartEvent, ChartMessage, ChartState, PrimitiveEditCancelReason, PrimitiveEditPhase,
     };
-    for operation in 0..4 {
+    for operation in 0..5 {
         let (mut chart, _, _) = setup_edit();
         chart.add_pane();
         prepare(&mut chart);
         let owner = chart.series_ids().next().unwrap();
+        chart
+            .add_series(
+                SeriesOptionsMap::Line(Default::default()),
+                0,
+                PriceScalePosition::Right,
+            )
+            .unwrap();
         let mut state = ChartState::default();
         let m = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
         let ChartMessage::PrimitiveEdit(mut stale) = m.clone() else {
@@ -232,7 +239,8 @@ fn pane_operations_cancel_captured_edits_once_and_reject_stale_tokens() {
             0 => chart.move_pane(0, 1),
             1 => chart.swap_panes(0, 1),
             2 => chart.move_series_to_pane(owner, 1),
-            _ => chart.remove_pane(0),
+            3 => chart.remove_pane(0),
+            _ => chart.set_series_order(owner, usize::MAX),
         }
         .unwrap();
         let events = chart.update(ChartMessage::Tick(Instant::now())).unwrap();

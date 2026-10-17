@@ -25,6 +25,9 @@ where
         let effects = self.panes[pane]
             .set_series_order(id, order)
             .map_err(ChartModelError::Pane)?;
+        if effects.is_empty() {
+            return Ok(());
+        }
         self.consume_pane_effects(effects);
         self.flush_effects();
         Ok(())
