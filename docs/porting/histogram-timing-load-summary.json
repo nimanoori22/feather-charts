@@ -1,0 +1,242 @@
+{
+  "date": "2026-10-17",
+  "diagnostic_only": true,
+  "tooling_base": "9dd9ad8",
+  "engine_source": "ae067e2",
+  "kernel": "7.2.5-3-omarchy",
+  "executions": 36,
+  "instrumented_measured_frames": 24000,
+  "instrumented_total_tail_frames": 1200,
+  "per_frame_counts": [
+    16,
+    16,
+    1328
+  ],
+  "all_per_series_work_constant": true,
+  "overhead": {
+    "flags": 0,
+    "comparisons": 24,
+    "guard": 0.05,
+    "median_growth": {
+      "min": -0.023286461517559864,
+      "max": 0.003920528136684753
+    },
+    "p95_growth": {
+      "min": -0.03364455210045347,
+      "max": 0.011949707745464
+    }
+  },
+  "reference_total_p95_ms": {
+    "ambient": {
+      "min": 1.199857,
+      "max": 1.2505289999999998
+    },
+    "cpu-contention": {
+      "min": 2.823644,
+      "max": 2.870699
+    }
+  },
+  "ambient_histogram_tail_mean_ms": {
+    "min": 0.06761236,
+    "max": 0.0728923
+  },
+  "ambient_histogram_tail_share": {
+    "min": 0.05895764841749452,
+    "max": 0.06314367603813473
+  },
+  "ambient_tail_minus_normal_ms": {
+    "histogram": {
+      "min": 0.010223345263157886,
+      "max": 0.013834855263157891
+    },
+    "other_snapshot": {
+      "min": 0.05998252473684218,
+      "max": 0.07431922263157897
+    }
+  },
+  "reference_tail_clock_means_ms": {
+    "ambient": {
+      "wall_ms": {
+        "min": 1.14484289,
+        "max": 1.19819115
+      },
+      "thread_cpu_ms": {
+        "min": 1.13936722,
+        "max": 1.19235632
+      }
+    },
+    "cpu-contention": {
+      "wall_ms": {
+        "min": 2.91024127,
+        "max": 3.34142796
+      },
+      "thread_cpu_ms": {
+        "min": 1.13139856,
+        "max": 1.17106212
+      }
+    }
+  },
+  "production_engine_changed": false,
+  "acceptance": "OPEN; budgets and historical results unchanged; no acceptance rerun",
+  "priority": "Defer open timing investigation; resume feature development with conflation next",
+  "historical_cause": "NOT ESTABLISHED; synthetic CPU contention is not evidence of historical application interference",
+  "validation": {
+    "isolated_library_tests": 400,
+    "python_tests": 63,
+    "strict_clippy": "PASS",
+    "rustfmt": "PASS",
+    "smoke_sources": [
+      1,
+      16
+    ],
+    "worker_exception_cleanup": "PASS",
+    "active_workers_reaped": 18
+  },
+  "artifacts": {
+    "target/histogram-timing-load/build/manifest.json": "0d17740c502cc051006493ccac927e9d5e698a2667f6f38dd82127388edb695b",
+    "target/histogram-timing-load/build/preparation_profile": "3a0d4254bd194aaa5774790c5a60a5a5192711d1059f441fc45b273d48307a32",
+    "target/histogram-timing-load/build/build.log": "5edd171f9ba02fea508e4785d21439e7e682bd6c7edd658a98f454a0f9d3a678",
+    "target/histogram-timing-load/counter-tests-red.log": "238dc475faf0668f7047e4c91436706aec08323a32f053cdfd6a1ba75a545b22",
+    "target/histogram-timing-load/analysis-tests-red.log": "892996a5b76ca01634ccd2690008c445fb1b42e4ef66ae749b81ab602b5326b2",
+    "target/histogram-timing-load/run-progress.log": "51ef844d8b15bcb2ee35b555050b4e88ebe6f23c235695c5987ca5887aef669c",
+    "target/histogram-timing-load/rust-tests.log": "5fa0a11f54133ed70b256f599b9b648cd4ea43c71b367b384039952773130b40",
+    "target/histogram-timing-load/python-tests-final.log": "a8fcc048ead2e919ff7bedbc72a6e47d01cf322f49837d731de7e7c3e8ee75bd",
+    "target/histogram-timing-load/clippy.log": "2d0605cabcdd40721080929e6b9b7103bede66740c7dff47cd090ced9d7b44e5",
+    "target/histogram-timing-load/smoke/1.counts.csv": "facb6c31816340022aca2b1a78efb1c03ef4de2edee8d79fb89fe9f0241b8b90",
+    "target/histogram-timing-load/smoke/1.log": "bc9f04900a5634076243811e9636b99e346d741a796ab978d0ccf4c5c63c55e2",
+    "target/histogram-timing-load/smoke/1.phase.csv": "ae55627d9bd0cca5aa761c0c483fb5e50967256dd8a39a27505e5c9f9c52a74d",
+    "target/histogram-timing-load/smoke/16.counts.csv": "e22953493625b12992ef24451ea96736f2779680747922fbc336afcf2c6f7704",
+    "target/histogram-timing-load/smoke/16.log": "2187d8986a472e48b4c7cfd925b8851425083f95414d4b8ee73281d1d558b590",
+    "target/histogram-timing-load/smoke/16.phase.csv": "b179c6422f1a2a58ba47a32d241a9a060e0c29f3eea9f4cc6764340007a4a94a",
+    "target/histogram-timing-load/runs/1-100000-off-ambient.environment.json": "8479410d08f60c71f61dd5492c34c5acf9549c10f603fd3de5bc7208d1d38012",
+    "target/histogram-timing-load/runs/1-100000-off-ambient.log": "04ce99c33b23fb6207179062f63d4b458986391ad8b114f0a20ea80bb7d10479",
+    "target/histogram-timing-load/runs/1-100000-off-ambient.phase.csv": "1c0cc589e7b970acc6ab09c535aad8fd7a440c8d397d5c4f59e8b942032bbb13",
+    "target/histogram-timing-load/runs/1-100000-off-cpu-contention.environment.json": "779a51c065d41e73c88927d499d2557a7cf852c550a68607f30e9ef4249204a9",
+    "target/histogram-timing-load/runs/1-100000-off-cpu-contention.log": "1f96e5991be8638fcebeea6b56999dc4a092c697373ed467363e15a87870d907",
+    "target/histogram-timing-load/runs/1-100000-off-cpu-contention.phase.csv": "de7efc6510cc33fab43575d2d71249fbb6a4ed563987810b7465b1ef9770b9c4",
+    "target/histogram-timing-load/runs/1-100000-on-ambient.counts.csv": "9c3e18cbbd1f2e77c459bfdca40d402150b9915b9f08c7a6eae86bdb9f3ebd74",
+    "target/histogram-timing-load/runs/1-100000-on-ambient.environment.json": "4dba6b467b0f427505a78b97202864d8567ec83b36a680842e00f46ab9c61c9d",
+    "target/histogram-timing-load/runs/1-100000-on-ambient.log": "51a405feffcc3e99916759ab7bcc7f09697413ed61dc05818cccf1d4e9bbbf35",
+    "target/histogram-timing-load/runs/1-100000-on-ambient.phase.csv": "2912f67b01c4282a31bd76ce705b74b00f7206e483d33e596364549f9ddb66c6",
+    "target/histogram-timing-load/runs/1-100000-on-cpu-contention.counts.csv": "5d1b4ce344ba41413a2f787fc01679f671c9e6d3021bf3839c776e35c88231ab",
+    "target/histogram-timing-load/runs/1-100000-on-cpu-contention.environment.json": "c17129408b29492fcaddb69354ae79f8a5bd52204223f2198f01e72b01df0a27",
+    "target/histogram-timing-load/runs/1-100000-on-cpu-contention.log": "6808879081c0e27aacdefe1ee49aad343116396746b7cba4f8f8339506c1d442",
+    "target/histogram-timing-load/runs/1-100000-on-cpu-contention.phase.csv": "665b5b2b2552308bfe4f10cd09a4e138ba8afb09fc67dc1ef58cd03f8b4f2588",
+    "target/histogram-timing-load/runs/1-100000-reference-ambient.environment.json": "cb29b7a88f6389375c32db0fdd98abf38d1639dbdf8dcab1d87ad71bc47b8d03",
+    "target/histogram-timing-load/runs/1-100000-reference-ambient.log": "6400eb8b4f0c99a93649f6b9f83b78d65981ffc7a399afd0d82417649412ad27",
+    "target/histogram-timing-load/runs/1-100000-reference-ambient.phase.csv": "36438dd710829ac4fda92fea3b9e722651085bf666919511f142a2e090d77f78",
+    "target/histogram-timing-load/runs/1-100000-reference-cpu-contention.environment.json": "8b1f2389a02c7d10dd29d5891d179fdea0a03bd17fa48eb443de4c11576d3959",
+    "target/histogram-timing-load/runs/1-100000-reference-cpu-contention.log": "dd0eea54c251b01557839a652d5bc949f63419ffd8316edf9f4425134f10949f",
+    "target/histogram-timing-load/runs/1-100000-reference-cpu-contention.phase.csv": "ee96397288910b83b7e8ddce475b7ca43703895346633fa92cc4ba940353f37b",
+    "target/histogram-timing-load/runs/1-1200-off-ambient.environment.json": "a7e1f6fe27a2ac4593107b26b693586bf6b526fa231c6a6927adc08e920416d4",
+    "target/histogram-timing-load/runs/1-1200-off-ambient.log": "3b93410a5988ded1694e352bac050e2cb717f2e106b9215b20fea7e075c623da",
+    "target/histogram-timing-load/runs/1-1200-off-ambient.phase.csv": "0a877f99cb0eb0fc57ca5e5679fc35de9e08d4d5cb11103299dff51ea92e0c62",
+    "target/histogram-timing-load/runs/1-1200-off-cpu-contention.environment.json": "6dd1d22e823367ef8ac953c06d3aaa1bb20a75f28a486a5d31b8af0311b59981",
+    "target/histogram-timing-load/runs/1-1200-off-cpu-contention.log": "755a9be71bdf81e53d4d0700c6173c1e34deb56f5bd27b0cad45b0a735edaa34",
+    "target/histogram-timing-load/runs/1-1200-off-cpu-contention.phase.csv": "3022fffecdd05eeb1ffa0a4a881e1e42ed883eef48dd38595747d014bb3d9ebf",
+    "target/histogram-timing-load/runs/1-1200-on-ambient.counts.csv": "5061a52335f61771e3333434c47d9aae621c1fa886f715e2e7428b8533f2a252",
+    "target/histogram-timing-load/runs/1-1200-on-ambient.environment.json": "3b9cf7341570ab7230b80b6b95eef865bf1133e25fb4f55708b75f6bcaf88692",
+    "target/histogram-timing-load/runs/1-1200-on-ambient.log": "fe3226838614e1b00e1d54f3e5f7a6193ea9fca285aa14d42f87b131baf2a6f1",
+    "target/histogram-timing-load/runs/1-1200-on-ambient.phase.csv": "8bcd6c0def0d0a026d5af5f643f47dafea9bc3f0fbb17c7b965e4d7f2613a973",
+    "target/histogram-timing-load/runs/1-1200-on-cpu-contention.counts.csv": "b7d215eb2944edf1dc6803ffae749f6cd1b0c71b6633403d858211cc0b1b1d0d",
+    "target/histogram-timing-load/runs/1-1200-on-cpu-contention.environment.json": "c5f2fa529d0c49dd15d2719b4550b1557e79157637653fc71c608cbef053c8ad",
+    "target/histogram-timing-load/runs/1-1200-on-cpu-contention.log": "46ce9ddb0e5a42f5bef3c750d928d11548147a1c9eb30aa28f9d188bb7e4968c",
+    "target/histogram-timing-load/runs/1-1200-on-cpu-contention.phase.csv": "fd2397aca04cfcb9081b262bc1d3c3330ac31f670c2e2b3d6d9908843133f05c",
+    "target/histogram-timing-load/runs/1-1200-reference-ambient.environment.json": "e690d7b26a9b9603f70bbbdb4e7d154a8df2a66049cfd589aff73e801e35116a",
+    "target/histogram-timing-load/runs/1-1200-reference-ambient.log": "93b9d948c7fdd36b343bd0916d671226f39371f744c6c6fd68728d1e76c92d7e",
+    "target/histogram-timing-load/runs/1-1200-reference-ambient.phase.csv": "638218a3fc0e568b6259155b9172cc86ada1f3cae3466633f171e10be0cc05a9",
+    "target/histogram-timing-load/runs/1-1200-reference-cpu-contention.environment.json": "a117abcca237a790b0bf4b8245e73f60b5c3cafb57dcfaaa5a666592fb69ce62",
+    "target/histogram-timing-load/runs/1-1200-reference-cpu-contention.log": "fb0f6e2c2fe5846c731196beb0571063dc0c8956137e0ea1caba1f93d1030e88",
+    "target/histogram-timing-load/runs/1-1200-reference-cpu-contention.phase.csv": "b488c81d7d38bc524d09bd6cb54cedbac1e7048ece600198c98f2814f2c98404",
+    "target/histogram-timing-load/runs/2-100000-off-ambient.environment.json": "824ad0a199542e3fe8d7f53f2cf0bdda62f43e2f3949919a294fd8e2308470fa",
+    "target/histogram-timing-load/runs/2-100000-off-ambient.log": "bc04d7ed2f23bfb02047d11759c473208fef13926ef03e87b6e890a47f9dbe96",
+    "target/histogram-timing-load/runs/2-100000-off-ambient.phase.csv": "ae0310610c6b06042279ee290baa69a21a3ad0f372f4e33bd97ce9e9678e4a95",
+    "target/histogram-timing-load/runs/2-100000-off-cpu-contention.environment.json": "0610c3327a2ff38e63100ca84bab8c7dd23643fb32ba9a8fa4a6d82162208570",
+    "target/histogram-timing-load/runs/2-100000-off-cpu-contention.log": "967ebff3af816ad96db2901d24475fcb2b7a06d9f0b68fb4bd696e021de7a129",
+    "target/histogram-timing-load/runs/2-100000-off-cpu-contention.phase.csv": "7692de84625abb3033cb1a6096a3e428569e4501da76b5b8c4801e6209db4b1a",
+    "target/histogram-timing-load/runs/2-100000-on-ambient.counts.csv": "a98b0d6dff248fb21945a48a289903c5001b5e8d3457bafb2b94c21a5aa194c6",
+    "target/histogram-timing-load/runs/2-100000-on-ambient.environment.json": "d74c7cffdf395423f6d9e878f21e4d6800d97800fc7a6e6e73aa7c25fbfa3810",
+    "target/histogram-timing-load/runs/2-100000-on-ambient.log": "a2abcbcadef73ade6c7d64845e729215531a635a4da4c7366aa33b00b32dea25",
+    "target/histogram-timing-load/runs/2-100000-on-ambient.phase.csv": "beee2a1bc6ee69341ec4d4236cd3378372b944d8bc5c9dce8299e5547efd70fa",
+    "target/histogram-timing-load/runs/2-100000-on-cpu-contention.counts.csv": "48f7ee0466a42b34abdbeff641ce16a36a704a8ba68e7e9ca51e5758ab7df191",
+    "target/histogram-timing-load/runs/2-100000-on-cpu-contention.environment.json": "a9a179396834f5268669d1973a0204d1a1ff37fe6a07fcc7bb3f5f0318fe28f0",
+    "target/histogram-timing-load/runs/2-100000-on-cpu-contention.log": "2a0790dc149f50a8344a11bf6724806ed36a0cd9365ce9614daa6956a71129ef",
+    "target/histogram-timing-load/runs/2-100000-on-cpu-contention.phase.csv": "7a45f676b619d7082f413a126454ac3ee245ac1626c6b35d43e01b8f5c541a4a",
+    "target/histogram-timing-load/runs/2-100000-reference-ambient.environment.json": "388909b590aca208768e015c6f9076de92a0e8d27463b925f859474096f1b7fe",
+    "target/histogram-timing-load/runs/2-100000-reference-ambient.log": "3920c546dd0ba2eea0d40f720f5dbd8f167be70f123efbbd32d84683e20f6dd7",
+    "target/histogram-timing-load/runs/2-100000-reference-ambient.phase.csv": "af35139d1252755a13ec7e1b63dae1b1ef49b518a07defabf19e17c4a89be7e0",
+    "target/histogram-timing-load/runs/2-100000-reference-cpu-contention.environment.json": "bc523af32b8765bbf88c008f0a3776cfd70eede04845b9ea6280b0284d9eb821",
+    "target/histogram-timing-load/runs/2-100000-reference-cpu-contention.log": "6fe2ff5c9f574a2f3f8934692a124d25bd1cfa900184d1176c545d489d86d463",
+    "target/histogram-timing-load/runs/2-100000-reference-cpu-contention.phase.csv": "4e24c5b29c3eca1affde167328642aae49fc56f88d27cbf1b52ca421bf824255",
+    "target/histogram-timing-load/runs/2-1200-off-ambient.environment.json": "7c853df3d6f09b01bdc7ff14bdcb6caf2f4609ebb76b789e77d75b0f5c452b78",
+    "target/histogram-timing-load/runs/2-1200-off-ambient.log": "f46bb54229d0a2d32432083cb9d4624ed40e6d18bbd77b81dda914e4fa7cfbad",
+    "target/histogram-timing-load/runs/2-1200-off-ambient.phase.csv": "411d2b52a6a135dee63b3a13af65c5d523c4d4cf51a63d10b292567365dc43cd",
+    "target/histogram-timing-load/runs/2-1200-off-cpu-contention.environment.json": "580d09e3b7e4e293a3537004144dfc71f896c2ffa8c6528bfa190586ef919342",
+    "target/histogram-timing-load/runs/2-1200-off-cpu-contention.log": "ace592285e679a2d4c8b0495c8a180ae73ea0eea8dd1b616fa46f29794fa240c",
+    "target/histogram-timing-load/runs/2-1200-off-cpu-contention.phase.csv": "8489e5cb813fba152ffde9bccc11942a3fe3b7f6522abc163a4bb6451102defd",
+    "target/histogram-timing-load/runs/2-1200-on-ambient.counts.csv": "c14effc20fa1ffd2637f19d410813064e6bf9d96885bfe20224d151e8bb1529f",
+    "target/histogram-timing-load/runs/2-1200-on-ambient.environment.json": "69c70ba1ab7e74d46096c90baf370759b9544c33dec282fd3e3dca27e354ab59",
+    "target/histogram-timing-load/runs/2-1200-on-ambient.log": "f89454642875fe3e0f2de9a9662ab92d9edc2aa4bac6a2cd57f5cdcf86b7c5e6",
+    "target/histogram-timing-load/runs/2-1200-on-ambient.phase.csv": "99fb53ae45afc69732007ce3f188dbd59491d83ee24820b21ae930857fe9c5f9",
+    "target/histogram-timing-load/runs/2-1200-on-cpu-contention.counts.csv": "8a8deea3ac1f4ad9220dee6b99959fe44b79d06674fab1ef9f2ef7fc441cd2b1",
+    "target/histogram-timing-load/runs/2-1200-on-cpu-contention.environment.json": "3cf1f7b6c048a6a3ff7c13c12bc8ede86c38de617001481d03993e2b0bd978d4",
+    "target/histogram-timing-load/runs/2-1200-on-cpu-contention.log": "b7efc677f165342aea07fe4ec5e58c6f2034b41bc1c7f4f713618806fa403fb1",
+    "target/histogram-timing-load/runs/2-1200-on-cpu-contention.phase.csv": "8fb05dfa7c4e0deec37f18604606ac90c0d633666fb0c97c17b7c258da5aa7b0",
+    "target/histogram-timing-load/runs/2-1200-reference-ambient.environment.json": "ac9009df2ca9eada354861e5c6120ecaa1f930e69656d06a8f43cae49374521d",
+    "target/histogram-timing-load/runs/2-1200-reference-ambient.log": "6774a96f1e71015d08fe904dc52039c0619d2c3fd78ba3008e18a4871509cd4c",
+    "target/histogram-timing-load/runs/2-1200-reference-ambient.phase.csv": "9aa9fb275cbc01fc1e610332190502bed2d092f4a4a9b77332f5065de060f67a",
+    "target/histogram-timing-load/runs/2-1200-reference-cpu-contention.environment.json": "beb712b731131adda168130f86ebc5be98c01e3e56743335eeee0c9902f60a3a",
+    "target/histogram-timing-load/runs/2-1200-reference-cpu-contention.log": "66fb6f0e33d7ac1de47d066f804115380a431ef54f62dc751dc4297d7f2b36b9",
+    "target/histogram-timing-load/runs/2-1200-reference-cpu-contention.phase.csv": "76c982ad090a1f1caf7f4143d933cab1e4a0832348124833c64868ed8516380f",
+    "target/histogram-timing-load/runs/3-100000-off-ambient.environment.json": "2f8e9ecd1aee3a0bf248792dbc6df2b38ef55d88e14151c032676ac120bdb5d3",
+    "target/histogram-timing-load/runs/3-100000-off-ambient.log": "ab102acd6406ab4277240f5f7da0a8455f9fe6eb2c3de470465e0ba8053e076e",
+    "target/histogram-timing-load/runs/3-100000-off-ambient.phase.csv": "8a0f4e6380bc3322d19b01d282c7438de2ac2b6e42af634cff00524971bde2c3",
+    "target/histogram-timing-load/runs/3-100000-off-cpu-contention.environment.json": "23540926649fa04bce47300eb7210d8577cba4fa75d8f6614019b1d66a9b930a",
+    "target/histogram-timing-load/runs/3-100000-off-cpu-contention.log": "6dbd593c0ad0bef82cb70d67dc10b176cef821d1cb30beecd08b72fd444ded26",
+    "target/histogram-timing-load/runs/3-100000-off-cpu-contention.phase.csv": "f726a33f6f51227a526572504e5f091ca3fc9018e77a431aadf34a83c0be32ef",
+    "target/histogram-timing-load/runs/3-100000-on-ambient.counts.csv": "d32b485370617b334dfb35abb4f4ce9a93d22c42089b98e70ee39bb9efb2bb56",
+    "target/histogram-timing-load/runs/3-100000-on-ambient.environment.json": "83ebeec42aac6c4e9742161d8022a519d89425a6c16591c9a303b55f7833433d",
+    "target/histogram-timing-load/runs/3-100000-on-ambient.log": "e6220480541424052d5fb1d2b9f0803a93e661a342a8a1954e8ee0cf5c66d8fc",
+    "target/histogram-timing-load/runs/3-100000-on-ambient.phase.csv": "76a1fefb308ba86682591151ab7c9cd9a7f48c35ff27531d0bcf9b611bbb7505",
+    "target/histogram-timing-load/runs/3-100000-on-cpu-contention.counts.csv": "dd44c47597c01b86fd200a79ae91d8bbd15c228bbf5baed274334362565d443e",
+    "target/histogram-timing-load/runs/3-100000-on-cpu-contention.environment.json": "f33e1e112ae293f289003ae911f3ea0a14990ff5925a170d9934691bfaa1156e",
+    "target/histogram-timing-load/runs/3-100000-on-cpu-contention.log": "224c683097ea775e9747587c218070884149de2e7a05f3c2f519df27e54ec06d",
+    "target/histogram-timing-load/runs/3-100000-on-cpu-contention.phase.csv": "c2b5940299aaed39b6cc1d686213c3449b531f30de741fc2d7a7f6b0f1990c87",
+    "target/histogram-timing-load/runs/3-100000-reference-ambient.environment.json": "159bf4904bf3ea8e360e7e1f883578fb6b16e7f8f600818d5f3a04de35eedb76",
+    "target/histogram-timing-load/runs/3-100000-reference-ambient.log": "3eb440bea97a59d8a68e40cc41218af676364effa6b33f7d14437123803fb63e",
+    "target/histogram-timing-load/runs/3-100000-reference-ambient.phase.csv": "e4c8ae9fb1445e400c6dba9adbd188debf1edc80ddb80c9da213fb3a7784e3d6",
+    "target/histogram-timing-load/runs/3-100000-reference-cpu-contention.environment.json": "fba6d01fb00ed33caffd3be6997c302958ae427adf77f98a438d9037d117848a",
+    "target/histogram-timing-load/runs/3-100000-reference-cpu-contention.log": "964f560f490d241321b7f39d6cda8a0d16624aceb6dd4163472b3c393fad9f9a",
+    "target/histogram-timing-load/runs/3-100000-reference-cpu-contention.phase.csv": "2ab1ab3d00018ed49896895113cf9184d9dcd7c572d2183334384f1dc7e322a0",
+    "target/histogram-timing-load/runs/3-1200-off-ambient.environment.json": "2818d0a0f9be0d2fa6f0521954087939f6b62f6e4279869f9af397310e46c2b3",
+    "target/histogram-timing-load/runs/3-1200-off-ambient.log": "df82deba3905c4ed54a671f6b84751e717d8cb4b5cd908a789c058bf564d226a",
+    "target/histogram-timing-load/runs/3-1200-off-ambient.phase.csv": "a866c9bbc322907604c28bfd04ba133ecc99bca2fe95e641277fdd122b3bc971",
+    "target/histogram-timing-load/runs/3-1200-off-cpu-contention.environment.json": "901c307ec3b51ab89103b43e36379badb8946ac4c0519fe2e568c275b6f9f2f9",
+    "target/histogram-timing-load/runs/3-1200-off-cpu-contention.log": "7d5ffeab162a7897ac9faf418ba2acb43737ee78f1f4b99c650a44fd275a3d5a",
+    "target/histogram-timing-load/runs/3-1200-off-cpu-contention.phase.csv": "a0f5c62fc8b21f6ecb1037ad1b4afea2b95250a3c59ed16743f59f9dad393b1a",
+    "target/histogram-timing-load/runs/3-1200-on-ambient.counts.csv": "4c9ef207561535419ad01f8203d7ffd6a35bd7082defb16fc4331343f19e30fb",
+    "target/histogram-timing-load/runs/3-1200-on-ambient.environment.json": "2f16b72b08ad14c89ce38e99048d8a2d2795633e5a5aecef466ecfd7c2283288",
+    "target/histogram-timing-load/runs/3-1200-on-ambient.log": "fca6eefa7b79004cae7390a3e820dc877556364ce3c094c3bf2659eff0d2aa9e",
+    "target/histogram-timing-load/runs/3-1200-on-ambient.phase.csv": "17bfb5d5c3481c92bfd62e6da553599dc7ac5b9f05d8ac70ecf7c2fd6915e49e",
+    "target/histogram-timing-load/runs/3-1200-on-cpu-contention.counts.csv": "de9115536c046e10e42aecbdf15174237958688bd43ade910d02575cf2f9e902",
+    "target/histogram-timing-load/runs/3-1200-on-cpu-contention.environment.json": "477910e3d36f31d97e718b9d34c56ff3f4e46777747535c6e68d85ea511f23bd",
+    "target/histogram-timing-load/runs/3-1200-on-cpu-contention.log": "3b7d1f6d8c569bdef69b162edaa01350227e2d6f02ca379f055969c6b1f46c58",
+    "target/histogram-timing-load/runs/3-1200-on-cpu-contention.phase.csv": "f271ccd2bcc01abbe0ae3890b0f802090fe9d7664c20895d3f1a36c323c20d4e",
+    "target/histogram-timing-load/runs/3-1200-reference-ambient.environment.json": "f3a47a976ecd44fc04faec4af6603ee9a5bfecec15d6d372b8d59d1abe21903a",
+    "target/histogram-timing-load/runs/3-1200-reference-ambient.log": "c529139eb05f79bb1450e138c0e7ee8dbae97b49d75e4964758cca1b6dd93038",
+    "target/histogram-timing-load/runs/3-1200-reference-ambient.phase.csv": "2d1fbe92730603c57b0c9be1b000b347ad8b6e519eeb05cb48df883ded61c545",
+    "target/histogram-timing-load/runs/3-1200-reference-cpu-contention.environment.json": "557c362fd8e9565333fa2d5100d2a7ccff88e99ffb34259e63ee298c12da3667",
+    "target/histogram-timing-load/runs/3-1200-reference-cpu-contention.log": "a5d5f306002523aeef3274b9837da24b599bff1220b6655c9c64afbeea44e66f",
+    "target/histogram-timing-load/runs/3-1200-reference-cpu-contention.phase.csv": "e5991cea96db6cf6d585b02ef622342d5a8b162ea3f99987a3fbbd4326c8fcf9",
+    "target/histogram-timing-load/runs/protocol.json": "8c78dcbd6c76cf40cf6e01b2f73a6569630e83e6cd819bf724d61ff32dd4ae31",
+    "target/histogram-timing-load/analysis/analysis.json": "0de35380a80ac6006e72a72f29de6c79e37921b4698e7fcec086d44086e23318",
+    "target/histogram-timing-load/analysis/frame-work.csv": "1e11dc9991eeeaf5551ba1c276a1d0d5ea1dd764d09150aad39aea0bcaaeff8b",
+    "target/histogram-timing-load/analysis/snapshot-split.svg": "9e1f6f41e5456eb0cd7c03f41e70545e03d11b517ab1597201796cc397f03f71",
+    "target/histogram-timing-load/analysis/work-and-latency.svg": "80d15149c91a4b50355fc6598a6cbfb5104da5a3e8587f2b34e001f47e999575",
+    "examples/support/histogram_work_counts.rs": "e06bfec0a8191c858b6af876eb236bc27e042147c866812e7b658e0dd83766c9",
+    "scripts/build_histogram_work_profile.py": "6cfad23038b2d6e2cc1787d41f5e69c7aa7c5a713f0e67073f989ff77220cdd1",
+    "scripts/profile_histogram_work.py": "fccac1eb6fd62736882b290531b756e790c2c25b640ef85e85266da93e9dbed7",
+    "scripts/histogram_work_analysis.py": "4b72b34df71c5b987eeb302c2a020dfe3664c414e3ea53f8ff34635545022181",
+    "scripts/test_histogram_work_analysis.py": "ebff2ba51e69b8830a9c9703bca05978e01f9c6dbbff982e7a6fcdd6bf11cbfc"
+  }
+}

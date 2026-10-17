@@ -5,6 +5,13 @@ Execution checklist: [live-update-acceptance-todo.md](live-update-acceptance-tod
 This extends the unfinished [incremental append milestone](incremental-append-todo.md)
 without replacing its history or the older navigation plan/checklist.
 
+**Current priority, 2026-10-17:** after the user-requested bounded
+[timing/load check](../docs/porting/histogram-timing-load.md), further timing
+investigation is deferred and [conflation development](conflation-next.md) may
+proceed separately. This supersedes the acceptance-before-conflation sequencing
+below. Historical failures, OPEN acceptance, device gaps and all thresholds remain
+unchanged; this is not an acceptance waiver or pass.
+
 ## Outcome and scope
 
 Deliver responsive live-update navigation on the available backends, correct

@@ -306,6 +306,13 @@ records further diagnostics and full normal-build mouse passes on both backends.
 Touchpad, touchscreen and high-DPI checks remain pending.
 See the [mouse checks](tasks/live-append-mouse-acceptance.md) for physical coverage.
 
+The latest [bounded timing/load check](docs/porting/histogram-timing-load.md)
+shows that controlled CPU contention increases elapsed time while counted
+Histogram work stays fixed; it establishes no new engine defect. Further timing
+investigation is deferred. Development now prioritizes
+[conflation rendering](tasks/conflation-next.md), with the historical timing
+exception and acceptance thresholds retained unchanged.
+
 ```sh
 cargo run --example public_chart -- --line --append-captures-only --capture-dir target/append-captures
 cargo run --release --example preparation_profile -- --rows 100000 --series 16 --kind line --phase append --fixed-last-price

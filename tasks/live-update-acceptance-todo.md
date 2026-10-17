@@ -5,6 +5,12 @@ Starting checkpoint: `b956460`. Software-drag and short-height fixes are impleme
 Timing gates and full physical acceptance remain open; see the implementation report.
 Existing measurements and mouse observations remain in their original reports.
 
+Current development priority (2026-10-17): timing investigation is deferred after
+the [bounded load check](../docs/porting/histogram-timing-load.md). Continue
+[conflation feature work](conflation-next.md) separately. All unchecked acceptance
+items and thresholds below remain open; the old acceptance-first feature
+sequencing is superseded by this priority decision.
+
 ## 1. Capture the actual demo timeline
 
 **Dependencies:** None. **Scope:** Medium; split integration from analysis if needed.
