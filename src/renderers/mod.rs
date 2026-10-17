@@ -23,3 +23,5 @@ pub mod baseline_renderer;
 pub mod line_hit_test;
 
 pub mod range_hit_test;
+
+pub mod series_last_price_animation_renderer;

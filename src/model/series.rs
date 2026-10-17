@@ -307,6 +307,8 @@ pub struct Series<I, O, M = ()> {
     pane_data_generation: u64,
     z_order: Cell<i32>,
     last_update_info: Option<SeriesUpdateInfo>,
+    pub(crate) last_price_animation:
+        Option<crate::model::last_price_animation::LastPriceAnimationState>,
     pub(crate) marker_collections: Vec<super::series_markers::MarkerCollection<O>>,
     pub(crate) marker_spacing: Cell<f64>,
     pub(crate) primitive_autoscale: Vec<(u64, super::ipane_primitive::PrimitiveAutoscaleProvider)>,
@@ -359,6 +361,15 @@ where
             pane_data_generation: 0,
             z_order: Cell::new(0),
             last_update_info: None,
+            last_price_animation: matches!(
+                series_type,
+                SeriesType::Line | SeriesType::Area | SeriesType::Baseline
+            )
+            .then(|| {
+                crate::model::last_price_animation::LastPriceAnimationState::new(
+                    std::time::Instant::now(),
+                )
+            }),
             marker_collections: vec![],
             marker_spacing: Cell::new(6.),
             primitive_autoscale: vec![],
@@ -430,6 +441,38 @@ where
             _ => return None,
         })
     }
+    pub(crate) fn animation_options(
+        &self,
+    ) -> Option<(crate::model::series_options::LastPriceAnimationMode, f64)> {
+        Some(match &self.options {
+            SeriesOptionsMap::Line(o) => (
+                o.style.last_price_animation,
+                o.style.line_width as u8 as f64,
+            ),
+            SeriesOptionsMap::Area(o) => (
+                o.style.last_price_animation,
+                o.style.line_width as u8 as f64,
+            ),
+            SeriesOptionsMap::Baseline(o) => (
+                o.style.last_price_animation,
+                o.style.line_width as u8 as f64,
+            ),
+            _ => return None,
+        })
+    }
+    fn update_price_animation(&mut self, info: Option<SeriesUpdateInfo>) {
+        if let Some((mode, _)) = self.animation_options() {
+            self.last_price_animation
+                .as_mut()
+                .expect("line-family animation state")
+                .on_update(
+                    info,
+                    self.data.rows().is_empty(),
+                    mode,
+                    std::time::Instant::now(),
+                );
+        }
+    }
     pub fn last_value_data(
         &self,
         scale: &crate::model::price_scale::PriceScale,
@@ -480,6 +523,7 @@ where
         self.data.set_data(rows);
         self.conflation.get_mut().clear();
         self.last_update_info = info;
+        self.update_price_animation(info);
         self.invalidate_pane_data();
     }
     fn apply_rows(
@@ -504,6 +548,7 @@ where
                 self.conflation.get_mut().clear();
             }
             self.last_update_info = info;
+            self.update_price_animation(info);
             self.invalidate_pane_data();
             changed
         } else {

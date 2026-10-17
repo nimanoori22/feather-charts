@@ -1307,6 +1307,9 @@ where
             None => self.pending = Some(mask),
         }
     }
+    pub(crate) fn has_pending_invalidation(&self) -> bool {
+        self.pending.is_some()
+    }
     pub fn take_invalidation(&mut self) -> Option<InvalidateMask> {
         self.pending.take()
     }

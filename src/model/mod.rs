@@ -51,3 +51,5 @@ pub mod time_scale_options;
 pub mod time_scale_visible_range;
 
 pub mod hit_test;
+
+pub(crate) mod last_price_animation;

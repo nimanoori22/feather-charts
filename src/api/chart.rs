@@ -98,6 +98,7 @@ pub struct Chart {
     pub(super) owner: MultiPaneChartFrameOwner,
     pub(crate) controller: TimeScaleAnimationController,
     frame: IcedMultiPaneChartFrame,
+    prepared_revision: Option<u64>,
     fonts: AxisFontResolver,
     background: String,
     separator: String,
@@ -150,6 +151,7 @@ impl Chart {
                 .collect(),
             owner: Default::default(),
             controller: Default::default(),
+            prepared_revision: None,
             frame: Default::default(),
             fonts: Default::default(),
             background,
@@ -354,6 +356,7 @@ impl Chart {
         ratio: f32,
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        self.prepared_revision = None;
         self.precompute_conflation_step();
         self.check_primitive_edit(size, ratio);
         let series = self
@@ -443,6 +446,7 @@ impl Chart {
         match result {
             Ok(frame) => {
                 self.frame = frame;
+                self.prepared_revision = Some(self.revision);
                 Ok(())
             }
             Err(error) => {
@@ -487,6 +491,26 @@ impl Chart {
         (self.frame.panes.len() > 1).then_some(&self.frame)
     }
     pub fn is_animating(&self) -> bool {
+        self.has_other_animation_work()
+            || self
+                .frame
+                .panes
+                .iter()
+                .any(|p| p.plot.last_price_animations.iter().any(|a| a.active))
+    }
+    pub(super) fn sample_price_animation_tick(&mut self, now: Instant) -> bool {
+        if self.prepared_revision != Some(self.revision)
+            || self.model.has_pending_invalidation()
+            || self.has_other_animation_work()
+        {
+            return false;
+        }
+        for pane in &mut self.frame.panes {
+            pane.plot.sample_last_price_animations(now);
+        }
+        true
+    }
+    fn has_other_animation_work(&self) -> bool {
         use crate::ui::primitive_hit_testing::PaneHit;
         let selection = self.model.crosshair().origin().and_then(|o| {
             self.frame_for_pane(o.pane)?

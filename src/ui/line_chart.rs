@@ -151,6 +151,8 @@ pub struct CanvasSeriesGeometry {
 }
 #[derive(Clone, Debug)]
 pub struct PlotSnapshot {
+    pub last_price_animations:
+        Vec<crate::renderers::series_last_price_animation_renderer::LastPriceAnimation>,
     pub hovered_custom_data: Option<crate::api::CustomHitData>,
     pub custom: Option<super::custom_series::PreparedCustomSeries>,
     pub marker_orders:
@@ -189,6 +191,7 @@ pub struct PlotSnapshot {
 impl Default for PlotSnapshot {
     fn default() -> Self {
         Self {
+            last_price_animations: vec![],
             hovered_custom_data: None,
             custom: None,
             marker_orders: Default::default(),
@@ -413,6 +416,7 @@ impl PlotSnapshot {
             })
             .collect::<Result<_, FrameError>>()?;
         Ok(Self {
+            last_price_animations: vec![],
             hovered_custom_data: None,
             custom: None,
             marker_orders: Default::default(),
@@ -444,6 +448,11 @@ impl PlotSnapshot {
             crosshair: vec![],
             crosshair_markers: vec![],
         })
+    }
+    pub(crate) fn sample_last_price_animations(&mut self, now: Instant) {
+        for animation in &mut self.last_price_animations {
+            animation.sample(now);
+        }
     }
     pub fn draw(&self, frame: &mut Frame) {
         let size = Size::new(
@@ -532,7 +541,6 @@ impl PlotSnapshot {
             crate::model::series_markers::MarkerZOrder::AboveSeries,
             None,
         );
-        self.draw_annotations(frame, crate::model::series_markers::MarkerZOrder::Top, None);
     }
     fn draw_series_price_lines(&self, frame: &mut Frame, series: Option<SeriesId>, base: bool) {
         self.draw_strokes(
@@ -643,7 +651,8 @@ where
             .map_err(FrameError::Model)?;
     }
     let mask = controller.draw_frame(model, now);
-    let snapshot = prepare_settled_plot(model, view, id, layout)?;
+    let mut snapshot = prepare_settled_plot(model, view, id, layout)?;
+    snapshot.sample_last_price_animations(now);
     Ok((snapshot, mask))
 }
 
@@ -777,6 +786,16 @@ where
     };
     let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
     snapshot.series_id = id;
+    if let Some(id) = id {
+        snapshot.last_price_animations.extend(
+            crate::views::pane::series_last_price_animation_pane_view::prepare(
+                model,
+                id,
+                ratio.horizontal,
+                Instant::now(),
+            )?,
+        );
+    }
     if let Some(id) = id
         && let Some(hit) = super::hit_testing::prepare(model, id, view)
     {

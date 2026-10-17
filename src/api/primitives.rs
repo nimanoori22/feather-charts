@@ -423,9 +423,26 @@ impl crate::ui::line_chart::PlotSnapshot {
         for background in [true, false] {
             self.draw_primitives(frame, layer, None, background);
             let raised = self.hovered_series.filter(|_| self.hovered_series_on_top);
-            let ids = std::iter::once(self.series_id)
-                .chain(self.series_layers.iter().map(|s| s.series_id));
-            for id in ids.flatten().filter(|id| Some(*id) != raised).chain(raised) {
+            let ids = || {
+                std::iter::once(self.series_id)
+                    .chain(self.series_layers.iter().map(|s| s.series_id))
+                    .enumerate()
+                    .filter_map(|(layer, id)| id.map(|id| (layer, id)))
+            };
+            for (series_layer, id) in ids()
+                .filter(|(_, id)| Some(*id) != raised)
+                .chain(ids().filter(|(_, id)| Some(*id) == raised))
+            {
+                if layer == PrimitiveLayer::Top && !background {
+                    for animation in self.last_price_animations.iter().filter(|a| a.series == id) {
+                        animation.draw(frame);
+                    }
+                    self.draw_annotations(
+                        frame,
+                        crate::model::series_markers::MarkerZOrder::Top,
+                        Some(series_layer),
+                    );
+                }
                 self.draw_primitives(frame, layer, Some(id), background);
             }
         }

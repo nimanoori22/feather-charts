@@ -326,6 +326,11 @@ impl Chart {
     pub fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent>, ChartError> {
         self.validate_message(&message)?;
         self.check_primitive_edit(self.size, self.ratio);
+        if let ChartMessage::Tick(now) = message
+            && self.sample_price_animation_tick(now)
+        {
+            return Ok(vec![]);
+        }
         let edit_message = matches!(message, ChartMessage::PrimitiveEdit(_));
         let previous = (
             self.model.crosshair().position(),

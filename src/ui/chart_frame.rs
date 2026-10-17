@@ -358,8 +358,10 @@ impl ChartFrameOwner {
                 pixel_ratio: input.pixel_ratio,
                 background: input.background.clone(),
             };
-            let plot = prepare_series_plot(model, &mut view, id, &plot_layout, PlotContent::Pane)
-                .map_err(ChartFrameError::Plot)?;
+            let mut plot =
+                prepare_series_plot(model, &mut view, id, &plot_layout, PlotContent::Pane)
+                    .map_err(ChartFrameError::Plot)?;
+            plot.sample_last_price_animations(now);
             let left = prepare_price_axis(&measured.left, layout.left_axis.size, input.pixel_ratio)
                 .map_err(ChartFrameError::Price)?;
             let right =

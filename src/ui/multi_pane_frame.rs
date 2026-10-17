@@ -428,6 +428,8 @@ impl MultiPaneChartFrameOwner {
                             .prepare(model, *id, &plot_layout, PlotContent::Series)
                             .map_err(ChartFrameError::Plot)?;
                         plot.hit_series.extend(series_plot.hit_series);
+                        plot.last_price_animations
+                            .extend(series_plot.last_price_animations);
                         let layer = plot.series_layers.len() + 1;
                         plot.annotations
                             .extend(series_plot.annotations.into_iter().map(|mut c| {
@@ -446,6 +448,7 @@ impl MultiPaneChartFrameOwner {
                                 custom: series_plot.custom,
                             });
                     }
+                    plot.sample_last_price_animations(now);
                     plot.axes = Some(axes.clone());
                     panes.push(ChartFrameSnapshot {
                         layout: *pane_layout,
