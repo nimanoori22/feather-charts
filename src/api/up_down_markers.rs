@@ -6,9 +6,7 @@ use super::{
 use crate::model::data_consumer::{AreaDataItem, BuiltInSeriesDataItem, LineDataItem, TimedData};
 use crate::model::{
     data_layer::SeriesId,
-    horz_scale_behavior_time::{
-        horz_scale_behavior_time::TimeKey, time_utils::convert_time, types::Time,
-    },
+    horz_scale_behavior_time::{horz_scale_behavior_time::TimeKey, types::Time},
     series_options::SeriesOptionsMap,
 };
 use crate::renderers::up_down_markers_renderer::{UpDownRenderer, geometry, in_view};
@@ -74,13 +72,8 @@ pub(crate) struct Controller<T = Time, K = TimeKey> {
 }
 #[derive(Debug)]
 struct Primitive<T = Time, K = TimeKey>(Rc<RefCell<State<T, K>>>);
-fn key(time: &Time) -> Result<TimeKey, ChartError> {
-    Ok(TimeKey::new(
-        convert_time(time)
-            .map_err(ChartError::Time)?
-            .timestamp
-            .seconds(),
-    ))
+fn key<B: super::ChartBehavior>(behavior: &B, time: &B::Item) -> Result<B::Key, ChartError> {
+    Ok(behavior.key(&behavior.to_internal(time).map_err(B::conversion_error)?))
 }
 fn colors(options: &UpDownMarkersOptions) -> Result<[iced::Color; 2], ChartError> {
     let parse = |value: &str| {
@@ -91,14 +84,14 @@ fn colors(options: &UpDownMarkersOptions) -> Result<[iced::Color; 2], ChartError
         parse(&options.negative_color)?,
     ])
 }
-fn value(item: &BuiltInSeriesDataItem<Time>) -> Option<f64> {
+fn value<T>(item: &BuiltInSeriesDataItem<T>) -> Option<f64> {
     match item {
         BuiltInSeriesDataItem::Line(LineDataItem::Data(d)) => Some(d.value),
         BuiltInSeriesDataItem::Area(AreaDataItem::Data(d)) => Some(d.value),
         _ => None,
     }
 }
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     pub fn add_up_down_markers(
         &mut self,
         series: SeriesId,
@@ -136,7 +129,7 @@ impl Chart {
     pub fn set_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        data: Vec<BuiltInSeriesDataItem<Time>>,
+        data: Vec<BuiltInSeriesDataItem<B::Item>>,
     ) -> Result<(), ChartError> {
         let series = self
             .up_down
@@ -145,7 +138,11 @@ impl Chart {
             .series;
         let baseline = data
             .iter()
-            .filter_map(|item| value(item).map(|v| key(item.time()).map(|key| (key, v))))
+            .filter_map(|item| {
+                value(item).map(|v| {
+                    key(self.model.time_scale().behavior(), item.time()).map(|key| (key, v))
+                })
+            })
             .collect::<Result<BTreeMap<_, _>, _>>()?;
         self.set_data(series, data)?;
         self.up_down.get_mut(&id.0).unwrap().baseline = baseline;
@@ -155,11 +152,11 @@ impl Chart {
     pub fn update_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        item: BuiltInSeriesDataItem<Time>,
+        item: BuiltInSeriesDataItem<B::Item>,
         historical: bool,
         now: Instant,
     ) -> Result<(), ChartError> {
-        let key = key(item.time())?;
+        let key = key(self.model.time_scale().behavior(), item.time())?;
         let new_value = value(&item);
         let time = item.time().clone();
         let (series, previous, duration) = {
@@ -219,17 +216,17 @@ impl Chart {
     pub fn set_up_down_markers(
         &mut self,
         id: UpDownMarkersId,
-        markers: Vec<UpDownMarker>,
+        markers: Vec<UpDownMarker<B::Item>>,
     ) -> Result<(), ChartError> {
         self.up_down
             .get(&id.0)
             .ok_or(ChartError::UnknownPrimitive(id.0))?;
-        let mut active: Vec<Active> = vec![];
+        let mut active: Vec<Active<B::Item, B::Key>> = vec![];
         for (index, marker) in markers.into_iter().enumerate() {
             if !marker.value.is_finite() || marker.value.abs() > 90_071_992_547_409.9 {
                 return Err(ChartError::InvalidMarker { index });
             }
-            let key = key(&marker.time)?;
+            let key = key(self.model.time_scale().behavior(), &marker.time)?;
             active.retain(|entry| entry.key != key);
             active.push(Active {
                 key,
@@ -248,7 +245,7 @@ impl Chart {
         &mut self,
         id: UpDownMarkersId,
         now: Instant,
-    ) -> Result<Vec<UpDownMarker>, ChartError> {
+    ) -> Result<Vec<UpDownMarker<B::Item>>, ChartError> {
         self.up_down
             .get(&id.0)
             .ok_or(ChartError::UnknownPrimitive(id.0))?;
@@ -368,3 +365,6 @@ impl<B: super::ChartBehavior> DrawingPrimitive<B> for Primitive<B::Item, B::Key>
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+use crate::model::horz_scale_behavior_time::time_utils::convert_time;

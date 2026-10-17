@@ -42,3 +42,21 @@ impl ChartBehavior for HorzScaleBehaviorTime {
         select_time_converter(data)
     }
 }
+
+impl ChartBehavior for crate::model::yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior {
+    fn conversion_error(error: Self::Error) -> ChartError {
+        ChartError::YieldCurve(error)
+    }
+    fn data_error(error: DataLayerError<Self::Error>) -> ChartError {
+        ChartError::YieldData(error)
+    }
+    fn validation_converter<D: TimedData<Item = Self::Item>>(
+        &self,
+        data: &[D],
+    ) -> Result<Self::Converter, Self::Error> {
+        for row in data {
+            self.options().scaffold(row.time().months())?;
+        }
+        Ok(crate::model::yield_curve_horz_scale_behavior::MaturityConverter)
+    }
+}

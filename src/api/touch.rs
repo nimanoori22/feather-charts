@@ -65,7 +65,7 @@ pub enum TouchAction {
     ExitTracking,
     Cancel,
 }
-impl super::Chart {
+impl<B: super::ChartBehavior> super::Chart<B> {
     pub fn touch_navigation_options(&self) -> TouchNavigationOptions {
         self.touch_options
     }

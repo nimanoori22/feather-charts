@@ -53,3 +53,5 @@ pub mod time_scale_visible_range;
 pub mod hit_test;
 
 pub(crate) mod last_price_animation;
+
+pub mod yield_curve_horz_scale_behavior;

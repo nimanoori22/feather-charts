@@ -5,9 +5,7 @@ use crate::model::{
     data_layer::{DataLayer, DataLayerError, SeriesId},
     get_series_plot_row_creator::create_builtin_plot_row,
     horz_scale_behavior_time::{
-        horz_scale_behavior_time::HorzScaleBehaviorTime,
-        time_utils::{TimeConversionError, select_time_converter},
-        types::Time,
+        horz_scale_behavior_time::HorzScaleBehaviorTime, time_utils::TimeConversionError,
     },
     localization_options::LocalizationOptions,
     pane::PriceScalePosition,
@@ -35,6 +33,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum ChartError {
+    YieldCurve(crate::model::yield_curve_horz_scale_behavior::YieldCurveError),
+    YieldData(DataLayerError<crate::model::yield_curve_horz_scale_behavior::YieldCurveError>),
     UnknownPrimitive(super::PrimitiveId),
     InvalidUpDownOptions,
     InvalidUpDownDeadline,
@@ -192,9 +192,9 @@ impl<B: ChartBehavior> Chart<B> {
         }
     }
 }
-impl Chart {
+impl<B: ChartBehavior> Chart<B> {
     /// Read-only engine inspection; data mutations must pass through this owner.
-    pub fn model(&self) -> &ChartModel<HorzScaleBehaviorTime> {
+    pub fn model(&self) -> &ChartModel<B> {
         &self.model
     }
     pub fn add_series(
@@ -231,7 +231,10 @@ impl Chart {
         self.views[pane].push((id, view));
         self.revision += 1;
         // Establish DataLayer membership so update() also works before set_data().
-        let update = self.layer.set_series_data(id, kind, vec![])?;
+        let update = self
+            .layer
+            .set_series_data(id, kind, vec![])
+            .map_err(B::data_error)?;
         self.model.apply_data_update(update)?;
         Ok(id)
     }
@@ -248,14 +251,17 @@ impl Chart {
     pub fn set_data(
         &mut self,
         id: SeriesId,
-        data: Vec<BuiltInSeriesDataItem<Time>>,
+        data: Vec<BuiltInSeriesDataItem<B::Item>>,
     ) -> Result<(), ChartError> {
         let kind = self.kind(id)?;
-        validate_data(kind, &data, true)?;
+        validate_data(self.model.time_scale().behavior(), kind, &data, true)?;
         if data.is_empty() {
             self.cancel_interaction();
         }
-        let update = self.layer.set_series_data(id, kind, data)?;
+        let update = self
+            .layer
+            .set_series_data(id, kind, data)
+            .map_err(B::data_error)?;
         self.model.apply_data_update(update)?;
         Ok(())
     }
@@ -263,10 +269,15 @@ impl Chart {
     pub fn update_data(
         &mut self,
         id: SeriesId,
-        item: BuiltInSeriesDataItem<Time>,
+        item: BuiltInSeriesDataItem<B::Item>,
         historical: bool,
     ) -> Result<(), ChartError> {
-        validate_data(self.kind(id)?, std::slice::from_ref(&item), false)?;
+        validate_data(
+            self.model.time_scale().behavior(),
+            self.kind(id)?,
+            std::slice::from_ref(&item),
+            false,
+        )?;
         let threshold = self
             .model
             .series(id)
@@ -274,7 +285,10 @@ impl Chart {
             .common_options()
             .conflation_threshold_factor;
         self.check_historical_conflation(id, historical, threshold)?;
-        let update = self.layer.update_series_data(id, item, historical)?;
+        let update = self
+            .layer
+            .update_series_data(id, item, historical)
+            .map_err(B::data_error)?;
         self.model.apply_data_update(update)?;
         Ok(())
     }
@@ -302,7 +316,7 @@ impl Chart {
             .pane_for_series(id)
             .ok_or(ChartError::UnknownSeries(id))?;
         self.cancel_interaction();
-        let update = self.layer.remove_series(id)?;
+        let update = self.layer.remove_series(id).map_err(B::data_error)?;
         self.model.remove_series(id, update)?;
         self.marker_orders
             .retain(|key, _| self.model.marker_collection(*key).is_some());
@@ -388,7 +402,7 @@ impl Chart {
             .collect();
         let mut primitive_output = vec![];
         let mut decorator =
-            |model: &mut ChartModel<HorzScaleBehaviorTime>,
+            |model: &mut ChartModel<B>,
              axes: &mut [crate::model::axis_snapshots::AxisSnapshots]| {
                 primitive_output = super::primitives::prepare_axes(
                     model,
@@ -629,20 +643,27 @@ impl Chart {
 }
 
 // Validate the entire replacement before DataLayer removes previous memberships.
-fn validate_data(
+fn validate_data<B: ChartBehavior>(
+    behavior: &B,
     kind: SeriesType,
-    data: &[BuiltInSeriesDataItem<Time>],
+    data: &[BuiltInSeriesDataItem<B::Item>],
     ordered: bool,
 ) -> Result<(), ChartError> {
     if data.is_empty() {
         return Ok(());
     }
-    let converter = select_time_converter(data).map_err(ChartError::Time)?;
+    let mut converter = behavior
+        .validation_converter(data)
+        .map_err(B::conversion_error)?;
     let mut previous = None;
     for (index, item) in data.iter().enumerate() {
-        let time = converter.convert(item.time()).map_err(ChartError::Time)?;
-        let timestamp = time.timestamp.seconds();
-        if ordered && previous.is_some_and(|p| timestamp <= p) {
+        let time = crate::model::ihorz_scale_behavior::HorzScaleItemConverter::convert(
+            &mut converter,
+            item.time(),
+        )
+        .map_err(B::conversion_error)?;
+        let timestamp = behavior.key(&time);
+        if ordered && previous.as_ref().is_some_and(|p| &timestamp <= p) {
             return Err(ChartError::UnorderedData { index });
         }
         previous = Some(timestamp);

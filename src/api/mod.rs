@@ -48,3 +48,9 @@ pub use image_watermark::{ImageWatermark, ImageWatermarkError, ImageWatermarkOpt
 
 mod up_down_markers;
 pub use up_down_markers::{MarkerSign, UpDownMarker, UpDownMarkersId, UpDownMarkersOptions};
+
+mod yield_curve;
+pub use crate::model::yield_curve_horz_scale_behavior::{
+    Maturity, YieldCurveError, YieldCurveOptions,
+};
+pub use yield_curve::YieldCurveChart;

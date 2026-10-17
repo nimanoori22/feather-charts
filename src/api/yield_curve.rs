@@ -1,0 +1,342 @@
+//! Typed numeric frontend; the calendar and yield charts share one owner/widget.
+use super::*;
+use crate::model::{
+    chart_model::ChartModelOptions,
+    data_consumer::{BuiltInSeriesDataItem, LineDataItem, WhitespaceData},
+    data_layer::SeriesId,
+    ihorz_scale_behavior::HorzScaleBehavior,
+    localization_options::LocalizationOptions,
+    pane::PriceScalePosition,
+    series_options::{
+        AreaSeriesOptions, AreaSeriesOptionsPatch, LineSeriesOptions, LineSeriesOptionsPatch,
+        PriceFormat, PriceFormatCustom, SeriesOptionsMap, SeriesType,
+    },
+    time_scale_options::HorzScaleOptions,
+    yield_curve_horz_scale_behavior::{ScaffoldState, YieldCurveHorzScaleBehavior},
+};
+use std::{ops::Deref, rc::Rc, time::Instant};
+
+pub struct YieldCurveChart {
+    core: Chart<YieldCurveHorzScaleBehavior>,
+    support: SeriesId,
+    scaffold: Option<ScaffoldState>,
+    dirty: bool,
+    rebuilds: u64,
+    price_formatter: crate::model::price_formatter_fn::PriceFormatterFn,
+}
+impl Deref for YieldCurveChart {
+    type Target = Chart<YieldCurveHorzScaleBehavior>;
+    fn deref(&self) -> &Self::Target {
+        &self.core
+    }
+}
+impl YieldCurveChart {
+    pub fn new(options: YieldCurveOptions) -> Result<Self, ChartError> {
+        let mut chart_options = ChartModelOptions::default();
+        chart_options.pane.left_price_scale.visible = true;
+        chart_options.pane.right_price_scale.visible = false;
+        chart_options.pane.default_visible_price_scale =
+            crate::model::pane::DefaultVisiblePriceScale::Left;
+        Self::with_chart_options(
+            options,
+            chart_options,
+            LocalizationOptions::new("en-US", ""),
+        )
+    }
+    pub fn with_chart_options(
+        options: YieldCurveOptions,
+        chart_options: ChartModelOptions,
+        localization: LocalizationOptions<Maturity>,
+    ) -> Result<Self, ChartError> {
+        options.scaffold(0.).map_err(ChartError::YieldCurve)?;
+        let mut data = YieldCurveHorzScaleBehavior::default();
+        data.set_options(options);
+        let mut scale = YieldCurveHorzScaleBehavior::default();
+        scale.set_options(options);
+        let price_formatter = localization
+            .base
+            .price_formatter
+            .clone()
+            .unwrap_or_else(|| Rc::new(|v| format!("{:.3}%", v.value())));
+        let mut core = Chart::with_behavior(
+            chart_options,
+            data,
+            scale,
+            HorzScaleOptions {
+                ignore_whitespace_indices: true,
+                ..Default::default()
+            },
+            localization,
+        );
+        let support = core.add_series(
+            SeriesOptionsMap::Line(LineSeriesOptions::default()),
+            0,
+            PriceScalePosition::Left,
+        )?;
+        core.kinds.remove(&support);
+        core.views[0].retain(|(id, _)| *id != support);
+        let mut chart = Self {
+            core,
+            support,
+            scaffold: None,
+            dirty: true,
+            rebuilds: 0,
+            price_formatter,
+        };
+        chart.settle()?;
+        Ok(chart)
+    }
+    pub fn add_line_series(
+        &mut self,
+        patch: LineSeriesOptionsPatch,
+        pane: usize,
+        position: PriceScalePosition,
+    ) -> Result<SeriesId, ChartError> {
+        let mut options = LineSeriesOptions::default();
+        yield_defaults(&mut options.common, self.price_formatter.clone());
+        options.apply_patch(patch);
+        self.core
+            .add_series(SeriesOptionsMap::Line(options), pane, position)
+    }
+    pub fn add_area_series(
+        &mut self,
+        patch: AreaSeriesOptionsPatch,
+        pane: usize,
+        position: PriceScalePosition,
+    ) -> Result<SeriesId, ChartError> {
+        let mut options = AreaSeriesOptions::default();
+        yield_defaults(&mut options.common, self.price_formatter.clone());
+        options.apply_patch(patch);
+        self.core
+            .add_series(SeriesOptionsMap::Area(options), pane, position)
+    }
+    pub fn set_data(
+        &mut self,
+        id: SeriesId,
+        rows: Vec<BuiltInSeriesDataItem<Maturity>>,
+    ) -> Result<(), ChartError> {
+        self.core.set_data(id, rows)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn update_data(
+        &mut self,
+        id: SeriesId,
+        row: BuiltInSeriesDataItem<Maturity>,
+        historical: bool,
+    ) -> Result<(), ChartError> {
+        self.core.update_data(id, row, historical)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn set_up_down_data(
+        &mut self,
+        id: UpDownMarkersId,
+        rows: Vec<BuiltInSeriesDataItem<Maturity>>,
+    ) -> Result<(), ChartError> {
+        self.core.set_up_down_data(id, rows)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn update_up_down_data(
+        &mut self,
+        id: UpDownMarkersId,
+        row: BuiltInSeriesDataItem<Maturity>,
+        historical: bool,
+        now: Instant,
+    ) -> Result<(), ChartError> {
+        self.core.update_up_down_data(id, row, historical, now)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn remove_series(&mut self, id: SeriesId) -> Result<(), ChartError> {
+        self.core.remove_series(id)?;
+        self.dirty = true;
+        Ok(())
+    }
+    pub fn replace_yield_curve_options(
+        &mut self,
+        options: YieldCurveOptions,
+    ) -> Result<(), ChartError> {
+        let last = self
+            .core
+            .model
+            .time_scale()
+            .last_time()
+            .map_or(0., |v| v.months());
+        options.scaffold(last).map_err(ChartError::YieldCurve)?;
+        self.core
+            .model
+            .configure_horizontal_behavior(&mut self.core.layer, || options);
+        self.dirty = true;
+        Ok(())
+    }
+    fn settle(&mut self) -> Result<(), ChartError> {
+        if !self.dirty {
+            return Ok(());
+        }
+        let scale = self.core.model.time_scale();
+        let last = scale.last_time().map_or(0., |v| v.months());
+        let state = scale
+            .behavior()
+            .options()
+            .scaffold(last)
+            .map_err(ChartError::YieldCurve)?;
+        if self.scaffold != Some(state) {
+            let rows = state
+                .items()
+                .map(|time| {
+                    BuiltInSeriesDataItem::Line(LineDataItem::Whitespace(WhitespaceData {
+                        time,
+                        custom_values: None,
+                    }))
+                })
+                .collect();
+            let update = self
+                .core
+                .layer
+                .set_series_data(self.support, SeriesType::Line, rows)
+                .map_err(ChartError::YieldData)?;
+            self.core.model.apply_data_update(update)?;
+            self.scaffold = Some(state);
+            self.rebuilds += 1;
+        }
+        self.dirty = false;
+        Ok(())
+    }
+    pub fn prepare(
+        &mut self,
+        size: iced::Size,
+        ratio: f32,
+        now: Instant,
+    ) -> Result<(), ChartError> {
+        self.settle()?;
+        self.core.prepare(size, ratio, now)
+    }
+    pub fn prepare_snapshot(
+        &mut self,
+        size: iced::Size,
+        ratio: f32,
+        now: Instant,
+    ) -> Result<crate::ui::multi_pane_frame::MultiPaneChartFrameSnapshot, ChartError> {
+        self.settle()?;
+        self.core.prepare_snapshot(size, ratio, now)
+    }
+    pub fn update(
+        &mut self,
+        message: ChartMessage,
+    ) -> Result<Vec<ChartEvent<Maturity>>, ChartError> {
+        self.settle()?;
+        self.core.update(message)
+    }
+    pub fn fit_content(&mut self) {
+        self.core.fit_content();
+    }
+    pub fn set_logical_range(&mut self, range: crate::model::time_data::LogicalRange) {
+        self.core.set_logical_range(range);
+    }
+    pub fn set_right_offset(&mut self, offset: f64) {
+        self.core.set_right_offset(offset);
+    }
+    pub fn add_pane(&mut self) -> usize {
+        self.core.add_pane()
+    }
+    pub fn set_pane_stretch_factor(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
+        self.core.set_pane_stretch_factor(pane, factor)
+    }
+    pub fn apply_time_scale_options(
+        &mut self,
+        patch: crate::model::time_scale_options::HorzScaleOptionsPatch,
+    ) {
+        self.core.apply_time_scale_options(patch);
+    }
+    pub fn apply_price_axis_options(
+        &mut self,
+        pane: usize,
+        side: crate::model::axis_snapshots::PriceAxisSide,
+        patch: crate::model::price_scale::PriceScaleOptionsPatch,
+    ) -> Result<(), ChartError> {
+        self.core.apply_price_axis_options(pane, side, patch)
+    }
+    pub fn add_up_down_markers(
+        &mut self,
+        id: SeriesId,
+        options: UpDownMarkersOptions,
+    ) -> Result<UpDownMarkersId, ChartError> {
+        self.core.add_up_down_markers(id, options)
+    }
+    pub fn set_up_down_markers(
+        &mut self,
+        id: UpDownMarkersId,
+        markers: Vec<UpDownMarker<Maturity>>,
+    ) -> Result<(), ChartError> {
+        self.core.set_up_down_markers(id, markers)
+    }
+    pub fn up_down_markers(
+        &mut self,
+        id: UpDownMarkersId,
+        now: Instant,
+    ) -> Result<Vec<UpDownMarker<Maturity>>, ChartError> {
+        self.core.up_down_markers(id, now)
+    }
+    pub fn clear_up_down_markers(&mut self, id: UpDownMarkersId) -> Result<(), ChartError> {
+        self.core.clear_up_down_markers(id)
+    }
+    pub fn replace_up_down_marker_options(
+        &mut self,
+        id: UpDownMarkersId,
+        options: UpDownMarkersOptions,
+    ) -> Result<(), ChartError> {
+        self.core.replace_up_down_marker_options(id, options)
+    }
+    pub fn remove_up_down_markers(&mut self, id: UpDownMarkersId) -> Result<(), ChartError> {
+        self.core.remove_up_down_markers(id)
+    }
+    pub fn add_pane_primitive(
+        &mut self,
+        pane: usize,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+    ) -> Result<PrimitiveId, ChartError> {
+        self.core.add_pane_primitive(pane, primitive)
+    }
+    pub fn add_series_primitive(
+        &mut self,
+        id: SeriesId,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+    ) -> Result<PrimitiveId, ChartError> {
+        self.core.add_series_primitive(id, primitive)
+    }
+    pub fn replace_primitive(
+        &mut self,
+        id: PrimitiveId,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+    ) -> Result<(), ChartError> {
+        self.core.replace_primitive(id, primitive)
+    }
+    pub fn remove_primitive(&mut self, id: PrimitiveId) -> Result<(), ChartError> {
+        self.core.remove_primitive(id)
+    }
+    pub fn replace_series_options(
+        &mut self,
+        id: SeriesId,
+        options: SeriesOptionsMap,
+    ) -> Result<(), ChartError> {
+        self.core.replace_series_options(id, options)
+    }
+}
+fn yield_defaults(
+    options: &mut crate::model::series_options::SeriesOptionsCommon,
+    formatter: crate::model::price_formatter_fn::PriceFormatterFn,
+) {
+    options.last_value_visible = false;
+    options.price_line_visible = false;
+    options.price_format = PriceFormat::Custom(PriceFormatCustom {
+        formatter,
+        tickmarks_formatter: None,
+        min_move: 0.01,
+        base: None,
+    });
+}
+
+#[cfg(test)]
+mod tests;

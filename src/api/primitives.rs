@@ -254,11 +254,11 @@ impl<B: ChartBehavior> Drop for Attachment<B> {
         self.primitive.detached();
     }
 }
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     pub fn primitive_context(
         &mut self,
         id: PrimitiveId,
-    ) -> Result<PrimitiveContext<'_>, ChartError> {
+    ) -> Result<PrimitiveContext<'_, B>, ChartError> {
         let owner = self.primitive_owner(id)?;
         let pane = match owner {
             PrimitiveOwner::Series(series) => self.model.pane_for_series(series),
@@ -324,7 +324,7 @@ impl Chart {
     fn attach_primitive(
         &mut self,
         owner: PrimitiveOwner,
-        primitive: impl DrawingPrimitive,
+        primitive: impl DrawingPrimitive<B>,
     ) -> Result<PrimitiveId, ChartError> {
         let id = NEXT_ID
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
@@ -345,7 +345,7 @@ impl Chart {
     pub fn add_series_primitive(
         &mut self,
         series: SeriesId,
-        primitive: impl DrawingPrimitive,
+        primitive: impl DrawingPrimitive<B>,
     ) -> Result<PrimitiveId, ChartError> {
         if self.model.projection(series).is_none() {
             return Err(ChartError::UnknownSeries(series));
@@ -355,7 +355,7 @@ impl Chart {
     pub fn add_pane_primitive(
         &mut self,
         pane: usize,
-        primitive: impl DrawingPrimitive,
+        primitive: impl DrawingPrimitive<B>,
     ) -> Result<PrimitiveId, ChartError> {
         let owner = *self.primitive_panes.get(pane).ok_or(
             crate::model::chart_model::ChartModelError::InvalidPane(pane),
@@ -366,7 +366,7 @@ impl Chart {
     pub fn replace_primitive(
         &mut self,
         id: PrimitiveId,
-        primitive: impl DrawingPrimitive,
+        primitive: impl DrawingPrimitive<B>,
     ) -> Result<(), ChartError> {
         self.primitive_owner(id)?;
         self.up_down.remove(&id);

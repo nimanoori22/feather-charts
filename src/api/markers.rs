@@ -1,27 +1,30 @@
 use super::{Chart, ChartError, MarkerCollectionId, SeriesMarker, SeriesMarkersOptions};
 use crate::model::{
     data_layer::SeriesId,
-    horz_scale_behavior_time::{time_utils::convert_time, types::Time},
     series_markers::{MarkerCollection, MarkerPosition},
 };
 use std::sync::atomic::{AtomicU64, Ordering};
 static NEXT_COLLECTION: AtomicU64 = AtomicU64::new(1);
 
-fn validate(markers: &[SeriesMarker<Time>]) -> Result<(), ChartError> {
+fn validate<B: super::ChartBehavior>(
+    behavior: &B,
+    markers: &[SeriesMarker<B::Item>],
+) -> Result<(), ChartError> {
     let mut previous = None;
     let mut parser = crate::model::colors::ColorParser::default();
     for (index, marker) in markers.iter().enumerate() {
-        let time = convert_time(&marker.time)
-            .map_err(ChartError::Time)?
-            .timestamp
-            .seconds();
+        let time = behavior.key(
+            &behavior
+                .to_internal(&marker.time)
+                .map_err(B::conversion_error)?,
+        );
         let price = match marker.position {
             MarkerPosition::AtPriceTop(p)
             | MarkerPosition::AtPriceBottom(p)
             | MarkerPosition::AtPriceMiddle(p) => Some(p),
             _ => None,
         };
-        if previous.is_some_and(|t| time < t)
+        if previous.as_ref().is_some_and(|t| &time < t)
             || !marker.size.is_finite()
             || marker.size.abs() > f64::from(f32::MAX) / 64.
             || price.is_some_and(|p| !p.is_finite() || p.abs() > 90_071_992_547_409.9)
@@ -33,17 +36,17 @@ fn validate(markers: &[SeriesMarker<Time>]) -> Result<(), ChartError> {
     }
     Ok(())
 }
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     pub fn add_series_markers(
         &mut self,
         series: SeriesId,
-        markers: Vec<SeriesMarker<Time>>,
+        markers: Vec<SeriesMarker<B::Item>>,
         options: SeriesMarkersOptions,
     ) -> Result<MarkerCollectionId, ChartError> {
         if !self.kinds.contains_key(&series) {
             return Err(ChartError::UnknownSeries(series));
         }
-        validate(&markers)?;
+        validate(self.model.time_scale().behavior(), &markers)?;
         let id = NEXT_COLLECTION
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map(MarkerCollectionId)
@@ -58,10 +61,10 @@ impl Chart {
     pub fn set_series_markers(
         &mut self,
         id: MarkerCollectionId,
-        markers: Vec<SeriesMarker<Time>>,
+        markers: Vec<SeriesMarker<B::Item>>,
     ) -> Result<(), ChartError> {
         self.series_marker_options(id)?;
-        validate(&markers)?;
+        validate(self.model.time_scale().behavior(), &markers)?;
         self.model
             .edit_marker_collection(id, |collection| collection.markers = markers);
         Ok(())
@@ -69,7 +72,7 @@ impl Chart {
     pub fn series_markers(
         &self,
         id: MarkerCollectionId,
-    ) -> Result<Vec<SeriesMarker<Time>>, ChartError> {
+    ) -> Result<Vec<SeriesMarker<B::Item>>, ChartError> {
         self.model
             .marker_collection(id)
             .map(|c| c.markers)

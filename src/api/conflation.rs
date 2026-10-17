@@ -4,7 +4,7 @@ use crate::{
     model::time_scale_options::PrecomputeConflationPriority, ui::multi_pane_frame::SeriesPaneView,
 };
 
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     fn warmup_levels(&self) -> Vec<usize> {
         let time = self.model.time_scale();
         if !time.options().enable_conflation || !time.options().precompute_conflation_on_init {

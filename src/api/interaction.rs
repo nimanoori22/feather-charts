@@ -50,7 +50,7 @@ pub(crate) struct PlotPan {
     anchor_y: f32,
     price_started: bool,
 }
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     fn begin_kinetic(&mut self, now: Instant, touch: bool) {
         self.kinetic = None;
         if if touch {
@@ -320,7 +320,10 @@ impl Chart {
     pub fn pan_pane(&self) -> Option<usize> {
         self.plot_pan.as_ref().map(|p| p.pane)
     }
-    pub fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent>, ChartError> {
+    pub fn update(
+        &mut self,
+        message: ChartMessage,
+    ) -> Result<Vec<ChartEvent<B::Item>>, ChartError> {
         self.validate_message(&message)?;
         if let ChartMessage::Tick(now) = &message {
             self.expire_up_down_markers(*now);
@@ -492,8 +495,8 @@ impl Chart {
         Ok(events)
     }
 }
-impl Chart {
-    fn pointer_event(&self) -> PointerEvent {
+impl<B: super::ChartBehavior> Chart<B> {
+    fn pointer_event(&self) -> PointerEvent<B::Item> {
         let position = self.model.crosshair().position();
         let origin = self.model.crosshair().origin();
         self.pointer_event_at(
@@ -509,7 +512,7 @@ impl Chart {
         point: Option<iced::Point>,
         logical: Option<crate::model::time_data::TimePointIndex>,
         y: Option<f64>,
-    ) -> PointerEvent {
+    ) -> PointerEvent<B::Item> {
         use crate::model::{
             data_consumer::{
                 AreaData, AreaDataItem, BarData, BarDataItem, BaselineData, BaselineDataItem,
@@ -657,7 +660,7 @@ impl Chart {
         }
     }
 }
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     pub fn active_price_axis(&self) -> Option<(usize, PriceAxisSide)> {
         self.active_price_axis
     }
@@ -689,7 +692,7 @@ impl super::ChartState {
     }
 }
 
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     fn validate_message(&self, message: &ChartMessage) -> Result<(), ChartError> {
         let point_valid = |point: iced::Point| point.x.is_finite() && point.y.is_finite();
         let input_valid = |input: &ChartInteraction| {

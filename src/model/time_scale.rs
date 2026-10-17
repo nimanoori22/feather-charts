@@ -153,6 +153,9 @@ where
     pub fn is_empty(&self) -> bool {
         self.width == 0.0 || self.points.is_empty() || self.base_index.is_none()
     }
+    pub(crate) fn last_time(&self) -> Option<&B::InternalItem> {
+        self.points.last().map(|point| &point.time)
+    }
     pub fn has_points(&self) -> bool {
         !self.points.is_empty()
     }

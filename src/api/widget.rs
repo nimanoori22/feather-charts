@@ -15,7 +15,7 @@ use iced::{
     widget::canvas::{self, Geometry},
 };
 use std::time::{Duration, Instant};
-impl Chart {
+impl<B: super::ChartBehavior> Chart<B> {
     pub fn program<Message>(
         &self,
         on_message: fn(ChartMessage) -> Message,

@@ -13,6 +13,19 @@ const DataLayer=new Function('lowerBound','ensureDefined','getSeriesPlotRowCreat
 const queue=[];
 const Behavior=new Function('queueMicrotask',source('helpers/delegate.ts')+source('model/yield-curve-horz-scale-behavior/yield-curve-horz-scale-behavior.ts')+';return YieldCurveHorzScaleBehavior;')(f=>queue.push(f));
 const helpers=new Function('ChartApi','lineSeries','YieldCurveHorzScaleBehavior','merge',source('api/options/yield-curve-chart-options-defaults.ts')+source('api/yield-chart-api.ts')+';return {generateWhitespaceData,buildWhitespaceState,defaultOptions,lineStyleDefaultOptionOverrides};')(class{}, {},Behavior,()=>{});
+// Exercise the real public YieldChartApi constructor/defaults/restriction boundary.
+const merge=new Function(source('helpers/strict-type-checks.ts')+';return merge;')();
+class BaseChart {
+ constructor(container,behavior,options){this.value=options;this.behavior=behavior;this.added=[];}
+ options(){return this.value;} horzBehaviour(){return this.behavior;}
+ addSeries(definition,options,pane){const rows=[];this.added.push({definition,options,pane,rows});return {setData(data){rows.splice(0,rows.length,...data);}};}
+}
+const factory=new Function('ChartApi','lineSeries','YieldCurveHorzScaleBehavior','merge','fetchHtmlElement',source('api/options/yield-curve-chart-options-defaults.ts')+source('api/yield-chart-api.ts')+source('api/create-yield-curve-chart.ts')+';return createYieldCurveChart;')(BaseChart,{type:'Line',isBuiltIn:true},Behavior,merge,v=>v);
+const publicChart=factory({},{});assert.equal(publicChart.added[0].rows.length,121);
+assert.throws(()=>publicChart.addSeries({type:'Candlestick',isBuiltIn:true}));
+publicChart.addSeries({type:'Area',isBuiltIn:true},{lastValueVisible:true});
+assert.equal(publicChart.added[1].options.lastValueVisible,true);assert.equal(publicChart.added[1].options.priceLineVisible,false);
+queue.length=0;
 const defaults={baseResolution:1,minimumTimeRange:120,startTimeRange:0};
 assert.equal(helpers.defaultOptions.localization.priceFormatter(5.378),'5.378%');
 assert.equal(helpers.defaultOptions.timeScale.ignoreWhitespaceIndices,true);
@@ -33,10 +46,11 @@ const layer=new DataLayer(layerBehavior);
 const owners=[0,1,2].map(id=>({id,seriesType:()=>id===2?'Area':'Line',isConflationEnabled:()=>false,customSeriesPlotValuesBuilder:()=>undefined,customSeriesWhitespaceCheck:()=>undefined}));
 let current=[],support=[],signature='',rebuilds=0;const states=[];
 function accept(update){if(update.timeScale.points)current=update.timeScale.points;}
-layerBehavior.whitespaceInvalidated().subscribe(last=>{const state=helpers.buildWhitespaceState(defaults,last),key=JSON.stringify(state);if(signature!==key){signature=key;support=helpers.generateWhitespaceData(state);rebuilds++;accept(layer.setSeriesData(owners[0],support));}});
+function refresh(last) {const state=helpers.buildWhitespaceState(defaults,last),key=JSON.stringify(state);if(signature!==key){signature=key;support=helpers.generateWhitespaceData(state);rebuilds++;accept(layer.setSeriesData(owners[0],support));}}
+layerBehavior.whitespaceInvalidated().subscribe(refresh);
 function flush(){let guard=0;while(queue.length){assert.ok(++guard<20,'recursive whitespace rebuild');queue.shift()();}}
 function snap(name){flush();states.push({name,keys:current.map(p=>p.time),weights:current.map(p=>p.timeWeight),support:support.map(p=>p.time),rebuilds});}
-accept(layer.setSeriesData(owners[0],helpers.generateWhitespaceData(helpers.buildWhitespaceState(defaults,0))));snap('empty');
+refresh(0);snap('empty');
 accept(layer.setSeriesData(owners[1],[{time:1,value:5},{time:6,value:4},{time:360,value:3}]));snap('line');
 accept(layer.setSeriesData(owners[2],[{time:3,value:5},{time:12,value:4},{time:240,value:3}]));snap('area');
 accept(layer.updateSeriesData(owners[1],{time:6,value:4.2},true));snap('historical');

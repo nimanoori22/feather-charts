@@ -40,6 +40,14 @@ impl<S: Default> Default for SeriesOptions<S> {
         }
     }
 }
+impl<S: Default> Default for SeriesOptionsPatch<S> {
+    fn default() -> Self {
+        Self {
+            common: Default::default(),
+            style: Default::default(),
+        }
+    }
+}
 impl Default for LineStyleOptions {
     fn default() -> Self {
         Self {
