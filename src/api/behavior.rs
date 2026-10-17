@@ -1,4 +1,4 @@
-//! The two supported public chart families share one synchronous owner.
+//! The supported public chart families share one synchronous owner.
 use super::ChartError;
 use crate::model::{
     data_consumer::TimedData,

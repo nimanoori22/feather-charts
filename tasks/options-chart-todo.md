@@ -1,7 +1,7 @@
 # Price-based horizontal chart checklist
 
 Plan: [options-chart-plan.md](options-chart-plan.md). Baseline: `53ed228`.
-Status: not started. Only these planning documents have been added.
+Status: source contract, pure behavior and public API implemented; demo and acceptance in progress.
 
 Each task needs a focused behavioral check and a compiling slice. Listed files
 are likely boundaries, not a requirement to create parallel abstractions. Split
@@ -14,17 +14,17 @@ Likely files: scripts/check_options_chart_reference.cjs,
 tests/options_chart_reference.rs, docs/porting/options-chart-source.json,
 docs/porting/options-chart.md.
 
-- [ ] Read complete price behavior/dependencies and trace remaining formatter,
+- [x] Read complete price behavior/dependencies and trace remaining formatter,
   data, options and event consumers; check coverage and read gaps directly.
-- [ ] Pin actual upstream working-tree hashes, preserve its local modifications,
+- [x] Pin actual upstream working-tree hashes, preserve its local modifications,
   and execute actual TS behavior rather than a rewritten expected algorithm.
-- [ ] Freeze cases/counts for identity, weights, toFixed default/range/rounding,
+- [x] Freeze cases/counts for identity, weights, toFixed default/range/rounding,
   large magnitudes, signed zero, irregular spacing and multi-series whitespace.
-- [ ] Characterize public factory defaults/options replacement using the actual
+- [x] Characterize public factory defaults/options replacement using the actual
   source construction path; distinguish narrow stubs from browser integration.
-- [ ] Record finite-value validation and integer precision policy separately from
+- [x] Record finite-value validation and integer precision policy separately from
   source coercions; choose formatting implementation from measured parity cases.
-- [ ] Save 24 calendar and 24 yield pre-change images with binary/source/font
+- [x] Save 24 calendar and 24 yield pre-change images with binary/source/font
   identity; freeze the feature capture protocol and counts.
 
 Gate A: executable source expectations and recoverable baselines exist before
@@ -36,11 +36,11 @@ Dependencies: 1. Scope: 3–5 files.
 Likely files: src/model/horz_scale_behavior_price.rs, model/mod.rs,
 precision formatter helper if needed, focused behavior/reference tests.
 
-- [ ] Write failing behavior tests, then implement finite HorizontalPrice,
+- [x] Write failing behavior tests, then implement finite HorizontalPrice,
   signed-zero normalization, consistent Eq/Ord/Hash and identity conversion.
-- [ ] Implement precision validation/defaults, source-compatible item/tick labels,
+- [x] Implement precision validation/defaults, source-compatible item/tick labels,
   exact weight predicates and incremental append behavior.
-- [ ] Test negative/fractional/large values, partial weight filling, empty mark
+- [x] Test negative/fractional/large values, partial weight filling, empty mark
   handling and replacement/append equivalence without unnecessary allocations.
 
 Verification: pure tests and actual-source comparisons pass; no renderer dependency.
@@ -51,11 +51,11 @@ Dependencies: 2a. Scope: 3–5 files.
 Likely files: src/api/behavior.rs, chart.rs error variants, api/options_chart.rs,
 api/mod.rs, constructor compatibility test (split exports if necessary).
 
-- [ ] Compare alias plus named constructor against wrapper; record final API and
+- [x] Compare alias plus named constructor against wrapper; record final API and
   ownership. Prove calendar Chart::new and YieldCurveChart callers compile.
-- [ ] Implement ChartBehavior validation/error hooks and typed public construction
+- [x] Implement ChartBehavior validation/error hooks and typed public construction
   with ordinary chart defaults and full chart/localization override access.
-- [ ] Replace horizontal options transactionally through the shared model/data
+- [x] Replace horizontal options transactionally through the shared model/data
   configuration path; invalidate labels without altering vertical price format.
 
 Verification: one public Line prepares numeric labels/events; precision changes

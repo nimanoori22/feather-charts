@@ -21,6 +21,42 @@ b.updateFormatter({precision: 2.9}); assert.equal(b.formatHorzItem(1), '1.00');
 const factory = new Function('HorzScaleBehaviorPrice', 'createChartEx', source('api/create-options-chart.ts') + ';return createOptionsChart;')(Behavior, (container, behavior, options) => ({container, behavior, options}));
 const options = {localization: {precision: 3}}, chart = factory('container', options);
 assert.ok(chart.behavior instanceof Behavior); assert.equal(chart.options, options);
+// Read real TimeScale methods without constructing a DOM/widget or substituting them.
+const SourceScale = new Function('isInteger', source('model/time-scale.ts') + ';return TimeScale;')(Number.isInteger);
+const isInteger = Number.isInteger;
+const view = {_localizationOptions: {}, _horzScaleBehavior: b};
+b.setOptions({localization: {precision: 2}});
+assert.equal(SourceScale.prototype.formatDateTime.call(view, {time: 1.5, originalTime: 1.5}), '1.50');
+view._localizationOptions.timeFormatter = v => 'Strike ' + v;
+assert.equal(SourceScale.prototype.formatDateTime.call(view, {time: 1.5, originalTime: 1.5}), 'Strike 1.5');
+view._width = 800; view._rightOffset = 0; view._barSpacing = 10;
+view.isEmpty = () => false; view.baseIndex = () => 2;
+const sourceCoordinates = [0, 1, 2].map(i => SourceScale.prototype.indexToCoordinate.call(view, i));
+assert.equal(sourceCoordinates[1] - sourceCoordinates[0], sourceCoordinates[2] - sourceCoordinates[1]);
+const ensureDefined = v => { assert.notEqual(v, undefined); return v; };
+const lowerBound = new Function(source('helpers/algorithms.ts') + ';return lowerBound;')();
+const creators = new Function('ensureDefined', source('model/data-consumer.ts') + source('model/get-series-plot-row-creator.ts') + ';return {getSeriesPlotRowCreator,isSeriesPlotRow};')(ensureDefined);
+const DataLayer = new Function('lowerBound','ensureDefined','getSeriesPlotRowCreator','isSeriesPlotRow', source('model/data-layer.ts') + ';return DataLayer;')(lowerBound, ensureDefined, creators.getSeriesPlotRowCreator, creators.isSeriesPlotRow);
+const layerBehavior = new Behavior(); layerBehavior.setOptions({localization: {precision: 0}});
+const layer = new DataLayer(layerBehavior);
+const owners = [0, 1].map(id => ({id, seriesType: () => 'Line', isConflationEnabled: () => false, customSeriesPlotValuesBuilder: () => undefined, customSeriesWhitespaceCheck: () => undefined}));
+const states = []; let current = [];
+function accept(name, update) {
+    if (update.timeScale.points) current = update.timeScale.points;
+    states.push(`${name}\t${current.map(p => p.time).join(',')}\t${current.map(p => p.timeWeight).join(',')}`);
+}
+accept('empty', layer.setSeriesData(owners[0], []));
+accept('line', layer.setSeriesData(owners[0], [{time:90,value:1},{time:100,value:2},{time:150,value:3}]));
+accept('union', layer.setSeriesData(owners[1], [{time:95,value:3},{time:100},{time:175,value:2}]));
+accept('historical', layer.updateSeriesData(owners[0], {time:100,value:4}, true));
+accept('append', layer.updateSeriesData(owners[0], {time:200,value:4}, false));
+accept('whitespace', layer.updateSeriesData(owners[0], {time:200}, false));
+accept('shorter', layer.setSeriesData(owners[0], [{time:90,value:1},{time:100,value:2}]));
+accept('remove', layer.removeSeries(owners[1]));
+accept('clear', layer.setSeriesData(owners[0], []));
+const stateFixture = states.join('\n') + '\n', stateFile = 'docs/porting/options-chart-states.tsv';
+if (process.argv.includes('--freeze')) fs.writeFileSync(stateFile, stateFixture);
+else assert.equal(fs.readFileSync(stateFile, 'utf8'), stateFixture);
 const cases = [];
 function record(value, precision) {
     if (!Number.isFinite(value)) return;
@@ -49,5 +85,7 @@ else assert.equal(fs.readFileSync(file, 'utf8'), fixture, 'Source contract chang
 if (!process.argv.includes('--source-only')) {
     const run = spawnSync('cargo', ['test', '--offline', '--lib', 'options_chart_source_reference'], {encoding: 'utf8'});
     assert.equal(run.status, 0, run.stderr + run.stdout); assert.ok(run.stdout.includes('1 passed'));
+    const integration = spawnSync('cargo', ['test', '--offline', '--test', 'options_chart', 'price_data_layer_states_match_actual_source'], {encoding: 'utf8'});
+    assert.equal(integration.status, 0, integration.stderr + integration.stdout); assert.ok(integration.stdout.includes('1 passed'));
 }
-console.log(`${cases.length} actual-source item/tick/weight cases; precision boundaries and factory delegation pass.`);
+console.log(`${cases.length} actual-source item/tick/weight cases; precision boundaries and factory delegation and 9 real DataLayer states pass.`);

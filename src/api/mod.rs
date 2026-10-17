@@ -54,3 +54,9 @@ pub use crate::model::yield_curve_horz_scale_behavior::{
     Maturity, YieldCurveError, YieldCurveOptions,
 };
 pub use yield_curve::YieldCurveChart;
+
+mod options_chart;
+pub use crate::model::horz_scale_behavior_price::{
+    HorizontalPrice, OptionsChartError, OptionsChartOptions,
+};
+pub use options_chart::OptionsChart;

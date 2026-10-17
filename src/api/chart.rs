@@ -33,6 +33,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum ChartError {
+    OptionsChart(crate::model::horz_scale_behavior_price::OptionsChartError),
+    OptionsData(DataLayerError<crate::model::horz_scale_behavior_price::OptionsChartError>),
     YieldCurve(crate::model::yield_curve_horz_scale_behavior::YieldCurveError),
     YieldData(DataLayerError<crate::model::yield_curve_horz_scale_behavior::YieldCurveError>),
     UnknownPrimitive(super::PrimitiveId),
