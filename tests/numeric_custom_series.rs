@@ -426,3 +426,87 @@ fn yield_custom_defaults_and_overrides_do_not_inherit_line_visibility() {
             .is_some()
     );
 }
+
+#[test]
+fn numeric_warmup_budgets_survive_data_invalidation() {
+    use feather_charts::model::time_scale_options::HorzScaleOptionsPatch;
+    macro_rules! run {
+        ($chart:expr,$ty:ty,$key:expr) => {{
+            let mut c = $chart;
+            let view = View::<$ty, $ty>::default();
+            let calls = view.reductions.clone();
+            let destroyed = view.destroyed.clone();
+            let h = c
+                .add_custom_series(view, Default::default(), 0, PriceScalePosition::Right)
+                .unwrap();
+            c.set_custom_data(
+                &h,
+                (0..2048).map(|i| datum($key(i as f64 + 1.), 4.)).collect(),
+            )
+            .unwrap();
+            c.apply_time_scale_options(HorzScaleOptionsPatch {
+                enable_conflation: Some(true),
+                precompute_conflation_on_init: Some(true),
+                bar_spacing: Some(4.),
+                ..Default::default()
+            });
+            c.prepare(Size::new(800., 500.), 1., Instant::now())
+                .unwrap();
+            assert!(calls.get() <= 128, "unbounded warmup {}", calls.get());
+            c.update_custom_data(&h, datum($key(2048.), 4.1), false)
+                .unwrap();
+            calls.set(0);
+            c.prepare(Size::new(800., 500.), 1., Instant::now())
+                .unwrap();
+            assert!(
+                calls.get() <= 128,
+                "unbounded restarted warmup {}",
+                calls.get()
+            );
+            c.remove_series(h.id()).unwrap();
+            assert_eq!(destroyed.get(), 1);
+        }};
+    }
+    run!(
+        OptionsChart::new_options(Default::default()).unwrap(),
+        HorizontalPrice,
+        p
+    );
+    run!(
+        YieldCurveChart::new(Default::default()).unwrap(),
+        Maturity,
+        |v| Maturity::from_months(v).unwrap()
+    );
+}
+
+#[test]
+fn yield_custom_localization_matches_source_halfway_rounding() {
+    let mut c = YieldCurveChart::new(Default::default()).unwrap();
+    let m = |v| Maturity::from_months(v).unwrap();
+    let h = c
+        .add_custom_series(
+            View::<Maturity, Maturity>::default(),
+            Default::default(),
+            0,
+            PriceScalePosition::Left,
+        )
+        .unwrap();
+    c.set_custom_data(&h, vec![datum(m(1.), 0.0625), datum(m(12.), 0.3125)])
+        .unwrap();
+    c.fit_content();
+    c.prepare(Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    for (value, label) in [
+        (0.0625, "0.063%"),
+        (0.3125, "0.313%"),
+        (-0.0625, "-0.063%"),
+        (-0.3125, "-0.313%"),
+    ] {
+        assert_eq!(
+            c.model().panes()[0]
+                .left_price_scale()
+                .format_price(value, 0.0625),
+            label
+        );
+    }
+}

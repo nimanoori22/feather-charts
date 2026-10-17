@@ -381,7 +381,9 @@ impl<B: ChartBehavior> Chart<B> {
     {
         let view = handle.attached_view(self)?;
         if !data.is_empty() {
-            B::validation_converter(self.layer.behavior(), &data).map_err(B::conversion_error)?;
+            B::validation_converter(self.layer.behavior(), &data).map_err(|error| {
+                B::data_error(crate::model::data_layer::DataLayerError::Behavior(error))
+            })?;
         }
         let empty = data.is_empty();
         let update = self
@@ -418,8 +420,9 @@ impl<B: ChartBehavior> Chart<B> {
             .common
             .conflation_threshold_factor;
         self.check_historical_conflation(handle.id, historical, threshold)?;
-        B::validation_converter(self.layer.behavior(), std::slice::from_ref(&data))
-            .map_err(B::conversion_error)?;
+        B::validation_converter(self.layer.behavior(), std::slice::from_ref(&data)).map_err(
+            |error| B::data_error(crate::model::data_layer::DataLayerError::Behavior(error)),
+        )?;
         let update = self
             .layer
             .update_custom_series_data(handle.id, data, &Builder(view), historical)

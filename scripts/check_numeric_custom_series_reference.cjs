@@ -29,6 +29,7 @@ const chart=new YieldApi({},{});
 const custom=chart.addCustomSeries({defaultOptions:()=>({})});
 assert.equal(custom.options.lastValueVisible,true);assert.equal(custom.options.priceLineVisible,true);
 assert.equal(chart.opts.localization.priceFormatter(5.378),'5.378%');
+for (const [value,label] of [[0.0625,'0.063%'],[0.3125,'0.313%'],[-0.0625,'-0.063%'],[-0.3125,'-0.313%']]) assert.equal(chart.opts.localization.priceFormatter(value),label);
 assert.throws(()=>chart.addSeries({type:'Histogram',isBuiltIn:true}));queue.length=0;
 const helpers=new Function('ChartApi','lineSeries','YieldCurveHorzScaleBehavior','merge',source('api/options/yield-curve-chart-options-defaults.ts')+source('api/yield-chart-api.ts')+';return {generateWhitespaceData,buildWhitespaceState};')(Base,{},Yield,merge);
 const states=[];
@@ -68,4 +69,5 @@ if(!process.argv.includes('--source-only')){
   assert.deepEqual(c[name],actual.map(r=>r.data.value));
  }
 }
+if(!process.argv.includes('--source-only')) { const run=spawnSync('cargo',['test','--offline','--test','numeric_custom_series','yield_custom_localization_matches_source_halfway_rounding'],{encoding:'utf8'}); assert.equal(run.status,0,run.stdout+run.stderr); assert.ok(run.stdout.includes('1 passed')); }
 console.log('18 actual-source numeric custom states and inherited yield custom defaults pass.');

@@ -57,7 +57,17 @@ impl YieldCurveChart {
             .base
             .price_formatter
             .clone()
-            .unwrap_or_else(|| Rc::new(|v| format!("{:.3}%", v.value())));
+            .unwrap_or_else(|| {
+                Rc::new(|v| {
+                    let value = v.value();
+                    let text = if value.is_finite() {
+                        crate::formatters::fixed::fixed(value, 3)
+                    } else {
+                        format!("{value:.3}")
+                    };
+                    format!("{text}%")
+                })
+            });
         let mut core = Chart::with_behavior(
             chart_options,
             data,

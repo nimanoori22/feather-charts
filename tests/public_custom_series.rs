@@ -837,3 +837,33 @@ fn box_example_reducer_keeps_last_box_and_combined_whiskers() {
     assert_eq!(&merged.quartiles[1..4], &b.data.quartiles[1..4]);
     assert_eq!(merged.time, a.original_time);
 }
+
+#[test]
+fn calendar_custom_preflight_preserves_data_error_variants() {
+    use feather_charts::{api::ChartError, model::data_layer::DataLayerError};
+    let mut c = Chart::default();
+    let h = c
+        .add_custom_series(
+            View {
+                renderer: Renderer {
+                    data: None,
+                    draws: Default::default(),
+                },
+                destroyed: Default::default(),
+            },
+            Default::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    c.set_custom_data(&h, vec![datum(1., 2.)]).unwrap();
+    assert!(matches!(
+        c.set_custom_data(&h, vec![datum(f64::NAN, 2.)]),
+        Err(ChartError::Data(DataLayerError::Behavior(_)))
+    ));
+    assert!(matches!(
+        c.update_custom_data(&h, datum(f64::NAN, 2.), false),
+        Err(ChartError::Data(DataLayerError::Behavior(_)))
+    ));
+    assert_eq!(h.data_at(0.0.into()).unwrap().median, 2.);
+}

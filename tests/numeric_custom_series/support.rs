@@ -121,8 +121,9 @@ impl MinMax for f64 {
         (self.min(b), self.max(b))
     }
 }
+type ObservedUpdates = Rc<RefCell<Vec<(f64, Vec<f64>)>>>;
 pub struct View<T, I> {
-    pub observed: Rc<RefCell<Vec<(f64, Vec<f64>)>>>,
+    pub observed: ObservedUpdates,
     pub renderer: Renderer<T>,
     pub destroyed: Rc<Cell<usize>>,
     pub reductions: Rc<Cell<usize>>,
