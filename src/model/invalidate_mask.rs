@@ -212,6 +212,37 @@ mod tests {
     use crate::model::time_data::Logical;
     use std::{cell::Cell, time::Duration};
 
+    #[test]
+    fn pane_reorder_keeps_autoscale_and_horizontal_requests_with_their_owners() {
+        let mut mask = InvalidateMask::light();
+        mask.invalidate_pane(
+            0,
+            PaneInvalidation {
+                level: InvalidationLevel::Full,
+                auto_scale: true,
+            },
+        );
+        mask.invalidate_pane(
+            2,
+            PaneInvalidation {
+                level: InvalidationLevel::Cursor,
+                auto_scale: false,
+            },
+        );
+        mask.set_right_offset(7.);
+        mask.reorder_panes(&[2, 0, 1]);
+        assert!(mask.pane_invalidation(2).auto_scale);
+        assert!(!mask.pane_invalidation(0).auto_scale);
+        assert_eq!(mask.pane_invalidation(1).level, InvalidationLevel::Light);
+        assert!(matches!(
+            mask.time_scale_invalidations(),
+            [
+                TimeScaleInvalidation::StopAnimation,
+                TimeScaleInvalidation::ApplyRightOffset(7.)
+            ]
+        ));
+    }
+
     #[derive(Debug)]
     struct TestAnimation {
         start: Instant,

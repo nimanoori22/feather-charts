@@ -6,6 +6,44 @@ mod support;
 use feather_charts::model::icustom_series::CustomSeriesDataItem;
 
 #[test]
+fn transferred_custom_price_source_uses_the_new_panes_visible_range() {
+    use feather_charts::model::time_data::LogicalRange;
+    use support::*;
+    let mut c = OptionsChart::new_options(Default::default()).unwrap();
+    c.add_pane();
+    let h = c
+        .add_custom_series(
+            View::<HorizontalPrice, HorizontalPrice>::default(),
+            Default::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    c.set_custom_data(
+        &h,
+        (0..200)
+            .map(|i| datum(HorizontalPrice::new(i as f64).unwrap(), i as f64 + 1.))
+            .collect(),
+    )
+    .unwrap();
+    c.fit_content();
+    c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+        .unwrap();
+    c.move_series_to_pane(h.id(), 1).unwrap();
+    assert_eq!(c.model().panes().len(), 1);
+    c.set_logical_range(LogicalRange {
+        from: 100.0.into(),
+        to: 110.0.into(),
+    });
+    c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+        .unwrap();
+    assert_eq!(
+        c.model().panes()[0].right_price_scale().first_value(),
+        Some(101.)
+    );
+}
+
+#[test]
 fn yield_removal_relocates_private_support_without_exposing_or_shrinking_it() {
     use support::*;
     let mut c = YieldCurveChart::new(Default::default()).unwrap();

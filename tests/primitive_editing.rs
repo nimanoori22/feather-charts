@@ -213,6 +213,43 @@ fn setup_edit() -> (Chart, feather_charts::api::PrimitiveId, Rc<Cell<usize>>) {
 }
 
 #[test]
+fn pane_operations_cancel_captured_edits_once_and_reject_stale_tokens() {
+    use feather_charts::api::{
+        ChartEvent, ChartMessage, ChartState, PrimitiveEditCancelReason, PrimitiveEditPhase,
+    };
+    for operation in 0..4 {
+        let (mut chart, _, _) = setup_edit();
+        chart.add_pane();
+        prepare(&mut chart);
+        let owner = chart.series_ids().next().unwrap();
+        let mut state = ChartState::default();
+        let m = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+        let ChartMessage::PrimitiveEdit(mut stale) = m.clone() else {
+            panic!("expected capture")
+        };
+        chart.update(m).unwrap();
+        match operation {
+            0 => chart.move_pane(0, 1),
+            1 => chart.swap_panes(0, 1),
+            2 => chart.move_series_to_pane(owner, 1),
+            _ => chart.remove_pane(0),
+        }
+        .unwrap();
+        let events = chart.update(ChartMessage::Tick(Instant::now())).unwrap();
+        assert_eq!(events.iter().filter(|e|matches!(e,ChartEvent::PrimitiveEdit(e) if e.phase==PrimitiveEditPhase::Cancel(PrimitiveEditCancelReason::ViewportChanged))).count(),1);
+        stale.phase = PrimitiveEditPhase::Update;
+        stale.position = Point::new(150., 150.);
+        assert!(
+            chart
+                .update(ChartMessage::PrimitiveEdit(stale))
+                .unwrap()
+                .iter()
+                .all(|e| !matches!(e, ChartEvent::PrimitiveEdit(_)))
+        );
+    }
+}
+
+#[test]
 fn editable_drag_captures_before_pan_and_commits_once_without_lifecycle_churn() {
     let (mut chart, _, detached) = setup_edit();
     let mut state = ChartState::default();
