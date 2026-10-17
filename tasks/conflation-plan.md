@@ -200,3 +200,13 @@ physical acceptance and the deferred historical timing exception separately.
 
 No user preference is needed to start task 0. Any unresolved API/ownership/scheduling
 choice above is an implementation investigation gate, not a claim already verified.
+
+## Execution record
+
+The feature, source oracle, native warmup and dense demos are implemented.
+See [the implementation report](../docs/porting/conflation-rendering.md) and
+[execution checklist](conflation-todo.md) for source/validation/performance evidence.
+Fresh physical mouse acceptance passed on both backends after diagnosing and
+fixing the software dependency dev-build penalty. Touchpad/touchscreen/high-DPI
+hardware coverage and the separate historical timing exception remain open.
+The original verification budgets and ordered roadmap above have not been changed.

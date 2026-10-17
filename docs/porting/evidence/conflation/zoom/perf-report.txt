@@ -1,0 +1,37 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+cmd__addr2line /home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts/target/debug/examples/public_chart: could not read first record
+#
+# Total Lost Samples: 0
+#
+# Samples: 626  of event 'cpu-clock:u'
+# Event count (approx.): 6323232260
+#
+# Overhead  Command       Shared Object     Symbol
+# ........  ............  ................  ..............................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    10.86%  public_chart  public_chart      [.] <tiny_skia::wide::u16x16_t::u16x16 as core::ops::bit::Shr>::shr
+            |
+             --1.12%--shr (inlined)
+
+     8.95%  public_chart  public_chart      [.] <tiny_skia::wide::u16x16_t::u16x16 as core::ops::arith::Mul>::mul
+     6.87%  public_chart  public_chart      [.] <tiny_skia::wide::u16x16_t::u16x16 as core::ops::arith::Add>::add
+     6.39%  public_chart  public_chart      [.] tiny_skia::pipeline::lowp::source_over
+     6.23%  public_chart  public_chart      [.] tiny_skia::scan::path::fill_path_impl
+     3.19%  public_chart  public_chart      [.] tiny_skia::pipeline::lowp::mask_u8
+     3.04%  public_chart  public_chart      [.] <alloc::vec::Vec<u8>>::extend_trusted::<core::array::iter::IntoIter<u8, 4>>
+     3.04%  public_chart  public_chart      [.] <tiny_skia::wide::u16x16_t::u16x16 as core::ops::arith::Sub>::sub
+     2.08%  public_chart  public_chart      [.] <tiny_skia::alpha_runs::AlphaRuns>::add
+     1.76%  public_chart  libc.so.6         [.] 0x0000000000176391
+            |
+            ---0x7257df776391
+
+     1.60%  public_chart  public_chart      [.] tiny_skia::pipeline::lowp::load_dst_tail
+     1.60%  public_chart  public_chart      [.] tiny_skia::pipeline::lowp::scale_1_float
+     1.44%  public_chart  public_chart      [.] <tiny_skia::alpha_runs::AlphaRuns>::break_run
+     1.12%  public_chart  public_chart      [.] <alloc::string::String as core::cmp::PartialEq<str>>::eq
+
+
+#
+# (Tip: If you have debuginfo enabled, try: perf report -s sym,srcline)
+#

@@ -9,8 +9,8 @@ Ordered execution checklist: [conflation-todo.md](conflation-todo.md).
 The user asked to move toward remaining features. Further timing investigation
 is deferred; existing acceptance failures, budgets and device gaps remain OPEN.
 This supersedes the old roadmap's requirement to finish timing acceptance before
-starting conflation development. It does not close that milestone. No conflation
-implementation is included in the diagnostic change.
+starting conflation development. It does not close that milestone. The diagnostic change did not include conflation implementation. It has now been
+implemented separately; see [the execution report](../docs/porting/conflation-rendering.md).
 
 1. **Establish the source contract.** Inspect complete upstream conflation code,
    real preparation/rendering consumers and tests with graph coverage/source

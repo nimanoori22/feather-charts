@@ -1,0 +1,92 @@
+[
+  {
+    "variant": "unoptimized",
+    "width": 800,
+    "samples": 70,
+    "model_ns": 44387.5,
+    "prepare_ns": 11216638.5,
+    "geometry_ns": 2689575.5,
+    "raster_ns": 277072627.0
+  },
+  {
+    "variant": "unoptimized",
+    "width": 300,
+    "samples": 70,
+    "model_ns": 39226.5,
+    "prepare_ns": 7241718.0,
+    "geometry_ns": 1119543.5,
+    "raster_ns": 68784856.0
+  },
+  {
+    "variant": "release",
+    "width": 800,
+    "samples": 70,
+    "model_ns": 7208.5,
+    "prepare_ns": 1401742.5,
+    "geometry_ns": 573712.0,
+    "raster_ns": 12605499.5
+  },
+  {
+    "variant": "release",
+    "width": 300,
+    "samples": 70,
+    "model_ns": 2547.0,
+    "prepare_ns": 700979.0,
+    "geometry_ns": 208252.0,
+    "raster_ns": 3400540.0
+  },
+  {
+    "variant": "skia-opt3",
+    "width": 800,
+    "samples": 70,
+    "model_ns": 43201.5,
+    "prepare_ns": 11199105.5,
+    "geometry_ns": 1698310.0,
+    "raster_ns": 82508565.5
+  },
+  {
+    "variant": "skia-opt3",
+    "width": 300,
+    "samples": 70,
+    "model_ns": 28709.0,
+    "prepare_ns": 7202300.0,
+    "geometry_ns": 696407.5,
+    "raster_ns": 19668064.5
+  },
+  {
+    "variant": "wrapper-opt3",
+    "width": 800,
+    "samples": 70,
+    "model_ns": 41959.5,
+    "prepare_ns": 11138531.0,
+    "geometry_ns": 1175021.5,
+    "raster_ns": 41424480.0
+  },
+  {
+    "variant": "wrapper-opt3",
+    "width": 300,
+    "samples": 70,
+    "model_ns": 22257.0,
+    "prepare_ns": 7136056.5,
+    "geometry_ns": 465269.5,
+    "raster_ns": 10302195.0
+  },
+  {
+    "variant": "final-dev",
+    "width": 800,
+    "samples": 70,
+    "model_ns": 39082.5,
+    "prepare_ns": 11278234.5,
+    "geometry_ns": 1230914.0,
+    "raster_ns": 15101879.0
+  },
+  {
+    "variant": "final-dev",
+    "width": 300,
+    "samples": 70,
+    "model_ns": 18181.0,
+    "prepare_ns": 7022207.0,
+    "geometry_ns": 478190.5,
+    "raster_ns": 4232650.0
+  }
+]

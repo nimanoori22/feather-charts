@@ -1,0 +1,175 @@
+{
+  "binary_sha256": "9ba6682c784ae4202173bcdaeaacbddacb7095cbc85ed7e5487b9d95adcf31ed",
+  "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "head": "cd3296760e65c7ad4893254d48ff5f3771f13e63",
+  "tracked_diff_sha256": "5f967d90e534101d3b3faa6e5e6ec007d1d65b652e1079f23e0c24431e18fedc",
+  "fixture_sha256": "e8415c8e547d694561d7b334ad217b516f3f98c07c70c547273522665ce7f671",
+  "python": "3.14.7 (main, Aug 10 2026, 07:46:56) [GCC 16.1.1 20260728]",
+  "created_unix": 1792229077.3620884,
+  "warmup": 20,
+  "samples": 100,
+  "size": [
+    1000,
+    500
+  ],
+  "dpr": 1,
+  "memory": "Linux wait4 ru_maxrss KiB, whole-process peak",
+  "precompute": false,
+  "renderer": "none; CPU preparation only",
+  "policy": "24 serial executions, no retries, keep failures; no old timing gates changed",
+  "runs": [
+    [
+      "line",
+      8192,
+      0,
+      "off"
+    ],
+    [
+      "line",
+      8192,
+      0,
+      "on"
+    ],
+    [
+      "line",
+      8192,
+      1,
+      "on"
+    ],
+    [
+      "line",
+      8192,
+      1,
+      "off"
+    ],
+    [
+      "line",
+      8192,
+      2,
+      "off"
+    ],
+    [
+      "line",
+      8192,
+      2,
+      "on"
+    ],
+    [
+      "line",
+      100000,
+      0,
+      "off"
+    ],
+    [
+      "line",
+      100000,
+      0,
+      "on"
+    ],
+    [
+      "line",
+      100000,
+      1,
+      "on"
+    ],
+    [
+      "line",
+      100000,
+      1,
+      "off"
+    ],
+    [
+      "line",
+      100000,
+      2,
+      "off"
+    ],
+    [
+      "line",
+      100000,
+      2,
+      "on"
+    ],
+    [
+      "histogram",
+      8192,
+      0,
+      "off"
+    ],
+    [
+      "histogram",
+      8192,
+      0,
+      "on"
+    ],
+    [
+      "histogram",
+      8192,
+      1,
+      "on"
+    ],
+    [
+      "histogram",
+      8192,
+      1,
+      "off"
+    ],
+    [
+      "histogram",
+      8192,
+      2,
+      "off"
+    ],
+    [
+      "histogram",
+      8192,
+      2,
+      "on"
+    ],
+    [
+      "histogram",
+      100000,
+      0,
+      "off"
+    ],
+    [
+      "histogram",
+      100000,
+      0,
+      "on"
+    ],
+    [
+      "histogram",
+      100000,
+      1,
+      "on"
+    ],
+    [
+      "histogram",
+      100000,
+      1,
+      "off"
+    ],
+    [
+      "histogram",
+      100000,
+      2,
+      "off"
+    ],
+    [
+      "histogram",
+      100000,
+      2,
+      "on"
+    ]
+  ]
+}
