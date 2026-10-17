@@ -1,9 +1,17 @@
 # Dynamic pane management
 
-Status: proposed; no production changes made. Baseline: `da1d01c`.
+Status: implemented; automated, capture and software/wgpu mouse acceptance passed
+on 2026-10-17.
+Baseline: `da1d01c`.
 Checklist: [pane-management-todo.md](pane-management-todo.md).
 These feature-specific files follow the repository's existing planning convention
 and preserve earlier plans and acceptance records.
+
+Final contract and evidence: [pane-management report](../docs/porting/pane-management.md).
+The real-browser probe established a source removal cleanup bug and orphaned-map
+retention. The report records the deliberate native policy: clean the requested
+pane's live series/attachments and retain readable detached custom data. The frozen
+source observations are preserved separately from the native cleanup assertions.
 
 ## Outcome and scope
 
