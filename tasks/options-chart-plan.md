@@ -1,6 +1,6 @@
 # Price-based horizontal charts: implementation plan
 
-Status: proposed; implementation has not started. Baseline: `53ed228`.
+Status: complete for planned scope; automated and software/GPU mouse acceptance passed. Baseline: `53ed228`.
 Checklist: [options-chart-todo.md](options-chart-todo.md).
 
 ## Outcome and scope
@@ -61,7 +61,7 @@ read any further coverage gaps before production edits.
 | --- | --- |
 | Numeric identity | Ordered finite prices retain their values in keys, events, markers and round trips. Test negative/fractional values and signed zero; reject NaN/infinity at the native boundary. |
 | Index-based positions | Irregular strikes such as 90,100,150 occupy successive logical positions. Compare multi-series unions and explicit whitespace against source. Do not interpolate absent strikes or generate support points. |
-| Fixed decimal labels | Both item/crosshair and tick labels use toFixed(precision). Omitted precision yields zero decimal places. Verify zero through 100 places, rounding ties, negative near-zero labels and the JS exponential fallback at magnitude >= 1e21. Rust formatting is not assumed equivalent. |
+| Fixed decimal labels | Behavior item and tick labels use toFixed(precision); shared TimeScale honors a custom timeFormatter for crosshair labels. Omitted precision yields zero decimal places. Verify zero through 100 places, rounding ties, negative near-zero labels and the JS exponential fallback at magnitude >= 1e21. Rust formatting is not assumed equivalent. |
 | Precision changes | Update data/model behavior coherently and invalidate labels/measurements. Horizontal precision must not overwrite vertical series price formatting. |
 | Priority weights | Multiples of 100,50,25,10,5,1,0.5 receive 8,7,6,5,4,3,1; other values receive 0, in that order. Preserve exact source floating-point predicates, including negative values and zero. |
 | Incremental work | Source fills weights starting at startIndex. The native append hook can calculate this item-local weight without rescanning history; replacement and append outputs must agree. |

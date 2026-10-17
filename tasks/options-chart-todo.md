@@ -1,7 +1,7 @@
 # Price-based horizontal chart checklist
 
 Plan: [options-chart-plan.md](options-chart-plan.md). Baseline: `53ed228`.
-Status: source contract, pure behavior and public API implemented; demo and acceptance in progress.
+Status: complete for planned scope; automated checks and software/GPU mouse acceptance passed.
 
 Each task needs a focused behavioral check and a compiling slice. Listed files
 are likely boundaries, not a requirement to create parallel abstractions. Split
@@ -66,15 +66,15 @@ update both behavior owners and cached labels; invalid options preserve old stat
 Dependencies: 2b. Scope: 2–4 tests/oracle files per slice; production changes only
 where a failing contract test proves a missing generic boundary.
 
-- [ ] Verify all six built-in families, multiple panes/series, fit/ranges,
+- [x] Verify all six built-in families, multiple panes/series, fit/ranges,
   coordinate round trips and source index spacing with irregular/missing strikes.
-- [ ] Verify set/latest/historical/whitespace updates, duplicates/order errors,
+- [x] Verify set/latest/historical/whitespace updates, duplicates/order errors,
   empty/reset/remove recovery and old-frame independence.
-- [ ] Verify typed pointer/crosshair data, annotation and managed markers, manual
+- [x] Verify typed pointer/crosshair data, annotation and managed markers, manual
   marker persistence, explicit-clock idle expiry and historical marker behavior.
-- [ ] Verify drawing/edit contexts, watermarks, appropriate price pulses and
+- [x] Verify drawing/edit contexts, watermarks, appropriate price pulses and
   existing interactions through the shared widget. Do not copy yield scaffolding.
-- [ ] Check precision refresh, hover and same-domain updates avoid full-history
+- [x] Check precision refresh, hover and same-domain updates avoid full-history
   work where the existing incremental paths support it.
 
 Gate B: API, model semantics and extensions pass focused comparisons; no second
@@ -86,10 +86,10 @@ Dependencies: 3. Scope: 3–5 files.
 Likely files: examples/options_chart.rs, examples/options_chart/main.rs,
 Cargo.toml example entry if needed, README.md, example test/fixture.
 
-- [ ] Build a strike-price Line + Histogram demo using existing support/runtime.
-- [ ] Expose precision, latest/history changes, reset/empty and feed/pulse controls;
+- [x] Build a strike-price Line + Histogram demo using existing support/runtime.
+- [x] Expose precision, latest/history changes, reset/empty and feed/pulse controls;
   include representative markers, watermarks and editable box.
-- [ ] Keep demo controls usable at narrow widths; numeric labels stay distinct
+- [x] Keep demo controls usable at narrow widths; numeric labels stay distinct
   from vertical price formatting and no option-pricing functionality is implied.
 
 Verification: all-target compile; deterministic preparation fixture and basic
@@ -100,11 +100,11 @@ startup on explicit software/GPU backends.
 Dependencies: 4a and frozen protocol from 1. Scope: capture helper, fixture module,
 protocol/manifest and focused pixel assertions; reuse existing capture machinery.
 
-- [ ] Capture proposed 120 feature images across 2 backends, 4 DPR values, 3 sizes
+- [x] Capture proposed 120 feature images across 2 backends, 4 DPR values, 3 sizes
   and 5 frozen scenes; check dimensions, clipping, spacing and labels.
-- [ ] Compare 24 calendar and 24 yield baseline images unchanged; inspect key
+- [x] Compare 24 calendar and 24 yield baseline images unchanged; inspect key
   feature scenes, empty recovery and frozen frames after mutation/drop.
-- [ ] Record source/binary/fixture/font hashes, actual backend and exact outcomes.
+- [x] Record source/binary/fixture/font hashes, actual backend and exact outcomes.
 
 Gate C: no unexplained source or native compatibility failures; preserve failures
 rather than modifying expected counts or thresholds after a failed run.
@@ -113,17 +113,37 @@ rather than modifying expected counts or thresholds after a failed run.
 
 Dependencies: 4b. Scope: docs/report/checklist; fixes return to the relevant task.
 
-- [ ] Run cargo fmt --check, cargo test --all-targets, cargo check --all-targets,
+- [x] Run cargo fmt --check, cargo test --all-targets, cargo check --all-targets,
   cargo clippy --all-targets -- -D warnings and applicable source oracles.
-- [ ] Ask for actual software mouse checks at regular/narrow/problem sizes:
+- [x] Ask for actual software mouse checks at regular/narrow/problem sizes:
   zoom/pan, price-axis wheel/drag, numeric crosshair, precision/live updates,
   box move/resize/Escape, idle markers, pulse visibility and short-height recovery.
-- [ ] Repeat physical checks with ICED_BACKEND=wgpu; record user results separately.
-- [ ] Write source/consumer contract, discarded TS conventions, chosen ownership,
+- [x] Repeat physical checks with ICED_BACKEND=wgpu; record user results separately.
+- [x] Write source/consumer contract, discarded TS conventions, chosen ownership,
   alternatives, exact files, tests/check results and remaining dependencies in the
   port report. Document public constructors and horizontal precision usage.
-- [ ] Keep historical timing exceptions and untested touchpad/touchscreen/high-DPI
+- [x] Keep historical timing exceptions and untested touchpad/touchscreen/high-DPI
   physical checks explicit. Do not mark them resolved by this feature.
 
 Gate D: planned behavior, source comparisons, backend regressions and recorded
 mouse acceptance pass. Push only when requested separately.
+
+## Recorded results (2026-10-17)
+
+- Implementation checkpoints: 207ac46 (pure behavior/source cases), af9dde2 (public
+  API/lifecycle), 0019701 (demo, integration and backend fixtures).
+- 680 tests pass across 64 all-target suites; zero failures/ignored tests. Final
+  eight price-chart integration tests and two demo tests rerun after review/layout
+  adjustments. Formatting, all-target check and strict Clippy pass on final code.
+- 28 actual-source oracle scripts pass; the new oracle covers 6,578 item/tick/weight
+  cases, nine real DataLayer states, numeric spacing, crosshair override and factory
+  delegation. Factory test uses a narrow observed boundary, not browser DOM setup.
+- Final matrix: target/options-chart/final-build; 120 feature images and 48 exact
+  baseline comparisons (24 calendar, 24 yield). Source/binary/fixture identities
+  verified after capture. Initial layout captures remain in final-retry; the first
+  final directory contains an aborted pre-build runner attempt, not accepted evidence.
+- Software and GPU: user reported “All checks passed; idle expiry passed; window
+  closed” for both explicit native backends, at all three requested sizes, including
+  short-height recovery and primitive editing.
+- Historical timing exception and touchpad/touchscreen/physical high-DPI checks
+  remain open. No push performed as part of this implementation.
