@@ -32,6 +32,20 @@ fn price_constructor_preserves_calendar_inference_and_numeric_spacing() {
             PriceScalePosition::Right,
         )
         .unwrap();
+    assert!(
+        c.model()
+            .series(id)
+            .unwrap()
+            .common_options()
+            .last_value_visible
+    );
+    assert!(
+        c.model()
+            .series(id)
+            .unwrap()
+            .common_options()
+            .price_line_visible
+    );
     c.set_data(id, vec![row(90., 1.), row(100., 2.), row(150., 3.)])
         .unwrap();
     c.fit_content();
@@ -83,12 +97,19 @@ fn precision_refreshes_tick_and_crosshair_labels_without_changing_prices() {
     };
     assert_eq!(c.model().time_scale().format_date_time(&point), "101");
     let before = c.frame().time.clone();
+    let prices = format!("{:?}", c.frame().prices);
+    let storage = c.model().series(id).unwrap().bars().rows().as_ptr();
     c.replace_options_chart_options(OptionsChartOptions { precision: 2 })
         .unwrap();
     c.prepare(iced::Size::new(800., 500.), 1., now).unwrap();
     assert_eq!(c.model().time_scale().format_date_time(&point), "100.50");
     assert_ne!(format!("{before:?}"), format!("{:?}", c.frame().time));
     assert_eq!(c.model().time_scale().behavior().options().precision, 2);
+    assert_eq!(prices, format!("{:?}", c.frame().prices));
+    assert_eq!(
+        storage,
+        c.model().series(id).unwrap().bars().rows().as_ptr()
+    );
     c.set_horizontal_price_formatter(Some(std::rc::Rc::new(|p| format!("Strike {}", p.value()))));
     assert_eq!(
         c.model().time_scale().format_date_time(&point),
@@ -248,6 +269,13 @@ fn all_builtin_price_families_prepare_at_short_heights_and_recover() {
             c.prepare(iced::Size::new(300., height), 1.25, now).unwrap();
         }
         assert_eq!(c.model().series(id).unwrap().bars().rows().len(), 3);
+        let plot = &c.frame().plot;
+        match family {
+            0 => assert!(!plot.lines.is_empty()),
+            1 => assert!(!plot.lines.is_empty() && !plot.fills.is_empty()),
+            2 => assert!(!plot.gradient_lines.is_empty() && !plot.fills.is_empty()),
+            _ => assert!(!plot.candles.is_empty()),
+        }
     }
 }
 
@@ -394,4 +422,86 @@ fn price_update_markers_expire_without_input_and_manual_markers_persist() {
         1
     );
     assert!(c.next_up_down_expiration().is_none());
+}
+
+#[test]
+fn numeric_panes_annotations_and_price_pulse_share_existing_paths() {
+    use feather_charts::model::{series_options::LastPriceAnimationMode, time_data::LogicalRange};
+    let mut c = OptionsChart::new_options(Default::default()).unwrap();
+    let mut options = LineSeriesOptions::default();
+    options.style.last_price_animation = LastPriceAnimationMode::Continuous;
+    let line = c
+        .add_series(
+            SeriesOptionsMap::Line(options),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let pane = c.add_pane();
+    let other = c
+        .add_series(
+            SeriesOptionsMap::Line(Default::default()),
+            pane,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let rows = || {
+        (0..32)
+            .map(|i| row(90. + i as f64 * 2.5, 4. + (i % 7) as f64 * 0.1))
+            .collect()
+    };
+    c.set_data(line, rows()).unwrap();
+    c.set_data(other, rows()).unwrap();
+    let annotations = c
+        .add_series_markers(
+            line,
+            vec![SeriesMarker::new(
+                price(100.),
+                MarkerPosition::AboveBar,
+                MarkerShape::Circle,
+                "red",
+            )],
+            Default::default(),
+        )
+        .unwrap();
+    c.add_pane_primitive(
+        0,
+        TextWatermark::new(TextWatermarkOptions {
+            lines: vec![TextWatermarkLine {
+                text: "Strikes".into(),
+                ..Default::default()
+            }],
+            ..Default::default()
+        })
+        .unwrap(),
+    )
+    .unwrap();
+    c.add_pane_primitive(
+        pane,
+        ImageWatermark::from_rgba(1, 1, vec![20, 80, 120, 40], Default::default()).unwrap(),
+    )
+    .unwrap();
+    c.fit_content();
+    let now = Instant::now();
+    c.prepare(iced::Size::new(800., 500.), 1., now).unwrap();
+    assert_eq!(c.multi_frame().unwrap().panes.len(), 2);
+    assert!(!c.multi_frame().unwrap().panes[1].plot.lines.is_empty());
+    assert_eq!(c.frame().plot.last_price_animations.len(), 1);
+    assert_eq!(c.series_markers(annotations).unwrap()[0].time, price(100.));
+    let frozen = c.frame().clone();
+    c.update(ChartMessage::Tick(
+        now + std::time::Duration::from_millis(325),
+    ))
+    .unwrap();
+    assert_ne!(
+        c.frame().plot.last_price_animations[0].radius,
+        frozen.plot.last_price_animations[0].radius
+    );
+    c.set_logical_range(LogicalRange {
+        from: 0.0.into(),
+        to: 10.0.into(),
+    });
+    c.prepare(iced::Size::new(800., 500.), 1., now).unwrap();
+    assert!(c.frame().plot.last_price_animations.is_empty());
+    assert_eq!(frozen.plot.last_price_animations.len(), 1);
 }

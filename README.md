@@ -515,3 +515,45 @@ The demo includes yield changes, 35-year extension, reset/empty recovery, domain
 and label controls, automatic/manual markers, a feed pause and a movable box with
 right-edge resizing. Escape cancels an edit. Numeric custom series and price-based
 options charts remain separate work. See the [port report](docs/porting/yield-curve.md).
+
+## Price-based horizontal charts
+
+Use `OptionsChart` when horizontal items are prices or strikes rather than dates.
+It supports all six built-in series through the ordinary chart API:
+
+```rust
+use feather_charts::{
+    api::{HorizontalPrice, OptionsChart, OptionsChartOptions},
+    model::{
+        data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem},
+        pane::PriceScalePosition,
+        series_options::SeriesOptionsMap,
+    },
+};
+let mut chart = OptionsChart::new_options(OptionsChartOptions { precision: 2 })?;
+let series = chart.add_series(
+    SeriesOptionsMap::Line(Default::default()), 0, PriceScalePosition::Right,
+)?;
+chart.set_data(series, vec![
+    BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+        time: HorizontalPrice::new(100.5)?, value: 4.25,
+        color: None, custom_values: None,
+    })),
+])?;
+chart.replace_options_chart_options(OptionsChartOptions { precision: 3 })?;
+# Ok::<(), Box<dyn std::error::Error>>(())
+```
+
+Prices must be finite; precision accepts 0–100 decimal places and defaults to 0.
+Strikes occupy ordered logical indices: 90, 100 and 150 are successive positions,
+not a continuous numeric distance scale. Horizontal precision leaves vertical
+series price formatting unchanged. `set_horizontal_price_formatter` overrides
+crosshair labels; axis ticks continue using precision. For full chart, horizontal
+scale and localization overrides use `with_options_chart_options`.
+
+Run `cargo run --example options_chart -- --live-feed`. The demo includes a Line,
+volume Histogram, precision/label controls, update markers, a pulse, watermarks and
+an editable box. Its toolbar scrolls horizontally at narrow widths. Use
+`ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to select the native renderer.
+The source contract and validation record are in
+[docs/porting/options-chart.md](docs/porting/options-chart.md).
