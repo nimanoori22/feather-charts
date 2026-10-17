@@ -453,3 +453,31 @@ failure remains recorded separately.
 The [short-window cause investigation](docs/porting/histogram-window-cause.md)
 records same-history controls and hardware counters. The focused runner reports
 these controls alongside every raw timing failure to qualify history attribution.
+
+## Up/down update markers
+
+Line and Area series support temporary circles/chevrons for managed value changes:
+
+```rust,ignore
+let markers = chart.add_up_down_markers(series, UpDownMarkersOptions::default())?;
+chart.set_up_down_data(markers, initial_data)?;
+chart.update_up_down_data(markers, updated_item, historical, Instant::now())?;
+```
+
+Changes compare against the last managed full data set, rather than the preceding
+update. Ordinary `set_data`/`update_data` calls bypass tracking; appended keys remain
+untracked until a managed full reset. The default lifetime is five seconds; zero
+expires immediately. `set_up_down_markers` installs indefinite manual markers.
+Colors and future update lifetimes can be replaced without changing existing deadlines.
+The widget schedules idle expiration; headless hosts use `next_up_down_expiration`
+and `ChartMessage::Tick(now)` or `prepare(..., now)`.
+
+```sh
+cargo run --example public_chart -- --line --up-down-markers --live-feed --primitives
+ICED_BACKEND=wgpu cargo run --example public_chart -- --area --up-down-markers
+```
+
+The demo includes latest/historical changes, manual markers, clear, colors, lifetime
+and pause-feed/pulse controls. Historical changes follow the existing data API's
+restriction against historical edits while bars are conflated. See the
+[port report](docs/porting/up-down-markers.md) for source behavior and native corrections.

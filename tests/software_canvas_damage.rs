@@ -19,7 +19,7 @@ use std::time::Instant;
 
 #[test]
 fn changing_chart_damage_is_one_region_and_keeps_fresh_pixels() {
-    check_damage(false, Size::new(941., 1030.));
+    check_damage(false, false, Size::new(941., 1030.));
 }
 #[test]
 fn image_chart_keeps_one_damage_region_at_all_acceptance_sizes() {
@@ -28,10 +28,20 @@ fn image_chart_keeps_one_damage_region_at_all_acceptance_sizes() {
         Size::new(420., 320.),
         Size::new(300., 180.),
     ] {
-        check_damage(true, size);
+        check_damage(true, false, size);
     }
 }
-fn check_damage(with_image: bool, size: Size) {
+#[test]
+fn up_down_updates_keep_one_damage_region_and_fresh_pixels() {
+    for size in [
+        Size::new(941., 1030.),
+        Size::new(420., 320.),
+        Size::new(300., 180.),
+    ] {
+        check_damage(true, true, size);
+    }
+}
+fn check_damage(with_image: bool, with_updates: bool, size: Size) {
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
         iced::Font::DEFAULT,
         iced::Pixels(12.),
@@ -75,12 +85,31 @@ fn check_damage(with_image: bool, size: Size) {
             )
             .unwrap();
     }
+    let marker_id = with_updates.then(|| {
+        let line = chart
+            .add_series(
+                SeriesOptionsMap::Line(Default::default()),
+                0,
+                PriceScalePosition::Right,
+            )
+            .unwrap();
+        let marker = chart.add_up_down_markers(line, Default::default()).unwrap();
+        chart
+            .set_up_down_data(marker, vec![update_row(100.)])
+            .unwrap();
+        marker
+    });
     chart.fit_content();
     let state = ChartState::default();
     let bounds = Rectangle::with_size(size);
     let mut previous: Option<Vec<iced_tiny_skia::Layer>> = None;
     let mut previous_pixels = None;
     for offset in [0., 3., -4., 0.] {
+        if let Some(id) = marker_id {
+            chart
+                .update_up_down_data(id, update_row(101. + offset), false, Instant::now())
+                .unwrap();
+        }
         chart.set_right_offset(offset);
         chart.prepare(size, 1., Instant::now()).unwrap();
         renderer.reset(bounds);
@@ -124,4 +153,16 @@ fn check_damage(with_image: bool, size: Size) {
         }
         previous_pixels = Some(pixels);
     }
+}
+
+fn update_row(
+    value: f64,
+) -> BuiltInSeriesDataItem<feather_charts::model::horz_scale_behavior_time::types::Time> {
+    use feather_charts::model::data_consumer::{LineData, LineDataItem};
+    BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+        time: UtcTimestamp::new(1_700_000_000. + 119. * 60.).into(),
+        value,
+        color: None,
+        custom_values: None,
+    }))
 }

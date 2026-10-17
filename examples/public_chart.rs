@@ -40,10 +40,13 @@ use marker_demo::sample_markers;
 mod image_watermark_demo;
 #[path = "public_chart/software_drag_profile.rs"]
 mod software_drag_profile;
+#[path = "public_chart/up_down_markers.rs"]
+mod up_down_demo;
 #[path = "public_chart/watermark.rs"]
 mod watermark_demo;
 
 struct App {
+    up_down: Option<up_down_demo::Scene>,
     image_watermark: Option<image_watermark_demo::Scene>,
     watermark: Option<watermark_demo::Scene>,
     primitive_scene: Option<primitive_demo::Scene>,
@@ -64,6 +67,13 @@ struct App {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    UpDownLatest,
+    UpDownHistorical,
+    UpDownManual,
+    UpDownClear,
+    UpDownLifetime,
+    UpDownColors,
+    UpDownPause,
     ImageOpacity,
     ImagePadding,
     ImageLimits,
@@ -194,7 +204,11 @@ impl App {
         let image_watermark = std::env::args()
             .any(|a| a == "--image-watermark")
             .then(|| image_watermark_demo::Scene::new(&mut chart));
+        let up_down = std::env::args()
+            .any(|a| a == "--up-down-markers")
+            .then(|| up_down_demo::Scene::new(&mut chart, price, kind, count));
         Self {
+            up_down,
             image_watermark,
             watermark,
             primitive_scene,
@@ -219,6 +233,37 @@ impl App {
 impl App {
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::UpDownLatest
+            | Message::UpDownHistorical
+            | Message::UpDownManual
+            | Message::UpDownClear
+            | Message::UpDownLifetime
+            | Message::UpDownColors => {
+                if let Some(scene) = &mut self.up_down
+                    && let Err(error) =
+                        scene.change(&mut self.chart, &message, self.latest, Instant::now())
+                {
+                    self.status = format!("Update rejected: {error:?}");
+                }
+                self.prepare();
+            }
+            Message::UpDownPause => {
+                self.live_since = None;
+                let mut options = sample_options(self.kind, self.show_last);
+                match &mut options {
+                    SeriesOptionsMap::Line(o) => {
+                        o.style.last_price_animation = LastPriceAnimationMode::Disabled
+                    }
+                    SeriesOptionsMap::Area(o) => {
+                        o.style.last_price_animation = LastPriceAnimationMode::Disabled
+                    }
+                    _ => unreachable!(),
+                }
+                self.chart
+                    .replace_series_options(self.price, options)
+                    .unwrap();
+                self.prepare();
+            }
             Message::ImageOpacity
             | Message::ImagePadding
             | Message::ImageLimits
@@ -242,6 +287,15 @@ impl App {
             }
             Message::FeedTick(at) => {
                 if self.live_since.is_some_and(|since| at >= since) {
+                    if let Some(scene) = &mut self.up_down {
+                        if let Err(error) =
+                            scene.change(&mut self.chart, &Message::UpDownLatest, self.latest, at)
+                        {
+                            self.status = format!("Update rejected: {error:?}");
+                        }
+                        self.prepare();
+                        return Task::none();
+                    }
                     return self.update(Message::Append);
                 }
             }
@@ -548,6 +602,28 @@ impl App {
                 ]
                 .spacing(8),
             )
+        } else {
+            content
+        };
+        let content = if let Some(scene) = &self.up_down {
+            content
+                .push(
+                    row![
+                        button("Latest change").on_press(Message::UpDownLatest),
+                        button("History change").on_press(Message::UpDownHistorical),
+                        button("Manual markers").on_press(Message::UpDownManual),
+                        button("Clear updates").on_press(Message::UpDownClear)
+                    ]
+                    .spacing(8),
+                )
+                .push(
+                    row![
+                        button(text(scene.lifetime_label())).on_press(Message::UpDownLifetime),
+                        button("Marker colors").on_press(Message::UpDownColors),
+                        button("Pause feed/pulse").on_press(Message::UpDownPause)
+                    ]
+                    .spacing(8),
+                )
         } else {
             content
         };
@@ -1107,13 +1183,31 @@ fn main() -> iced::Result {
         SeriesType::Baseline
     } else if args.iter().any(|a| a == "--bar") {
         SeriesType::Bar
-    } else if args.iter().any(|a| a == "--line") {
+    } else if args.iter().any(|a| a == "--line")
+        || (args.iter().any(|a| a == "--up-down-markers")
+            && !args
+                .iter()
+                .any(|a| a == "--histogram" || a == "--candlestick"))
+    {
         SeriesType::Line
     } else if args.iter().any(|a| a == "--histogram") {
         SeriesType::Histogram
     } else {
         SeriesType::Candlestick
     };
+    if args.iter().any(|a| a == "--up-down-markers")
+        && !matches!(kind, SeriesType::Line | SeriesType::Area)
+    {
+        eprintln!("Up/down update markers support --line or --area.");
+        return Ok(());
+    }
+    if let Some(index) = args.iter().position(|a| a == "--up-down-captures") {
+        up_down_demo::capture(
+            std::path::Path::new(args.get(index + 1).expect("capture directory")),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(index) = args.iter().position(|a| a == "--image-watermark-captures") {
         image_watermark_demo::capture(
             std::path::Path::new(args.get(index + 1).expect("capture directory")),
