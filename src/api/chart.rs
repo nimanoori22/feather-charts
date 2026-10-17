@@ -392,6 +392,7 @@ impl<B: ChartBehavior> Chart<B> {
         ratio: f32,
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        self.expire_up_down_markers(now);
         self.prepared_revision = None;
         self.precompute_conflation_step();
         self.check_primitive_edit(size, ratio);
@@ -466,7 +467,6 @@ impl<B: ChartBehavior> Chart<B> {
         ratio: f32,
         now: Instant,
     ) -> Result<(), ChartError> {
-        self.expire_up_down_markers(now);
         if self.size != size || self.ratio != ratio {
             self.cancel_viewport_interaction();
         }
