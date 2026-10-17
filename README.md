@@ -481,3 +481,37 @@ The demo includes latest/historical changes, manual markers, clear, colors, life
 and pause-feed/pulse controls. Historical changes follow the existing data API's
 restriction against historical edits while bars are conflated. See the
 [port report](docs/porting/up-down-markers.md) for source behavior and native corrections.
+
+## Yield curves
+
+Use `YieldCurveChart` for numeric maturities in months (`12` means one year).
+It supports Line and Area curves, shared maturity indexing, month/year labels,
+historical updates and numeric up/down markers through the existing synchronous
+engine and Iced widget.
+
+```rust,ignore
+let mut chart = YieldCurveChart::new(YieldCurveOptions::default())?;
+let series = chart.add_line_series(Default::default(), 0, PriceScalePosition::Left)?;
+// Use BuiltInSeriesDataItem<Maturity>; construct maturities with
+// Maturity::from_months(months), which rejects nonfinite numbers.
+chart.set_data(series, rows)?;
+chart.fit_content();
+```
+
+Defaults show the left yield axis, format values as `5.378%`, and hide last-value
+labels and price lines. Series patches allow explicit overrides. Use
+`set_maturity_formatter` for horizontal labels and `replace_yield_curve_options`
+for scaffold resolution/start/minimum. The private whitespace scaffold preserves
+upstream spacing and retained extent: clearing or shortening curves does not
+necessarily shrink a previously extended horizontal domain. Scaffold generation
+is limited to 100,000 points; errors preserve existing data and markers.
+
+```sh
+ICED_BACKEND=tiny-skia cargo run --example yield_curve -- --live-feed
+ICED_BACKEND=wgpu cargo run --example yield_curve -- --live-feed
+```
+
+The demo includes yield changes, 35-year extension, reset/empty recovery, domain
+and label controls, automatic/manual markers, a feed pause and a movable box with
+right-edge resizing. Escape cancels an edit. Numeric custom series and price-based
+options charts remain separate work. See the [port report](docs/porting/yield-curve.md).
