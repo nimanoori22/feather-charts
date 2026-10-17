@@ -16,6 +16,14 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn side() -> PriceScalePosition;
     fn core(&self) -> &Chart<Self::Behavior>;
     fn line(&mut self, pane: usize, pulse: bool) -> SeriesId;
+    fn area(&mut self, pane: usize) -> SeriesId;
+    fn raw_data(
+        &mut self,
+        id: SeriesId,
+        rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
+    ) -> Result<(), ChartError>;
+    fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartError>;
+    fn set_hovered_series_on_top(&mut self, enabled: bool);
     fn custom(
         &mut self,
         pane: usize,
@@ -49,6 +57,19 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn raw_data(
+            &mut self,
+            id: SeriesId,
+            rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
+        ) -> Result<(), ChartError> {
+            self.set_data(id, rows)
+        }
+        fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartError> {
+            self.set_series_order(id, order)
+        }
+        fn set_hovered_series_on_top(&mut self, enabled: bool) {
+            self.set_hovered_series_on_top(enabled)
+        }
         fn custom(
             &mut self,
             pane: usize,
@@ -175,6 +196,10 @@ impl Host for Chart {
         )
         .unwrap()
     }
+    fn area(&mut self, p: usize) -> SeriesId {
+        self.add_series(SeriesOptionsMap::Area(area_options()), p, Self::side())
+            .unwrap()
+    }
     common!();
 }
 impl Host for OptionsChart {
@@ -200,6 +225,10 @@ impl Host for OptionsChart {
             PriceScalePosition::Right,
         )
         .unwrap()
+    }
+    fn area(&mut self, p: usize) -> SeriesId {
+        self.add_series(SeriesOptionsMap::Area(area_options()), p, Self::side())
+            .unwrap()
     }
     common!();
 }
@@ -233,5 +262,20 @@ impl Host for YieldCurveChart {
         )
         .unwrap()
     }
+    fn area(&mut self, p: usize) -> SeriesId {
+        self.add_area_series(Default::default(), p, Self::side())
+            .unwrap()
+    }
     common!();
+}
+
+fn area_options() -> AreaSeriesOptions {
+    let mut o = AreaSeriesOptions::default();
+    o.common.price_format = PriceFormat::Custom(PriceFormatCustom {
+        formatter: Rc::new(|p| format!("{:.4}", p.value())),
+        tickmarks_formatter: None,
+        min_move: 0.0001,
+        base: Some(10000.),
+    });
+    o
 }

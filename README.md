@@ -618,3 +618,27 @@ The scrolling toolbar moves/swaps panes, transfers the blue or custom series,
 creates a destination pane, removes the last pane and resets the scene. The box
 and temporary update markers follow the blue series; watermarks follow panes.
 Select `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` for native rendering.
+
+## Series drawing order
+
+Use `series_order(id)` and `set_series_order(id, order)` to read/change an existing
+built-in or custom series' zero-based position within its pane. Oversized indices
+clamp to the last source. Data, IDs and attachments remain owned by the same series.
+Changing order cancels active gestures/edits; invalid calls and identity operations
+preserve them. Hover raising affects presentation independently of stored order.
+
+Maturity indices count the private whitespace support slot, so the first public
+series normally starts at 1. That support series cannot be reordered through the
+public API. Reordering can change the price-scale formatter; existing Rust policy
+also refreshes overlay formatters and chooses visible leaders. See the
+[source contract and verification](docs/porting/series-order.md).
+
+```bash
+cargo run --example pane_management -- --series-order --live-feed
+cargo run --example pane_management -- --series-order --options --live-feed
+cargo run --example pane_management -- --series-order --yield-curve --live-feed
+```
+
+Select the blue line or custom intervals, then use Backward/Forward/To back/To
+front. The second toolbar displays the selected series' order and controls hover
+raising. Both toolbars scroll horizontally. Pane controls and Reset remain available.

@@ -29,6 +29,8 @@ use std::{
 struct App<C: Host> {
     chart: C,
     line: SeriesId,
+    order_mode: bool,
+    selected_custom: bool,
     custom: CustomSeriesHandle<interval::View<C::Item, C::Internal>>,
     markers: UpDownMarkersId,
     region: region::Scene,
@@ -53,6 +55,12 @@ enum Message {
     Remove,
     Reset,
     Pause,
+    SelectSeries,
+    Backward,
+    Forward,
+    ToBack,
+    ToFront,
+    HoverRaise,
 }
 fn line_row<C: Host>(i: usize, shift: f64) -> BuiltInSeriesDataItem<C::Item> {
     BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
@@ -111,6 +119,8 @@ impl<C: Host> App<C> {
         Self {
             chart,
             line,
+            order_mode: false,
+            selected_custom: false,
             custom,
             markers,
             region,
@@ -122,9 +132,63 @@ impl<C: Host> App<C> {
                 .into(),
         }
     }
+    fn with_order(live: bool, enabled: bool) -> Self {
+        let mut app = Self::new(live);
+        app.order_mode = enabled;
+        if enabled {
+            app.chart.move_series_to_pane(app.custom.id(), 0).unwrap();
+            let area = app.chart.area(0);
+            app.chart
+                .raw_data(
+                    area,
+                    (0..24)
+                        .map(|i| {
+                            BuiltInSeriesDataItem::Area(
+                                feather_charts::model::data_consumer::AreaDataItem::Data(
+                                    feather_charts::model::data_consumer::AreaData {
+                                        time: C::key(i),
+                                        value: 4.5 + (i as f64 * 0.3).sin() * 0.4,
+                                        line_color: None,
+                                        top_color: None,
+                                        bottom_color: None,
+                                        custom_values: None,
+                                    },
+                                ),
+                            )
+                        })
+                        .collect(),
+                )
+                .unwrap();
+            app.chart.fit();
+            app.status = "Select blue line or custom intervals, then change order. Hover raising is independent.".into();
+        }
+        app
+    }
+    fn selected(&self) -> SeriesId {
+        if self.selected_custom {
+            self.custom.id()
+        } else {
+            self.line
+        }
+    }
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::SelectSeries => self.selected_custom = !self.selected_custom,
+            Message::HoverRaise => self
+                .chart
+                .set_hovered_series_on_top(!self.chart.core().hovered_series_on_top()),
+            Message::Backward | Message::Forward | Message::ToBack | Message::ToFront => {
+                let id = self.selected();
+                let current = self.chart.core().series_order(id)?;
+                let target = match m {
+                    Message::Backward => current.saturating_sub(1),
+                    Message::Forward => current.saturating_add(1),
+                    Message::ToBack => 0,
+                    _ => usize::MAX,
+                };
+                self.chart.set_series_order(id, target)?;
+            }
             Message::Down => self.chart.move_pane(0, n - 1)?,
             Message::Up => self.chart.move_pane(n - 1, 0)?,
             Message::Swap => self.chart.swap_panes(0, n - 1)?,
@@ -150,7 +214,7 @@ impl<C: Host> App<C> {
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
-                *self = Self::new(live);
+                *self = Self::with_order(live, self.order_mode);
                 self.size = size;
                 self.ratio = ratio;
             }
@@ -232,6 +296,33 @@ impl<C: Host> App<C> {
             self.chart.core().model().pane_for_series(self.line),
             self.chart.core().model().pane_for_series(self.custom.id())
         );
+        let order_controls = if self.order_mode {
+            row![
+                button(if self.selected_custom {
+                    "Selected: custom"
+                } else {
+                    "Selected: blue line"
+                })
+                .on_press(Message::SelectSeries),
+                button("Backward").on_press(Message::Backward),
+                button("Forward").on_press(Message::Forward),
+                button("To back").on_press(Message::ToBack),
+                button("To front").on_press(Message::ToFront),
+                button(if self.chart.core().hovered_series_on_top() {
+                    "Hover raise: on"
+                } else {
+                    "Hover raise: off"
+                })
+                .on_press(Message::HoverRaise),
+                text(format!(
+                    "order {:?}",
+                    self.chart.core().series_order(self.selected()).ok()
+                ))
+            ]
+            .spacing(6)
+        } else {
+            row![]
+        };
         column![
             iced::widget::scrollable(
                 row![
@@ -255,6 +346,9 @@ impl<C: Host> App<C> {
             .direction(iced::widget::scrollable::Direction::Horizontal(
                 Default::default()
             )),
+            iced::widget::scrollable(order_controls).direction(
+                iced::widget::scrollable::Direction::Horizontal(Default::default())
+            ),
             text(owners).size(12).wrapping(text::Wrapping::None),
             text(&self.status).size(12).wrapping(text::Wrapping::None),
             self.chart.core().element().map(Message::Chart)
@@ -273,11 +367,15 @@ impl<C: Host> App<C> {
         ])
     }
 }
-fn run<C: Host>(live: bool, title: &'static str) -> iced::Result {
-    iced::application(move || App::<C>::new(live), App::update, App::view)
-        .title(title)
-        .subscription(App::subscription)
-        .run()
+fn run<C: Host>(live: bool, ordered: bool, title: &'static str) -> iced::Result {
+    iced::application(
+        move || App::<C>::with_order(live, ordered),
+        App::update,
+        App::view,
+    )
+    .title(title)
+    .subscription(App::subscription)
+    .run()
 }
 fn main() -> iced::Result {
     let args: Vec<_> = std::env::args().collect();
@@ -285,16 +383,18 @@ fn main() -> iced::Result {
         captures::run(
             std::path::Path::new(&args[i + 1]),
             args.iter().any(|a| a == "--wgpu"),
+            args.iter().any(|a| a == "--series-order"),
         );
         return Ok(());
     }
+    let ordered = args.iter().any(|a| a == "--series-order");
     let live = args.iter().any(|a| a == "--live-feed");
     if args.iter().any(|a| a == "--yield-curve") {
-        run::<YieldCurveChart>(live, "Feather Charts — maturity pane management")
+        run::<YieldCurveChart>(live, ordered, "Feather Charts — maturity pane management")
     } else if args.iter().any(|a| a == "--options") {
-        run::<OptionsChart>(live, "Feather Charts — strike pane management")
+        run::<OptionsChart>(live, ordered, "Feather Charts — strike pane management")
     } else {
-        run::<Chart>(live, "Feather Charts — calendar pane management")
+        run::<Chart>(live, ordered, "Feather Charts — calendar pane management")
     }
 }
 
@@ -343,6 +443,49 @@ mod tests {
         assert_eq!(app.chart.core().model().panes().len(), 3);
         assert_ne!(app.custom.id(), original);
         assert_eq!(app.size, Size::new(800., 500.));
+    }
+    fn order_controls<C: Host>() {
+        let mut app = App::<C>::with_order(true, true);
+        app.size = Size::new(800., 500.);
+        for action in [
+            Message::ToFront,
+            Message::Backward,
+            Message::ToBack,
+            Message::Forward,
+            Message::SelectSeries,
+            Message::ToBack,
+            Message::ToFront,
+            Message::HoverRaise,
+            Message::LineNew,
+            Message::CustomToLine,
+            Message::ToBack,
+            Message::Tick(Instant::now()),
+            Message::Reset,
+        ] {
+            app.action(action).unwrap();
+            app.chart
+                .prepare(Size::new(300., 90.), 1.5, Instant::now())
+                .unwrap();
+            app.chart.prepare(app.size, 1., Instant::now()).unwrap();
+            assert!(app.chart.core().series_order(app.selected()).is_ok());
+        }
+        assert!(app.order_mode);
+        assert_eq!(
+            app.chart.core().model().pane_for_series(app.line),
+            app.chart.core().model().pane_for_series(app.custom.id())
+        );
+    }
+    #[test]
+    fn calendar_order_controls() {
+        order_controls::<Chart>();
+    }
+    #[test]
+    fn strike_order_controls() {
+        order_controls::<OptionsChart>();
+    }
+    #[test]
+    fn maturity_order_controls() {
+        order_controls::<YieldCurveChart>();
     }
     #[test]
     fn calendar_controls_keep_live_owners_and_recover() {

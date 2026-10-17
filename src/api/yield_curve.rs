@@ -284,6 +284,10 @@ impl YieldCurveChart {
     pub fn move_pane(&mut self, from: usize, to: usize) -> Result<(), ChartError> {
         self.core.move_pane(from, to)
     }
+    /// Temporarily raise the hovered series without changing its stored order.
+    pub fn set_hovered_series_on_top(&mut self, enabled: bool) {
+        self.core.set_hovered_series_on_top(enabled);
+    }
     /// Set pane-local order, counting the private whitespace support slot.
     pub fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartError> {
         self.core.set_series_order(id, order)
