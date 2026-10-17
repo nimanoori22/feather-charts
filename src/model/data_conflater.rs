@@ -110,10 +110,11 @@ impl ConflationCache {
         }
     }
     /// One unit builds at most one pair; partial levels never become visible.
-    pub fn step<R: Input>(&mut self, rows: &[R], target: usize, mut budget: usize) {
+    pub fn step<R: Input>(&mut self, rows: &[R], target: usize, mut budget: usize) -> usize {
+        let initial = budget;
         let target = normalize(target);
         if target <= 1 {
-            return;
+            return 0;
         }
         while budget > 0 && !self.contains(target) {
             let level = (1..=9)
@@ -163,6 +164,7 @@ impl ConflationCache {
                 self.build = Some(job);
             }
         }
+        initial - budget
     }
     pub fn update_last<R: Input>(&mut self, rows: &[R]) {
         self.build = None;
@@ -195,7 +197,7 @@ mod tests {
                     count: i % 3 + 1,
                 })
                 .collect();
-            for level in [1, 2, 3, 4, 5, 8, 16, 64, 512, 4096] {
+            for level in [1, 2, 3, 4, 5, 8, 16, 32, 64, 128, 256, 512, 4096] {
                 let mut cache = ConflationCache::default();
                 cache.ensure(&rows, level);
                 let actual = if level == 1 {
@@ -218,9 +220,13 @@ mod tests {
                         .collect::<Vec<_>>()
                 };
                 println!(
-                    "CONFLATION {{\"factor\":{level},\"rows\":{:?},\"actual\":{:?}}}",
+                    "CONFLATION {{\"factor\":{level},\"rows\":{:?},\"actual\":{:?},\"line\":{:?}}}",
                     encode(&rows),
-                    encode(actual)
+                    encode(actual),
+                    actual
+                        .iter()
+                        .map(|r| line_value(r.value, r.count))
+                        .collect::<Vec<_>>()
                 );
             }
         }
@@ -261,6 +267,34 @@ mod tests {
         }
     }
 
+    #[test]
+    fn dense_counts_storage_and_factor_source_cases() {
+        let rows: Vec<_> = (0..8192)
+            .map(|i| Bar {
+                first: i,
+                end: i + 1,
+                index: (i as f64).into(),
+                value: [1., 2., 0., 1.],
+                count: 1,
+            })
+            .collect();
+        let mut cache = ConflationCache::default();
+        cache.ensure(&rows, 8);
+        assert_eq!(cache.rows(8).len(), 1024);
+        assert!(cache.rows(8).iter().all(|r| r.count == 8));
+        cache.ensure(&rows, 512);
+        assert!(cache.levels.values().map(Vec::len).sum::<usize>() < rows.len());
+        for spacing in [0.00001, 0.125, 0.5, 1., 4.] {
+            for dpr in [1., 1.25, 1.5, 2.] {
+                for threshold in [0.25, 1., 4.] {
+                    println!(
+                        "CONFLATION_FACTOR {{\"spacing\":{spacing},\"dpr\":{dpr},\"threshold\":{threshold},\"actual\":{}}}",
+                        factor(spacing, dpr, threshold)
+                    );
+                }
+            }
+        }
+    }
     #[test]
     fn recursive_remainders_counts_identity_and_extremes() {
         let rows: Vec<_> = (0..7)

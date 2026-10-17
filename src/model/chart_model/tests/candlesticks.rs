@@ -404,10 +404,7 @@ fn candle_history_whitespace_conflation_and_failed_frame_clear_output() {
         },
     );
     flush(&mut model);
-    assert_eq!(
-        model.prepare_candlesticks(id),
-        Err(CandlestickPreparationError::UnsupportedConflation)
-    );
+    assert!(model.prepare_candlesticks(id).unwrap().is_some());
     model.apply_time_scale_options(
         &mut layer,
         HorzScaleOptionsPatch {
@@ -571,4 +568,44 @@ fn candle_magnet_compares_selected_scales_and_excludes_hidden_and_overlay_source
         )
         .unwrap();
     assert!((model.crosshair().position().unwrap().y.unwrap() - expected).abs() > 1e-8);
+}
+
+#[test]
+fn conflated_candles_keep_first_raw_direction_and_overrides() {
+    let (mut layer, mut model, id) = candle_fixture(PriceScaleMode::Normal);
+    let mut first = candle(0., 100., 110.);
+    if let BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(data)) = &mut first {
+        data.wick_color = Some("purple".into());
+    }
+    model
+        .apply_data_update(
+            layer
+                .set_series_data(
+                    id,
+                    SeriesType::Candlestick,
+                    vec![first, candle(1., 110., 80.)],
+                )
+                .unwrap(),
+        )
+        .unwrap();
+    model.apply_time_scale_options(
+        &mut layer,
+        HorzScaleOptionsPatch {
+            enable_conflation: Some(true),
+            min_bar_spacing: Some(0.001),
+            bar_spacing: Some(0.5),
+            ..Default::default()
+        },
+    );
+    let data = model.prepare_candlesticks(id).unwrap().unwrap();
+    assert_eq!(data.items.len(), 1);
+    // Aggregate closes below open, but source color lookup uses the first raw candle.
+    assert_eq!(
+        (
+            &*data.items[0].color,
+            &*data.items[0].border_color,
+            &*data.items[0].wick_color
+        ),
+        ("green", "blue", "purple")
+    );
 }

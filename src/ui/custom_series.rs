@@ -8,6 +8,9 @@ use iced::widget::canvas::Frame;
 use std::rc::Rc;
 
 pub(crate) struct CustomPreparation<'a> {
+    pub conflation_enabled: bool,
+    pub conflation_factor: usize,
+    pub conflation_threshold: Option<f64>,
     pub visible: Option<RangeImpl<TimePointIndex>>,
     pub coordinate: &'a dyn Fn(TimePointIndex) -> Coordinate,
     pub bar_spacing: f64,
@@ -15,6 +18,8 @@ pub(crate) struct CustomPreparation<'a> {
     pub price: Option<PriceCoordinateTransform>,
 }
 pub(crate) trait CustomPreparationAdapter {
+    fn needs_precompute(&self, levels: &[usize]) -> bool;
+    fn precompute(&mut self, levels: &[usize], budget: usize) -> usize;
     fn hit_tolerance(&self) -> f64;
     fn data_at(&self, index: TimePointIndex) -> Option<crate::api::CustomSeriesEventData>;
     fn first_value(&self, range: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue>;

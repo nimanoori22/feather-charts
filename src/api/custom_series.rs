@@ -1,4 +1,5 @@
 //! Typed public custom owners and the heterogeneous, synchronous frame adapter.
+mod conflation;
 use super::{Chart, ChartError};
 use crate::model::{
     data_consumer::TimedData,
@@ -114,6 +115,7 @@ struct Adapter<V>
 where
     V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
 {
+    conflation: conflation::Cache<V::Data>,
     model: ModelHandle<TimePoint, Time, V::Data>,
     view: Rc<RefCell<OwnedView<V>>>,
 }
@@ -125,6 +127,34 @@ where
     V::Renderer: Clone + 'static,
     <V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData: Clone + 'static,
 {
+    fn needs_precompute(&self, levels: &[usize]) -> bool {
+        let model = self.model.borrow();
+        !model.rows().is_empty()
+            && levels.iter().any(|&level| {
+                level > 1
+                    && !self
+                        .conflation
+                        .contains(model.pane_data_generation(), level)
+            })
+    }
+    fn precompute(&mut self, levels: &[usize], budget: usize) -> usize {
+        let model = self.model.borrow();
+        let source = (model.pane_data_generation(), model.rows().len());
+        let level = levels
+            .iter()
+            .copied()
+            .find(|&level| level > 1 && !self.conflation.contains(source.0, level));
+        drop(model);
+        level.map_or(0, |level| {
+            self.conflation.step(
+                source,
+                level,
+                budget,
+                |i| self.model.borrow().rows()[i].clone(),
+                &self.view.borrow().view,
+            )
+        })
+    }
     fn hit_tolerance(&self) -> f64 {
         self.model.borrow().options().common.hit_test_tolerance
     }
@@ -143,11 +173,45 @@ where
         self.model.borrow().first_value(range)
     }
     fn prepare(&mut self, context: CustomPreparation<'_>) -> Option<PreparedCustomSeries> {
-        let model = self.model.borrow();
+        let mut model = self.model.borrow();
         if !model.visible() {
             return None;
         }
-        let rows = model.rows();
+        let level = if context.conflation_enabled {
+            crate::model::data_conflater::factor(
+                context.bar_spacing,
+                context.pixel_ratio,
+                model
+                    .options()
+                    .common
+                    .conflation_threshold_factor
+                    .or(context.conflation_threshold)
+                    .unwrap_or(1.),
+            )
+        } else {
+            1
+        };
+        if level > 1
+            && !self
+                .conflation
+                .contains(model.pane_data_generation(), level)
+        {
+            let generation = model.pane_data_generation();
+            let length = model.rows().len();
+            drop(model);
+            self.conflation.ensure(
+                (generation, length),
+                level,
+                |i| self.model.borrow().rows()[i].clone(),
+                &self.view.borrow().view,
+            );
+            model = self.model.borrow();
+        }
+        let rows = if level > 1 {
+            self.conflation.rows(level).unwrap_or_else(|| model.rows())
+        } else {
+            model.rows()
+        };
         let range = context
             .visible
             .as_ref()
@@ -181,7 +245,7 @@ where
                 from: r.from - storage.from,
                 to: r.to - storage.from,
             }),
-            conflation_factor: 1.0,
+            conflation_factor: context.conflation_factor as f64,
             pixel_ratio: context.pixel_ratio,
         };
         let fallback = context
@@ -254,6 +318,7 @@ impl Chart {
         self.views[pane].push((
             id,
             SeriesPaneView::Custom(CustomPaneView::new(Adapter {
+                conflation: Default::default(),
                 model: model.clone(),
                 view: owned.clone(),
             })),

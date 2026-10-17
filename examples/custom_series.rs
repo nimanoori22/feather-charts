@@ -48,6 +48,15 @@ enum Message {
 impl Default for App {
     fn default() -> Self {
         let mut chart = Chart::default();
+        if std::env::args().any(|a| a == "--conflation") {
+            chart.apply_time_scale_options(
+                feather_charts::model::time_scale_options::HorzScaleOptionsPatch {
+                    enable_conflation: Some(true),
+                    min_bar_spacing: Some(0.001),
+                    ..Default::default()
+                },
+            );
+        }
         let line = chart
             .add_series(
                 SeriesOptionsMap::Line(LineSeriesOptions::default()),
@@ -58,7 +67,7 @@ impl Default for App {
         chart
             .set_data(
                 line,
-                (0..120)
+                (0..sample_count())
                     .map(|index| {
                         let CustomSeriesDataItem::Data(data) = sample(index) else {
                             unreachable!()
@@ -76,7 +85,7 @@ impl Default for App {
         let mut app = Self {
             chart,
             custom: None,
-            latest: 119,
+            latest: sample_count() - 1,
             style: false,
             size: Size::ZERO,
             ratio: 1.,
@@ -104,11 +113,11 @@ impl App {
                 .unwrap();
             self.custom = Some(handle);
         }
-        self.latest = 119;
+        self.latest = sample_count() - 1;
         self.chart
             .set_custom_data(
                 self.custom.as_ref().unwrap(),
-                (0..120).map(sample).collect(),
+                (0..sample_count()).map(sample).collect(),
             )
             .unwrap();
         self.chart.fit_content();
@@ -300,27 +309,35 @@ mod live_tests {
         let mut app = App::default();
         app.size = Size::new(400., 300.);
         let _ = app.update(Message::FeedTick(Instant::now()));
-        assert_eq!(app.latest, 119);
+        assert_eq!(app.latest, sample_count() - 1);
         let _ = app.update(Message::ToggleLive);
         let _ = app.update(Message::FeedTick(Instant::now()));
-        assert_eq!(app.latest, 120);
+        assert_eq!(app.latest, sample_count());
         let _ = app.update(Message::ToggleLive);
         let _ = app.update(Message::FeedTick(Instant::now()));
-        assert_eq!(app.latest, 120);
+        assert_eq!(app.latest, sample_count());
         let _ = app.update(Message::ToggleLive);
         let stale = app.live_since.unwrap() - std::time::Duration::from_secs(1);
         let _ = app.update(Message::FeedTick(stale));
-        assert_eq!(app.latest, 120);
+        assert_eq!(app.latest, sample_count());
         let _ = app.update(Message::Remove);
         assert!(app.live_since.is_none());
         let _ = app.update(Message::FeedTick(Instant::now()));
-        assert_eq!(app.latest, 120);
+        assert_eq!(app.latest, sample_count());
         assert!(app.custom.is_none());
         let _ = app.update(Message::ToggleLive);
         assert!(app.live_since.is_none());
         let _ = app.update(Message::Reload);
         let _ = app.update(Message::ToggleLive);
         let _ = app.update(Message::FeedTick(Instant::now()));
-        assert_eq!(app.latest, 120);
+        assert_eq!(app.latest, sample_count());
+    }
+}
+
+fn sample_count() -> usize {
+    if std::env::args().any(|a| a == "--conflation") {
+        8192
+    } else {
+        120
     }
 }

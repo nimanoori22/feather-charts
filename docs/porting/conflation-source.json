@@ -12,6 +12,7 @@
     "src/model/series/custom-pane-view.ts": "5278d244882b2cc6c129922ab517b2feddb1c85ed734f5a7316a24309bc88db9",
     "src/model/series/series-pane-view-base.ts": "fddfaac411ef8c13fdbc325176bc319be6751f5ee8c791f43457011ebd875b4f",
     "tests/unittests/conflation.spec.ts": "73e76aaeb78dd6022db7ceef7987d500dd3ae1afccc824995649f12081a1dea1",
-    "tests/unittests/conflation-integration.spec.ts": "3cfda541ba4ddc325efb36c4dfbe78ff66935b1945027cc866b23f72670722e0"
+    "tests/unittests/conflation-integration.spec.ts": "3cfda541ba4ddc325efb36c4dfbe78ff66935b1945027cc866b23f72670722e0",
+    "src/api/chart-api.ts": "091d5c5739a68a87dc213a92df12e643823107105691af9ff656fe33fcda815d"
   }
 }

@@ -1,10 +1,9 @@
 //! Stateless preparation with an owned output; no back-reference to ChartModel.
-use crate::model::plot_data::PlotRowLike;
 use crate::{
     model::{
         chart_model::ChartModel, data_layer::SeriesId, ihorz_scale_behavior::HorzScaleBehavior,
         price_scale::PriceScale, series::Series, series_data::SeriesPlotRow,
-        series_options::SeriesOptionsMap, time_data::visible_range_by, time_scale::TimeScale,
+        series_options::SeriesOptionsMap, time_scale::TimeScale,
     },
     renderers::bars_renderer::{BarPoint, BarsRendererData},
 };
@@ -72,32 +71,31 @@ where
     {
         return Ok(None);
     }
-    if time.options().enable_conflation {
-        return Err(BarPreparationError::UnsupportedConflation);
-    }
     let Some(visible) = time.visible_strict_range() else {
         return Ok(None);
     };
     let Some(first) = series.first_value(Some(&visible)) else {
         return Ok(None);
     };
-    let range = visible_range_by(series.bars().rows(), &visible, false, PlotRowLike::index);
+    let rows = series.render_rows(time);
+    let range = rows.visible(&visible, false);
     if range.from >= range.to {
         return Ok(None);
     }
     let mut items = Vec::with_capacity(range.to - range.from);
-    for row in &series.bars().rows()[range.from..range.to] {
+    for rendered in rows.iter(range.from..range.to) {
+        let row = rendered.row;
         let SeriesPlotRow::Bar(row) = row else {
             unreachable!("Bar Series contains Bar rows");
         };
-        let [open, high, low, close] = row.base.value;
+        let [open, high, low, close] = rendered.value;
         let coordinates = [open, high, low, close]
             .map(|value| price.price_to_coordinate(value, first.value).value());
         let x = time.index_to_coordinate(row.base.index).value();
         if !x.is_finite() || coordinates.iter().any(|y| !y.is_finite()) {
             return Err(BarPreparationError::NonFiniteCoordinates);
         }
-        let up = open <= close;
+        let up = row.base.value[0] <= row.base.value[3];
         let style = &options.style;
         items.push(BarPoint {
             x,

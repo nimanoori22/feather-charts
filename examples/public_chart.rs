@@ -84,6 +84,18 @@ impl Default for App {
 impl App {
     fn new(kind: SeriesType) -> Self {
         let mut chart = Chart::default();
+        let dense = std::env::args().any(|a| a == "--conflation");
+        let count = if dense { 8192 } else { 120 };
+        if dense {
+            chart.apply_time_scale_options(
+                feather_charts::model::time_scale_options::HorzScaleOptionsPatch {
+                    enable_conflation: Some(true),
+                    min_bar_spacing: Some(0.001),
+                    precompute_conflation_on_init: Some(true),
+                    ..Default::default()
+                },
+            );
+        }
         let price = chart
             .add_series(sample_options(kind, true), 0, PriceScalePosition::Right)
             .unwrap();
@@ -103,7 +115,7 @@ impl App {
             )
             .unwrap();
         chart.set_pane_stretch_factor(0, 2.).unwrap();
-        let times = (0..120).map(|i| {
+        let times = (0..count).map(|i| {
             (
                 i,
                 Time::from(UtcTimestamp::new(1_700_000_000. + i as f64 * 60.)),
@@ -174,7 +186,7 @@ impl App {
             price,
             volume,
             levels,
-            latest: 119,
+            latest: count - 1,
             show_last: true,
             kind,
             style_step: 0,
@@ -719,6 +731,14 @@ fn capture(directory: &std::path::Path, wgpu: bool, kind: SeriesType) {
     if std::env::args().any(|a| a == "--append-captures-only") {
         scenarios.retain(|scenario| scenario.starts_with("live"));
     }
+    if std::env::args().any(|a| a == "--conflation-captures-only") {
+        scenarios.retain(|s| {
+            matches!(
+                *s,
+                "default" | "live-narrow" | "inverted" | "curved" | "steps"
+            )
+        });
+    }
     let count = scenarios.len() * 4;
     for scenario in scenarios {
         for ratio in [1., 1.25, 1.5, 2.] {
@@ -1020,6 +1040,10 @@ fn main() -> iced::Result {
     };
     if args.iter().any(|a| a == "--cached-geometry-check") {
         software_drag_profile::check_cached(args.iter().any(|a| a == "--wgpu"));
+        return Ok(());
+    }
+    if args.iter().any(|a| a == "--dense-zoom-profile") {
+        software_drag_profile::zoom();
         return Ok(());
     }
     if args.iter().any(|a| a == "--software-drag-profile") {

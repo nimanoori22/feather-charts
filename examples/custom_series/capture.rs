@@ -47,8 +47,18 @@ pub fn run(directory: &str, wgpu: bool) {
         "touch-narrow",
         "touch-multi-pane",
     ];
+    let mut count = 0;
     for ratio in [1., 1.25, 1.5, 2.] {
         for state in states {
+            if std::env::args().any(|a| a == "--conflation")
+                && ![
+                    "normal", "append", "replace", "narrow", "inverted", "manual",
+                ]
+                .contains(&state)
+            {
+                continue;
+            }
+
             let mut app = App {
                 size: if matches!(state, "narrow" | "touch-narrow") {
                     Size::new(420., 320.)
@@ -210,6 +220,9 @@ pub fn run(directory: &str, wgpu: bool) {
                 (app.size.width * ratio) as u32,
                 (app.size.height * ratio) as u32,
             );
+            if state == "normal" && std::env::args().any(|a| a == "--conflation") {
+                assert!(app.chart.model().time_scale().conflation_factor() > 1);
+            }
             let bytes = renderer.screenshot(physical, ratio, Color::BLACK);
             assert_eq!(
                 bytes,
@@ -243,12 +256,10 @@ pub fn run(directory: &str, wgpu: bool) {
                 rgb.extend_from_slice(&pixel[..3]);
             }
             file.write_all(&rgb).unwrap();
+            count += 1;
         }
     }
-    println!(
-        "{} custom-series captures passed on {backend}",
-        states.len() * 4
-    );
+    println!("{} custom-series captures passed on {backend}", count);
 }
 
 fn touch(app: &mut App, scenario: &str) {

@@ -258,10 +258,8 @@ fn histogram_frame_failure_conflation_empty_and_history_refresh() {
         },
     );
     flush(&mut model);
-    assert_eq!(
-        pane.refresh(&mut model, id),
-        Err(HistogramPreparationError::UnsupportedConflation)
-    );
+    pane.refresh(&mut model, id).unwrap();
+    assert!(pane.data().is_some());
     model.apply_time_scale_options(
         &mut layer,
         HorzScaleOptionsPatch {

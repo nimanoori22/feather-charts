@@ -19,3 +19,15 @@ winit = "0.30"
 wayland-client = { version = "0.31", features = ["system"] }
 wayland-protocols = { version = "0.32", features = ["client"] }
 libc = "0.2"
+
+# Dense software rasterization is too slow without dependency optimization.
+[profile.dev.package.tiny-skia]
+opt-level = 3
+# Its 16-lane pixel arithmetic needs release-style overflow semantics to vectorize.
+overflow-checks = false
+
+[profile.dev.package.tiny-skia-path]
+opt-level = 3
+
+[profile.dev.package.iced_tiny_skia]
+opt-level = 3

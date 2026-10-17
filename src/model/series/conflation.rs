@@ -58,6 +58,23 @@ impl<I, O, M> RenderRows<'_, I, O, M> {
     }
 }
 impl<I: Clone, O: Clone, M: Clone> Series<I, O, M> {
+    pub(crate) fn needs_precompute(&self, levels: &[usize]) -> bool {
+        !self.data.rows().is_empty()
+            && levels
+                .iter()
+                .any(|&level| level > 1 && !self.conflation.borrow().contains(level))
+    }
+    pub(crate) fn precompute_step(&self, levels: &[usize], budget: usize) -> usize {
+        let mut cache = self.conflation.borrow_mut();
+        let Some(level) = levels
+            .iter()
+            .copied()
+            .find(|&level| level > 1 && !cache.contains(level))
+        else {
+            return 0;
+        };
+        cache.step(self.data.rows(), level, budget)
+    }
     pub(crate) fn render_rows<B: HorzScaleBehavior>(
         &self,
         time: &TimeScale<B>,

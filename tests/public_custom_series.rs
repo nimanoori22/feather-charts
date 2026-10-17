@@ -601,3 +601,239 @@ fn custom_preparation_and_existing_time_updates_copy_only_visible_payloads() {
         "tail append copied {appended} custom payloads"
     );
 }
+
+type ReductionRecords = Rc<RefCell<Vec<(f64, Vec<f64>)>>>;
+type InspectCallback = Rc<RefCell<Option<Box<dyn Fn()>>>>;
+struct ReducingView {
+    inner: View,
+    seen: ReductionRecords,
+    reduce: bool,
+    inspect: Option<Box<dyn Fn()>>,
+}
+impl CustomSeriesPaneView<Frame> for ReducingView {
+    type Item = Time;
+    type InternalTime = TimePoint;
+    type Data = Datum;
+    type Metadata = ();
+    type Options = ();
+    type Renderer = Renderer;
+    fn renderer(&self) -> &Renderer {
+        self.inner.renderer()
+    }
+    fn update(&mut self, data: PaneRendererCustomData<Datum>, _: &()) {
+        self.seen.borrow_mut().push((
+            data.conflation_factor,
+            data.bars.iter().map(|b| b.original_data.median).collect(),
+        ));
+        self.inner.update(data, &());
+    }
+    fn price_value_builder(&self, data: &Datum) -> CustomSeriesPricePlotValues {
+        self.inner.price_value_builder(data)
+    }
+    fn is_whitespace(&self, data: &CustomSeriesDataItem<Datum, Time>) -> bool {
+        self.inner.is_whitespace(data)
+    }
+    fn default_options(&self) {}
+    fn conflate(
+        &self,
+        a: &CustomConflationContext<Datum, Time, TimePoint>,
+        b: &CustomConflationContext<Datum, Time, TimePoint>,
+    ) -> Option<Datum> {
+        if let Some(inspect) = &self.inspect {
+            inspect();
+        }
+        self.reduce.then(|| Datum {
+            time: a.original_time.clone(),
+            low: a.data.low.min(b.data.low),
+            high: a.data.high.max(b.data.high),
+            median: a.data.median * 10. + b.data.median,
+        })
+    }
+}
+#[test]
+fn custom_conflation_preserves_reduction_order_and_no_reducer_passthrough() {
+    use feather_charts::model::time_scale_options::HorzScaleOptionsPatch;
+    for reduce in [false, true] {
+        let seen = Rc::new(RefCell::new(vec![]));
+        let mut chart = Chart::default();
+        let handle = chart
+            .add_custom_series(
+                ReducingView {
+                    inner: View {
+                        renderer: Renderer {
+                            data: None,
+                            draws: Rc::new(RefCell::new(vec![])),
+                        },
+                        destroyed: Rc::new(RefCell::new(0)),
+                    },
+                    seen: seen.clone(),
+                    reduce,
+                    inspect: None,
+                },
+                CustomSeriesOptions::default(),
+                0,
+                PriceScalePosition::Right,
+            )
+            .unwrap();
+        chart
+            .set_custom_data(
+                &handle,
+                (0..7)
+                    .map(|i| datum(1000. + i as f64 * 60., i as f64 + 1.))
+                    .collect(),
+            )
+            .unwrap();
+        chart.apply_time_scale_options(HorzScaleOptionsPatch {
+            enable_conflation: Some(true),
+            min_bar_spacing: Some(0.001),
+            bar_spacing: Some(0.125),
+            ..Default::default()
+        });
+        chart
+            .prepare(Size::new(800., 500.), 1., Instant::now())
+            .unwrap();
+        let records = seen.borrow();
+        let (level, values) = records.last().unwrap();
+        assert_eq!(*level, 8.);
+        assert_eq!(
+            *values,
+            if reduce {
+                vec![2107.]
+            } else {
+                (1..=7).map(f64::from).collect()
+            }
+        );
+        assert_eq!(handle.data_at(0.0.into()).unwrap().median, 1.);
+        drop(records);
+        chart
+            .update_custom_data(&handle, datum(1360., 9.), false)
+            .unwrap();
+        chart
+            .prepare(Size::new(800., 500.), 1., Instant::now())
+            .unwrap();
+        assert_eq!(handle.data_at(6.0.into()).unwrap().median, 9.);
+        let values = seen.borrow().last().unwrap().1.clone();
+        assert_eq!(
+            values,
+            if reduce {
+                vec![2109.]
+            } else {
+                vec![1., 2., 3., 4., 5., 6., 9.]
+            }
+        );
+        if reduce {
+            println!(
+                "CUSTOM_CONFLATION {{\"initial\":2107,\"latest\":{}}}",
+                values[0]
+            );
+        }
+    }
+}
+
+#[test]
+fn custom_warmup_is_bounded_releases_model_borrows_and_drops_with_owner() {
+    use feather_charts::model::time_scale_options::HorzScaleOptionsPatch;
+    use std::cell::Cell;
+    let calls = Rc::new(Cell::new(0));
+    let inspect: InspectCallback = Rc::new(RefCell::new(None));
+    let mut chart = Chart::default();
+    let handle = chart
+        .add_custom_series(
+            ReducingView {
+                inner: View {
+                    renderer: Renderer {
+                        data: None,
+                        draws: Rc::new(RefCell::new(vec![])),
+                    },
+                    destroyed: Rc::new(RefCell::new(0)),
+                },
+                seen: Rc::new(RefCell::new(vec![])),
+                reduce: true,
+                inspect: Some(Box::new({
+                    let calls = calls.clone();
+                    let inspect = inspect.clone();
+                    move || {
+                        calls.set(calls.get() + 1);
+                        if let Some(read) = &*inspect.borrow() {
+                            read();
+                        }
+                    }
+                })),
+            },
+            CustomSeriesOptions::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    *inspect.borrow_mut() = Some(Box::new({
+        let handle = handle.clone();
+        move || {
+            assert!(handle.data_at(0.0.into()).is_some());
+        }
+    }));
+    chart
+        .set_custom_data(
+            &handle,
+            (0..2048)
+                .map(|i| datum(1000. + i as f64 * 60., 1.))
+                .collect(),
+        )
+        .unwrap();
+    chart.apply_time_scale_options(HorzScaleOptionsPatch {
+        enable_conflation: Some(true),
+        precompute_conflation_on_init: Some(true),
+        min_bar_spacing: Some(0.001),
+        ..Default::default()
+    });
+    chart
+        .prepare(Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(calls.get(), 128);
+    assert!(chart.is_animating());
+    chart
+        .update_custom_data(&handle, datum(1000. + 2047. * 60., 2.), false)
+        .unwrap();
+    chart
+        .prepare(Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(calls.get(), 256);
+    chart.remove_series(handle.id()).unwrap();
+    let before = calls.get();
+    chart
+        .prepare(Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(calls.get(), before);
+}
+
+#[test]
+fn box_example_reducer_keeps_last_box_and_combined_whiskers() {
+    let view = box_whisker::View::default();
+    let context = |i: usize| {
+        let CustomSeriesDataItem::Data(data) = box_whisker::sample(i) else {
+            unreachable!()
+        };
+        CustomConflationContext {
+            original_time: data.time.clone(),
+            time: TimePoint {
+                timestamp: UtcTimestamp::new(1_700_000_000. + i as f64 * 60.),
+                business_day: None,
+            },
+            index: (i as f64).into(),
+            price_values: view.price_value_builder(&data),
+            data,
+        }
+    };
+    let a = context(0);
+    let b = context(10);
+    let merged = view.conflate(&a, &b).unwrap();
+    assert_eq!(
+        merged.quartiles[0],
+        a.data.quartiles[0].min(b.data.quartiles[0])
+    );
+    assert_eq!(
+        merged.quartiles[4],
+        a.data.quartiles[4].max(b.data.quartiles[4])
+    );
+    assert_eq!(&merged.quartiles[1..4], &b.data.quartiles[1..4]);
+    assert_eq!(merged.time, a.original_time);
+}

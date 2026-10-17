@@ -70,7 +70,8 @@ Renderer clones must own immutable geometry. Sharing mutable live geometry
 between clones violates retained-frame behavior. Removed handles remain readable
 but cannot mutate the chart; view cleanup runs once on detachment. The public
 adapter uses `Time` and unit common metadata; additional metadata belongs in
-the application's datum. Full conflation rendering remains separate work.
+the application's datum. Conflation uses the view's typed reducer; views without
+a reducer continue to draw their raw rows.
 See the [custom-series contract](docs/porting/custom-series-design.md) and
 [acceptance checklist](tasks/custom-series-todo.md).
 
@@ -94,12 +95,39 @@ cargo run --example public_chart -- --baseline
 The same example also accepts `--line` and `--histogram`; its default is
 Candlestick. Use **Change style** to exercise styles and Baseline base changes.
 All families share data updates, price decorations, zoom/pan and scale controls.
-Conflation and last-price animation remain outside this milestone. Iced gradients differ slightly from browser Canvas interpolation,
+Last-price animation remains separate work. Iced gradients differ slightly from browser Canvas interpolation,
 especially on WGPU; paths and gradient stops are checked against source.
 
 Contracts and validation: [Area](docs/porting/area-rendering.md),
 [Bar](docs/porting/bar-rendering.md), [Baseline](docs/porting/baseline-rendering.md).
 Fresh physical mouse/touchpad acceptance for these new families remains pending.
+
+## Dense data and conflation
+
+All six built-in families support optional conflation: aggregate drawing rows when
+multiple bars occupy the same pixels. Canonical data, autoscale and exact-index
+pointer payloads retain their original values. Enable `enable_conflation` and use
+a sufficiently small `min_bar_spacing` to zoom out into dense history. Thresholds
+can be set globally or per series; device pixel ratio affects level selection.
+
+```sh
+cargo run --example public_chart -- --line --conflation --live-feed
+cargo run --example custom_series -- --conflation
+```
+
+The demo loads 8,192 bars plus a volume pane. Use the other series flags to try
+Candlestick (default), Bar, Histogram, Area and Baseline. The custom demo retains
+the last box with combined whisker extrema. Optional
+`precompute_conflation_on_init` warms levels through bounded native chart ticks.
+Custom hosts should keep ticking while `Chart::is_animating()` returns true.
+Historical updates at effective factor >1 return
+`ChartError::HistoricalUpdateWithConflation` before changing data. Latest updates,
+appends and full replacements remain available. Custom reducers run synchronously
+and must keep their work bounded.
+
+Source behavior, ownership, validation and performance evidence are recorded in
+the [conflation report](docs/porting/conflation-rendering.md). Physical acceptance
+for this feature is tracked separately from automated verification.
 
 ## Price lines and labels
 

@@ -213,6 +213,18 @@ impl CustomSeriesPaneView<Frame> for View {
     fn is_whitespace(&self, data: &CustomSeriesDataItem<Datum, Time>) -> bool {
         matches!(data, CustomSeriesDataItem::Whitespace(_))
     }
+    fn conflate(
+        &self,
+        a: &CustomConflationContext<Datum, Time, TimePoint>,
+        b: &CustomConflationContext<Datum, Time, TimePoint>,
+    ) -> Option<Datum> {
+        // Show the last box's quartiles/outliers with the group's whisker extrema.
+        let mut data = b.data.clone();
+        data.time = a.original_time.clone();
+        data.quartiles[0] = a.data.quartiles[0].min(b.data.quartiles[0]);
+        data.quartiles[4] = a.data.quartiles[4].max(b.data.quartiles[4]);
+        Some(data)
+    }
     fn default_options(&self) -> Options {
         Options::default()
     }

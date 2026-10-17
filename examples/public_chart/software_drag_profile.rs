@@ -157,3 +157,59 @@ pub(super) fn check_cached(wgpu: bool) {
         "diagnostic_only=true backend={backend} cached_reference_pairs={pairs} all_identical=true"
     );
 }
+
+pub(super) fn zoom() {
+    let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
+        iced::Font::DEFAULT,
+        iced::Pixels(12.),
+        Some("tiny-skia"),
+    ))
+    .unwrap();
+    println!("width,height,sample,factor,model_ns,prepare_ns,geometry_ns,raster_ns");
+    for size in [Size::new(800., 500.), Size::new(300., 300.)] {
+        let mut app = App {
+            size,
+            ratio: 1.,
+            ..App::new(SeriesType::Line)
+        };
+        app.prepare();
+        for sample in 0..80 {
+            if sample % 15 == 0 {
+                let _ = app.update(Message::Append);
+            }
+            let start = Instant::now();
+            app.chart.zoom_time(
+                (f64::from(size.width) / 2.).into(),
+                if sample % 40 < 20 { 1. } else { -1. / 1.1 },
+            );
+            let model = start.elapsed();
+            let start = Instant::now();
+            app.chart.prepare(size, 1., Instant::now()).unwrap();
+            let prepare = start.elapsed();
+            renderer.reset(iced::Rectangle::with_size(size));
+            let start = Instant::now();
+            let mut frame = iced::widget::canvas::Frame::new(&renderer, size);
+            app.chart.multi_frame().unwrap().draw(&mut frame);
+            renderer.draw_geometry(frame.into_geometry());
+            let geometry = start.elapsed();
+            let start = Instant::now();
+            let bytes = renderer.screenshot(
+                Size::new(size.width as u32, size.height as u32),
+                1.,
+                iced::Color::BLACK,
+            );
+            let raster = start.elapsed();
+            assert_eq!(bytes.len(), size.width as usize * size.height as usize * 4);
+            println!(
+                "{},{},{sample},{},{},{},{},{}",
+                size.width,
+                size.height,
+                app.chart.model().time_scale().conflation_factor(),
+                model.as_nanos(),
+                prepare.as_nanos(),
+                geometry.as_nanos(),
+                raster.as_nanos()
+            );
+        }
+    }
+}

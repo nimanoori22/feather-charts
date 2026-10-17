@@ -86,6 +86,9 @@ impl SeriesPaneView {
             plot.custom = view
                 .adapter
                 .prepare(super::custom_series::CustomPreparation {
+                    conflation_enabled: time.options().enable_conflation,
+                    conflation_factor: time.conflation_factor(),
+                    conflation_threshold: time.options().conflation_threshold_factor,
                     visible,
                     coordinate: &|index| time.index_to_coordinate(index),
                     bar_spacing: time.bar_spacing(),

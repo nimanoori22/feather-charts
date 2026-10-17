@@ -1,10 +1,9 @@
 //! Stateless preparation with an owned output; no back-reference to ChartModel.
-use crate::model::plot_data::PlotRowLike;
 use crate::{
     model::{
         chart_model::ChartModel, data_layer::SeriesId, ihorz_scale_behavior::HorzScaleBehavior,
         price_scale::PriceScale, series::Series, series_data::SeriesPlotRow,
-        series_options::SeriesOptionsMap, time_data::visible_range_by, time_scale::TimeScale,
+        series_options::SeriesOptionsMap, time_scale::TimeScale,
     },
     renderers::histogram_renderer::{HistogramPoint, HistogramRendererData},
 };
@@ -72,27 +71,25 @@ where
     {
         return Ok(None);
     }
-    if time.options().enable_conflation {
-        return Err(HistogramPreparationError::UnsupportedConflation);
-    }
     let Some(visible) = time.visible_strict_range() else {
         return Ok(None);
     };
     let Some(first) = series.first_value(Some(&visible)) else {
         return Ok(None);
     };
-    let range = visible_range_by(series.bars().rows(), &visible, true, PlotRowLike::index);
+    let rows = series.render_rows(time);
+    let range = rows.visible(&visible, true);
     if range.from >= range.to {
         return Ok(None);
     }
     let mut items = Vec::with_capacity(range.to - range.from);
-    for row in &series.bars().rows()[range.from..range.to] {
+    for rendered in rows.iter(range.from..range.to) {
+        let value = rendered.line_value();
+        let row = rendered.row;
         let SeriesPlotRow::Histogram(row) = row else {
             unreachable!("histogram Series contains histogram rows");
         };
-        let y = price
-            .price_to_coordinate(row.base.value[3], first.value)
-            .value();
+        let y = price.price_to_coordinate(value, first.value).value();
         let x = time.index_to_coordinate(row.base.index).value();
         if !x.is_finite() || !y.is_finite() {
             return Err(HistogramPreparationError::NonFiniteCoordinates);

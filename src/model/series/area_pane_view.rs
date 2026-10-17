@@ -1,15 +1,9 @@
 //! Stateless preparation with an owned output; no back-reference to ChartModel.
-use crate::model::plot_data::PlotRowLike;
 use crate::{
     model::{
-        chart_model::ChartModel,
-        data_layer::SeriesId,
-        ihorz_scale_behavior::HorzScaleBehavior,
-        price_scale::PriceScale,
-        series::Series,
-        series_data::SeriesPlotRow,
-        series_options::SeriesOptionsMap,
-        time_data::{SeriesItemsIndexesRange, visible_range_by},
+        chart_model::ChartModel, data_layer::SeriesId, ihorz_scale_behavior::HorzScaleBehavior,
+        price_scale::PriceScale, series::Series, series_data::SeriesPlotRow,
+        series_options::SeriesOptionsMap, time_data::SeriesItemsIndexesRange,
         time_scale::TimeScale,
     },
     renderers::{
@@ -81,17 +75,14 @@ where
     {
         return Ok(None);
     }
-    if time.options().enable_conflation {
-        return Err(AreaPreparationError::UnsupportedConflation);
-    }
     let Some(visible) = time.visible_strict_range() else {
         return Ok(None);
     };
     let Some(first) = series.first_value(Some(&visible)) else {
         return Ok(None);
     };
-    let rows = series.bars().rows();
-    let visible_rows = visible_range_by(rows, &visible, true, PlotRowLike::index);
+    let rows = series.render_rows(time);
+    let visible_rows = rows.visible(&visible, true);
     if visible_rows.from >= visible_rows.to {
         return Ok(None);
     }
@@ -104,15 +95,15 @@ where
     };
     let mut items = Vec::with_capacity(to - from);
     let mut fill_colors = Vec::with_capacity(items.capacity());
-    for row in &rows[from..to] {
+    for rendered in rows.iter(from..to) {
+        let value = rendered.line_value();
+        let row = rendered.row;
         let SeriesPlotRow::Area(row) = row else {
             unreachable!("area Series contains area rows");
         };
         let index = row.base.index;
         let x = time.index_to_coordinate(index).value();
-        let y = price
-            .price_to_coordinate(row.base.value[3], first.value)
-            .value();
+        let y = price.price_to_coordinate(value, first.value).value();
         if !x.is_finite() || !y.is_finite() {
             return Err(AreaPreparationError::NonFiniteCoordinates);
         }

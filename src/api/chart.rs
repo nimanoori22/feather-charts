@@ -354,6 +354,7 @@ impl Chart {
         ratio: f32,
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        self.precompute_conflation_step();
         self.check_primitive_edit(size, ratio);
         let series = self
             .views
@@ -501,7 +502,10 @@ impl Chart {
             }
             None => self.last_hit.is_some() || self.last_primitive.is_some(),
         };
-        self.controller.is_active() || changed || !self.pending_primitive_edits.is_empty()
+        self.controller.is_active()
+            || changed
+            || !self.pending_primitive_edits.is_empty()
+            || self.has_pending_conflation()
     }
     pub fn fit_content(&mut self) {
         self.cancel_viewport_interaction();
