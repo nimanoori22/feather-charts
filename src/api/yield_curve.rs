@@ -68,8 +68,10 @@ impl YieldCurveChart {
             },
             localization,
         );
+        let mut support_options = LineSeriesOptions::default();
+        yield_defaults(&mut support_options.common, price_formatter.clone());
         let support = core.add_series(
-            SeriesOptionsMap::Line(LineSeriesOptions::default()),
+            SeriesOptionsMap::Line(support_options),
             0,
             PriceScalePosition::Left,
         )?;
@@ -171,6 +173,34 @@ impl YieldCurveChart {
         self.dirty = true;
         Ok(())
     }
+    pub fn set_maturity_formatter(
+        &mut self,
+        formatter: Option<crate::model::localization_options::TimeFormatterFn<Maturity>>,
+    ) {
+        self.core
+            .model
+            .set_time_formatter(&mut self.core.layer, formatter);
+    }
+    pub fn primitive_context(
+        &mut self,
+        id: PrimitiveId,
+    ) -> Result<PrimitiveContext<'_, YieldCurveHorzScaleBehavior>, ChartError> {
+        self.core.primitive_context(id)
+    }
+    pub fn preview_primitive_update(&mut self, id: PrimitiveEditId) -> Result<(), ChartError> {
+        self.core.preview_primitive_update(id)
+    }
+    pub fn request_primitive_update(&mut self, id: PrimitiveId) -> Result<(), ChartError> {
+        self.core.request_primitive_update(id)
+    }
+    pub fn add_price_line(
+        &mut self,
+        id: SeriesId,
+        options: PriceLineOptions,
+    ) -> Result<PriceLineId, ChartError> {
+        self.core.add_price_line(id, options)
+    }
+
     fn settle(&mut self) -> Result<(), ChartError> {
         if !self.dirty {
             return Ok(());

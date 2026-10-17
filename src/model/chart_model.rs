@@ -1386,6 +1386,20 @@ where
         self.flush_effects();
     }
 
+    pub fn set_time_formatter(
+        &mut self,
+        data_layer: &mut DataLayer<B, M>,
+        formatter: Option<crate::model::localization_options::TimeFormatterFn<B::Item>>,
+    ) where
+        B::Converter: HorzScaleItemConverter<B::Item, B::InternalItem, Error = B::Error>,
+    {
+        self.time_scale.set_time_formatter(formatter);
+        data_layer
+            .behavior_mut()
+            .update_formatter(self.time_scale.localization());
+        self.full_update();
+    }
+
     /// Builds equivalent owned options twice; neither B nor its callback-bearing
     /// options need Clone. Changes to time-key interpretation require new data.
     pub fn configure_horizontal_behavior(

@@ -214,6 +214,15 @@ where
             self.time_marks_cache = None;
         }
     }
+    pub(crate) fn set_time_formatter(
+        &mut self,
+        formatter: Option<crate::model::localization_options::TimeFormatterFn<B::Item>>,
+    ) {
+        self.localization.time_formatter = formatter;
+        self.behavior.update_formatter(&self.localization);
+        self.formatted_by_weight.clear();
+        self.time_marks_cache = None;
+    }
     pub fn set_localization_options(&mut self, localization: LocalizationOptions<B::Item>) {
         self.localization = localization;
         self.behavior.update_formatter(&self.localization);
