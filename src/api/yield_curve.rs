@@ -284,6 +284,10 @@ impl YieldCurveChart {
     pub fn move_pane(&mut self, from: usize, to: usize) -> Result<(), ChartError> {
         self.core.move_pane(from, to)
     }
+    /// Set pane-local order, counting the private whitespace support slot.
+    pub fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartError> {
+        self.core.set_series_order(id, order)
+    }
     pub fn swap_panes(&mut self, first: usize, second: usize) -> Result<(), ChartError> {
         self.core.swap_panes(first, second)
     }

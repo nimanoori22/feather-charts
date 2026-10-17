@@ -710,6 +710,10 @@ where
         vec![PaneEffect::LightUpdate]
     }
 
+    pub fn series_order(&self, id: SeriesId) -> Option<usize> {
+        self.source_index(id)
+    }
+
     pub fn set_series_order(
         &mut self,
         id: SeriesId,

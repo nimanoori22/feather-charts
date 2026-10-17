@@ -9,6 +9,27 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    pub fn series_order(&self, id: SeriesId) -> Result<usize, ChartModelError> {
+        let pane = self
+            .pane_for_series(id)
+            .ok_or(ChartModelError::UnknownSeries(id))?;
+        self.panes[pane]
+            .series_order(id)
+            .ok_or(ChartModelError::UnknownSeries(id))
+    }
+
+    pub fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartModelError> {
+        let pane = self
+            .pane_for_series(id)
+            .ok_or(ChartModelError::UnknownSeries(id))?;
+        let effects = self.panes[pane]
+            .set_series_order(id, order)
+            .map_err(ChartModelError::Pane)?;
+        self.consume_pane_effects(effects);
+        self.flush_effects();
+        Ok(())
+    }
+
     pub fn move_pane(&mut self, from: usize, to: usize) -> Result<(), ChartModelError> {
         self.validate_pane(from)?;
         self.validate_pane(to)?;
