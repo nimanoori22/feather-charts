@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-17",
+  "all_target_tests": 613,
+  "fmt": "passed",
+  "all_target_check": "passed",
+  "strict_all_target_clippy": "passed",
+  "source_oracles": [
+    "58 animation states",
+    "9 update flags",
+    "12 canonical endpoint/DPR payloads",
+    "4 independent DPR renderer cases",
+    "source color/alpha rules",
+    "182 conflation aggregation states",
+    "60 conflation factors",
+    "custom reducer update ordering"
+  ],
+  "physical_mouse": {
+    "tiny-skia": {
+      "sizes": [
+        "regular",
+        "narrow"
+      ],
+      "result": "All checks passed; window closed",
+      "scene": "dense Line + volume, Continuous animation, live feed, editable primitive"
+    },
+    "wgpu": {
+      "sizes": [
+        "regular",
+        "narrow"
+      ],
+      "result": "All checks passed; window closed",
+      "scene": "dense Line + volume, Continuous animation, live feed, editable primitive"
+    }
+  },
+  "not_tested": [
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI"
+  ],
+  "historical_timing_exception": "OPEN/deferred; unchanged budgets",
+  "measured_binary_backup": "target/last-price-animation/batch/measured-binary"
+}

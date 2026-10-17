@@ -1,0 +1,181 @@
+[
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-line"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--area",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-area"
+    ],
+    "compared": 20,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--baseline",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-baseline"
+    ],
+    "compared": 20,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--bar",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-bar"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--candlestick",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-candlestick"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--histogram",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-histogram"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--series-markers",
+      "--primitives",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/tiny-skia-mixed"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-line",
+      "--wgpu"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--area",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-area",
+      "--wgpu"
+    ],
+    "compared": 20,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--baseline",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-baseline",
+      "--wgpu"
+    ],
+    "compared": 20,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--bar",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-bar",
+      "--wgpu"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--candlestick",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-candlestick",
+      "--wgpu"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--histogram",
+      "--conflation",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-histogram",
+      "--wgpu"
+    ],
+    "compared": 8,
+    "identical": true
+  },
+  {
+    "command": [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--series-markers",
+      "--primitives",
+      "--conflation-captures-only",
+      "--capture-dir",
+      "target/last-price-animation/disabled-reference/wgpu-mixed",
+      "--wgpu"
+    ],
+    "compared": 8,
+    "identical": true
+  }
+]

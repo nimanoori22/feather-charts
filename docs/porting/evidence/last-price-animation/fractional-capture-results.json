@@ -1,0 +1,272 @@
+[
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-line-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "f69f0d0ffd9c2fb11174853b0729cd3576ff161250093c49412d00a1a8dcc352"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-line-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "c92119845d72931e0df8ac687e55396901536e6915941effd2ca47dc4862089f"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-line-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "97746ee144c78b8ae25d21e52748b2fda9ec1395a77e7ea195a37efa7c8efee2"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-area-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "ab7cc36e0f5f36766133b7bbd2d864d6053f8f0fb56ed1f2fe6b65f51f3b226f"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-area-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "482ab688342a658cf63a364ac87f335940ebba37df84890a8314c7a5bc752edb"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-area-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "ea0aaf213d93f8140cea669c7405fabb93a61f64616ee7c890f7059fb481b1ce"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-baseline-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "b32291676c27f94e048850f842cee4c1a606315946581d25443c7c85672c529f"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-baseline-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "ad410805163877abea5264f5d45a625f21bd69fad70a6d3fb6106d1ff1e211c1"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/fractional-captures/tiny-skia-baseline-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "279c3cbd0548bda0dde2ec0fe9eddd5ad32f0c9b50ea5f1cfb30db57f0e0cfb3"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-line-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "97404288ccc73c49b677c96cf762d8fe778b714482153877f9c7cf8f4eb6b9ca"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-line-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "77db8b7bd5ca573289027cf335e7bf1ee835317c13e1027b41ef0887c2a51378"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-line-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "fa2fbe075c510c5e785a863430288fd3b39bd5ef5b679a9e98a9d18a8530c07b"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-area-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "71425980bfdb154fec2d7af4f2c4e7922db6222e05ae2455982c7b56b5afa9e1"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-area-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "776110533ec26b62ddca2c1ad006a9ad507a4a1aeda4b968085a422ba764290e"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-area-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "486bcd83da7b7da684f04426557e0579cdf16bc6288bf94a977dc50bdd981185"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-baseline-1.25.csv",
+      "1.25"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "c357d751ad31a0b2867a02c773f2cd8c6452f34911ae09be275fd1d1513caa05"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-baseline-1.5.csv",
+      "1.5"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "55c6bb2d620698a1a4808fc766cbefde8b4ad92731c67a1d8883a9f7e3d4bb93"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/fractional-captures/wgpu-baseline-2.csv",
+      "2"
+    ],
+    "exit": 0,
+    "fixed_rgba_sha256": "b6317e71cbf346edbcc72be701570e8641d8ee9278d75a78c37ef35aabdacfda"
+  }
+]

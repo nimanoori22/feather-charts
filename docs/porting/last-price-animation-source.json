@@ -1,0 +1,18 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "sources": {
+    "src/views/pane/series-last-price-animation-pane-view.ts": "26b434bc021efbee6a0e8c94bc8635843cf31bd2689efc1b201a6dcc17b1f88e",
+    "src/renderers/series-last-price-animation-renderer.ts": "cfd47650264c76dcf1ef7d44b7b5d2b46523f719f27da477a509a712f43923eb",
+    "src/model/series.ts": "1802481faaec9a83f56038cda8455561ec28d83d2315b60564f4c0e26a212a7e",
+    "src/model/data-layer.ts": "2bf838ef145b007ddd33e0dabe6eb598c56945fced5f7cc2e6e45cab54f2ed83",
+    "src/model/colors.ts": "e8c05ee6d04176fb1dc64e96d4c51796c7dc564ed2ed980ba5c6c4293df4f5d8",
+    "src/gui/pane-widget.ts": "48c6c9285f3ec00ec146be5ad01f735d39b541f61eb1483279a4fa8f2f11eda7",
+    "src/model/get-series-plot-row-creator.ts": "dea9dd2baed0543b9107e799b9b07d9781ecc4ad8498ff67cfdcc33396c53703",
+    "src/model/data-consumer.ts": "5d229692ee62b7860890183d718846c4b29595a1850d213c2842d2f5b0dfa61d",
+    "src/model/series-bar-colorer.ts": "c74a69a814dfeea55d1bd50499f875baea5fb5695d15b6478c2c76a7484902f1",
+    "src/model/series-options.ts": "8a4fbcf7630193a353e527a077d065d98b7384041e58798f1b176c2f7a0ec12a",
+    "src/renderers/bitmap-coordinates-pane-renderer.ts": "9eed3072909a8b934a2f3651c44d208df9f9515df18e0b7f14301768cd98cd7d",
+    "src/helpers/assertions.ts": "b4585dc7b5a130a41f7406d7ab6e554711041c35f0880bc90fa92a756d015f35",
+    "src/helpers/algorithms.ts": "60ae4f69f002e80354320e14f2e43cd0491882acd8c5e56404176490387f2d40"
+  }
+}

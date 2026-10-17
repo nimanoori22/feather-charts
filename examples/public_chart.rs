@@ -15,8 +15,8 @@ use feather_charts::{
         series_options::{
             AreaSeriesOptions, BarSeriesOptions, BaseValuePrice, BaseValueType,
             BaselineSeriesOptions, CandlestickSeriesOptions, HistogramSeriesOptions,
-            LineSeriesOptions, PriceFormat, PriceFormatBuiltIn, PriceFormatBuiltInType,
-            SeriesOptionsMap, SeriesType,
+            LastPriceAnimationMode, LineSeriesOptions, PriceFormat, PriceFormatBuiltIn,
+            PriceFormatBuiltInType, SeriesOptionsMap, SeriesType,
         },
     },
 };
@@ -501,9 +501,17 @@ impl App {
     }
 }
 fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
+    let animation = if std::env::args().any(|a| a == "--last-price-animation-continuous") {
+        LastPriceAnimationMode::Continuous
+    } else if std::env::args().any(|a| a == "--last-price-animation") {
+        LastPriceAnimationMode::OnDataUpdate
+    } else {
+        LastPriceAnimationMode::Disabled
+    };
     match kind {
         SeriesType::Baseline => {
             let mut o = BaselineSeriesOptions::default();
+            o.style.last_price_animation = animation;
             o.common.last_value_visible = last;
             o.style.base_value = BaseValueType::Price(BaseValuePrice { price: 100. });
             SeriesOptionsMap::Baseline(o)
@@ -515,11 +523,13 @@ fn sample_options(kind: SeriesType, last: bool) -> SeriesOptionsMap {
         }
         SeriesType::Area => {
             let mut o = AreaSeriesOptions::default();
+            o.style.last_price_animation = animation;
             o.common.last_value_visible = last;
             SeriesOptionsMap::Area(o)
         }
         SeriesType::Line => {
             let mut o = LineSeriesOptions::default();
+            o.style.last_price_animation = animation;
             o.common.last_value_visible = last;
             SeriesOptionsMap::Line(o)
         }

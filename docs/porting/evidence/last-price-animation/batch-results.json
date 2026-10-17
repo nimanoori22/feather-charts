@@ -1,0 +1,1106 @@
+[
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/00-line-8192-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 667.0,
+      "geometry_ns": 121814.0,
+      "raster_ns": 17887828.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "988565bb17816451fa7377aa58c5bebe60f64a429a2c08927c456071c2e316c8",
+    "fixed_rgba_sha256": "f87a772376669c5614db51a7460f969a1b3717573759f6f1800b8f8cffb83f47"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/00-line-8192-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1127.0,
+      "geometry_ns": 126577.0,
+      "raster_ns": 17793801.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "fcacf0d18e47167b7e61f6add4ff1ca240927bdd7d3f1c1c9a7bebe3f929ee66",
+    "fixed_rgba_sha256": "76db9d56a5823ceb28de07c427df954c3484b2b7e1892f6562fdafbe72320a5b"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/01-line-8192-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1642.0,
+      "geometry_ns": 637934.5,
+      "raster_ns": 2180767.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "49d6a3b5d4b167dc20ecc193dc3e2d41ca80935e6af6861881bbf798029d5b53",
+    "fixed_rgba_sha256": "c99d05ad7af97d1933da221186cf668da964e368540a80a28d0e12fe011312c7"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/01-line-8192-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1264.0,
+      "geometry_ns": 621971.0,
+      "raster_ns": 2115870.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "ae16647b0c596714b32ca9c8a9bf3e21a2b9723fd7e62a2b9988e01d5b2f1b46",
+    "fixed_rgba_sha256": "571747c2acf0c650854698778067d138791edd1f5ee1538441f55f8b896acedd"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/02-line-8192-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 129.0,
+      "geometry_ns": 54076.5,
+      "raster_ns": 3503257.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "91578e6378066d33f0338a87d8836e54438d9bd27c93f72e4b35afe9746efac6",
+    "fixed_rgba_sha256": "186c86615136def92affd7ee4f7dab6f096c920238fd9bb95331620cfe1ad042"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/02-line-8192-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 272.5,
+      "geometry_ns": 59205.5,
+      "raster_ns": 3546879.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "b0c2537c728848bf5ef84e2f0708bcffcfe6a3502935c60161d7df564e0dd04b",
+    "fixed_rgba_sha256": "664b98ef9c7e2b769c117876508e20affa2826a79923c5520a332a2b2bc66e72"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/03-line-8192-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1333.5,
+      "geometry_ns": 329053.0,
+      "raster_ns": 1260077.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "7ed88d64a4f355189bd08125778bc61407f12c375227cee6e2af1680648df010",
+    "fixed_rgba_sha256": "2434e57d3a9a22f41b7329b55c30f30ffb62b9dac72658617f44f9508ea7663d"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/03-line-8192-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 956.5,
+      "geometry_ns": 313460.5,
+      "raster_ns": 1241753.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "2a891e880683f34f5f7dd845dce49eb19c6bf673460316adc0a1a2c1ea1e9bc7",
+    "fixed_rgba_sha256": "34587358d46ebeaab212a8bc2f268bde597cc6b07bca876a96c59eeae14c7a3b"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/04-line-100000-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1113.0,
+      "geometry_ns": 148304.5,
+      "raster_ns": 8647309.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "9777252ed00763c4a6750cd7a0a1cde95f4832f58ed73d8d5a6d3c66e2933368",
+    "fixed_rgba_sha256": "575753458f1f3d7e84d4c8429364849ebf7f06a1354c3e2f9127cf62a3e3d7b8"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/04-line-100000-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1109.0,
+      "geometry_ns": 138818.0,
+      "raster_ns": 8459527.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "6483e8aae47e6a1eac796e1211f378fc743556d389beaabeb5d618597bcbabaa",
+    "fixed_rgba_sha256": "18f31c89a509276eb1a08b017c55e4074fc902ba26ec2861e927700063cdf478"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/05-line-100000-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1714.5,
+      "geometry_ns": 627829.5,
+      "raster_ns": 2136731.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "3fc55efffc0bc659394a3979b0c85eebaacc140c05b8e2a92495b3c600886961",
+    "fixed_rgba_sha256": "81e8b5bab872a40534504218dfce5ca8bad355fa1258f1684a342ad2fc0be9ec"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/05-line-100000-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 3045.0,
+      "geometry_ns": 836865.0,
+      "raster_ns": 6550436.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "171f87f38532c9d3c15e6d9d6f52e69abb7171f0a45101b84b4a7f1762a01ced",
+    "fixed_rgba_sha256": "58b6d378d20425d4caf724fb108e4ff143fe679425f273f8960e9d66c3c68ab6"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/06-line-100000-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1663.0,
+      "geometry_ns": 129944.0,
+      "raster_ns": 4504170.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "3508a32691bdf946465a9aba53aec746eb45551e667c6ecd072c0d277d975d3e",
+    "fixed_rgba_sha256": "959ace64fa752bcf49e6d3667c96db683f9745f8e4e293fa302d4dbcc2d4b157"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/06-line-100000-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2834.0,
+      "geometry_ns": 138322.5,
+      "raster_ns": 4588747.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "3bd6001219596885a1c4cbb0ae25b3fb39a46b26ee96dacd8f52ed02896dd53f",
+    "fixed_rgba_sha256": "46ca626f5552998413bcd10727301dee6e0cefc6cb9c62c1bedf1e2ee3b61836"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/07-line-100000-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 4125.0,
+      "geometry_ns": 456555.0,
+      "raster_ns": 6390793.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "4c3f6960094621050c52d07d664ae9dbc3aaf1ac885186c055bae697876491aa",
+    "fixed_rgba_sha256": "cb279694cc5c4952b23a6c8abfead1bd81519b9adcd7231075645a8db69e0011"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "line",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/07-line-100000-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 3419.5,
+      "geometry_ns": 417677.5,
+      "raster_ns": 4142880.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "7f5475556a751629c1940127543dc804d87bd66d36fc9babab47ec32633fcdb5",
+    "fixed_rgba_sha256": "04656125b923c152ddcbe962782a45c669c1f6b3faa0382f87d2b2601fca3c7d"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/08-area-8192-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 3405.0,
+      "geometry_ns": 271222.5,
+      "raster_ns": 56332386.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "80ff8c1ae8589635f95cb66e4c837f6b98c9a2a67c9287e16034ed1a4c4f9c60",
+    "fixed_rgba_sha256": "1a56c83a031faa1041ee0fd0dd55e5297b262d39eb6b832d45b4182c3cf42c52"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/08-area-8192-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 4624.0,
+      "geometry_ns": 278459.0,
+      "raster_ns": 56641289.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "7413c19017d6d7b4b4454b4a11d4d76f26662f4afe7ba0e4a897b9f6baa2846d",
+    "fixed_rgba_sha256": "916404d9d6b66280a078afc1b9e1f563d93d9a3b4998e12ec4220c3df73425f0"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/09-area-8192-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 4816.0,
+      "geometry_ns": 4374126.0,
+      "raster_ns": 5847196.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "824acc8755793a7408e134bfb3f7f95ef98541517cabd054a115e62b9b38b7bd",
+    "fixed_rgba_sha256": "5187b47b89d021a0a29297a4b992cb1c73ad75804f6e7957d8bbaad9314ca208"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/09-area-8192-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2961.5,
+      "geometry_ns": 3726718.0,
+      "raster_ns": 6886145.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "f86f1732bc242e4710f34c7b9177142986c535defb9e1735d905bed37476f13f",
+    "fixed_rgba_sha256": "16cb04e93cc6e8e8bd422d43d1a7d6244e8d41f9b66bba708429c866bb26736d"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/10-area-8192-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 955.5,
+      "geometry_ns": 98054.5,
+      "raster_ns": 11843714.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "8f36c807a473839406a1025b700974e7c632d57b86ae45d05226bec456d8dc47",
+    "fixed_rgba_sha256": "a43d881ca683fb9ffbba40310a49c5224a29a93ae08aec07dc79c25c4ec48267"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/10-area-8192-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1841.5,
+      "geometry_ns": 95795.5,
+      "raster_ns": 11618701.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "98bcdaccff0451836f72c90ef14f82c9ed57c38cfd33df17d7d0ea29aa981b26",
+    "fixed_rgba_sha256": "bcc577e0ccb3175d5b364a16c22e300c639de0d8eb3bca71d807c0d5b5783e84"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/11-area-8192-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2796.5,
+      "geometry_ns": 627253.5,
+      "raster_ns": 1713990.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "31fd2d101473d1f18aaf78ce20998ffc00bbdce9c8e8eef73b9f8634e2c76a1b",
+    "fixed_rgba_sha256": "f2d417a7c1600f66aa2024751fb76381ee0a7af7e3f9bc9e899c7158edc978af"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/11-area-8192-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1887.0,
+      "geometry_ns": 622712.5,
+      "raster_ns": 1733533.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "3426ef099c8a73b1990757c42e754491680d6a4a1f6ef0626f1c87012271665b",
+    "fixed_rgba_sha256": "5574579b3b8736482b5353531df8ffd7c487723653d81079354d1298b764e666"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/12-area-100000-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 785.0,
+      "geometry_ns": 163866.5,
+      "raster_ns": 13893103.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "74de1f99f7a86db72adf6885e997bcf078cd6db6c562218730fbcc88d460c2c3",
+    "fixed_rgba_sha256": "43c92051701597e5cd7a47bc1806f28ed05636f899b7c22cd5a1c7bd7280b860"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/12-area-100000-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1223.5,
+      "geometry_ns": 159848.0,
+      "raster_ns": 13620265.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "05b675f6d4bd2487fb7ea88bc4547f6492aef887d28200fc0446662bc414359e",
+    "fixed_rgba_sha256": "ca21501e1efb3ab727b9a985ba4d01eb7b36706c0240c3185008d85e23978c5a"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/13-area-100000-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2317.0,
+      "geometry_ns": 1671254.0,
+      "raster_ns": 2349511.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "011b6959c9861c2dcb67ab0807305b089d50eafc5a82641ad957f60812562a31",
+    "fixed_rgba_sha256": "cdf23865f42e9ec2c5483c7c4a78c14d05b4e803c07cb3710686b6126e40b246"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/13-area-100000-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1689.5,
+      "geometry_ns": 1654629.0,
+      "raster_ns": 2308118.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "a5677e88925ba7d1ecc7a7c6d97166d3027724c3ceafa522ff6c7b985a69c201",
+    "fixed_rgba_sha256": "c2c32635b29fef4b9c4e6cc92406e4907da39ad50ca363a7887d8c6a25f10c15"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/14-area-100000-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 294.0,
+      "geometry_ns": 75176.0,
+      "raster_ns": 6832620.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "18c432e34e2c14e11f7aa16f5058fdef86af93da7193c55a67ec8ea79374f371",
+    "fixed_rgba_sha256": "d753c31287d5fe0182e50da487406666ea8ea8a74fe5e661e0ae6d96e28b0f4f"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/14-area-100000-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 442.5,
+      "geometry_ns": 80819.0,
+      "raster_ns": 6859754.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "cc4eeaefd46687230a812b5a626a343cb1a34270a37ef31cf5fcda74ed6eb5c8",
+    "fixed_rgba_sha256": "c946b392f6d0adabbafc58208197e1e153260a949b86883482c0d400858ba413"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/15-area-100000-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2212.5,
+      "geometry_ns": 709033.5,
+      "raster_ns": 1392927.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "1d3b5f94e397a35f0aeba5d2c0cf1aff9536d2648955d32aa191fbacbbb9455a",
+    "fixed_rgba_sha256": "aa6936db0ac176f231a1a890a3e1dfd23f207e7043bdadf82962ec22b19322ab"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "area",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/15-area-100000-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1715.5,
+      "geometry_ns": 692582.0,
+      "raster_ns": 1364750.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "512269c5a3b3674e851bf99d7f4c794af4ef4824a2d0acd92b594af1f0a0dd18",
+    "fixed_rgba_sha256": "529a94e6c051fec32d8be0bef196ab2464da424b4273a0e5e66ccd756b8c9903"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/16-baseline-8192-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 925.0,
+      "geometry_ns": 156925.5,
+      "raster_ns": 51734854.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "25481d18b6e112a83b928b8ed6510d510396709dce0801d418a61cc40aeff859",
+    "fixed_rgba_sha256": "a06f27f1724e39a4c03624f176f2fc38311c2bdc54695de3c097cf0202b851ad"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/16-baseline-8192-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1744.5,
+      "geometry_ns": 160885.5,
+      "raster_ns": 51546165.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "ab30f110fc934028bc05d51dca56027b75e4e786d741872d62d3b182bf2d3bd0",
+    "fixed_rgba_sha256": "29ffc47d5cbdf9be141792bf1597b89241880435c59eb57d9c260bd9c4bccbd5"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/17-baseline-8192-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2069.5,
+      "geometry_ns": 2006405.0,
+      "raster_ns": 2711180.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "3323960cb7c9ba7c7108d7a6887b9eb7696d9768bc8b5cc92624cb7a94cd2103",
+    "fixed_rgba_sha256": "65a21bf6e6a174eea7d44c5fa08a3c21c26ca5d48da26432fefc249b7af39877"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/17-baseline-8192-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1613.5,
+      "geometry_ns": 1982429.5,
+      "raster_ns": 2663894.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "4eb26aa822b1451f59f915df94c4ea364fa0ade2fc9d0786e907bb666651194a",
+    "fixed_rgba_sha256": "c28df7479af6ebcc700c3701d81cf019271d477e12417e83d2d2824c1e257860"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/18-baseline-8192-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 442.5,
+      "geometry_ns": 71301.5,
+      "raster_ns": 12822878.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "f5f943b725f5ae02b9f759da1fc3b61206768d83a37a9a63959904ed812d6a26",
+    "fixed_rgba_sha256": "22655b7720d4ce98f661a0ae75e80775053f071afa9fb16e2b5670e200993d22"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/18-baseline-8192-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 833.5,
+      "geometry_ns": 77580.5,
+      "raster_ns": 12832461.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "48ae059c7ed16eba8b8a83748a5918e3bb78a2df07da9f47ac0b7c0db7ed92c6",
+    "fixed_rgba_sha256": "3dccf8aedd33aadbd9da7f9f05779be97d120ce8defd63811fd2f06e25f49941"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/19-baseline-8192-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1848.5,
+      "geometry_ns": 612434.5,
+      "raster_ns": 1483543.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "16d5d1f99a246a3c5ab069d5079c3967fcf9b018a13372869e7437d7145998ec",
+    "fixed_rgba_sha256": "f344e28cc94309a4efb94bbdac1bf273bf17c6ec5b48336f176645b16a872bbc"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "8192",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/19-baseline-8192-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1274.0,
+      "geometry_ns": 597940.0,
+      "raster_ns": 1452304.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "6d3fb88d1bd67dda8e3582aa1a20542feabcf1cb63b45512a2e2884b3a649ca3",
+    "fixed_rgba_sha256": "6f3c7b3d3c3dfa1237ca6547c50e59fb11a4cbb59206999cdca533dd688120d0"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/20-baseline-100000-800x500-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 775.5,
+      "geometry_ns": 150700.5,
+      "raster_ns": 19451980.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "40155d4cd08d7d9b90164d33ed5e402ba57100293453252e025236df5207fae2",
+    "fixed_rgba_sha256": "36077870d6608f7e707b8fc80f957497b70b8b642407c55826ba60d18bb15855"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "800",
+      "500",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/20-baseline-100000-800x500-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1252.5,
+      "geometry_ns": 155530.0,
+      "raster_ns": 19481617.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "168fd27307175dafd866706557b97ecb77ca828a55c5282238522e8da350fbd9",
+    "fixed_rgba_sha256": "f1556ddd9affeecec7ee5109fc28911a9cda88bf2195cfa81899bb69aeafe35f"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/21-baseline-100000-800x500-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 2076.0,
+      "geometry_ns": 1672532.5,
+      "raster_ns": 2426060.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "cf63c9805aeec44680395d7f04ece69b5c0937b59db890c6a4763d38bf5a06a0",
+    "fixed_rgba_sha256": "133097687b3ea6d9e893145ed8e99e3eb24a826993fd081f6bb7e936d333a2fd"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "800",
+      "500",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/21-baseline-100000-800x500-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1431.0,
+      "geometry_ns": 1654722.5,
+      "raster_ns": 2416337.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "4ef11c0d8268c6620f254ca0d76d72318a88203b6c2f10a34bb2b469642a2953",
+    "fixed_rgba_sha256": "4ac69e1d987b682904a18b7ea64f9c72a55a148a042b760b28cac66521eb4c4d"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "disabled",
+      "target/last-price-animation/batch/22-baseline-100000-300x300-tiny-skia-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 370.5,
+      "geometry_ns": 78651.5,
+      "raster_ns": 10146012.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "d21881e5bf5cd86c3164f7fc542df86132fbf61d2d31b173098689360fba6225",
+    "fixed_rgba_sha256": "30c2bddab5b26e627efaa7004db604d9664dc09edea80b1b01312d29c44e4422"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "300",
+      "300",
+      "tiny-skia",
+      "continuous",
+      "target/last-price-animation/batch/22-baseline-100000-300x300-tiny-skia-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 517.5,
+      "geometry_ns": 81811.5,
+      "raster_ns": 10099121.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "5a53292b5c1fc80e33a391fe8a93193d63d706a3ab45b36e99c0d67012caa49c",
+    "fixed_rgba_sha256": "f04c37f22e63c4deab1036ce7a59a4bcf0832b512eb34cc604d16d057354fc44"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "continuous",
+      "target/last-price-animation/batch/23-baseline-100000-300x300-wgpu-continuous.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1814.0,
+      "geometry_ns": 706393.0,
+      "raster_ns": 1411670.0
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "7bdc0e3f262e3922360e039e0aea5571b9e91f2b8f53fb429e11f248657ea9af",
+    "fixed_rgba_sha256": "41c94b053fb2d4b221f13736278a17579a4cba48c00fa5407e4f419f96437aba"
+  },
+  {
+    "command": [
+      "target/release/examples/last_price_animation_profile",
+      "baseline",
+      "100000",
+      "300",
+      "300",
+      "wgpu",
+      "disabled",
+      "target/last-price-animation/batch/23-baseline-100000-300x300-wgpu-disabled.csv"
+    ],
+    "exit": 0,
+    "samples": 80,
+    "median_ns": {
+      "prepare_ns": 1304.5,
+      "geometry_ns": 695299.5,
+      "raster_ns": 1395434.5
+    },
+    "formatter_calls": 0,
+    "base_retained": true,
+    "csv_sha256": "ef8455c3aa1573ec6fc8db2581f4630351fccf8a2005784b5b08d22e1b4e88b4",
+    "fixed_rgba_sha256": "5475538b6355ccfc01ecb5417ab2bfe206fde24a6fab546291068268d5404d61"
+  }
+]

@@ -102,6 +102,21 @@ Contracts and validation: [Area](docs/porting/area-rendering.md),
 [Bar](docs/porting/bar-rendering.md), [Baseline](docs/porting/baseline-rendering.md).
 Fresh physical mouse/touchpad acceptance for these new families remains pending.
 
+## Last-price animation
+
+Line, Area and Baseline support `LastPriceAnimationMode::{Disabled, Continuous,
+OnDataUpdate}` through their existing `style.last_price_animation` option.
+The default is Disabled. OnDataUpdate leaves a center dot after the pulse ends.
+The native widget schedules redraws automatically.
+
+```sh
+cargo run --example public_chart -- --line --last-price-animation --live-feed
+cargo run --example public_chart -- --area --last-price-animation-continuous --conflation
+cargo run --example public_chart -- --baseline --last-price-animation --live-feed
+```
+
+See the [source contract and verification report](docs/porting/last-price-animation.md).
+
 ## Dense data and conflation
 
 All six built-in families support optional conflation: aggregate drawing rows when
