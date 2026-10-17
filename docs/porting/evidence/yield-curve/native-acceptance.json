@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-17",
+  "software": {
+    "environment": "ICED_BACKEND=tiny-skia",
+    "result": "All checks passed; idle expiry passed; window closed",
+    "exit": 0
+  },
+  "gpu": {
+    "environment": "ICED_BACKEND=wgpu",
+    "result": "All checks passed; idle expiry passed; window closed",
+    "exit": 0
+  },
+  "sizes": [
+    "regular",
+    "narrow",
+    "earlier problem size"
+  ],
+  "checks": [
+    "curve changes/extension/reset/empty recovery",
+    "domain step and formatter controls",
+    "wheel zoom",
+    "diagonal pan",
+    "left price-axis wheel/drag",
+    "numeric crosshair labels/selection",
+    "box move/right-edge resize/Escape rollback",
+    "short-height recovery",
+    "five-second idle expiration",
+    "manual marker persistence"
+  ],
+  "untested": [
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI"
+  ],
+  "historical_timing_acceptance": "OPEN/deferred"
+}

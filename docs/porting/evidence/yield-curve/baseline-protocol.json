@@ -1,0 +1,6 @@
+{
+  "baseline": "24bd3ba",
+  "binary_sha256": "8ec825cf817dbc4dcca9c1feaba52497dde4334389344f5f9cfdf5ddbad83c5d",
+  "origin": "target/up-down-markers/final/protocol.json",
+  "note": "Retained exact-binary pre-feature images, 12 per backend"
+}

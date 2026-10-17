@@ -1,0 +1,22 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.81s
+     Running tests/yield_curve.rs (target/debug/deps/yield_curve-3f6ac97c04aff042)
+
+running 1 test
+test numeric_headless_snapshot_expires_markers_without_a_widget_tick ... FAILED
+
+failures:
+
+---- numeric_headless_snapshot_expires_markers_without_a_widget_tick stdout ----
+
+thread 'numeric_headless_snapshot_expires_markers_without_a_widget_tick' (441) panicked at tests/yield_curve.rs:348:5:
+headless snapshots must advance marker deadlines
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    numeric_headless_snapshot_expires_markers_without_a_widget_tick
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.15s
+
+error: test failed, to rerun pass `--test yield_curve`

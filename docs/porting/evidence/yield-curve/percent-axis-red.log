@@ -1,0 +1,24 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.85s
+     Running tests/yield_curve.rs (target/debug/deps/yield_curve-3f6ac97c04aff042)
+
+running 1 test
+test yield_axis_uses_three_decimal_percent_defaults_including_support_owner ... FAILED
+
+failures:
+
+---- yield_axis_uses_three_decimal_percent_defaults_including_support_owner stdout ----
+
+thread 'yield_axis_uses_three_decimal_percent_defaults_including_support_owner' (179) panicked at tests/yield_curve.rs:363:5:
+assertion `left == right` failed
+  left: "5.38"
+ right: "5.378%"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    yield_axis_uses_three_decimal_percent_defaults_including_support_owner
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.20s
+
+error: test failed, to rerun pass `--test yield_curve`

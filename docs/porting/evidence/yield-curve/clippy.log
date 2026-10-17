@@ -1,0 +1,3 @@
+    Blocking waiting for file lock on build directory
+    Checking feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 6.46s

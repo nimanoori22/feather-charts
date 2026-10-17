@@ -1,0 +1,9 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.05s
+     Running unittests examples/yield_curve.rs (target/debug/examples/yield_curve-aa62ddd9a509e57c)
+
+running 2 tests
+test region::tests::box_hit_distinguishes_moving_from_right_edge_resizing ... ok
+test region::edit_tests::numeric_box_edit_router_moves_resizes_and_restores_on_escape ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s

@@ -1,0 +1,25 @@
+    Blocking waiting for file lock on build directory
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1m 06s
+     Running unittests src/lib.rs (target/debug/deps/feather_charts-4ab6a597a8984957)
+
+running 1 test
+test model::yield_curve_horz_scale_behavior::tests::numeric_maturity_uses_years_and_months_instead_of_calendar_dates ... FAILED
+
+failures:
+
+---- model::yield_curve_horz_scale_behavior::tests::numeric_maturity_uses_years_and_months_instead_of_calendar_dates stdout ----
+
+thread 'model::yield_curve_horz_scale_behavior::tests::numeric_maturity_uses_years_and_months_instead_of_calendar_dates' (288) panicked at src/model/yield_curve_horz_scale_behavior.rs:23:9:
+assertion `left == right` failed
+  left: "18"
+ right: "1Y6M"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    model::yield_curve_horz_scale_behavior::tests::numeric_maturity_uses_years_and_months_instead_of_calendar_dates
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 416 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--lib`

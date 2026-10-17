@@ -1,6 +1,6 @@
 # Yield-curve chart implementation plan
 
-Date: 2026-10-17. Status: planned; no production changes made.
+Date: 2026-10-17. Status: complete for planned scope; automated and software/GPU mouse acceptance pass.
 Rust baseline: `24bd3ba` (up/down marker implementation and mouse acceptance).
 Execution checklist: [yield-curve-todo.md](yield-curve-todo.md).
 

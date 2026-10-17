@@ -1,0 +1,34 @@
+   Compiling feather-charts v0.1.0 (/home/nima/Desktop/dev/rust_dev/lw_chart_rs_port/feather-charts)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.98s
+     Running tests/up_down_markers.rs (target/debug/deps/up_down_markers-dc4caa33d6c29287)
+
+running 12 tests
+test automatic_markers_expire_at_the_exact_deadline ... ok
+test managed_updates_compare_to_the_seeded_baseline ... ok
+test manual_and_existing_lifetimes_are_independent_of_new_options ... ok
+test historical_conflation_rejection_preserves_markers_and_deadline ... ok
+test pane_index_shifts_and_series_removal_cancel_all_controller_work ... ok
+test replacing_the_generic_attachment_invalidates_the_controller_id ... ok
+test zero_negative_and_rejected_data_updates_preserve_the_native_contract ... ok
+test pulse_fast_path_keeps_marker_geometry_until_expiration_is_due ... ok
+test manual_markers_draw_visible_pixels ... ok
+test idle_widget_requests_one_deadline_then_publishes_tick_and_stops ... ok
+test missing_times_hidden_series_and_unsupported_kinds_are_safe ... ok
+test color_replacement_updates_marker_pixels_and_old_frames_stay_frozen ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.43s
+
+     Running tests/yield_curve.rs (target/debug/deps/yield_curve-3f6ac97c04aff042)
+
+running 9 tests
+test numeric_headless_snapshot_expires_markers_without_a_widget_tick ... ok
+test failed_writes_preserve_data_domain_and_marker_deadlines ... ok
+test changing_maturity_formatter_invalidates_axis_labels_and_can_restore_defaults ... ok
+test yield_axis_uses_three_decimal_percent_defaults_including_support_owner ... ok
+test numeric_markers_expire_exactly_and_manual_markers_persist ... ok
+test sparse_curve_draws_and_source_defaults_keep_private_scaffold_out_of_public_data ... ok
+test pointer_payloads_are_numeric_and_crosshair_ignores_scaffold_only_maturities ... ok
+test numeric_pulse_ticks_reuse_markers_until_the_expiration_deadline ... ok
+test numeric_live_updates_keep_one_software_damage_region ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.94s
