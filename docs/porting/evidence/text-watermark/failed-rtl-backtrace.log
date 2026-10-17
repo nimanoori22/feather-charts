@@ -1,0 +1,45 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.20s
+     Running unittests src/lib.rs (target/debug/deps/feather_charts-ee13a20310a91a48)
+
+running 1 test
+
+thread 'ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text' (24) panicked at /home/nima/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cosmic-text-0.15.0/src/glyph_cache.rs:100:18:
+attempt to add with overflow
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:679:5
+   1: core::panicking::panic_fmt
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panicking.rs:80:14
+   2: core::panicking::panic_const::panic_const_add_overflow
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/panicking.rs:175:17
+   3: <cosmic_text::glyph_cache::SubpixelBin>::new
+             at /home/nima/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cosmic-text-0.15.0/src/glyph_cache.rs:100:18
+   4: <cosmic_text::glyph_cache::CacheKey>::new
+             at /home/nima/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cosmic-text-0.15.0/src/glyph_cache.rs:45:26
+   5: <cosmic_text::layout::LayoutGlyph>::physical
+             at /home/nima/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/cosmic-text-0.15.0/src/layout.rs:78:33
+   6: <iced_graphics::geometry::text::Text>::draw_with::<<feather_charts::ui::price_axis::AxisFontResolver>::glyph_paths_aligned::{closure#1}>
+             at /home/nima/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/iced_graphics-0.14.0/src/geometry/text.rs:89:44
+   7: <feather_charts::ui::price_axis::AxisFontResolver>::glyph_paths_aligned
+             at ./src/ui/price_axis.rs:200:22
+   8: <feather_charts::ui::price_axis::AxisFontResolver>::glyph_paths_top
+             at ./src/ui/price_axis.rs:155:14
+   9: feather_charts::ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text
+             at ./src/ui/price_axis.rs:847:22
+  10: feather_charts::ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text::{closure#0}
+             at ./src/ui/price_axis.rs:831:70
+  11: <feather_charts::ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text::{closure#0} as core::ops::function::FnOnce<()>>::call_once
+             at /home/nima/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+  12: <fn() -> core::result::Result<(), alloc::string::String> as core::ops::function::FnOnce<()>>::call_once
+             at /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:250:5
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+test ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text ... FAILED
+
+failures:
+
+failures:
+    ui::price_axis::watermark_unicode_tests::native_shaping_and_fallback_support_non_ascii_watermark_text
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 409 filtered out; finished in 0.27s
+
+error: test failed, to rerun pass `--lib`

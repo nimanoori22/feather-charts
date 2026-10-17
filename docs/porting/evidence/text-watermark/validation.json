@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-17",
+  "baseline": "61bb52b",
+  "all_target_tests_passed": 626,
+  "commands": {
+    "cargo fmt --check": "pass",
+    "cargo test --all-targets": "pass",
+    "cargo check --all-targets": "pass",
+    "cargo clippy --all-targets -- -D warnings": "pass",
+    "watermark_source_oracle": "270 layout states and factory/lifecycle checks pass",
+    "animation_source_oracle": "pass",
+    "conflation_source_oracle": "pass"
+  },
+  "physical_mouse": {
+    "tiny-skia": {
+      "sizes": [
+        "regular",
+        "narrow"
+      ],
+      "controls": [
+        "watermark visibility",
+        "alignment",
+        "text",
+        "style"
+      ],
+      "gestures": [
+        "wheel zoom",
+        "diagonal plot dragging",
+        "price-axis wheel/drag",
+        "box moving/resizing"
+      ],
+      "pane_anchor": "pass",
+      "user_response": "All checks passed; window closed"
+    },
+    "wgpu": {
+      "sizes": [
+        "regular",
+        "narrow"
+      ],
+      "controls": [
+        "watermark visibility",
+        "alignment",
+        "text",
+        "style"
+      ],
+      "gestures": [
+        "wheel zoom",
+        "diagonal plot dragging",
+        "price-axis wheel/drag",
+        "box moving/resizing"
+      ],
+      "pane_anchor": "pass",
+      "user_response": "All checks passed; window closed"
+    }
+  },
+  "untested_physical_devices": [
+    "touchpad",
+    "touchscreen",
+    "high-DPI"
+  ],
+  "historical_timing_acceptance": "OPEN/deferred; thresholds unchanged",
+  "raw_capture_directory": "target/text-watermark/after-fixed",
+  "original_failure_directory": "target/text-watermark/after"
+}

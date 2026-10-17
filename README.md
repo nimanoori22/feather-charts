@@ -117,6 +117,44 @@ cargo run --example public_chart -- --baseline --last-price-animation --live-fee
 
 See the [source contract and verification report](docs/porting/last-price-animation.md).
 
+## Text watermarks
+
+Attach a viewport-relative watermark to a pane using the existing primitive API:
+
+```rust
+use feather_charts::api::{TextWatermark, TextWatermarkLine, TextWatermarkOptions};
+
+let mut options = TextWatermarkOptions {
+    lines: vec![TextWatermarkLine {
+        text: "BTCUSD".into(),
+        ..Default::default()
+    }],
+    ..Default::default()
+};
+let id = chart.add_pane_primitive(0, TextWatermark::new(options.clone())?)?;
+options.visible = false;
+chart.replace_primitive(id, TextWatermark::new(options)?)?;
+chart.remove_primitive(id)?;
+```
+
+Each line supports its own color, native `iced::Font` (family, weight, style),
+font size and optional line height. Lines shrink independently to the pane width;
+text stays anchored to the pane while data pans/zooms. Use the alignment fields
+for left/center/right and top/center/bottom. Watermarks occupy the source's normal
+primitive layer, so filled or densely drawn series can cover them. They add no
+hit target or autoscale contribution.
+
+```sh
+cargo run --example public_chart -- --line --text-watermark --live-feed --primitives
+cargo run --example public_chart -- --area --text-watermark
+cargo run --example public_chart -- --line --conflation --text-watermark
+```
+
+The demo provides text, style, alignment and visibility controls. Load custom fonts
+through the host's Iced setup before preparing the watermark; recreate/replace it
+if font availability changes later. Native fallback and glyph metrics can differ
+from browser fonts. See the [watermark port report](docs/porting/text-watermark.md).
+
 ## Dense data and conflation
 
 All six built-in families support optional conflation: aggregate drawing rows when

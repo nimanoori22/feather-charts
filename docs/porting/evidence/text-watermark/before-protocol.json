@@ -1,0 +1,21 @@
+{
+  "commands": [
+    [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--watermark-captures",
+      "target/text-watermark/before/tiny-skia"
+    ],
+    [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--watermark-captures",
+      "target/text-watermark/before/wgpu",
+      "--wgpu"
+    ]
+  ],
+  "binary_sha256": "23aafae54792420ef47990b601eb7994e47119a0e64d88e602ba56d2d68b1a2e",
+  "baseline": "61bb52b; capture-fixture-only change"
+}

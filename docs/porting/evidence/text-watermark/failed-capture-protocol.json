@@ -1,0 +1,62 @@
+{
+  "commands": [
+    [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--watermark-captures",
+      "target/text-watermark/after/tiny-skia"
+    ],
+    [
+      "target/debug/examples/public_chart",
+      "--line",
+      "--conflation",
+      "--watermark-captures",
+      "target/text-watermark/after/wgpu",
+      "--wgpu"
+    ]
+  ],
+  "binary_sha256": "2d8dd663cb733f36c93e196b27b38bbc9f8f5d6c555cf56c536f027b51ba49ab",
+  "capture_fixture_sha256": "e0940e26238f888d6b0bc7e40669cec3e8a730f9b1ffff8fea4399a2d8d3c653",
+  "scenes": [
+    "default",
+    "multiline",
+    "edges",
+    "long",
+    "mixed",
+    "empty"
+  ],
+  "sizes": [
+    [
+      800,
+      500
+    ],
+    [
+      300,
+      300
+    ],
+    [
+      300,
+      90
+    ]
+  ],
+  "dpr": [
+    1,
+    1.25,
+    1.5,
+    2
+  ],
+  "fontconfig_identity": [
+    {
+      "family": "sans-serif",
+      "fc_match_file": "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+      "sha256": "baccc64becc3eb7d104b7c84d99f5314a0a1f896e2b3ea6c2f22fc08d2003bee"
+    },
+    {
+      "family": "monospace",
+      "fc_match_file": "/usr/share/fonts/TTF/JetBrainsMonoNerdFont-Regular.ttf",
+      "sha256": "1c680e8cde9fcf8b88a5605ce8d1fb94dd3fb15841f7ca7bf4c55664855e5611"
+    }
+  ],
+  "font_note": "Fontconfig selections recorded; actual glyph fallback is provided by Iced/cosmic-text."
+}

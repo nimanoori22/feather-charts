@@ -1,0 +1,4 @@
+
+thread 'main' (195981) panicked at examples/public_chart/watermark.rs:157:21:
+watermark drew nothing: multiline 800 500 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
