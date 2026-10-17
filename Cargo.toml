@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 csscolorparser = "0.8.3"
 chrono = { version = "0.4", features = ["unstable-locales"] }
-iced = { version = "0.14.0", features = ["canvas", "advanced"] }
+iced = { version = "0.14.0", features = ["canvas", "advanced", "image-without-codecs"] }
 
 [dev-dependencies]
 # Verify the actual software renderer damage work, already locked transitively.
@@ -31,3 +31,7 @@ opt-level = 3
 
 [profile.dev.package.iced_tiny_skia]
 opt-level = 3
+
+[patch.crates-io]
+iced_tiny_skia = { path = "vendor/iced_tiny_skia-0.14.1" }
+iced_wgpu = { path = "vendor/iced_wgpu-0.14.0" }

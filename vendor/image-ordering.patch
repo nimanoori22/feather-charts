@@ -1,0 +1,159 @@
+--- a/iced_tiny_skia-0.14.1/src/engine.rs
++++ b/iced_tiny_skia-0.14.1/src/engine.rs
+@@ -493,0 +494,17 @@
++            Primitive::Image(image) => {
++                let image_clip = match image {
++                    Image::Raster { clip_bounds, .. }
++                    | Image::Vector { clip_bounds, .. } => *clip_bounds,
++                } * transformation;
++                if let Some(bounds) = clip_bounds.intersection(&image_clip) {
++                    adjust_clip_mask(clip_mask, bounds);
++                    self.draw_image(
++                        image,
++                        transformation,
++                        pixels,
++                        clip_mask,
++                        bounds,
++                    );
++                    adjust_clip_mask(clip_mask, clip_bounds);
++                }
++            }
+--- a/iced_tiny_skia-0.14.1/src/geometry.rs
++++ b/iced_tiny_skia-0.14.1/src/geometry.rs
+@@ -310,5 +310,6 @@
+-        self.images.push(graphics::Image::Raster {
+-            image,
+-            bounds,
+-            clip_bounds: self.clip_bounds,
+-        });
++        self.primitives
++            .push(Primitive::Image(graphics::Image::Raster {
++                image,
++                bounds,
++                clip_bounds: self.clip_bounds,
++            }));
+@@ -325 +326 @@
+-        self.images.push(Image::Vector {
++        self.primitives.push(Primitive::Image(Image::Vector {
+@@ -329 +330 @@
+-        });
++        }));
+--- a/iced_tiny_skia-0.14.1/src/primitive.rs
++++ b/iced_tiny_skia-0.14.1/src/primitive.rs
+@@ -4,0 +5,2 @@
++    /// A canvas image in vector insertion order.
++    Image(crate::graphics::Image),
+@@ -28,0 +31 @@
++            Primitive::Image(image) => return image.bounds(),
+--- a/iced_tiny_skia-0.14.1/src/raster.rs
++++ b/iced_tiny_skia-0.14.1/src/raster.rs
+@@ -60 +60,4 @@
+-        let transform = transform.pre_scale(width_scale, height_scale);
++        // Keep placement in the transform: integer pixmap offsets lose subpixel positions after scaling.
++        let transform = transform
++            .pre_translate(bounds.x, bounds.y)
++            .pre_scale(width_scale, height_scale);
+@@ -68,2 +71,2 @@
+-            (bounds.x / width_scale) as i32,
+-            (bounds.y / height_scale) as i32,
++            0,
++            0,
+--- a/iced_wgpu-0.14.0/src/geometry.rs
++++ b/iced_wgpu-0.14.0/src/geometry.rs
+@@ -24,0 +25,2 @@
++    /// Ordered canvas image/vector phases.
++    Ordered(Vec<Geometry>),
+@@ -34,0 +37 @@
++    pub ordered: Vec<Cache>,
+@@ -44 +47,5 @@
+-        Geometry::Cached(cache.clone())
++        if cache.ordered.is_empty() {
++            Geometry::Cached(cache.clone())
++        } else {
++            Geometry::Ordered(cache.ordered.iter().map(Self::load).collect())
++        }
+@@ -52,0 +60,14 @@
++            Self::Ordered(parts) => {
++                let mut previous = previous.map(|p| p.ordered.into_iter());
++                Cache {
++                    ordered: parts
++                        .into_iter()
++                        .map(|p| {
++                            let old =
++                                previous.as_mut().and_then(Iterator::next);
++                            p.cache(group, old)
++                        })
++                        .collect(),
++                    ..Cache::default()
++                }
++            }
+@@ -66,0 +88 @@
++                    previous.ordered.clear();
+@@ -87,0 +110 @@
++                        ordered: Vec::new(),
+@@ -104,0 +128 @@
++    ordered: Vec<Geometry>,
+@@ -115,0 +140,14 @@
++    fn flush_ordered(&mut self) {
++        self.meshes.extend(
++            std::mem::replace(&mut self.buffers, BufferStack::new())
++                .into_meshes(self.clip_bounds),
++        );
++        if !self.meshes.is_empty() || !self.images.is_empty() {
++            self.ordered.push(Geometry::Live {
++                meshes: std::mem::take(&mut self.meshes),
++                images: std::mem::take(&mut self.images),
++                text: Vec::new(),
++            });
++        }
++    }
++
+@@ -118,0 +157 @@
++            ordered: Vec::new(),
+@@ -416 +455,10 @@
+-    fn paste(&mut self, frame: Frame) {
++    fn paste(&mut self, mut frame: Frame) {
++        if !self.ordered.is_empty() || !frame.ordered.is_empty() {
++            self.text.extend(std::mem::take(&mut frame.text));
++            self.flush_ordered();
++            match frame.into_geometry() {
++                Geometry::Ordered(parts) => self.ordered.extend(parts),
++                part => self.ordered.push(part),
++            }
++            return;
++        }
+@@ -425,0 +474,11 @@
++        if !self.ordered.is_empty() {
++            self.flush_ordered();
++            if !self.text.is_empty() {
++                self.ordered.push(Geometry::Live {
++                    meshes: Vec::new(),
++                    images: Vec::new(),
++                    text: self.text,
++                });
++            }
++            return Geometry::Ordered(self.ordered);
++        }
+@@ -436,0 +496 @@
++        self.flush_ordered();
+@@ -450,0 +511 @@
++        self.flush_ordered();
+@@ -453,0 +515 @@
++        self.flush_ordered();
+@@ -465,0 +528 @@
++        self.flush_ordered();
+--- a/iced_wgpu-0.14.0/src/lib.rs
++++ b/iced_wgpu-0.14.0/src/lib.rs
+@@ -865,0 +866,10 @@
++        if let Geometry::Ordered(parts) = geometry {
++            let (layer, transformation) = self.layers.current_mut();
++            let bounds = layer.bounds * transformation.inverse();
++            for part in parts {
++                self.layers.push_clip(bounds);
++                self.draw_geometry(part);
++                self.layers.pop_clip();
++            }
++            return;
++        }
+@@ -868,0 +879 @@
++            Geometry::Ordered(_) => unreachable!("handled ordered geometry"),

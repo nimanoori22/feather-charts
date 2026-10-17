@@ -1,0 +1,26 @@
+{
+  "vendor/iced_tiny_skia-0.14.1/src/engine.rs": {
+    "original_sha256": "e127c9156b39ce8f355f81aeae2dba3417b60623ce48ceabd50367b3c3456f13",
+    "patched_sha256": "a95a036368f1cea8ea2c2f87b0a4032cb87087e2d73ddb2f093152630d59a4fb"
+  },
+  "vendor/iced_tiny_skia-0.14.1/src/geometry.rs": {
+    "original_sha256": "8b6c53c2a31c2aa1e359ecf084900961681c117dddd14fcd829561bd917c5bbc",
+    "patched_sha256": "a24ac0f8cfc5d4ea660b55332b2a1d9d3f02c0aab70d1997dd6c7b0fefd8a3a6"
+  },
+  "vendor/iced_tiny_skia-0.14.1/src/primitive.rs": {
+    "original_sha256": "fe921bf12924e7a9ae8b426bfe1cc1dd08df488010d11c375814f28b50ac5521",
+    "patched_sha256": "56ba7a66598c9452dd70e3f0f8a1a68813555ae301fed6639dcfb27e4367f23c"
+  },
+  "vendor/iced_tiny_skia-0.14.1/src/raster.rs": {
+    "original_sha256": "4db53edb905af7f1945ee393934d02ea6943e358c5c7bb2059e8ecbe21e6be46",
+    "patched_sha256": "c17a229a03de1140b759cd0b47caad8b7cc45f4c9b1ef1d2e98739aba0f15342"
+  },
+  "vendor/iced_wgpu-0.14.0/src/geometry.rs": {
+    "original_sha256": "57cdcad6b837722021627da243f32ebeaa365512279f8b03f91b3923409d6d3c",
+    "patched_sha256": "e3a8f11dea8f9be803a5b83bd4767c015aa3a681d74c2f524952f1bbefa2d7d4"
+  },
+  "vendor/iced_wgpu-0.14.0/src/lib.rs": {
+    "original_sha256": "2ad3d675d4eea6732d0f2433ec6457b4335d6da57b2b8b31fd8b4195f45df0f6",
+    "patched_sha256": "be16e80ac10033a72518b91fc30c5f0fe12ce12c21dcb0e2ba77bfe781267596"
+  }
+}
