@@ -32,6 +32,7 @@ impl Chart {
             axis_scaling: self.axis_scaling(),
             active_price_axis: self.active_price_axis,
             animate: self.is_animating(),
+            marker_deadline: self.next_up_down_expiration(),
             enabled: !self.model.time_scale().is_empty(),
             resize_panes: self.resize_panes,
             hover_color: self.hover_color,
@@ -60,6 +61,7 @@ pub struct ChartProgram<'a, Message> {
     axis_scaling: Vec<[bool; 2]>,
     active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     animate: bool,
+    marker_deadline: Option<Instant>,
     enabled: bool,
     resize_panes: bool,
     hover_color: iced::Color,
@@ -402,6 +404,18 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             return Some(self.publish(clicked).and_capture());
         }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
+            if self
+                .marker_deadline
+                .is_some_and(|deadline| deadline <= *now)
+            {
+                return Some(self.publish(ChartMessage::Tick(*now)));
+            }
+            let deadline = state
+                .touch_input
+                .deadline()
+                .into_iter()
+                .chain(self.marker_deadline)
+                .min();
             if self.animate {
                 let next = state
                     .last_redraw
@@ -409,17 +423,14 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                     .unwrap_or(*now);
                 if *now < next {
                     return Some(canvas::Action::request_redraw_at(
-                        state
-                            .touch_input
-                            .deadline()
-                            .map_or(next, |deadline| deadline.min(next)),
+                        deadline.map_or(next, |deadline| deadline.min(next)),
                     ));
                 }
                 state.last_redraw = Some(*now);
                 return Some(self.publish(ChartMessage::Tick(*now)));
             }
             state.last_redraw = None;
-            if let Some(deadline) = state.touch_input.deadline() {
+            if let Some(deadline) = deadline {
                 return Some(canvas::Action::request_redraw_at(deadline));
             }
         }

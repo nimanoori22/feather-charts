@@ -35,6 +35,8 @@ use std::{
 #[derive(Debug)]
 pub enum ChartError {
     UnknownPrimitive(super::PrimitiveId),
+    InvalidUpDownOptions,
+    InvalidUpDownDeadline,
     Model(ChartModelError),
     Frame(ChartFrameError),
     PriceAxis(crate::model::axis_snapshots::PriceAxisOptionsError),
@@ -71,6 +73,7 @@ pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart {
+    pub(super) up_down: BTreeMap<super::PrimitiveId, super::up_down_markers::Controller>,
     pub(super) primitive_edit: Option<super::primitive_editing::EditSession>,
     pub(super) pending_primitive_edits: Vec<super::PrimitiveEditEvent>,
     pub(crate) extension_order: u64,
@@ -124,6 +127,7 @@ impl Chart {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            up_down: BTreeMap::new(),
             primitive_edit: None,
             pending_primitive_edits: vec![],
             extension_order: 0,
@@ -286,6 +290,7 @@ impl Chart {
         self.marker_orders
             .retain(|key, _| self.model.marker_collection(*key).is_some());
         self.kinds.remove(&id);
+        self.up_down.retain(|_, controller| controller.series != id);
         self.primitives
             .retain(|a| a.owner != super::PrimitiveOwner::Series(id));
         for views in &mut self.views {
@@ -430,6 +435,7 @@ impl Chart {
         ratio: f32,
         now: Instant,
     ) -> Result<(), ChartError> {
+        self.expire_up_down_markers(now);
         if self.size != size || self.ratio != ratio {
             self.cancel_viewport_interaction();
         }

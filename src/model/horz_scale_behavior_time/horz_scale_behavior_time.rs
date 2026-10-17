@@ -25,7 +25,7 @@ use crate::{
 pub struct TimeKey(u64);
 
 impl TimeKey {
-    fn new(timestamp: f64) -> Self {
+    pub(crate) fn new(timestamp: f64) -> Self {
         let bits = timestamp.to_bits();
         Self(if bits >> 63 == 0 {
             bits | (1_u64 << 63)

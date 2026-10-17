@@ -1,0 +1,14 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "files": {
+    "src/plugins/up-down-markers-plugin/expiring-markers-manager.ts": "7f3030dd46fcd98e5237757c33fa7a60f3873edc11f3812058b4cf79cb744a2c",
+    "src/plugins/up-down-markers-plugin/options.ts": "a16255dbc09ecf9e9dbb15e6df3d75caa2aa39857f4f6dc048565a8625f2edaa",
+    "src/plugins/up-down-markers-plugin/primitive.ts": "aca81ede95b9044fbee75750db8bf5cac54b5c6139a04c235970fdb69fb3d915",
+    "src/plugins/up-down-markers-plugin/renderer.ts": "dffed3003ff716820058fb5dc1868fc043d868714fa890d7ba56bb967975e1cf",
+    "src/plugins/up-down-markers-plugin/types.ts": "c26b38dc03d491ed87a692fa3e0ac6859fe9391055d363fdcf6b2b6362ddea3b",
+    "src/plugins/up-down-markers-plugin/view.ts": "1275f40d9afbacf6c9526b2334898e6c865b6637a8dffa49959169dfe0ae950a",
+    "src/plugins/up-down-markers-plugin/wrapper.ts": "09ceab79bb63f4dd97ce95323d5a3122594c1cbe0c9dd4b844a8a4538d507d49",
+    "src/plugins/series-primitive-adapter.ts": "665475ca1dc4785f5aab04a8b60c1e87b49226904f029bf02f99d38297825133",
+    "src/plugins/primitive-wrapper-base.ts": "1308db5108b3eb5c0fcd99e7f92f801115b67fff5436c89c6be8c880dfca43fe"
+  }
+}

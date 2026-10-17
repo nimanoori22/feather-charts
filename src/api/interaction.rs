@@ -325,6 +325,9 @@ impl Chart {
     }
     pub fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent>, ChartError> {
         self.validate_message(&message)?;
+        if let ChartMessage::Tick(now) = &message {
+            self.expire_up_down_markers(*now);
+        }
         self.check_primitive_edit(self.size, self.ratio);
         if let ChartMessage::Tick(now) = message
             && self.sample_price_animation_tick(now)

@@ -370,6 +370,7 @@ impl Chart {
         primitive: impl DrawingPrimitive,
     ) -> Result<(), ChartError> {
         self.primitive_owner(id)?;
+        self.up_down.remove(&id);
         self.cancel_primitive_edit_for(id, super::PrimitiveEditCancelReason::ExternalChange);
         let attachment = self
             .primitives
@@ -406,6 +407,7 @@ impl Chart {
             self.model.set_primitive_autoscale(series, id.0, None);
         }
         self.primitives.remove(index);
+        self.up_down.remove(&id);
         self.model.full_update();
         Ok(())
     }

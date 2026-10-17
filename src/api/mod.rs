@@ -43,3 +43,6 @@ pub use text_watermark::{
 
 mod image_watermark;
 pub use image_watermark::{ImageWatermark, ImageWatermarkError, ImageWatermarkOptions};
+
+mod up_down_markers;
+pub use up_down_markers::{MarkerSign, UpDownMarker, UpDownMarkersId, UpDownMarkersOptions};
