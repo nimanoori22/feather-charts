@@ -31,6 +31,7 @@ struct CachedAxisText {
     font: Font,
     size: f32,
     alignment: text::Alignment,
+    vertical_alignment: alignment::Vertical,
     color: Color,
     paths: Vec<(Path, Color)>,
 }
@@ -56,6 +57,10 @@ pub struct AxisFontResolver {
     glyph_shapes: std::cell::Cell<usize>,
 }
 impl AxisFontResolver {
+    #[cfg(test)]
+    pub(crate) fn work_counts(&self) -> (usize, usize) {
+        (self.width_shapes.get(), self.glyph_shapes.get())
+    }
     pub fn register(&mut self, name: &'static str, font: Font) {
         self.glyphs.get_mut().clear();
         self.widths.get_mut().clear();
@@ -129,12 +134,49 @@ impl AxisFontResolver {
         color: Color,
         position: Point,
     ) -> Vec<(Path, Color)> {
+        self.glyph_paths_aligned(
+            content,
+            font,
+            size,
+            (alignment, alignment::Vertical::Center),
+            color,
+            position,
+        )
+    }
+    pub(crate) fn glyph_paths_top(
+        &self,
+        content: &str,
+        font: Font,
+        size: f32,
+        alignment: text::Alignment,
+        color: Color,
+        position: Point,
+    ) -> Vec<(Path, Color)> {
+        self.glyph_paths_aligned(
+            content,
+            font,
+            size,
+            (alignment, alignment::Vertical::Top),
+            color,
+            position,
+        )
+    }
+    fn glyph_paths_aligned(
+        &self,
+        content: &str,
+        font: Font,
+        size: f32,
+        alignment: (text::Alignment, alignment::Vertical),
+        color: Color,
+        position: Point,
+    ) -> Vec<(Path, Color)> {
         let mut cache = self.glyphs.borrow_mut();
         let index = cache.iter().position(|entry| {
             entry.content == content
                 && entry.font == font
                 && entry.size == size
-                && entry.alignment == alignment
+                && entry.alignment == alignment.0
+                && entry.vertical_alignment == alignment.1
                 && entry.color == color
         });
         let index = match index {
@@ -147,11 +189,16 @@ impl AxisFontResolver {
                     position: Point::ORIGIN,
                     font,
                     size: size.into(),
-                    align_x: alignment,
-                    align_y: alignment::Vertical::Center,
+                    align_x: alignment.0,
+                    align_y: alignment.1,
                     line_height: LineHeight::Relative(1.2),
                     shaping: Shaping::Advanced,
-                    max_width: f32::INFINITY,
+                    // A finite unwrapped line prevents cosmic-text RTL positions becoming infinite.
+                    max_width: (self
+                        .text_width(content, font, size)
+                        .expect("validated glyph font size")
+                        as f32)
+                        .max(1.),
                     color,
                 };
                 let mut paths = vec![];
@@ -163,7 +210,8 @@ impl AxisFontResolver {
                     content: content.into(),
                     font,
                     size,
-                    alignment,
+                    alignment: alignment.0,
+                    vertical_alignment: alignment.1,
                     color,
                     paths,
                 });
@@ -572,6 +620,7 @@ mod tests {
                 font: Font::DEFAULT,
                 size: 12.,
                 alignment: text::Alignment::Left,
+                vertical_alignment: alignment::Vertical::Center,
                 color: Color::WHITE,
                 paths: vec![],
             });
@@ -728,5 +777,88 @@ mod tests {
                 .all(|item| !matches!(item, AxisPrimitive::Glyph { .. }))
         );
         assert_eq!(empty.required_width, 56.);
+    }
+}
+
+#[cfg(test)]
+mod watermark_anchor_tests {
+    use super::*;
+    #[test]
+    fn top_and_center_paths_match_native_text_and_do_not_share_a_cache_entry() {
+        let fonts = AxisFontResolver::default();
+        for (index, anchor) in [alignment::Vertical::Top, alignment::Vertical::Center]
+            .into_iter()
+            .enumerate()
+        {
+            let mut direct = vec![];
+            canvas::Text {
+                content: "Ágj Q".into(),
+                position: Point::ORIGIN,
+                font: Font::MONOSPACE,
+                size: 48.0.into(),
+                align_x: text::Alignment::Left,
+                align_y: anchor,
+                line_height: LineHeight::Relative(1.2),
+                shaping: Shaping::Advanced,
+                max_width: f32::INFINITY,
+                color: Color::BLACK,
+            }
+            .draw_with(|path, color| direct.push((path, color)));
+            let prepared = if anchor == alignment::Vertical::Top {
+                fonts.glyph_paths_top(
+                    "Ágj Q",
+                    Font::MONOSPACE,
+                    48.,
+                    text::Alignment::Left,
+                    Color::BLACK,
+                    Point::ORIGIN,
+                )
+            } else {
+                fonts.glyph_paths(
+                    "Ágj Q",
+                    Font::MONOSPACE,
+                    48.,
+                    text::Alignment::Left,
+                    Color::BLACK,
+                    Point::ORIGIN,
+                )
+            };
+            assert_eq!(format!("{direct:?}"), format!("{prepared:?}"));
+            assert_eq!(fonts.work_counts(), (1, index + 1));
+        }
+    }
+}
+
+#[cfg(test)]
+mod watermark_unicode_tests {
+    use super::*;
+    #[test]
+    fn native_shaping_and_fallback_support_non_ascii_watermark_text() {
+        let fonts = AxisFontResolver::default();
+        for (content, font) in [
+            ("日本語", Font::DEFAULT),
+            ("مرحبا", Font::DEFAULT),
+            (
+                "BTC · café",
+                Font {
+                    family: iced::font::Family::Name("Feather Missing Font"),
+                    ..Font::DEFAULT
+                },
+            ),
+        ] {
+            assert!(fonts.text_width(content, font, 24.).unwrap() > 0.);
+            assert!(
+                !fonts
+                    .glyph_paths_top(
+                        content,
+                        font,
+                        24.,
+                        text::Alignment::Left,
+                        Color::BLACK,
+                        Point::ORIGIN
+                    )
+                    .is_empty()
+            );
+        }
     }
 }

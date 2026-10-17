@@ -15,3 +15,5 @@ pub mod hit_testing;
 pub(crate) mod primitive_hit_testing;
 
 pub mod custom_series;
+
+pub(crate) mod text_watermark;

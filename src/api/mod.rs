@@ -35,3 +35,8 @@ pub use primitives::{
     PrimitiveCoordinateTransform, PrimitiveHit, PrimitiveHitCandidate, PrimitiveHitTester,
     PrimitiveId, PrimitiveLayer, PrimitiveOwner, PrimitivePaneId, PrimitiveRenderer, PrimitiveView,
 };
+
+mod text_watermark;
+pub use text_watermark::{
+    TextWatermark, TextWatermarkError, TextWatermarkLine, TextWatermarkOptions,
+};

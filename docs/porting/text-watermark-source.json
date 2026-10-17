@@ -1,0 +1,14 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "sources": {
+    "src/plugins/text-watermark/options.ts": "323586657ffeb9ba4d2ff1e5982f63cf8acfbb863f6918baf23663f8f73f1ff2",
+    "src/plugins/text-watermark/primitive.ts": "de43ca8568be1751c1f50ab5271510a05caf6af12d1eeed42cdaa8ad811273ee",
+    "src/plugins/text-watermark/pane-view.ts": "69cdb819533f69533f81d9dffe070628e3cac72035d5cd7ae63f626f8d1fd13b",
+    "src/plugins/text-watermark/pane-renderer.ts": "dc95bd8abedbd5a14a4ae227667bbf26f21b5be2aecaa4c2cb04fc9113b9ced0",
+    "src/plugins/pane-primitive-wrapper.ts": "fe144b35dd8f0fa23401a926086cf02754eb3d029a2e7cefb50348145383bba8",
+    "src/model/ipane-primitive.ts": "80847ca86fc04c5445ee893758b6159b8a62d47a71994891279098fad5eb528a",
+    "src/gui/pane-widget.ts": "48c6c9285f3ec00ec146be5ad01f735d39b541f61eb1483279a4fa8f2f11eda7",
+    "src/helpers/make-font.ts": "23802076fe3f8175b0bc2bed05b31c9f5a18f868afb0cc89dabb6bddc0ab6656",
+    "src/index.ts": "6be8f3db655346ac17f1a4dafa190dbf891731c03c0bf301d4bfd0433ba4b50e"
+  }
+}
