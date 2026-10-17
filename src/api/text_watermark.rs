@@ -111,8 +111,8 @@ impl TextWatermark {
         })
     }
 }
-impl DrawingPrimitive for TextWatermark {
-    fn prepare(&self, context: &PrimitiveContext<'_>) -> PreparedPrimitive {
+impl<B: super::ChartBehavior> DrawingPrimitive<B> for TextWatermark {
+    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive {
         let size = context.size;
         if !self.options.visible
             || self.options.lines.is_empty()

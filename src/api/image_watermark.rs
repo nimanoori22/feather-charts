@@ -102,8 +102,8 @@ impl ImageWatermark {
         })
     }
 }
-impl DrawingPrimitive for ImageWatermark {
-    fn prepare(&self, context: &PrimitiveContext<'_>) -> PreparedPrimitive {
+impl<B: super::ChartBehavior> DrawingPrimitive<B> for ImageWatermark {
+    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive {
         if self.options.alpha == 0. {
             return PreparedPrimitive::default();
         }

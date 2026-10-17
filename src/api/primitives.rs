@@ -478,10 +478,10 @@ impl crate::ui::line_chart::PlotSnapshot {
     }
 }
 
-pub(crate) fn prepare_axes(
-    model: &mut ChartModel<HorzScaleBehaviorTime>,
+pub(crate) fn prepare_axes<B: ChartBehavior>(
+    model: &mut ChartModel<B>,
     axes: &mut [crate::model::axis_snapshots::AxisSnapshots],
-    attachments: &[Attachment],
+    attachments: &[Attachment<B>],
     pane_keys: &[PrimitivePaneId],
     ratio: f32,
 ) -> Result<Vec<Vec<PreparedAttachment>>, crate::ui::chart_frame::ChartFrameError> {

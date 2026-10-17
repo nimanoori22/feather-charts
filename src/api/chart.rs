@@ -1,3 +1,4 @@
+use super::ChartBehavior;
 use crate::model::{
     chart_model::{ChartModel, ChartModelError, ChartModelOptions},
     data_consumer::{BuiltInSeriesDataItem, TimedData},
@@ -72,20 +73,21 @@ pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
-pub struct Chart {
-    pub(super) up_down: BTreeMap<super::PrimitiveId, super::up_down_markers::Controller>,
+pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
+    pub(super) up_down:
+        BTreeMap<super::PrimitiveId, super::up_down_markers::Controller<B::Item, B::Key>>,
     pub(super) primitive_edit: Option<super::primitive_editing::EditSession>,
     pub(super) pending_primitive_edits: Vec<super::PrimitiveEditEvent>,
     pub(crate) extension_order: u64,
     pub(crate) marker_orders: BTreeMap<super::MarkerCollectionId, u64>,
     pub(super) last_primitive: Option<super::PrimitiveHit>,
     empty_frame: IcedChartFrame,
-    pub(crate) primitives: Vec<super::primitives::Attachment>,
+    pub(crate) primitives: Vec<super::primitives::Attachment<B>>,
     pub(crate) primitive_panes: Vec<super::PrimitivePaneId>,
     hovered_series_on_top: bool,
     pub(super) last_hit: Option<super::ChartHit>,
-    pub(crate) model: ChartModel<HorzScaleBehaviorTime>,
-    pub(super) layer: DataLayer<HorzScaleBehaviorTime>,
+    pub(crate) model: ChartModel<B>,
+    pub(super) layer: DataLayer<B>,
     pub(crate) size: iced::Size,
     pub(crate) ratio: f32,
     pub(crate) plot_pan: Option<super::interaction::PlotPan>,
@@ -117,6 +119,23 @@ impl Default for Chart {
 }
 impl Chart {
     pub fn new(options: ChartModelOptions) -> Self {
+        Self::with_behavior(
+            options,
+            HorzScaleBehaviorTime::default(),
+            HorzScaleBehaviorTime::default(),
+            HorzScaleOptions::default(),
+            LocalizationOptions::new("en-US", "dd MMM 'yy"),
+        )
+    }
+}
+impl<B: ChartBehavior> Chart<B> {
+    pub(crate) fn with_behavior(
+        options: ChartModelOptions,
+        data_behavior: B,
+        scale_behavior: B,
+        scale_options: HorzScaleOptions,
+        localization: LocalizationOptions<B::Item>,
+    ) -> Self {
         let background = match &options.layout.background {
             crate::model::layout_options::Background::Solid { color } => color.clone(),
             crate::model::layout_options::Background::VerticalGradient { top_color, .. } => {
@@ -165,17 +184,15 @@ impl Chart {
             resize_panes,
             revision: 0,
             model: ChartModel::new(
-                TimeScale::new(
-                    HorzScaleBehaviorTime::default(),
-                    HorzScaleOptions::default(),
-                    LocalizationOptions::new("en-US", "dd MMM 'yy"),
-                ),
+                TimeScale::new(scale_behavior, scale_options, localization),
                 options,
             ),
-            layer: DataLayer::new(HorzScaleBehaviorTime::default()),
+            layer: DataLayer::new(data_behavior),
             kinds: BTreeMap::new(),
         }
     }
+}
+impl Chart {
     /// Read-only engine inspection; data mutations must pass through this owner.
     pub fn model(&self) -> &ChartModel<HorzScaleBehaviorTime> {
         &self.model

@@ -54,26 +54,26 @@ impl UpDownMarkersId {
     }
 }
 #[derive(Clone, Debug)]
-struct Active {
-    key: TimeKey,
-    marker: UpDownMarker,
+struct Active<T = Time, K = TimeKey> {
+    key: K,
+    marker: UpDownMarker<T>,
     expires: Option<Instant>,
 }
 #[derive(Debug)]
-struct State {
+struct State<T = Time, K = TimeKey> {
     options: UpDownMarkersOptions,
     colors: [iced::Color; 2],
-    active: Vec<Active>,
+    active: Vec<Active<T, K>>,
     next: Option<Instant>,
 }
 #[derive(Debug)]
-pub(crate) struct Controller {
+pub(crate) struct Controller<T = Time, K = TimeKey> {
     pub series: SeriesId,
-    state: Rc<RefCell<State>>,
-    baseline: BTreeMap<TimeKey, f64>,
+    state: Rc<RefCell<State<T, K>>>,
+    baseline: BTreeMap<K, f64>,
 }
 #[derive(Debug)]
-struct Primitive(Rc<RefCell<State>>);
+struct Primitive<T = Time, K = TimeKey>(Rc<RefCell<State<T, K>>>);
 fn key(time: &Time) -> Result<TimeKey, ChartError> {
     Ok(TimeKey::new(
         convert_time(time)
@@ -314,8 +314,8 @@ impl Chart {
         self.remove_primitive(id.0)
     }
 }
-impl DrawingPrimitive for Primitive {
-    fn prepare(&self, context: &PrimitiveContext<'_>) -> PreparedPrimitive {
+impl<B: super::ChartBehavior> DrawingPrimitive<B> for Primitive<B::Item, B::Key> {
+    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive {
         let PrimitiveOwner::Series(series) = context.owner else {
             return PreparedPrimitive::default();
         };
