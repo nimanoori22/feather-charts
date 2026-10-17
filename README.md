@@ -589,3 +589,32 @@ latest/history/whitespace writes, clear/reset/remove/re-add, styles and label co
 Hover shows original custom data and the separate renderer hit value. Select native
 software/GPU rendering with `ICED_BACKEND=tiny-skia` / `ICED_BACKEND=wgpu`.
 See the [port report](docs/porting/numeric-custom-series.md) for parity and acceptance.
+
+## Dynamic pane management
+
+Use `move_pane(from, to)`, `swap_panes(first, second)`,
+`move_series_to_pane(series, target)` and `remove_pane(index)` on calendar, strike
+and maturity charts. Pane indices are current positions and can change after an
+operation. A series target past the end creates one appended pane. Transferring
+the last series can remove an unpreserved empty source pane.
+
+Series IDs, custom handles, data and series attachments survive transfers. Pane
+watermarks and scale settings stay with their pane. Structural changes cancel
+active gestures and edits. Invalid calls and identity operations preserve them.
+
+Explicit removal cleans the selected pane's live series and attachments, while
+retained custom handles keep readable data. The final pane remains. Yield charts
+retain their private horizontal support data. This native cleanup policy avoids
+the local TypeScript source's orphaned-map and incorrect widget-detach behavior;
+see the [source findings](docs/porting/pane-management.md).
+
+```bash
+cargo run --example pane_management -- --live-feed
+cargo run --example pane_management -- --options --live-feed
+cargo run --example pane_management -- --yield-curve --live-feed
+```
+
+The scrolling toolbar moves/swaps panes, transfers the blue or custom series,
+creates a destination pane, removes the last pane and resets the scene. The box
+and temporary update markers follow the blue series; watermarks follow panes.
+Select `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` for native rendering.
