@@ -557,3 +557,35 @@ an editable box. Its toolbar scrolls horizontally at narrow widths. Use
 `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to select the native renderer.
 The source contract and validation record are in
 [docs/porting/options-chart.md](docs/porting/options-chart.md).
+
+## Custom series on numeric axes
+
+The existing custom-series API also works on `OptionsChart` and `YieldCurveChart`.
+Implement `CustomSeriesPaneView<Frame>` with `Item` and `InternalTime` both set to
+`HorizontalPrice` for strikes, or both set to `Maturity` for yield curves. Keep the
+existing `CustomSeriesHandle<View>` syntax; the view determines the data types.
+
+Use `add_custom_series`, `set_custom_data`, `update_custom_data`,
+`replace_custom_view_options` and `replace_custom_series_options` on either chart.
+`PointerEvent<T>::custom_data` and `custom_hit_data` require a matching view. The
+renderer still receives logical indices in `bar.time`, while `original_data.time`
+retains the numeric price/maturity. Conflation changes drawing data; handle and
+pointer access still return original canonical data.
+
+Yield custom series retain ordinary last-value and price-line visibility defaults;
+the chart-wide yield formatter still applies. Custom mutations validate the bounded
+yield extent before changing data, then settle the private domain scaffold through
+the existing preparation path. Chart and renderer ownership stays synchronous.
+
+Try the same native interval renderer in both modes:
+
+```bash
+cargo run --example numeric_custom_series -- --live-feed
+cargo run --example numeric_custom_series -- --yield-curve --live-feed
+```
+
+Add `--dense` to start with 8,192 items. The toolbar scrolls horizontally and offers
+latest/history/whitespace writes, clear/reset/remove/re-add, styles and label controls.
+Hover shows original custom data and the separate renderer hit value. Select native
+software/GPU rendering with `ICED_BACKEND=tiny-skia` / `ICED_BACKEND=wgpu`.
+See the [port report](docs/porting/numeric-custom-series.md) for parity and acceptance.
