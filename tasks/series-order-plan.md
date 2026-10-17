@@ -1,6 +1,7 @@
 # Series drawing order
 
-Date: 2026-10-17. Status: planned; implementation has not started.
+Date: 2026-10-17. Status: implemented on 2026-10-18; automated checks pass,
+source and capture verification pass; native mouse acceptance is pending.
 Checklist: [series-order-todo.md](series-order-todo.md).
 Baseline: `6503c80` (completed dynamic pane management).
 
@@ -96,9 +97,9 @@ proposed until Task 1 freezes the maturity index contract.
   order mutation if a capture references a layer or stale hit; reject/no-op calls
   do not cancel. Cancellation must happen once and never commit an edit implicitly.
 
-Maturity charts need an explicit decision on whether the hidden support series
-occupies a public order slot. Probe the real source implementation and trace its
-API before deciding; do not filter it out or expose its mutable ID by assumption.
+The completed source probe confirms that maturity support occupies an order slot.
+The implementation counts it while rejecting its ID at the public API boundary.
+See the [porting report](../docs/porting/series-order.md) for the final contract.
 
 ## Design and ownership
 
