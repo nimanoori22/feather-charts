@@ -326,3 +326,17 @@ Histogram projection is enriched in the sampled tail; font work is substantial
 in both normal and slow frames. Neither is established as the cause of the old
 regression. No production engine change or acceptance retry followed. Remaining
 scheduler/native attribution, device coverage and conflation gates stay open.
+
+
+## Exact Histogram work-count continuation
+
+The [count study](../docs/porting/histogram-work-study.md) retains 18 diagnostic
+executions with reference/off/on controls. All 12,000 enabled measured frames
+have identical per-series counts: one refresh, one preparation and 83 points
+each (16/16/1,328 per frame), including all 600 total-tail frames. Zero of 12
+overhead comparisons exceed the unchanged 5% diagnostic guard. Extra counted
+Histogram work is absent in these captures; other snapshot work and varying
+per-operation costs remain unmeasured. Next isolate aggregate Histogram time
+from the remaining snapshot work with calibrated, same-frame measurements. No
+production engine remedy or unchanged acceptance retry followed. The historical
+regression, actual-presentation, remaining device and conflation gates stay open.

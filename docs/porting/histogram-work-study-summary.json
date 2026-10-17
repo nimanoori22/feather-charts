@@ -1,0 +1,297 @@
+{
+  "date": "2026-10-17",
+  "diagnostic_only": true,
+  "engine_source": "ae067e2",
+  "tooling_base": "d56550d",
+  "executions": 18,
+  "instrumented_executions": 6,
+  "measured_frames": 12000,
+  "total_tail_frames": 600,
+  "all_per_series_work_constant": true,
+  "per_series_counts": {
+    "refreshes": 1,
+    "preparations": 1,
+    "points": 83
+  },
+  "per_frame_counts": {
+    "refreshes": 16,
+    "preparations": 16,
+    "points": 1328
+  },
+  "controls": [
+    {
+      "pair": 1,
+      "rows": 1200,
+      "control": "reference",
+      "median": -0.008275664582637399,
+      "p95": -0.01007880581397258,
+      "flagged": false
+    },
+    {
+      "pair": 1,
+      "rows": 1200,
+      "control": "off",
+      "median": -0.009461819473996713,
+      "p95": -0.012939301682011406,
+      "flagged": false
+    },
+    {
+      "pair": 1,
+      "rows": 100000,
+      "control": "reference",
+      "median": 0.007224223524721296,
+      "p95": 0.007212078157514457,
+      "flagged": false
+    },
+    {
+      "pair": 1,
+      "rows": 100000,
+      "control": "off",
+      "median": -0.005807324099693867,
+      "p95": -0.006390729516691285,
+      "flagged": false
+    },
+    {
+      "pair": 2,
+      "rows": 100000,
+      "control": "reference",
+      "median": 0.006311079876561765,
+      "p95": 0.0037679389062645896,
+      "flagged": false
+    },
+    {
+      "pair": 2,
+      "rows": 100000,
+      "control": "off",
+      "median": 0.023390674865727767,
+      "p95": 0.018776912867835005,
+      "flagged": false
+    },
+    {
+      "pair": 2,
+      "rows": 1200,
+      "control": "reference",
+      "median": 0.013514554337418438,
+      "p95": 0.007326061734324263,
+      "flagged": false
+    },
+    {
+      "pair": 2,
+      "rows": 1200,
+      "control": "off",
+      "median": 0.01072621231773141,
+      "p95": 0.004621015043193788,
+      "flagged": false
+    },
+    {
+      "pair": 3,
+      "rows": 1200,
+      "control": "reference",
+      "median": 0.018626560726447083,
+      "p95": 0.01614871163261755,
+      "flagged": false
+    },
+    {
+      "pair": 3,
+      "rows": 1200,
+      "control": "off",
+      "median": -0.02272399812357584,
+      "p95": -0.020248198088855474,
+      "flagged": false
+    },
+    {
+      "pair": 3,
+      "rows": 100000,
+      "control": "reference",
+      "median": -0.003636538638222886,
+      "p95": -0.00749393981604729,
+      "flagged": false
+    },
+    {
+      "pair": 3,
+      "rows": 100000,
+      "control": "off",
+      "median": 0.0023997260474153403,
+      "p95": -0.0008397176490890779,
+      "flagged": false
+    }
+  ],
+  "overhead_flags": 0,
+  "overhead_guard_fraction": 0.05,
+  "runs": [
+    {
+      "name": "1-1200-on",
+      "rows": 1200,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.069649,
+        "p95": 1.123815
+      },
+      "total": {
+        "median": 1.1428779999999998,
+        "p95": 1.210931
+      },
+      "snapshot_tail_share": 0.9274412208909004
+    },
+    {
+      "name": "1-100000-on",
+      "rows": 100000,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.065882,
+        "p95": 1.121645
+      },
+      "total": {
+        "median": 1.134347,
+        "p95": 1.202301
+      },
+      "snapshot_tail_share": 0.9335110524709404
+    },
+    {
+      "name": "2-100000-on",
+      "rows": 100000,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.087764,
+        "p95": 1.1465239999999999
+      },
+      "total": {
+        "median": 1.1569800000000001,
+        "p95": 1.224361
+      },
+      "snapshot_tail_share": 0.9338568672694243
+    },
+    {
+      "name": "2-1200-on",
+      "rows": 1200,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.082838,
+        "p95": 1.136385
+      },
+      "total": {
+        "median": 1.157987,
+        "p95": 1.220716
+      },
+      "snapshot_tail_share": 0.9292115915460489
+    },
+    {
+      "name": "3-1200-on",
+      "rows": 1200,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.0914640000000002,
+        "p95": 1.15536
+      },
+      "total": {
+        "median": 1.166633,
+        "p95": 1.235081
+      },
+      "snapshot_tail_share": 0.9277683607765601
+    },
+    {
+      "name": "3-100000-on",
+      "rows": 100000,
+      "work_patterns": 1,
+      "tail_frames": 100,
+      "normal_frames": 1900,
+      "snapshot": {
+        "median": 1.069808,
+        "p95": 1.125507
+      },
+      "total": {
+        "median": 1.138689,
+        "p95": 1.204155
+      },
+      "snapshot_tail_share": 0.9327739561390198
+    }
+  ],
+  "production_engine_changed": false,
+  "acceptance": "OPEN; unchanged checks not rerun",
+  "conclusion": "No extra captured Histogram refresh/preparation/projected-point work in these frames. Other snapshot work and per-operation costs are unmeasured; historical regression cause is not established.",
+  "validation": {
+    "python_tests": 61,
+    "isolated_library_tests": 399,
+    "counter_tests": 2,
+    "smoke_sources": [
+      1,
+      16
+    ],
+    "rustfmt": "PASS",
+    "strict_clippy_isolated_example": "PASS",
+    "review": "PASS: count scope, sample/source identity, calibration controls and production isolation reviewed"
+  },
+  "artifacts": {
+    "target/histogram-work-study/environment.json": "33373dcf153fb1b7c76a2b1794792cb8072203ce72530f7128796f4cb75a0013",
+    "target/histogram-work-study/build/manifest.json": "ea93515c395fa9c271d1d31aa91b7482a56640393a9776a4e9ecb03285bbf8e0",
+    "target/histogram-work-study/build/preparation_profile": "7def3c760e8a42f81d6f7ea2328c1b376f4a1f3479af06df4985888dcad98529",
+    "target/histogram-work-study/build/build.log": "354b4aa10cb2c471331717bf57428fc392124c25a8b3d16ddeca727cb174672f",
+    "target/histogram-work-study/run-progress.log": "f15ae19a88fdb9cdd61333c757ee11119180abe76a1651352f88001a99ad1dc7",
+    "target/histogram-work-study/python-tests.log": "870514ec498f3164ad06dac9700157da1a65e1a71678ebc453a3634a35fc11b2",
+    "target/histogram-work-study/rust-tests.log": "5dc3ed699acabb9b584ca3375c472383e8b28cf238c4412981ef5ce811b812a6",
+    "target/histogram-work-study/counter-tests-red.log": "cd8cbe0d4c79fb050dead67a196e4e00feac45738859e71f9a5a0868213d0025",
+    "target/histogram-work-study/analysis-tests-red.log": "9bb10ae53f987fa4bae747cda3b7fe3d06f953293bb442fee3e8d13c1c086b60",
+    "target/histogram-work-study/runs/1-100000-off.log": "339217c48229f815412574ac60c12bb86f53220edd64035e864208e2324dda18",
+    "target/histogram-work-study/runs/1-100000-off.phase.csv": "619ef664e70e51037ac4f260d331795b0c0f20b7c387374930fcd8813fe459da",
+    "target/histogram-work-study/runs/1-100000-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/1-100000-on.log": "40a240205a5ef15dc5e15cddd56dad7dd9ffcd419e53cadfe23a2ac68588eab8",
+    "target/histogram-work-study/runs/1-100000-on.phase.csv": "98f86d8001baac2328b6bd73c350cea1a03192b3b2660d758479049555482601",
+    "target/histogram-work-study/runs/1-100000-reference.log": "4fb01349efaeff9e972524b705f5ffa31bb5f07c8db06b1209764a6c66aae6b5",
+    "target/histogram-work-study/runs/1-100000-reference.phase.csv": "604282a3b2d75d45b76039afa613e1ad3933faeb41466f25dade8366541a9f1f",
+    "target/histogram-work-study/runs/1-1200-off.log": "432a525a1507676de5c55764934254e07ee510cafc742309b9791b739081e125",
+    "target/histogram-work-study/runs/1-1200-off.phase.csv": "f1351d8c3ea38215b90053709ca459d12f4317f142cd9a5ddafefb4f68b3ab19",
+    "target/histogram-work-study/runs/1-1200-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/1-1200-on.log": "fe32cc3b2fd1a1fad91e27c9919a540b025aa202339397b372206e0ddda092cc",
+    "target/histogram-work-study/runs/1-1200-on.phase.csv": "8dd8527caa8f7e05704c21eb872f8d630def60d861fa007096d813db10ec7b34",
+    "target/histogram-work-study/runs/1-1200-reference.log": "f9919c0e7fed4c4f0d4d970100e03133487e0945f917ff40b6bd622b13278cfc",
+    "target/histogram-work-study/runs/1-1200-reference.phase.csv": "eed1699eba05c1e62721437fe5ae60c78f116d9cf452d3dc7c4b491b296422e0",
+    "target/histogram-work-study/runs/2-100000-off.log": "5b30b8e5caa3ad3d014742cb83ccc6fa3a4396040a370fbc66967f0a85415a53",
+    "target/histogram-work-study/runs/2-100000-off.phase.csv": "ea3dca2282df4361a42f750dc42e3dd76c0b63de22e1f2b132af82f459ed6965",
+    "target/histogram-work-study/runs/2-100000-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/2-100000-on.log": "f6d07fabda045f1a75362cb7bc235b5d611ae0b1d8cb021791b517a6b80be92a",
+    "target/histogram-work-study/runs/2-100000-on.phase.csv": "0d254f656cedc992d7b4541b9529ae55c68d7da8268802679727a751bb1dff21",
+    "target/histogram-work-study/runs/2-100000-reference.log": "a66c6eb86c8244a9a302d634a2de6bcaed676a8702b560db54103a7ab9bac6ad",
+    "target/histogram-work-study/runs/2-100000-reference.phase.csv": "e618a415735f6b9f39467fabd82bf19de3a77d5c8b7372023445d13ef60a35ea",
+    "target/histogram-work-study/runs/2-1200-off.log": "08378df0d0b95a805d856a9fc73dd8c1d7b1073ea5da3ef94ee17612a39bd4f0",
+    "target/histogram-work-study/runs/2-1200-off.phase.csv": "3718cfb3794183c4b3fb9524ee860eee0146f8724f29c97ca09a4f1e6c246901",
+    "target/histogram-work-study/runs/2-1200-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/2-1200-on.log": "a1dd4b77603fb8dd10b105747fa2af2a9af866f6c8b54213c40b98468b265ef7",
+    "target/histogram-work-study/runs/2-1200-on.phase.csv": "da320100e26f2ed8eb35893c7ad10c97d0919e95eda9fd7385d7ee7c1ad9f905",
+    "target/histogram-work-study/runs/2-1200-reference.log": "34f5e1a8b730605269a5736c8606c288aeadd7b186043bc3a1f3e742eb28a8c8",
+    "target/histogram-work-study/runs/2-1200-reference.phase.csv": "9238db3261ca25f8894843154ef422848cb7f6319e43e0c688f539ccb2dbf503",
+    "target/histogram-work-study/runs/3-100000-off.log": "df6842d940c7949a8377583aebbd26f3a7291df432cb7071af301ebb0a305a8c",
+    "target/histogram-work-study/runs/3-100000-off.phase.csv": "01be25b6752869383243b1aa2a3b207fdf745edd0655c9778c7d0d8dbd14b2b1",
+    "target/histogram-work-study/runs/3-100000-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/3-100000-on.log": "c616befcaacd8404527667b7d839a93b1a085e8d37f4e7df8ab89d6a618a10b8",
+    "target/histogram-work-study/runs/3-100000-on.phase.csv": "7486297e63eb817cd3fa4ed115e9d2c208a45840e5e526e1d3b7516de7592bc6",
+    "target/histogram-work-study/runs/3-100000-reference.log": "90482f404e8f42b43db57dc769b5e980019aa28ac079dd748bec51528d8f112f",
+    "target/histogram-work-study/runs/3-100000-reference.phase.csv": "842ebbaded53862bea941f388605e6824ca09da76ad38017e9b34140f1f59731",
+    "target/histogram-work-study/runs/3-1200-off.log": "4df54d262137e1a6ca69a8f326a9721e6362bcb1195fca0a1e32a53107595961",
+    "target/histogram-work-study/runs/3-1200-off.phase.csv": "e56bd88a1b0c07171d7842a5a9170718dc7d2095f9ab6fbe4f46fbd88be260bf",
+    "target/histogram-work-study/runs/3-1200-on.counts.csv": "42012eb3b0370c3ffdb57ced9a4d8713cb759c99b6c17ef6f62d0bcf038a6314",
+    "target/histogram-work-study/runs/3-1200-on.log": "31ead8cf0f73cdf0f084c8a95a44b098fc55fd52e158680093487548e99dd870",
+    "target/histogram-work-study/runs/3-1200-on.phase.csv": "454a902bdb34e4299582273b98bbd03dc55b2071af65211f65bc980371651dac",
+    "target/histogram-work-study/runs/3-1200-reference.log": "3a339e0fe2a4cde0716dc5c4cb0edc40671188e1e614dc5fad7eef4a43076bdc",
+    "target/histogram-work-study/runs/3-1200-reference.phase.csv": "756e2bf2b757b08f01dd7bcfc342c1e2b90fcb5e9c9a46a489424f0231501b9f",
+    "target/histogram-work-study/runs/protocol.json": "5e4e24bba98185ed3d653297142fb0bfdd387410f90982cba30341be75edb79e",
+    "target/histogram-work-study/analysis/analysis.json": "a7086fe7edded5f63d84369dc8d74d2f4b1550a2b0e940ad9fe786339b3932a1",
+    "target/histogram-work-study/analysis/frame-work.csv": "97b067e960094aca6118032ba525be0b2ed9fa39628e2e584acd4685f95ff8ed",
+    "target/histogram-work-study/analysis/work-and-latency.svg": "9ca0b07861c4071fe1758e76916c6a83746781fd51e045f7672fc1da8251aaf7",
+    "target/histogram-work-study/clippy.log": "18c33abe463e4491fb549da5c5b06729a6aad263fa45e02618dbe97d40f4ded5",
+    "examples/support/histogram_work_counts.rs": "da5f3951b05bc975dac99afab417eaddd759cb156006c677026942d92bc5db55",
+    "scripts/build_histogram_work_profile.py": "cf693045d56ec2e5acc8341a188925cf0e08d22d4bc1d2cdd4fcec2bbb951732",
+    "scripts/histogram_work_analysis.py": "8ca4da7e0937e18f6b450a20b189b348bf189c32644408a9c84e3fd0172ca9b8",
+    "scripts/profile_histogram_work.py": "b91b7339a8c0a31e8b68fa2f02949b25f5d756eea83db00212771b968b65a1b4",
+    "scripts/test_histogram_work_analysis.py": "a7ee566513e1ce7d7d6900c72719f3ea1613e93f7b1e3032a8cf9e93b196a243"
+  }
+}
