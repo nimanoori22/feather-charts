@@ -1,11 +1,10 @@
 //! Typed public custom owners and the heterogeneous, synchronous frame adapter.
 mod conflation;
-use super::{Chart, ChartError};
+use super::{Chart, ChartBehavior, ChartError};
 use crate::model::{
     data_consumer::TimedData,
     data_layer::SeriesId,
     get_series_plot_row_creator::CustomPlotRowBuilder,
-    horz_scale_behavior_time::types::{Time, TimePoint},
     icustom_series::*,
     iprice_data_source::FirstValue,
     pane::PriceScalePosition,
@@ -39,15 +38,15 @@ impl<V: CustomSeriesPaneView<Frame>> Drop for OwnedView<V> {
 /// handles. Reading retained data does not keep the pane view attached.
 pub struct CustomSeriesHandle<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
     id: SeriesId,
-    model: ModelHandle<TimePoint, Time, V::Data>,
+    model: ModelHandle<V::InternalTime, V::Item, V::Data>,
     view: Weak<RefCell<OwnedView<V>>>,
 }
 impl<V> Clone for CustomSeriesHandle<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
     fn clone(&self) -> Self {
         Self {
@@ -59,7 +58,7 @@ where
 }
 impl<V> std::fmt::Debug for CustomSeriesHandle<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CustomSeriesHandle")
@@ -69,7 +68,7 @@ where
 }
 impl<V> CustomSeriesHandle<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
     pub const fn id(&self) -> SeriesId {
         self.id
@@ -82,7 +81,18 @@ where
         *data.time_mut() = row.base.original_time.clone();
         Some(data)
     }
-    fn attached_view(&self, chart: &Chart) -> Result<Rc<RefCell<OwnedView<V>>>, ChartError> {
+    fn attached_view<B: ChartBehavior>(
+        &self,
+        chart: &Chart<B>,
+    ) -> Result<Rc<RefCell<OwnedView<V>>>, ChartError>
+    where
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            >,
+    {
         if chart.kinds.get(&self.id) != Some(&SeriesType::Custom)
             || chart.model.pane_for_series(self.id).is_none()
         {
@@ -113,15 +123,15 @@ impl<V: CustomSeriesPaneView<Frame>> CustomPlotRowBuilder<V::Data, V::Item, V::M
 
 struct Adapter<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
-    conflation: conflation::Cache<V::Data>,
-    model: ModelHandle<TimePoint, Time, V::Data>,
+    conflation: conflation::Cache<V>,
+    model: ModelHandle<V::InternalTime, V::Item, V::Data>,
     view: Rc<RefCell<OwnedView<V>>>,
 }
 impl<V> crate::ui::custom_series::CustomPreparationAdapter for Adapter<V>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()> + 'static,
+    V: CustomSeriesPaneView<Frame, Metadata = ()> + 'static,
     V::Data: 'static,
     V::Options: 'static,
     V::Renderer: Clone + 'static,
@@ -280,7 +290,7 @@ where
         })
     }
 }
-impl Chart {
+impl<B: ChartBehavior> Chart<B> {
     /// Renderer clones must own frozen visible geometry and must not share a
     /// mutable live view. They are retained independently by prepared frames.
     pub fn add_custom_series<V>(
@@ -291,8 +301,12 @@ impl Chart {
         position: PriceScalePosition,
     ) -> Result<CustomSeriesHandle<V>, ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>
-            + 'static,
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            > + 'static,
         V::Data: 'static,
         V::Options: 'static,
         V::Renderer: Clone + 'static,
@@ -312,7 +326,8 @@ impl Chart {
             .register_custom_series(model.clone(), pane, position)?;
         let update = self
             .layer
-            .set_custom_series_data(id, vec![], &Builder(owned.clone()))?;
+            .set_custom_series_data(id, vec![], &Builder(owned.clone()))
+            .map_err(B::data_error)?;
         self.model.apply_custom_data_update(&model, update)?;
         self.kinds.insert(id, SeriesType::Custom);
         self.views[pane].push((
@@ -333,18 +348,26 @@ impl Chart {
     pub fn set_custom_data<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        data: Vec<CustomSeriesDataItem<V::Data, Time>>,
+        data: Vec<CustomSeriesDataItem<V::Data, B::Item>>,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>
-            + 'static,
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            > + 'static,
         V::Data: 'static,
     {
         let view = handle.attached_view(self)?;
+        if !data.is_empty() {
+            B::validation_converter(self.layer.behavior(), &data).map_err(B::conversion_error)?;
+        }
         let empty = data.is_empty();
         let update = self
             .layer
-            .set_custom_series_data(handle.id, data, &Builder(view))?;
+            .set_custom_series_data(handle.id, data, &Builder(view))
+            .map_err(B::data_error)?;
         if empty {
             self.cancel_interaction();
         }
@@ -355,12 +378,16 @@ impl Chart {
     pub fn update_custom_data<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        data: CustomSeriesDataItem<V::Data, Time>,
+        data: CustomSeriesDataItem<V::Data, B::Item>,
         historical: bool,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>
-            + 'static,
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            > + 'static,
         V::Data: 'static,
     {
         let view = handle.attached_view(self)?;
@@ -371,9 +398,12 @@ impl Chart {
             .common
             .conflation_threshold_factor;
         self.check_historical_conflation(handle.id, historical, threshold)?;
-        let update =
-            self.layer
-                .update_custom_series_data(handle.id, data, &Builder(view), historical)?;
+        B::validation_converter(self.layer.behavior(), std::slice::from_ref(&data))
+            .map_err(B::conversion_error)?;
+        let update = self
+            .layer
+            .update_custom_series_data(handle.id, data, &Builder(view), historical)
+            .map_err(B::data_error)?;
         self.model.apply_custom_data_update(&handle.model, update)?;
         Ok(())
     }
@@ -383,7 +413,12 @@ impl Chart {
         options: V::Options,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            >,
     {
         handle.attached_view(self)?.borrow_mut().options = options;
         handle.model.borrow_mut().invalidate_pane_data();
@@ -397,7 +432,12 @@ impl Chart {
         options: CustomSeriesOptions,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            >,
     {
         handle.attached_view(self)?;
         validate_options(&options)?;
@@ -457,10 +497,10 @@ impl std::fmt::Debug for CustomHitData {
         f.debug_struct("CustomHitData").finish_non_exhaustive()
     }
 }
-impl super::PointerEvent {
+impl<T> super::PointerEvent<T> {
     pub fn custom_data<V>(&self, handle: &CustomSeriesHandle<V>) -> Option<&V::Data>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+        V: CustomSeriesPaneView<Frame, Item = T, Metadata = ()>,
         V::Data: 'static,
     {
         self.custom_series_data
@@ -474,7 +514,7 @@ impl super::PointerEvent {
         handle: &CustomSeriesHandle<V>,
     ) -> Option<&<V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData>
     where
-        V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+        V: CustomSeriesPaneView<Frame, Item = T, Metadata = ()>,
         <V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData: 'static,
     {
         if self.hit.as_ref()?.series != handle.id {

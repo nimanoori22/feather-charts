@@ -1,18 +1,22 @@
 use super::*;
 use std::collections::BTreeMap;
-type Row<D> = crate::model::series_data::CustomPlotRow<TimePoint, Time, D>;
-struct Job<D> {
+type Row<V> = crate::model::series_data::CustomPlotRow<
+    <V as CustomSeriesPaneView<Frame>>::InternalTime,
+    <V as CustomSeriesPaneView<Frame>>::Item,
+    <V as CustomSeriesPaneView<Frame>>::Data,
+>;
+struct Job<V: CustomSeriesPaneView<Frame>> {
     level: usize,
     position: usize,
-    rows: Vec<Row<D>>,
+    rows: Vec<Row<V>>,
 }
-pub(super) struct Cache<D> {
+pub(super) struct Cache<V: CustomSeriesPaneView<Frame>> {
     generation: Option<u64>,
-    levels: BTreeMap<usize, Vec<Row<D>>>,
+    levels: BTreeMap<usize, Vec<Row<V>>>,
     unavailable: bool,
-    job: Option<Job<D>>,
+    job: Option<Job<V>>,
 }
-impl<D> Default for Cache<D> {
+impl<V: CustomSeriesPaneView<Frame>> Default for Cache<V> {
     fn default() -> Self {
         Self {
             generation: None,
@@ -22,50 +26,33 @@ impl<D> Default for Cache<D> {
         }
     }
 }
-impl<D: Clone> Cache<D> {
+impl<V: CustomSeriesPaneView<Frame, Metadata = ()>> Cache<V> {
     pub fn contains(&self, generation: u64, level: usize) -> bool {
         self.generation == Some(generation)
             && (self.unavailable || self.levels.contains_key(&level))
     }
-    pub fn rows(&self, level: usize) -> Option<&[Row<D>]> {
+    pub fn rows(&self, level: usize) -> Option<&[Row<V>]> {
         self.levels.get(&level).map(Vec::as_slice)
     }
-    pub fn ensure<V>(
+    pub fn ensure(
         &mut self,
         source: (u64, usize),
         target: usize,
-        mut row: impl FnMut(usize) -> Row<D>,
+        mut row: impl FnMut(usize) -> Row<V>,
         view: &V,
-    ) where
-        V: CustomSeriesPaneView<
-                Frame,
-                Item = Time,
-                InternalTime = TimePoint,
-                Data = D,
-                Metadata = (),
-            >,
-    {
+    ) {
         while !self.contains(source.0, target) {
             self.step(source, target, usize::MAX, &mut row, view);
         }
     }
-    pub fn step<V>(
+    pub fn step(
         &mut self,
         source: (u64, usize),
         target: usize,
         mut budget: usize,
-        mut row: impl FnMut(usize) -> Row<D>,
+        mut row: impl FnMut(usize) -> Row<V>,
         view: &V,
-    ) -> usize
-    where
-        V: CustomSeriesPaneView<
-                Frame,
-                Item = Time,
-                InternalTime = TimePoint,
-                Data = D,
-                Metadata = (),
-            >,
-    {
+    ) -> usize {
         let initial = budget;
         if self.generation != Some(source.0) {
             self.levels.clear();
@@ -125,15 +112,15 @@ impl<D: Clone> Cache<D> {
         initial - budget
     }
 }
-fn merge<V>(a: &Row<V::Data>, b: &Row<V::Data>, view: &V) -> Option<Row<V::Data>>
+fn merge<V>(a: &Row<V>, b: &Row<V>, view: &V) -> Option<Row<V>>
 where
-    V: CustomSeriesPaneView<Frame, Item = Time, InternalTime = TimePoint, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame, Metadata = ()>,
 {
-    let context = |r: &Row<V::Data>| CustomConflationContext {
+    let context = |r: &Row<V>| CustomConflationContext {
         data: r.data.clone(),
         index: r.base.index,
         original_time: r.base.original_time.clone(),
-        time: r.base.time,
+        time: r.base.time.clone(),
         price_values: view.price_value_builder(&r.data),
     };
     let data = view.conflate(&context(a), &context(b))?;
