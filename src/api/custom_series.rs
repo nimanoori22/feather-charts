@@ -299,6 +299,13 @@ impl Chart {
         V::Data: 'static,
     {
         let view = handle.attached_view(self)?;
+        let threshold = handle
+            .model
+            .borrow()
+            .options()
+            .common
+            .conflation_threshold_factor;
+        self.check_historical_conflation(handle.id, historical, threshold)?;
         let update =
             self.layer
                 .update_custom_series_data(handle.id, data, &Builder(view), historical)?;

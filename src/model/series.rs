@@ -4,6 +4,7 @@ pub mod area_pane_view;
 pub mod bars_pane_view;
 pub mod baseline_pane_view;
 pub mod candlesticks_pane_view;
+mod conflation;
 pub mod histogram_pane_view;
 pub mod line_pane_view;
 pub mod markers_pane_view;
@@ -301,6 +302,7 @@ pub struct Series<I, O, M = ()> {
     options: SeriesOptionsMap,
     data: PlotList<SeriesPlotRow<I, O, (), M>>,
     data_cache: SeriesDataCache,
+    conflation: RefCell<super::data_conflater::ConflationCache>,
     formatter: SeriesValueFormatter,
     pane_data_generation: u64,
     z_order: Cell<i32>,
@@ -352,6 +354,7 @@ where
             options,
             data: PlotList::new(),
             data_cache: SeriesDataCache::default(),
+            conflation: RefCell::default(),
             formatter,
             pane_data_generation: 0,
             z_order: Cell::new(0),
@@ -475,6 +478,7 @@ where
     ) {
         self.data_cache.invalidate(None);
         self.data.set_data(rows);
+        self.conflation.get_mut().clear();
         self.last_update_info = info;
         self.invalidate_pane_data();
     }
@@ -486,7 +490,19 @@ where
     ) -> bool {
         if let Some(index) = changed_index {
             self.data_cache.invalidate(Some(index));
+            let length = self.data.rows().len();
             let changed = self.data.update_row(index, rows.pop());
+            if length == self.data.rows().len()
+                && self
+                    .data
+                    .rows()
+                    .last()
+                    .is_some_and(|r| PlotRowLike::index(r) == index)
+            {
+                self.conflation.get_mut().update_last(self.data.rows());
+            } else {
+                self.conflation.get_mut().clear();
+            }
             self.last_update_info = info;
             self.invalidate_pane_data();
             changed

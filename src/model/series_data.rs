@@ -124,6 +124,17 @@ pub enum SeriesPlotRow<I, O, D = (), M = ()> {
 }
 
 impl<I, O, D, M> SeriesPlotRow<I, O, D, M> {
+    pub(crate) fn original_data_count(&self) -> Option<usize> {
+        match self {
+            Self::Bar(r) => r.base.original_data_count,
+            Self::Candlestick(r) => r.base.original_data_count,
+            Self::Area(r) => r.base.original_data_count,
+            Self::Baseline(r) => r.base.original_data_count,
+            Self::Line(r) => r.base.original_data_count,
+            Self::Histogram(r) => r.base.original_data_count,
+            Self::Custom(r) => r.base.original_data_count,
+        }
+    }
     pub const fn series_type(&self) -> SeriesType {
         match self {
             Self::Bar(_) => SeriesType::Bar,

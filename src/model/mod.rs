@@ -6,6 +6,7 @@ pub mod chart_model;
 pub mod colors;
 pub mod coordinate;
 pub mod crosshair;
+pub(crate) mod data_conflater;
 pub mod data_consumer;
 pub mod data_layer;
 pub mod data_source;

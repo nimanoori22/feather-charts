@@ -336,7 +336,7 @@ fn line_view_clears_stale_output_for_hidden_empty_zero_size_and_unknown_series()
 }
 
 #[test]
-fn line_preparation_rejects_non_line_and_enabled_conflation() {
+fn line_preparation_rejects_non_line_and_accepts_enabled_conflation() {
     use crate::model::series::line_pane_view::LinePreparationError;
     let (mut layer, mut model, id) = fixture();
     model.apply_time_scale_options(
@@ -347,10 +347,7 @@ fn line_preparation_rejects_non_line_and_enabled_conflation() {
         },
     );
     flush(&mut model);
-    assert_eq!(
-        model.prepare_line(id),
-        Err(LinePreparationError::UnsupportedConflation)
-    );
+    assert!(model.prepare_line(id).unwrap().is_some());
     model.apply_time_scale_options(
         &mut layer,
         HorzScaleOptionsPatch {

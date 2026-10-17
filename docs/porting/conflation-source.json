@@ -1,0 +1,17 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "sources": {
+    "src/model/data-conflater.ts": "56c2b69724cb50bea2dc31c155dd334c5968ce4313dcf3094b0465c2880a666e",
+    "src/model/conflation/constants.ts": "fd374baf408da456c11a712f381a29d7f96143515bd1fb7e39ca308c337b1874",
+    "src/model/series.ts": "1802481faaec9a83f56038cda8455561ec28d83d2315b60564f4c0e26a212a7e",
+    "src/model/data-layer.ts": "2bf838ef145b007ddd33e0dabe6eb598c56945fced5f7cc2e6e45cab54f2ed83",
+    "src/model/time-scale.ts": "6ac070be74aa16d0467ab13ece8c5f981e2c472a15fab6a946b4bec035373d41",
+    "src/model/series-bar-colorer.ts": "c74a69a814dfeea55d1bd50499f875baea5fb5695d15b6478c2c76a7484902f1",
+    "src/model/series/line-pane-view-base.ts": "9954a044f6021e8f7c62edcfab2640b6ff1a410752075848a495a94dea7366d4",
+    "src/model/series/bars-pane-view-base.ts": "b00ba3e534d1ef5bcbd93a2e79e30514c64c383f765bcc94e01479855e09fe72",
+    "src/model/series/custom-pane-view.ts": "5278d244882b2cc6c129922ab517b2feddb1c85ed734f5a7316a24309bc88db9",
+    "src/model/series/series-pane-view-base.ts": "fddfaac411ef8c13fdbc325176bc319be6751f5ee8c791f43457011ebd875b4f",
+    "tests/unittests/conflation.spec.ts": "73e76aaeb78dd6022db7ceef7987d500dd3ae1afccc824995649f12081a1dea1",
+    "tests/unittests/conflation-integration.spec.ts": "3cfda541ba4ddc325efb36c4dfbe78ff66935b1945027cc866b23f72670722e0"
+  }
+}

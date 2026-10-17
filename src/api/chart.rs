@@ -42,6 +42,7 @@ pub enum ChartError {
     Time(TimeConversionError),
     UnknownSeries(SeriesId),
     UnsupportedSeries,
+    HistoricalUpdateWithConflation(SeriesId),
     InvalidData { index: usize },
     UnorderedData { index: usize },
     IdExhausted,
@@ -243,8 +244,32 @@ impl Chart {
         historical: bool,
     ) -> Result<(), ChartError> {
         validate_data(self.kind(id)?, std::slice::from_ref(&item), false)?;
+        let threshold = self
+            .model
+            .series(id)
+            .ok_or(ChartError::UnknownSeries(id))?
+            .common_options()
+            .conflation_threshold_factor;
+        self.check_historical_conflation(id, historical, threshold)?;
         let update = self.layer.update_series_data(id, item, historical)?;
         self.model.apply_data_update(update)?;
+        Ok(())
+    }
+    pub(super) fn check_historical_conflation(
+        &self,
+        id: SeriesId,
+        historical: bool,
+        threshold: Option<f64>,
+    ) -> Result<(), ChartError> {
+        if historical
+            && self
+                .model
+                .time_scale()
+                .effective_conflation_factor(threshold)
+                > 1
+        {
+            return Err(ChartError::HistoricalUpdateWithConflation(id));
+        }
         Ok(())
     }
     pub fn remove_series(&mut self, id: SeriesId) -> Result<(), ChartError> {

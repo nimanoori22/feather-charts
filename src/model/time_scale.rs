@@ -665,6 +665,18 @@ where
             self.time_marks_cache = None;
         }
     }
+    pub(crate) fn effective_conflation_factor(&self, series_threshold: Option<f64>) -> usize {
+        if !self.options.enable_conflation {
+            return 1;
+        }
+        super::data_conflater::factor(
+            self.bar_spacing,
+            self.device_pixel_ratio,
+            series_threshold
+                .or(self.options.conflation_threshold_factor)
+                .unwrap_or(1.),
+        )
+    }
     pub fn conflation_factor(&self) -> usize {
         self.conflation_factor
     }
@@ -879,18 +891,7 @@ where
         }
     }
     fn update_conflation_factor(&mut self) {
-        if !self.options.enable_conflation {
-            self.conflation_factor = 1;
-            return;
-        }
-        let threshold =
-            self.options.conflation_threshold_factor.unwrap_or(1.0) / self.device_pixel_ratio;
-        if self.bar_spacing >= threshold {
-            self.conflation_factor = 1;
-            return;
-        }
-        let level = 2_f64.powf((threshold / self.bar_spacing).log2().floor()) as usize;
-        self.conflation_factor = level.clamp(1, 512);
+        self.conflation_factor = self.effective_conflation_factor(None);
     }
 }
 
