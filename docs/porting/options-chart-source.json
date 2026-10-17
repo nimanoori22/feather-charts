@@ -1,0 +1,20 @@
+{
+  "revision": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "files": {
+    "src/api/create-options-chart.ts": "8103a103321cce866a465461c9fdc5a25c3bfb8f8383d4b44f77ecac8ceed44b",
+    "src/api/create-chart.ts": "eeed33a936dcc350552bc939fc95959a4a466e82ae958b75d672afc283eb4bf5",
+    "src/api/chart-api.ts": "091d5c5739a68a87dc213a92df12e643823107105691af9ff656fe33fcda815d",
+    "src/api/ichart-api.ts": "8288fb4bbc5402350c2faac8db6e3e109dd244084df55101742b1de49c96a2d6",
+    "src/api/options/chart-options-defaults.ts": "90caa1c29d992064d2d966b74013424de76b12ca205321852780e1c6809341ec",
+    "src/model/horz-scale-behavior-price/horz-scale-behaviour-price.ts": "624aeeec1267879fde3a139b622e748677b8f022bc4f3e6d9d8b074ac8cc9bda",
+    "src/model/horz-scale-behavior-price/options.ts": "2130a895d8407f0f1a1899ab009d23b9906d4ebe8d421c869603cf255383b24f",
+    "src/model/horz-scale-behavior-price/types.ts": "118a524abfc2d12d070198d926d1cadb139e2d421153098da3f34bf959dc02e0",
+    "src/model/time-scale.ts": "6ac070be74aa16d0467ab13ece8c5f981e2c472a15fab6a946b4bec035373d41",
+    "src/model/data-layer.ts": "2bf838ef145b007ddd33e0dabe6eb598c56945fced5f7cc2e6e45cab54f2ed83",
+    "src/model/data-consumer.ts": "5d229692ee62b7860890183d718846c4b29595a1850d213c2842d2f5b0dfa61d",
+    "src/model/get-series-plot-row-creator.ts": "dea9dd2baed0543b9107e799b9b07d9781ecc4ad8498ff67cfdcc33396c53703",
+    "src/helpers/algorithms.ts": "60ae4f69f002e80354320e14f2e43cd0491882acd8c5e56404176490387f2d40",
+    "src/helpers/strict-type-checks.ts": "c1b79b8ca418df9d8d4e48fea5a19181bf49c660ad635d4885cedf14868012b4",
+    "tests/e2e/graphics/test-cases/options-chart.js": "0bb420d3f2e116a1f4d64d05f542c6424017afa6401f32abfb284b155490b0f9"
+  }
+}
