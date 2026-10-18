@@ -202,6 +202,9 @@ fn custom_pop_moves_payloads_before_shared_indices_change() {
     );
     assert_eq!(destroyed.get(), 0);
     assert_eq!(c.pop_custom_data(&h, 99).unwrap().len(), 1);
+    c.fit_content();
+    c.prepare(iced::Size::new(300., 90.), 1.5, std::time::Instant::now())
+        .unwrap();
     c.update_custom_data(&h, datum(HorizontalPrice::new(2.).unwrap(), 20.), false)
         .unwrap();
     assert_eq!(h.data()[0].value, 20.);
@@ -301,6 +304,11 @@ fn all_builtin_queries_and_pop_preserve_original_times_and_style_fields() {
             Some(item.clone())
         );
         assert_eq!(c.pop_data(id, 1).unwrap(), [item]);
+        c.fit_content();
+        c.prepare(iced::Size::new(300., 90.), 1.5, std::time::Instant::now())
+            .unwrap();
+        c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+            .unwrap();
     }
 }
 
