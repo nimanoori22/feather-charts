@@ -850,3 +850,10 @@ the new attribution fields (`None` for a manually constructed frame); prefer
 `..Default::default()` where applicable. Existing constructors keep their defaults.
 See the [source contract and verification](docs/porting/attribution.md) and the
 [preserved source notices](docs/porting/attribution-source/NOTICE).
+
+## Public parity audit
+
+The [local 5.2.1 parity audit](docs/porting/public-parity-audit.md) records the
+remaining API, option-routing and edge-case differences after the feature roadmap.
+It includes a 374-member inventory and reproducible source/native diagnostics.
+The audit identifies gaps; its successful diagnostic command is not a parity pass.

@@ -1,0 +1,924 @@
+{
+  "schema": 1,
+  "scope": "Declared members of the listed core API/options/data/payload interfaces; inheritance recorded, not expanded. Representation is not proven behavioral parity. Extension traits and exports reviewed separately in public-parity-audit.md.",
+  "counts": {
+    "declarations": 55,
+    "members": 374,
+    "methods": 99,
+    "statuses": {
+      "native": 67,
+      "gap": 19,
+      "mapped": 58,
+      "partial": 22,
+      "platform": 4,
+      "represented": 204
+    }
+  },
+  "reexports": [
+    {
+      "name": "LineStyle",
+      "from": "./renderers/draw-line"
+    },
+    {
+      "name": "LineType",
+      "from": "./renderers/draw-line"
+    },
+    {
+      "name": "TrackingModeExitMode",
+      "from": "./model/chart-model"
+    },
+    {
+      "name": "CrosshairMode",
+      "from": "./model/crosshair"
+    },
+    {
+      "name": "MismatchDirection",
+      "from": "./model/plot-list"
+    },
+    {
+      "name": "PriceScaleMode",
+      "from": "./model/price-scale"
+    },
+    {
+      "name": "PriceLineSource",
+      "from": "./model/series-options"
+    },
+    {
+      "name": "LastPriceAnimationMode",
+      "from": "./model/series-options"
+    },
+    {
+      "name": "ColorType",
+      "from": "./model/layout-options"
+    },
+    {
+      "name": "isBusinessDay",
+      "from": "./model/horz-scale-behavior-time/types"
+    },
+    {
+      "name": "isUTCTimestamp",
+      "from": "./model/horz-scale-behavior-time/types"
+    },
+    {
+      "name": "TickMarkType",
+      "from": "./model/horz-scale-behavior-time/types"
+    },
+    {
+      "name": "ICustomSeriesPaneView",
+      "from": "./model/icustom-series"
+    },
+    {
+      "name": "ICustomSeriesPaneRenderer",
+      "from": "./model/icustom-series"
+    },
+    {
+      "name": "CustomBarItemData",
+      "from": "./model/icustom-series"
+    },
+    {
+      "name": "CustomData",
+      "from": "./model/icustom-series"
+    },
+    {
+      "name": "CustomSeriesHitTestResult",
+      "from": "./model/icustom-series"
+    },
+    {
+      "name": "createChart",
+      "from": "./api/create-chart"
+    },
+    {
+      "name": "createChartEx",
+      "from": "./api/create-chart"
+    },
+    {
+      "name": "defaultHorzScaleBehavior",
+      "from": "./api/create-chart"
+    },
+    {
+      "name": "createYieldCurveChart",
+      "from": "./api/create-yield-curve-chart"
+    },
+    {
+      "name": "createOptionsChart",
+      "from": "./api/create-options-chart"
+    },
+    {
+      "name": "LineSeries",
+      "from": "./model/series/line-series"
+    },
+    {
+      "name": "BaselineSeries",
+      "from": "./model/series/baseline-series"
+    },
+    {
+      "name": "AreaSeries",
+      "from": "./model/series/area-series"
+    },
+    {
+      "name": "BarSeries",
+      "from": "./model/series/bar-series"
+    },
+    {
+      "name": "CandlestickSeries",
+      "from": "./model/series/candlestick-series"
+    },
+    {
+      "name": "HistogramSeries",
+      "from": "./model/series/histogram-series"
+    },
+    {
+      "name": "createTextWatermark",
+      "from": "./plugins/text-watermark/primitive"
+    },
+    {
+      "name": "createImageWatermark",
+      "from": "./plugins/image-watermark/primitive"
+    },
+    {
+      "name": "createSeriesMarkers",
+      "from": "./plugins/series-markers/wrapper"
+    },
+    {
+      "name": "createUpDownMarkers",
+      "from": "./plugins/up-down-markers-plugin/wrapper"
+    }
+  ],
+  "declarations": [
+    {
+      "name": "HoveredInfo",
+      "file": "src/api/ichart-api.ts",
+      "line": 38,
+      "extends": []
+    },
+    {
+      "name": "MouseEventParams",
+      "file": "src/api/ichart-api.ts",
+      "line": 69,
+      "extends": []
+    },
+    {
+      "name": "IChartApiBase",
+      "file": "src/api/ichart-api.ts",
+      "line": 127,
+      "extends": []
+    },
+    {
+      "name": "IPaneApi",
+      "file": "src/api/ipane-api.ts",
+      "line": 13,
+      "extends": []
+    },
+    {
+      "name": "IPriceLine",
+      "file": "src/api/iprice-line.ts",
+      "line": 6,
+      "extends": []
+    },
+    {
+      "name": "IPriceScaleApi",
+      "file": "src/api/iprice-scale-api.ts",
+      "line": 7,
+      "extends": []
+    },
+    {
+      "name": "ISeriesApi",
+      "file": "src/api/iseries-api.ts",
+      "line": 56,
+      "extends": []
+    },
+    {
+      "name": "ITimeScaleApi",
+      "file": "src/api/itime-scale-api.ts",
+      "line": 21,
+      "extends": []
+    },
+    {
+      "name": "IYieldCurveChartApi",
+      "file": "src/api/iyield-chart-api.ts",
+      "line": 13,
+      "extends": [
+        "extends Omit<IChartApiBase<number>, 'addSeries'>"
+      ]
+    },
+    {
+      "name": "HandleScrollOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 38,
+      "extends": []
+    },
+    {
+      "name": "HandleScaleOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 75,
+      "extends": []
+    },
+    {
+      "name": "KineticScrollOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 104,
+      "extends": []
+    },
+    {
+      "name": "AxisPressedMouseMoveOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 133,
+      "extends": []
+    },
+    {
+      "name": "AxisDoubleClickOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 152,
+      "extends": []
+    },
+    {
+      "name": "TrackingModeOptions",
+      "file": "src/model/chart-model.ts",
+      "line": 250,
+      "extends": []
+    },
+    {
+      "name": "ChartOptionsBase",
+      "file": "src/model/chart-model.ts",
+      "line": 262,
+      "extends": []
+    },
+    {
+      "name": "ChartOptionsImpl",
+      "file": "src/model/chart-model.ts",
+      "line": 387,
+      "extends": [
+        "extends ChartOptionsBase"
+      ]
+    },
+    {
+      "name": "CrosshairLineOptions",
+      "file": "src/model/crosshair.ts",
+      "line": 62,
+      "extends": []
+    },
+    {
+      "name": "CrosshairOptions",
+      "file": "src/model/crosshair.ts",
+      "line": 113,
+      "extends": []
+    },
+    {
+      "name": "WhitespaceData",
+      "file": "src/model/data-consumer.ts",
+      "line": 25,
+      "extends": []
+    },
+    {
+      "name": "SingleValueData",
+      "file": "src/model/data-consumer.ts",
+      "line": 41,
+      "extends": [
+        "extends WhitespaceData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "LineData",
+      "file": "src/model/data-consumer.ts",
+      "line": 56,
+      "extends": [
+        "extends SingleValueData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "HistogramData",
+      "file": "src/model/data-consumer.ts",
+      "line": 66,
+      "extends": [
+        "extends SingleValueData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "AreaData",
+      "file": "src/model/data-consumer.ts",
+      "line": 76,
+      "extends": [
+        "extends SingleValueData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "BaselineData",
+      "file": "src/model/data-consumer.ts",
+      "line": 96,
+      "extends": [
+        "extends SingleValueData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "OhlcData",
+      "file": "src/model/data-consumer.ts",
+      "line": 131,
+      "extends": [
+        "extends WhitespaceData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "BarData",
+      "file": "src/model/data-consumer.ts",
+      "line": 158,
+      "extends": [
+        "extends OhlcData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "CandlestickData",
+      "file": "src/model/data-consumer.ts",
+      "line": 168,
+      "extends": [
+        "extends OhlcData<HorzScaleItem>"
+      ]
+    },
+    {
+      "name": "GridLineOptions",
+      "file": "src/model/grid.ts",
+      "line": 9,
+      "extends": []
+    },
+    {
+      "name": "GridOptions",
+      "file": "src/model/grid.ts",
+      "line": 33,
+      "extends": []
+    },
+    {
+      "name": "PriceChartLocalizationOptions",
+      "file": "src/model/horz-scale-behavior-price/options.ts",
+      "line": 9,
+      "extends": [
+        "extends LocalizationOptions<HorzScalePriceItem>"
+      ]
+    },
+    {
+      "name": "TimeScaleOptions",
+      "file": "src/model/horz-scale-behavior-time/time-based-chart-options.ts",
+      "line": 10,
+      "extends": [
+        "extends HorzScaleOptions"
+      ]
+    },
+    {
+      "name": "LayoutPanesOptions",
+      "file": "src/model/layout-options.ts",
+      "line": 59,
+      "extends": []
+    },
+    {
+      "name": "LayoutOptions",
+      "file": "src/model/layout-options.ts",
+      "line": 83,
+      "extends": []
+    },
+    {
+      "name": "LocalizationOptionsBase",
+      "file": "src/model/localization-options.ts",
+      "line": 19,
+      "extends": []
+    },
+    {
+      "name": "LocalizationOptions",
+      "file": "src/model/localization-options.ts",
+      "line": 62,
+      "extends": [
+        "extends LocalizationOptionsBase"
+      ]
+    },
+    {
+      "name": "PriceLineOptions",
+      "file": "src/model/price-line-options.ts",
+      "line": 6,
+      "extends": []
+    },
+    {
+      "name": "PriceScaleOptions",
+      "file": "src/model/price-scale.ts",
+      "line": 92,
+      "extends": []
+    },
+    {
+      "name": "CandlestickStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 13,
+      "extends": []
+    },
+    {
+      "name": "BarStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 117,
+      "extends": []
+    },
+    {
+      "name": "LineStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 150,
+      "extends": []
+    },
+    {
+      "name": "AreaStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 241,
+      "extends": []
+    },
+    {
+      "name": "BaselineStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 381,
+      "extends": []
+    },
+    {
+      "name": "HistogramStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 514,
+      "extends": []
+    },
+    {
+      "name": "CustomStyleOptions",
+      "file": "src/model/series-options.ts",
+      "line": 533,
+      "extends": []
+    },
+    {
+      "name": "PriceFormatBuiltIn",
+      "file": "src/model/series-options.ts",
+      "line": 551,
+      "extends": []
+    },
+    {
+      "name": "PriceFormatCustom",
+      "file": "src/model/series-options.ts",
+      "line": 585,
+      "extends": []
+    },
+    {
+      "name": "SeriesOptionsCommon",
+      "file": "src/model/series-options.ts",
+      "line": 695,
+      "extends": []
+    },
+    {
+      "name": "HorzScaleOptions",
+      "file": "src/model/time-scale.ts",
+      "line": 64,
+      "extends": []
+    },
+    {
+      "name": "YieldCurveOptions",
+      "file": "src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts",
+      "line": 6,
+      "extends": []
+    },
+    {
+      "name": "ImageWatermarkOptions",
+      "file": "src/plugins/image-watermark/options.ts",
+      "line": 1,
+      "extends": []
+    },
+    {
+      "name": "SeriesMarkersOptions",
+      "file": "src/plugins/series-markers/options.ts",
+      "line": 14,
+      "extends": []
+    },
+    {
+      "name": "TextWatermarkOptions",
+      "file": "src/plugins/text-watermark/options.ts",
+      "line": 5,
+      "extends": []
+    },
+    {
+      "name": "TextWatermarkLineOptions",
+      "file": "src/plugins/text-watermark/options.ts",
+      "line": 36,
+      "extends": []
+    },
+    {
+      "name": "UpDownMarkersPluginOptions",
+      "file": "src/plugins/up-down-markers-plugin/options.ts",
+      "line": 4,
+      "extends": []
+    }
+  ],
+  "hashes": {
+    "src/api/ichart-api.ts": "8288fb4bbc5402350c2faac8db6e3e109dd244084df55101742b1de49c96a2d6",
+    "src/api/ipane-api.ts": "47640caf3a47dac6f86dbd63c66626f1dfde22bcdbb603e85af34d5f78fac362",
+    "src/api/iprice-line.ts": "a11e88424790e9e4b2445502127e7c1db84da1d590feab9e9874b2dd531a5ad1",
+    "src/api/iprice-scale-api.ts": "2273c3f53ccd4cb1a73f15b983326c785c37103d131514b317b1a2664899f816",
+    "src/api/iseries-api.ts": "fa4a18760fdedcba0030ab7eb524906dc4782b5c48f3ca6d614a7a375700d787",
+    "src/api/itime-scale-api.ts": "7872d4a95abe5d12299e6fcc714db089957750fd32f640e316c132916fb67484",
+    "src/api/iyield-chart-api.ts": "3a36d3503ca28aa8440e2ef38ab448067fa5d38559846f2f5fab25d3b48b4154",
+    "src/model/chart-model.ts": "50b0e60e18a35f33a60690dde6e0f8c97976460b8311948109956c1f6ffc71f7",
+    "src/model/crosshair.ts": "a6af7ad33a2b896d60126a4056764b83bd53c28d7b0b5fa9a24f322dc0d9588a",
+    "src/model/data-consumer.ts": "5d229692ee62b7860890183d718846c4b29595a1850d213c2842d2f5b0dfa61d",
+    "src/model/grid.ts": "8b75fa8944740534d1fcdc2ab8d1ccfb5342f069017601ed71b27eb80c0809d9",
+    "src/model/horz-scale-behavior-price/options.ts": "2130a895d8407f0f1a1899ab009d23b9906d4ebe8d421c869603cf255383b24f",
+    "src/model/horz-scale-behavior-time/time-based-chart-options.ts": "ed398481e15e3c4f2bd032fd12b5654d0ec47e19bfd328ad4190bc335b712493",
+    "src/model/layout-options.ts": "ebbf082e63002cbfd6853e33ba2e855ce6464f638bcca630142e40e641949cc6",
+    "src/model/localization-options.ts": "feb62c53b3ac9a0a39d7994f05d407fba824ac64dbb70b27c24c7f81e59d57ce",
+    "src/model/price-line-options.ts": "ccf5d99a134b922546743242bd60718567a6bb15aac57cef7448038720ccf3d5",
+    "src/model/price-scale.ts": "84f6dae5ec15c47a1022dec715b530d035c97ce66ffa81393462be6cefab990f",
+    "src/model/series-options.ts": "8a4fbcf7630193a353e527a077d065d98b7384041e58798f1b176c2f7a0ec12a",
+    "src/model/time-scale.ts": "6ac070be74aa16d0467ab13ece8c5f981e2c472a15fab6a946b4bec035373d41",
+    "src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts": "db1a3ff45b6031dc200c2f312eea8c77abe9a9862b84b544468e1ce1fb92692e",
+    "src/plugins/image-watermark/options.ts": "f166683723a881e3f80acd4d80fbecc77641d35105db9d0b2a356262bf802582",
+    "src/plugins/series-markers/options.ts": "0298bec1bb5d2363ed5af66642f68fd55f9c26621bee91ea7a82dd907fc45f29",
+    "src/plugins/text-watermark/options.ts": "323586657ffeb9ba4d2ff1e5982f63cf8acfbb863f6918baf23663f8f73f1ff2",
+    "src/plugins/up-down-markers-plugin/options.ts": "a16255dbc09ecf9e9dbb15e6df3d75caa2aa39857f4f6dc048565a8625f2edaa",
+    "native:src/model/layout_options.rs": "5acd6701e9481c0f4ce51730a604f39a03949e772a6111784651e9f224ab6e66",
+    "native:src/model/time_scale_options.rs": "d72c1e1d4097f8639b2d8de2cec67010bbae5580a5367c489510d3ace29f8662",
+    "native:src/model/price_scale.rs": "4f2474561d3d0c3b16a80ca86cd02a44c3377aaeb08e04761d7ccb3da87804bc",
+    "native:src/model/crosshair.rs": "c5551bf295bb2ebc667771605f0934e24e498458be7a34a5bd1d9a7d098eed5c",
+    "native:src/model/grid.rs": "cc28456883f71a26405a5ef8707674f1809b886d20d7f122214795ba9eae2181",
+    "native:src/model/localization_options.rs": "8791d09957c47c9713fece603abec03953411c249fd1e4dea5319597b45bc5d5",
+    "native:src/model/series_options.rs": "e807701ae6eaf1525bc3bab8e6760f180f614ce9f1489a1018c328585e4984d7",
+    "native:src/model/price_line.rs": "caa8bc3ffe16b30d8eb1b2b9626cde52076ccbdd18ed07d5ae0e2bceff225d8d",
+    "native:src/model/data_consumer.rs": "5489ba4a546f19a6a466b0a2dc714bf9df6259d8d4294bf2b6298cca86904ac3",
+    "native:src/api/image_watermark.rs": "2e9bd120d397325bc5a1c4a167327a7a5b228dc0cba9fd455558b9773be25695",
+    "native:src/api/text_watermark.rs": "f56e049aeb0f2065d70eab21dbaa611d78d53a5dcffdbe6d6d5007c1959b5b19",
+    "native:src/model/series_markers.rs": "8fcf471b5e658c08a1a2ed0bd90a4888019fd5e65667e801005d2c4bda6c30c9",
+    "native:src/api/up_down_markers.rs": "e2af37b8f8a67e796fc8a953681d8bc4d2fd5b598f0dde1cc3b8d96656bdc15c",
+    "native:src/model/yield_curve_horz_scale_behavior.rs": "eeedc10bbd70e29421e519062dd9e71ab0e8b0b0a998c34308d3029cffe979d9",
+    "native:src/model/horz_scale_behavior_price.rs": "fd1cd77e022e35aff399c5de3cbebda0f06c872aa979b34dac1d6637db91b414",
+    "native:src/api/touch.rs": "77ad12ade06231390c60f1ebc08af55d0efd63251efd20307aeefc8c0dd8736c",
+    "native:src/model/horz_scale_behavior_time/time_based_chart_options.rs": "ff1ffabfac350001b621718358ca817c9b8b2dcdfd9c59caaf1c49704d21a8f9"
+  },
+  "rows": [
+    {"id":"HoveredInfo.type","file":"src/api/ichart-api.ts","line":44,"kind":"property","signature":"type: HoveredItemType;","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"HoveredInfo.sourceKind","file":"src/api/ichart-api.ts","line":50,"kind":"property","signature":"sourceKind: 'series' | 'series-primitive' | 'pane-primitive';","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"HoveredInfo.objectKind","file":"src/api/ichart-api.ts","line":54,"kind":"property","signature":"objectKind: 'series' | 'custom-object' | 'custom-price-line' | 'series-marker' | 'primitive';","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"HoveredInfo.series","file":"src/api/ichart-api.ts","line":58,"kind":"property","signature":"series?: ISeriesApi<SeriesType, HorzScaleItem>;","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"HoveredInfo.objectId","file":"src/api/ichart-api.ts","line":62,"kind":"property","signature":"objectId?: unknown;","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"HoveredInfo.paneIndex","file":"src/api/ichart-api.ts","line":66,"kind":"property","signature":"paneIndex?: number;","status":"native","note":"ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane"},
+    {"id":"MouseEventParams.time","file":"src/api/ichart-api.ts","line":75,"kind":"property","signature":"time?: HorzScaleItem;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.logical","file":"src/api/ichart-api.ts","line":79,"kind":"property","signature":"logical?: Logical;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.point","file":"src/api/ichart-api.ts","line":85,"kind":"property","signature":"point?: Point;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.paneIndex","file":"src/api/ichart-api.ts","line":89,"kind":"property","signature":"paneIndex?: number;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.seriesData","file":"src/api/ichart-api.ts","line":96,"kind":"property","signature":"seriesData: Map<ISeriesApi<SeriesType, HorzScaleItem>, BarData<HorzScaleItem> | LineData<HorzScaleItem> | HistogramData<HorzScaleItem> | CustomData<HorzScaleItem>>;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.hoveredInfo","file":"src/api/ichart-api.ts","line":100,"kind":"property","signature":"hoveredInfo?: HoveredInfo<HorzScaleItem>;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.hoveredSeries","file":"src/api/ichart-api.ts","line":106,"kind":"property","signature":"hoveredSeries?: ISeriesApi<SeriesType, HorzScaleItem>;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.hoveredObjectId","file":"src/api/ichart-api.ts","line":112,"kind":"property","signature":"hoveredObjectId?: unknown;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
+    {"id":"MouseEventParams.sourceEvent","file":"src/api/ichart-api.ts","line":116,"kind":"property","signature":"sourceEvent?: TouchMouseEventData;","status":"gap","note":"F10: PointerEvent omits native input modifiers/source metadata"},
+    {"id":"IChartApiBase.remove","file":"src/api/ichart-api.ts","line":131,"kind":"method","signature":"remove(): void;","status":"native","note":"Drop releases chart ownership"},
+    {"id":"IChartApiBase.resize","file":"src/api/ichart-api.ts","line":143,"kind":"method","signature":"resize(width: number, height: number, forceRepaint?: boolean): void;","status":"native","note":"Chart.prepare / ChartMessage::Bounds; host owns sizing"},
+    {"id":"IChartApiBase.addCustomSeries","file":"src/api/ichart-api.ts","line":157,"kind":"method","signature":"addCustomSeries<TData extends CustomData<HorzScaleItem>, TOptions extends CustomSeriesOptions, TPartialOptions extends SeriesPartialOptions<TOptions> = SeriesPartialOptions<TOptions> >( customPaneView: ICustomSeriesPaneView<HorzScaleItem, TData, TOptions>, customOptions?: SeriesPartialOptions<TOptions>, paneIndex?: number ): ISeriesApi<'Custom', HorzScaleItem, TData | WhitespaceData<HorzScaleItem>, TOptions, TPartialOptions>;","status":"mapped","note":"Chart.add_custom_series"},
+    {"id":"IChartApiBase.addSeries","file":"src/api/ichart-api.ts","line":175,"kind":"method","signature":"addSeries<T extends SeriesType>( definition: SeriesDefinition<T>, options?: SeriesPartialOptionsMap[T], paneIndex?: number ): ISeriesApi<T, HorzScaleItem>;","status":"mapped","note":"Chart.add_series"},
+    {"id":"IChartApiBase.removeSeries","file":"src/api/ichart-api.ts","line":189,"kind":"method","signature":"removeSeries(seriesApi: ISeriesApi<SeriesType, HorzScaleItem>): void;","status":"mapped","note":"Chart.remove_series"},
+    {"id":"IChartApiBase.subscribeClick","file":"src/api/ichart-api.ts","line":208,"kind":"method","signature":"subscribeClick(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"ChartEvent::Click; owned delivery"},
+    {"id":"IChartApiBase.unsubscribeClick","file":"src/api/ichart-api.ts","line":219,"kind":"method","signature":"unsubscribeClick(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"Host owns routing of pointer events"},
+    {"id":"IChartApiBase.subscribeDblClick","file":"src/api/ichart-api.ts","line":238,"kind":"method","signature":"subscribeDblClick(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"EventInterests.double_click / ChartEvent::DoubleClick"},
+    {"id":"IChartApiBase.unsubscribeDblClick","file":"src/api/ichart-api.ts","line":249,"kind":"method","signature":"unsubscribeDblClick(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"EventInterests.double_click"},
+    {"id":"IChartApiBase.subscribeCrosshairMove","file":"src/api/ichart-api.ts","line":268,"kind":"method","signature":"subscribeCrosshairMove(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"ChartEvent::CrosshairMoved"},
+    {"id":"IChartApiBase.unsubscribeCrosshairMove","file":"src/api/ichart-api.ts","line":279,"kind":"method","signature":"unsubscribeCrosshairMove(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"Host owns routing of pointer events"},
+    {"id":"IChartApiBase.priceScale","file":"src/api/ichart-api.ts","line":288,"kind":"method","signature":"priceScale(priceScaleId: string, paneIndex?: number): IPriceScaleApi;","status":"native","note":"Chart methods use pane + PriceScalePosition"},
+    {"id":"IChartApiBase.timeScale","file":"src/api/ichart-api.ts","line":295,"kind":"method","signature":"timeScale(): ITimeScaleApi<HorzScaleItem>;","status":"partial","note":"F06: read-only model.time_scale; incomplete mutation facade"},
+    {"id":"IChartApiBase.applyOptions","file":"src/api/ichart-api.ts","line":302,"kind":"method","signature":"applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;","status":"partial","note":"F01/F03/F04: Chart.apply_chart_options covers a subset"},
+    {"id":"IChartApiBase.options","file":"src/api/ichart-api.ts","line":309,"kind":"method","signature":"options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;","status":"partial","note":"F01/F04: runtime_options omits localization and constructor callbacks"},
+    {"id":"IChartApiBase.takeScreenshot","file":"src/api/ichart-api.ts","line":318,"kind":"method","signature":"takeScreenshot(addTopLayer?: boolean, includeCrosshair?: boolean): HTMLCanvasElement;","status":"mapped","note":"Chart.take_screenshot / prepare_screenshot + ScreenshotExporter"},
+    {"id":"IChartApiBase.addPane","file":"src/api/ichart-api.ts","line":325,"kind":"method","signature":"addPane(preserveEmptyPane?: boolean): IPaneApi<HorzScaleItem>;","status":"native","note":"Chart.add_pane then set_preserve_empty_pane"},
+    {"id":"IChartApiBase.panes","file":"src/api/ichart-api.ts","line":332,"kind":"method","signature":"panes(): IPaneApi<HorzScaleItem>[];","status":"mapped","note":"Chart.model().panes()"},
+    {"id":"IChartApiBase.removePane","file":"src/api/ichart-api.ts","line":339,"kind":"method","signature":"removePane(index: number): void;","status":"mapped","note":"Chart.remove_pane"},
+    {"id":"IChartApiBase.swapPanes","file":"src/api/ichart-api.ts","line":347,"kind":"method","signature":"swapPanes(first: number, second: number): void;","status":"mapped","note":"Chart.swap_panes"},
+    {"id":"IChartApiBase.autoSizeActive","file":"src/api/ichart-api.ts","line":355,"kind":"method","signature":"autoSizeActive(): boolean;","status":"platform","note":"Iced host controls layout; no ResizeObserver"},
+    {"id":"IChartApiBase.chartElement","file":"src/api/ichart-api.ts","line":363,"kind":"method","signature":"chartElement(): HTMLDivElement;","status":"platform","note":"Iced Canvas replaces DOM element"},
+    {"id":"IChartApiBase.setCrosshairPosition","file":"src/api/ichart-api.ts","line":375,"kind":"method","signature":"setCrosshairPosition(price: number, horizontalPosition: HorzScaleItem, seriesApi: ISeriesApi<SeriesType, HorzScaleItem>): void;","status":"partial","note":"F06: native pane + pixel position; host performs price/item conversion"},
+    {"id":"IChartApiBase.clearCrosshairPosition","file":"src/api/ichart-api.ts","line":380,"kind":"method","signature":"clearCrosshairPosition(): void;","status":"native","note":"Chart.set_crosshair_position(pane, None)"},
+    {"id":"IChartApiBase.paneSize","file":"src/api/ichart-api.ts","line":390,"kind":"method","signature":"paneSize(paneIndex?: number): PaneSize;","status":"mapped","note":"Chart.frame/multi_frame layouts"},
+    {"id":"IChartApiBase.horzBehaviour","file":"src/api/ichart-api.ts","line":395,"kind":"method","signature":"horzBehaviour(): IHorzScaleBehavior<HorzScaleItem>;","status":"mapped","note":"Chart.model().time_scale().behavior()"},
+    {"id":"IPaneApi.getHeight","file":"src/api/ipane-api.ts","line":19,"kind":"method","signature":"getHeight(): number;","status":"mapped","note":"Chart.model().panes()[pane].height()"},
+    {"id":"IPaneApi.setHeight","file":"src/api/ipane-api.ts","line":26,"kind":"method","signature":"setHeight(height: number): void;","status":"gap","note":"F07: no reusable Chart pixel-height setter"},
+    {"id":"IPaneApi.moveTo","file":"src/api/ipane-api.ts","line":33,"kind":"method","signature":"moveTo(paneIndex: number): void;","status":"mapped","note":"Chart.move_pane"},
+    {"id":"IPaneApi.paneIndex","file":"src/api/ipane-api.ts","line":40,"kind":"method","signature":"paneIndex(): number;","status":"native","note":"Current index selectors; stable PrimitivePaneId for attachments"},
+    {"id":"IPaneApi.getSeries","file":"src/api/ipane-api.ts","line":47,"kind":"method","signature":"getSeries(): ISeriesApi<SeriesType, HorzScaleItem>[];","status":"mapped","note":"Pane.attached_source_ids, sorted with Chart.series_order / Chart.model().pane_for_series"},
+    {"id":"IPaneApi.getHTMLElement","file":"src/api/ipane-api.ts","line":54,"kind":"method","signature":"getHTMLElement(): HTMLElement | null;","status":"platform","note":"No DOM; use prepared pane layout"},
+    {"id":"IPaneApi.attachPrimitive","file":"src/api/ipane-api.ts","line":61,"kind":"method","signature":"attachPrimitive(primitive: IPanePrimitive<HorzScaleItem>): void;","status":"mapped","note":"Chart.add_pane_primitive"},
+    {"id":"IPaneApi.detachPrimitive","file":"src/api/ipane-api.ts","line":69,"kind":"method","signature":"detachPrimitive(primitive: IPanePrimitive<HorzScaleItem>): void;","status":"mapped","note":"Chart.remove_primitive"},
+    {"id":"IPaneApi.priceScale","file":"src/api/ipane-api.ts","line":77,"kind":"method","signature":"priceScale(priceScaleId: string): IPriceScaleApi;","status":"native","note":"Pane selector + Chart price-scale methods"},
+    {"id":"IPaneApi.setPreserveEmptyPane","file":"src/api/ipane-api.ts","line":84,"kind":"method","signature":"setPreserveEmptyPane(preserve: boolean): void;","status":"mapped","note":"Chart.set_preserve_empty_pane"},
+    {"id":"IPaneApi.preserveEmptyPane","file":"src/api/ipane-api.ts","line":91,"kind":"method","signature":"preserveEmptyPane(): boolean;","status":"mapped","note":"Pane.preserve_empty_pane()"},
+    {"id":"IPaneApi.getStretchFactor","file":"src/api/ipane-api.ts","line":99,"kind":"method","signature":"getStretchFactor(): number;","status":"mapped","note":"Pane.stretch_factor()"},
+    {"id":"IPaneApi.setStretchFactor","file":"src/api/ipane-api.ts","line":119,"kind":"method","signature":"setStretchFactor(stretchFactor: number): void;","status":"mapped","note":"Chart.set_pane_stretch_factor"},
+    {"id":"IPaneApi.addCustomSeries","file":"src/api/ipane-api.ts","line":133,"kind":"method","signature":"addCustomSeries<TData extends CustomData<HorzScaleItem>, TOptions extends CustomSeriesOptions, TPartialOptions extends SeriesPartialOptions<TOptions> = SeriesPartialOptions<TOptions> >( customPaneView: ICustomSeriesPaneView<HorzScaleItem, TData, TOptions>, customOptions?: SeriesPartialOptions<TOptions> ): ISeriesApi<'Custom', HorzScaleItem, TData | WhitespaceData<HorzScaleItem>, TOptions, TPartialOptions>;","status":"native","note":"Chart.add_custom_series with pane selector"},
+    {"id":"IPaneApi.addSeries","file":"src/api/ipane-api.ts","line":149,"kind":"method","signature":"addSeries<T extends SeriesType>( definition: SeriesDefinition<T>, options?: SeriesPartialOptionsMap[T], ): ISeriesApi<T, HorzScaleItem>;","status":"native","note":"Chart.add_series with pane selector"},
+    {"id":"IPriceLine.applyOptions","file":"src/api/iprice-line.ts","line":23,"kind":"method","signature":"applyOptions(options: Partial<PriceLineOptions>): void;","status":"native","note":"Chart.replace_price_line_options; merge an owned readback"},
+    {"id":"IPriceLine.options","file":"src/api/iprice-line.ts","line":27,"kind":"method","signature":"options(): Readonly<PriceLineOptions>;","status":"mapped","note":"Chart.price_line_options"},
+    {"id":"IPriceScaleApi.applyOptions","file":"src/api/iprice-scale-api.ts","line":13,"kind":"method","signature":"applyOptions(options: DeepPartial<PriceScaleOptions>): void;","status":"mapped","note":"Chart.apply_price_scale_options"},
+    {"id":"IPriceScaleApi.options","file":"src/api/iprice-scale-api.ts","line":20,"kind":"method","signature":"options(): Readonly<PriceScaleOptions>;","status":"mapped","note":"Chart.price_scale_options"},
+    {"id":"IPriceScaleApi.width","file":"src/api/iprice-scale-api.ts","line":25,"kind":"method","signature":"width(): number;","status":"native","note":"Prepared frame layout; overlays occupy no axis width"},
+    {"id":"IPriceScaleApi.setVisibleRange","file":"src/api/iprice-scale-api.ts","line":32,"kind":"method","signature":"setVisibleRange(range: IRange<number>): void;","status":"mapped","note":"Chart.set_visible_price_range"},
+    {"id":"IPriceScaleApi.getVisibleRange","file":"src/api/iprice-scale-api.ts","line":39,"kind":"method","signature":"getVisibleRange(): IRange<number> | null;","status":"mapped","note":"Chart.visible_price_range"},
+    {"id":"IPriceScaleApi.setAutoScale","file":"src/api/iprice-scale-api.ts","line":46,"kind":"method","signature":"setAutoScale(on: boolean): void;","status":"mapped","note":"Chart.set_price_scale_auto_scale"},
+    {"id":"ISeriesApi.priceFormatter","file":"src/api/iseries-api.ts","line":68,"kind":"method","signature":"priceFormatter(): IPriceFormatter;","status":"mapped","note":"Chart.model().series(id).formatter() for built-ins"},
+    {"id":"ISeriesApi.priceToCoordinate","file":"src/api/iseries-api.ts","line":76,"kind":"method","signature":"priceToCoordinate(price: number): Coordinate | null;","status":"partial","note":"F06: host composes first value + actual price scale"},
+    {"id":"ISeriesApi.coordinateToPrice","file":"src/api/iseries-api.ts","line":84,"kind":"method","signature":"coordinateToPrice(coordinate: number): BarPrice | null;","status":"partial","note":"F06: host composes first value + actual price scale"},
+    {"id":"ISeriesApi.barsInLogicalRange","file":"src/api/iseries-api.ts","line":110,"kind":"method","signature":"barsInLogicalRange(range: IRange<number>): BarsInfo<HorzScaleItem> | null;","status":"mapped","note":"Chart.bars_in_logical_range / custom handle"},
+    {"id":"ISeriesApi.applyOptions","file":"src/api/iseries-api.ts","line":119,"kind":"method","signature":"applyOptions(options: TPartialOptions): void;","status":"partial","note":"F03: typed replacement/patches exist; priceScaleId does not relocate"},
+    {"id":"ISeriesApi.options","file":"src/api/iseries-api.ts","line":126,"kind":"method","signature":"options(): Readonly<TOptions>;","status":"partial","note":"F06: built-in options readable; typed custom options lack public readback"},
+    {"id":"ISeriesApi.priceScale","file":"src/api/iseries-api.ts","line":142,"kind":"method","signature":"priceScale(): IPriceScaleApi;","status":"partial","note":"F06: no reusable series-to-scale query; actual membership private"},
+    {"id":"ISeriesApi.setData","file":"src/api/iseries-api.ts","line":163,"kind":"method","signature":"setData(data: TData[]): void;","status":"mapped","note":"Chart.set_data / set_custom_data"},
+    {"id":"ISeriesApi.update","file":"src/api/iseries-api.ts","line":190,"kind":"method","signature":"update(bar: TData, historicalUpdate?: boolean): void;","status":"mapped","note":"Chart.update_data / update_custom_data"},
+    {"id":"ISeriesApi.pop","file":"src/api/iseries-api.ts","line":203,"kind":"method","signature":"pop(count: number): TData[];","status":"mapped","note":"Chart.pop_data / pop_custom_data"},
+    {"id":"ISeriesApi.dataByIndex","file":"src/api/iseries-api.ts","line":216,"kind":"method","signature":"dataByIndex(logicalIndex: number, mismatchDirection?: MismatchDirection): TData | null;","status":"mapped","note":"Chart.data_by_index / custom handle"},
+    {"id":"ISeriesApi.data","file":"src/api/iseries-api.ts","line":227,"kind":"method","signature":"data(): readonly TData[];","status":"partial","note":"F08: Chart.series_data constrains built-in metadata to ()"},
+    {"id":"ISeriesApi.subscribeDataChanged","file":"src/api/iseries-api.ts","line":244,"kind":"method","signature":"subscribeDataChanged(handler: DataChangedHandler): void;","status":"native","note":"EventInterests.data_changed / ChartEvent::DataChanged"},
+    {"id":"ISeriesApi.unsubscribeDataChanged","file":"src/api/iseries-api.ts","line":255,"kind":"method","signature":"unsubscribeDataChanged(handler: DataChangedHandler): void;","status":"native","note":"EventInterests.data_changed; host filters series"},
+    {"id":"ISeriesApi.createPriceLine","file":"src/api/iseries-api.ts","line":273,"kind":"method","signature":"createPriceLine(options: CreatePriceLineOptions): IPriceLine;","status":"mapped","note":"Chart.add_price_line"},
+    {"id":"ISeriesApi.removePriceLine","file":"src/api/iseries-api.ts","line":285,"kind":"method","signature":"removePriceLine(line: IPriceLine): void;","status":"mapped","note":"Chart.remove_price_line"},
+    {"id":"ISeriesApi.priceLines","file":"src/api/iseries-api.ts","line":290,"kind":"method","signature":"priceLines(): IPriceLine[];","status":"gap","note":"F06: no reusable price-line enumeration"},
+    {"id":"ISeriesApi.seriesType","file":"src/api/iseries-api.ts","line":305,"kind":"method","signature":"seriesType(): TSeriesType;","status":"mapped","note":"Chart.model().series(id).series_type() for built-ins; custom handle is typed"},
+    {"id":"ISeriesApi.lastValueData","file":"src/api/iseries-api.ts","line":321,"kind":"method","signature":"lastValueData(globalLast: boolean): LastValueDataResult;","status":"partial","note":"F06: built-in engine method exists; custom projection and scale membership are private"},
+    {"id":"ISeriesApi.attachPrimitive","file":"src/api/iseries-api.ts","line":328,"kind":"method","signature":"attachPrimitive(primitive: ISeriesPrimitive<HorzScaleItem>): void;","status":"mapped","note":"Chart.add_series_primitive"},
+    {"id":"ISeriesApi.detachPrimitive","file":"src/api/iseries-api.ts","line":336,"kind":"method","signature":"detachPrimitive(primitive: ISeriesPrimitive<HorzScaleItem>): void;","status":"mapped","note":"Chart.remove_primitive"},
+    {"id":"ISeriesApi.moveToPane","file":"src/api/iseries-api.ts","line":345,"kind":"method","signature":"moveToPane(paneIndex: number): void;","status":"mapped","note":"Chart.move_series_to_pane"},
+    {"id":"ISeriesApi.seriesOrder","file":"src/api/iseries-api.ts","line":352,"kind":"method","signature":"seriesOrder(): number;","status":"mapped","note":"Chart.series_order"},
+    {"id":"ISeriesApi.setSeriesOrder","file":"src/api/iseries-api.ts","line":364,"kind":"method","signature":"setSeriesOrder(order: number): void;","status":"mapped","note":"Chart.set_series_order"},
+    {"id":"ISeriesApi.getPane","file":"src/api/iseries-api.ts","line":371,"kind":"method","signature":"getPane(): IPaneApi<HorzScaleItem>;","status":"mapped","note":"Chart.model().pane_for_series"},
+    {"id":"ITimeScaleApi.scrollPosition","file":"src/api/itime-scale-api.ts","line":25,"kind":"method","signature":"scrollPosition(): number;","status":"mapped","note":"Chart.model().time_scale().right_offset()"},
+    {"id":"ITimeScaleApi.scrollToPosition","file":"src/api/itime-scale-api.ts","line":33,"kind":"method","signature":"scrollToPosition(position: number, animated: boolean): void;","status":"native","note":"Chart.set_right_offset / scroll_to_offset_animated"},
+    {"id":"ITimeScaleApi.scrollToRealTime","file":"src/api/itime-scale-api.ts","line":38,"kind":"method","signature":"scrollToRealTime(): void;","status":"gap","note":"F06: engine method exists; no reusable owner forwarding"},
+    {"id":"ITimeScaleApi.getVisibleRange","file":"src/api/itime-scale-api.ts","line":48,"kind":"method","signature":"getVisibleRange(): IRange<HorzScaleItem> | null;","status":"partial","note":"F06: engine visible_time_range needs mutable access; use range events or compose from layout"},
+    {"id":"ITimeScaleApi.setVisibleRange","file":"src/api/itime-scale-api.ts","line":67,"kind":"method","signature":"setVisibleRange(range: IRange<HorzScaleItem>): void;","status":"gap","note":"F06: no Chart horizontal-item range setter"},
+    {"id":"ITimeScaleApi.getVisibleLogicalRange","file":"src/api/itime-scale-api.ts","line":74,"kind":"method","signature":"getVisibleLogicalRange(): LogicalRange | null;","status":"partial","note":"F06: engine getter needs mutable access; event-driven observation available"},
+    {"id":"ITimeScaleApi.setVisibleLogicalRange","file":"src/api/itime-scale-api.ts","line":85,"kind":"method","signature":"setVisibleLogicalRange(range: IRange<number>): void;","status":"mapped","note":"Chart.set_logical_range"},
+    {"id":"ITimeScaleApi.resetTimeScale","file":"src/api/itime-scale-api.ts","line":90,"kind":"method","signature":"resetTimeScale(): void;","status":"gap","note":"F06: engine method exists; no reusable owner forwarding"},
+    {"id":"ITimeScaleApi.fitContent","file":"src/api/itime-scale-api.ts","line":95,"kind":"method","signature":"fitContent(): void;","status":"mapped","note":"Chart.fit_content"},
+    {"id":"ITimeScaleApi.logicalToCoordinate","file":"src/api/itime-scale-api.ts","line":103,"kind":"method","signature":"logicalToCoordinate(logical: Logical): Coordinate | null;","status":"native","note":"TimeScale.index_to_coordinate; host guards empty state"},
+    {"id":"ITimeScaleApi.coordinateToLogical","file":"src/api/itime-scale-api.ts","line":111,"kind":"method","signature":"coordinateToLogical(x: number): Logical | null;","status":"native","note":"TimeScale.coordinate_to_index; host guards empty state"},
+    {"id":"ITimeScaleApi.timeToIndex","file":"src/api/itime-scale-api.ts","line":119,"kind":"method","signature":"timeToIndex(time: HorzScaleItem, findNearest?: boolean): TimePointIndex | null;","status":"native","note":"Behavior.to_internal then TimeScale.time_to_index"},
+    {"id":"ITimeScaleApi.timeToCoordinate","file":"src/api/itime-scale-api.ts","line":127,"kind":"method","signature":"timeToCoordinate(time: HorzScaleItem): Coordinate | null;","status":"native","note":"Compose time_to_index + index_to_coordinate"},
+    {"id":"ITimeScaleApi.coordinateToTime","file":"src/api/itime-scale-api.ts","line":135,"kind":"method","signature":"coordinateToTime(x: number): HorzScaleItem | null;","status":"native","note":"Compose coordinate_to_index + index_to_original_time"},
+    {"id":"ITimeScaleApi.width","file":"src/api/itime-scale-api.ts","line":140,"kind":"method","signature":"width(): number;","status":"mapped","note":"TimeScale.width()"},
+    {"id":"ITimeScaleApi.height","file":"src/api/itime-scale-api.ts","line":145,"kind":"method","signature":"height(): number;","status":"native","note":"Prepared frame time-axis layout"},
+    {"id":"ITimeScaleApi.subscribeVisibleTimeRangeChange","file":"src/api/itime-scale-api.ts","line":166,"kind":"method","signature":"subscribeVisibleTimeRangeChange(handler: TimeRangeChangeEventHandler<HorzScaleItem>): void;","status":"native","note":"EventInterests.visible_horizontal_range"},
+    {"id":"ITimeScaleApi.unsubscribeVisibleTimeRangeChange","file":"src/api/itime-scale-api.ts","line":177,"kind":"method","signature":"unsubscribeVisibleTimeRangeChange(handler: TimeRangeChangeEventHandler<HorzScaleItem>): void;","status":"native","note":"EventInterests.visible_horizontal_range"},
+    {"id":"ITimeScaleApi.subscribeVisibleLogicalRangeChange","file":"src/api/itime-scale-api.ts","line":198,"kind":"method","signature":"subscribeVisibleLogicalRangeChange(handler: LogicalRangeChangeEventHandler): void;","status":"native","note":"EventInterests.visible_logical_range"},
+    {"id":"ITimeScaleApi.unsubscribeVisibleLogicalRangeChange","file":"src/api/itime-scale-api.ts","line":209,"kind":"method","signature":"unsubscribeVisibleLogicalRangeChange(handler: LogicalRangeChangeEventHandler): void;","status":"native","note":"EventInterests.visible_logical_range"},
+    {"id":"ITimeScaleApi.subscribeSizeChange","file":"src/api/itime-scale-api.ts","line":216,"kind":"method","signature":"subscribeSizeChange(handler: SizeChangeEventHandler): void;","status":"native","note":"EventInterests.horizontal_axis_size"},
+    {"id":"ITimeScaleApi.unsubscribeSizeChange","file":"src/api/itime-scale-api.ts","line":223,"kind":"method","signature":"unsubscribeSizeChange(handler: SizeChangeEventHandler): void;","status":"native","note":"EventInterests.horizontal_axis_size"},
+    {"id":"ITimeScaleApi.applyOptions","file":"src/api/itime-scale-api.ts","line":230,"kind":"method","signature":"applyOptions(options: DeepPartial<HorzScaleOptions>): void;","status":"mapped","note":"Chart.apply_time_scale_options"},
+    {"id":"ITimeScaleApi.options","file":"src/api/itime-scale-api.ts","line":237,"kind":"method","signature":"options(): Readonly<HorzScaleOptions>;","status":"mapped","note":"TimeScale.options(); compare effective bar_spacing() separately"},
+    {"id":"IYieldCurveChartApi.addSeries","file":"src/api/iyield-chart-api.ts","line":26,"kind":"method","signature":"addSeries<T extends YieldCurveSeriesType>( definition: SeriesDefinition<T>, options?: SeriesPartialOptionsMap[T], paneIndex?: number ): ISeriesApi<T, number, WhitespaceData<number> | LineData<number>>;","status":"mapped","note":"YieldCurveChart built-in add methods; shared Chart for other typed families"},
+    {"id":"HandleScrollOptions.mouseWheel","file":"src/model/chart-model.ts","line":44,"kind":"property","signature":"mouseWheel: boolean;","status":"native","note":"MouseNavigationOptions / TouchNavigationOptions"},
+    {"id":"HandleScrollOptions.pressedMouseMove","file":"src/model/chart-model.ts","line":51,"kind":"property","signature":"pressedMouseMove: boolean;","status":"native","note":"MouseNavigationOptions / TouchNavigationOptions"},
+    {"id":"HandleScrollOptions.horzTouchDrag","file":"src/model/chart-model.ts","line":60,"kind":"property","signature":"horzTouchDrag: boolean;","status":"native","note":"MouseNavigationOptions / TouchNavigationOptions"},
+    {"id":"HandleScrollOptions.vertTouchDrag","file":"src/model/chart-model.ts","line":69,"kind":"property","signature":"vertTouchDrag: boolean;","status":"native","note":"MouseNavigationOptions / TouchNavigationOptions"},
+    {"id":"HandleScaleOptions.mouseWheel","file":"src/model/chart-model.ts","line":81,"kind":"property","signature":"mouseWheel: boolean;","status":"native","note":"MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch"},
+    {"id":"HandleScaleOptions.pinch","file":"src/model/chart-model.ts","line":88,"kind":"property","signature":"pinch: boolean;","status":"native","note":"MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch"},
+    {"id":"HandleScaleOptions.axisPressedMouseMove","file":"src/model/chart-model.ts","line":93,"kind":"property","signature":"axisPressedMouseMove: AxisPressedMouseMoveOptions | boolean;","status":"gap","note":"F04: axis-specific controls absent"},
+    {"id":"HandleScaleOptions.axisDoubleClickReset","file":"src/model/chart-model.ts","line":98,"kind":"property","signature":"axisDoubleClickReset: AxisDoubleClickOptions | boolean;","status":"gap","note":"F04: axis-specific controls absent"},
+    {"id":"KineticScrollOptions.touch","file":"src/model/chart-model.ts","line":110,"kind":"property","signature":"touch: boolean;","status":"represented","note":"src/api/touch.rs KineticScrollOptions.touch"},
+    {"id":"KineticScrollOptions.mouse","file":"src/model/chart-model.ts","line":117,"kind":"property","signature":"mouse: boolean;","status":"represented","note":"src/api/touch.rs KineticScrollOptions.mouse"},
+    {"id":"AxisPressedMouseMoveOptions.time","file":"src/model/chart-model.ts","line":139,"kind":"property","signature":"time: boolean;","status":"gap","note":"F04: no independent time axis control"},
+    {"id":"AxisPressedMouseMoveOptions.price","file":"src/model/chart-model.ts","line":146,"kind":"property","signature":"price: boolean;","status":"gap","note":"F04: no independent price axis control"},
+    {"id":"AxisDoubleClickOptions.time","file":"src/model/chart-model.ts","line":158,"kind":"property","signature":"time: boolean;","status":"gap","note":"F04: no independent time axis control"},
+    {"id":"AxisDoubleClickOptions.price","file":"src/model/chart-model.ts","line":165,"kind":"property","signature":"price: boolean;","status":"gap","note":"F04: no independent price axis control"},
+    {"id":"TrackingModeOptions.exitMode","file":"src/model/chart-model.ts","line":256,"kind":"property","signature":"exitMode: TrackingModeExitMode;","status":"native","note":"TouchNavigationOptions.tracking_exit"},
+    {"id":"ChartOptionsBase.width","file":"src/model/chart-model.ts","line":268,"kind":"property","signature":"width: number;","status":"native","note":"Chart.prepare and Iced layout"},
+    {"id":"ChartOptionsBase.height","file":"src/model/chart-model.ts","line":275,"kind":"property","signature":"height: number;","status":"native","note":"Chart.prepare and Iced layout"},
+    {"id":"ChartOptionsBase.autoSize","file":"src/model/chart-model.ts","line":293,"kind":"property","signature":"autoSize: boolean;","status":"platform","note":"Iced host layout replaces ResizeObserver"},
+    {"id":"ChartOptionsBase.layout","file":"src/model/chart-model.ts","line":298,"kind":"property","signature":"layout: LayoutOptions;","status":"mapped","note":"ChartModelOptions.layout"},
+    {"id":"ChartOptionsBase.leftPriceScale","file":"src/model/chart-model.ts","line":303,"kind":"property","signature":"leftPriceScale: VisiblePriceScaleOptions;","status":"mapped","note":"PaneOptions.left_price_scale"},
+    {"id":"ChartOptionsBase.rightPriceScale","file":"src/model/chart-model.ts","line":307,"kind":"property","signature":"rightPriceScale: VisiblePriceScaleOptions;","status":"mapped","note":"PaneOptions.right_price_scale"},
+    {"id":"ChartOptionsBase.defaultVisiblePriceScaleId","file":"src/model/chart-model.ts","line":319,"kind":"property","signature":"defaultVisiblePriceScaleId: 'left' | 'right';","status":"partial","note":"F04: PaneOptions.default_visible_price_scale construction only"},
+    {"id":"ChartOptionsBase.overlayPriceScales","file":"src/model/chart-model.ts","line":323,"kind":"property","signature":"overlayPriceScales: OverlayPriceScaleOptions;","status":"mapped","note":"PaneOptions.overlay_price_scale"},
+    {"id":"ChartOptionsBase.timeScale","file":"src/model/chart-model.ts","line":328,"kind":"property","signature":"timeScale: HorzScaleOptions;","status":"mapped","note":"HorzScaleOptions / Chart.apply_time_scale_options"},
+    {"id":"ChartOptionsBase.crosshair","file":"src/model/chart-model.ts","line":334,"kind":"property","signature":"crosshair: CrosshairOptions;","status":"mapped","note":"Chart.set_crosshair_options / apply_chart_options"},
+    {"id":"ChartOptionsBase.grid","file":"src/model/chart-model.ts","line":339,"kind":"property","signature":"grid: GridOptions;","status":"mapped","note":"ChartModelOptions.grid"},
+    {"id":"ChartOptionsBase.handleScroll","file":"src/model/chart-model.ts","line":344,"kind":"property","signature":"handleScroll: HandleScrollOptions | boolean;","status":"native","note":"MouseNavigationOptions / TouchNavigationOptions"},
+    {"id":"ChartOptionsBase.handleScale","file":"src/model/chart-model.ts","line":349,"kind":"property","signature":"handleScale: HandleScaleOptions | boolean;","status":"partial","note":"F04: wheel/pinch supported, no axis-specific settings"},
+    {"id":"ChartOptionsBase.kineticScroll","file":"src/model/chart-model.ts","line":354,"kind":"property","signature":"kineticScroll: KineticScrollOptions;","status":"mapped","note":"KineticScrollOptions"},
+    {"id":"ChartOptionsBase.trackingMode","file":"src/model/chart-model.ts","line":359,"kind":"property","signature":"trackingMode: TrackingModeOptions;","status":"mapped","note":"TouchNavigationOptions.tracking_exit"},
+    {"id":"ChartOptionsBase.localization","file":"src/model/chart-model.ts","line":364,"kind":"property","signature":"localization: LocalizationOptionsBase;","status":"partial","note":"F01: constructor ownership supported; incomplete scale integration/runtime"},
+    {"id":"ChartOptionsBase.addDefaultPane","file":"src/model/chart-model.ts","line":371,"kind":"property","signature":"addDefaultPane: boolean;","status":"mapped","note":"ChartModelOptions.add_default_pane"},
+    {"id":"ChartOptionsBase.hoveredSeriesOnTop","file":"src/model/chart-model.ts","line":381,"kind":"property","signature":"hoveredSeriesOnTop: boolean;","status":"mapped","note":"Chart.set_hovered_series_on_top"},
+    {"id":"ChartOptionsImpl.localization","file":"src/model/chart-model.ts","line":392,"kind":"property","signature":"localization: LocalizationOptions<HorzScaleItem>;","status":"partial","note":"F01: generic localization contract"},
+    {"id":"CrosshairLineOptions.color","file":"src/model/crosshair.ts","line":68,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.color"},
+    {"id":"CrosshairLineOptions.width","file":"src/model/crosshair.ts","line":75,"kind":"property","signature":"width: LineWidth;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.width"},
+    {"id":"CrosshairLineOptions.style","file":"src/model/crosshair.ts","line":82,"kind":"property","signature":"style: LineStyle;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.style"},
+    {"id":"CrosshairLineOptions.visible","file":"src/model/crosshair.ts","line":95,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.visible"},
+    {"id":"CrosshairLineOptions.labelVisible","file":"src/model/crosshair.ts","line":102,"kind":"property","signature":"labelVisible: boolean;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.label_visible"},
+    {"id":"CrosshairLineOptions.labelBackgroundColor","file":"src/model/crosshair.ts","line":109,"kind":"property","signature":"labelBackgroundColor: string;","status":"represented","note":"src/model/crosshair.rs CrosshairLineOptions.label_background_color"},
+    {"id":"CrosshairOptions.mode","file":"src/model/crosshair.ts","line":119,"kind":"property","signature":"mode: CrosshairMode;","status":"represented","note":"src/model/crosshair.rs CrosshairOptions.mode"},
+    {"id":"CrosshairOptions.vertLine","file":"src/model/crosshair.ts","line":124,"kind":"property","signature":"vertLine: CrosshairLineOptions;","status":"native","note":"CrosshairOptions.vertical"},
+    {"id":"CrosshairOptions.horzLine","file":"src/model/crosshair.ts","line":129,"kind":"property","signature":"horzLine: CrosshairLineOptions;","status":"native","note":"CrosshairOptions.horizontal"},
+    {"id":"CrosshairOptions.doNotSnapToHiddenSeriesIndices","file":"src/model/crosshair.ts","line":136,"kind":"property","signature":"doNotSnapToHiddenSeriesIndices: boolean;","status":"represented","note":"src/model/crosshair.rs CrosshairOptions.do_not_snap_to_hidden_series_indices"},
+    {"id":"WhitespaceData.time","file":"src/model/data-consumer.ts","line":29,"kind":"property","signature":"time: HorzScaleItem;","status":"represented","note":"src/model/data_consumer.rs WhitespaceData.time"},
+    {"id":"WhitespaceData.customValues","file":"src/model/data-consumer.ts","line":35,"kind":"property","signature":"customValues?: Record<string, unknown>;","status":"partial","note":"F08: engine generic metadata; reusable Chart built-in inputs fix it to ()"},
+    {"id":"SingleValueData.time","file":"src/model/data-consumer.ts","line":45,"kind":"property","signature":"time: HorzScaleItem;","status":"represented","note":"src/model/data_consumer.rs SingleValueData.time"},
+    {"id":"SingleValueData.value","file":"src/model/data-consumer.ts","line":50,"kind":"property","signature":"value: number;","status":"represented","note":"src/model/data_consumer.rs SingleValueData.value"},
+    {"id":"LineData.color","file":"src/model/data-consumer.ts","line":60,"kind":"property","signature":"color?: string;","status":"represented","note":"src/model/data_consumer.rs LineData.color"},
+    {"id":"HistogramData.color","file":"src/model/data-consumer.ts","line":70,"kind":"property","signature":"color?: string;","status":"represented","note":"src/model/data_consumer.rs HistogramData.color"},
+    {"id":"AreaData.lineColor","file":"src/model/data-consumer.ts","line":80,"kind":"property","signature":"lineColor?: string;","status":"represented","note":"src/model/data_consumer.rs AreaData.line_color"},
+    {"id":"AreaData.topColor","file":"src/model/data-consumer.ts","line":85,"kind":"property","signature":"topColor?: string;","status":"represented","note":"src/model/data_consumer.rs AreaData.top_color"},
+    {"id":"AreaData.bottomColor","file":"src/model/data-consumer.ts","line":90,"kind":"property","signature":"bottomColor?: string;","status":"represented","note":"src/model/data_consumer.rs AreaData.bottom_color"},
+    {"id":"BaselineData.topFillColor1","file":"src/model/data-consumer.ts","line":100,"kind":"property","signature":"topFillColor1?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.top_fill_color1"},
+    {"id":"BaselineData.topFillColor2","file":"src/model/data-consumer.ts","line":105,"kind":"property","signature":"topFillColor2?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.top_fill_color2"},
+    {"id":"BaselineData.topLineColor","file":"src/model/data-consumer.ts","line":110,"kind":"property","signature":"topLineColor?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.top_line_color"},
+    {"id":"BaselineData.bottomFillColor1","file":"src/model/data-consumer.ts","line":115,"kind":"property","signature":"bottomFillColor1?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.bottom_fill_color1"},
+    {"id":"BaselineData.bottomFillColor2","file":"src/model/data-consumer.ts","line":120,"kind":"property","signature":"bottomFillColor2?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.bottom_fill_color2"},
+    {"id":"BaselineData.bottomLineColor","file":"src/model/data-consumer.ts","line":125,"kind":"property","signature":"bottomLineColor?: string;","status":"represented","note":"src/model/data_consumer.rs BaselineData.bottom_line_color"},
+    {"id":"OhlcData.time","file":"src/model/data-consumer.ts","line":135,"kind":"property","signature":"time: HorzScaleItem;","status":"represented","note":"src/model/data_consumer.rs OhlcData.time"},
+    {"id":"OhlcData.open","file":"src/model/data-consumer.ts","line":140,"kind":"property","signature":"open: number;","status":"represented","note":"src/model/data_consumer.rs OhlcData.open"},
+    {"id":"OhlcData.high","file":"src/model/data-consumer.ts","line":144,"kind":"property","signature":"high: number;","status":"represented","note":"src/model/data_consumer.rs OhlcData.high"},
+    {"id":"OhlcData.low","file":"src/model/data-consumer.ts","line":148,"kind":"property","signature":"low: number;","status":"represented","note":"src/model/data_consumer.rs OhlcData.low"},
+    {"id":"OhlcData.close","file":"src/model/data-consumer.ts","line":152,"kind":"property","signature":"close: number;","status":"represented","note":"src/model/data_consumer.rs OhlcData.close"},
+    {"id":"BarData.color","file":"src/model/data-consumer.ts","line":162,"kind":"property","signature":"color?: string;","status":"represented","note":"src/model/data_consumer.rs BarData.color"},
+    {"id":"CandlestickData.color","file":"src/model/data-consumer.ts","line":172,"kind":"property","signature":"color?: string;","status":"represented","note":"src/model/data_consumer.rs CandlestickData.color"},
+    {"id":"CandlestickData.borderColor","file":"src/model/data-consumer.ts","line":176,"kind":"property","signature":"borderColor?: string;","status":"represented","note":"src/model/data_consumer.rs CandlestickData.border_color"},
+    {"id":"CandlestickData.wickColor","file":"src/model/data-consumer.ts","line":180,"kind":"property","signature":"wickColor?: string;","status":"represented","note":"src/model/data_consumer.rs CandlestickData.wick_color"},
+    {"id":"GridLineOptions.color","file":"src/model/grid.ts","line":15,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/grid.rs GridLineOptions.color"},
+    {"id":"GridLineOptions.style","file":"src/model/grid.ts","line":22,"kind":"property","signature":"style: LineStyle;","status":"represented","note":"src/model/grid.rs GridLineOptions.style"},
+    {"id":"GridLineOptions.visible","file":"src/model/grid.ts","line":29,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/model/grid.rs GridLineOptions.visible"},
+    {"id":"GridOptions.vertLines","file":"src/model/grid.ts","line":37,"kind":"property","signature":"vertLines: GridLineOptions;","status":"represented","note":"src/model/grid.rs GridOptions.vert_lines"},
+    {"id":"GridOptions.horzLines","file":"src/model/grid.ts","line":42,"kind":"property","signature":"horzLines: GridLineOptions;","status":"represented","note":"src/model/grid.rs GridOptions.horz_lines"},
+    {"id":"PriceChartLocalizationOptions.precision","file":"src/model/horz-scale-behavior-price/options.ts","line":14,"kind":"property","signature":"precision: number;","status":"represented","note":"src/model/horz_scale_behavior_price.rs OptionsChartOptions.precision"},
+    {"id":"TimeScaleOptions.tickMarkFormatter","file":"src/model/horz-scale-behavior-time/time-based-chart-options.ts","line":16,"kind":"property","signature":"tickMarkFormatter?: TickMarkFormatter;","status":"native","note":"TimeBehaviorOptions via with_custom_behavior / configure_horizontal_behavior"},
+    {"id":"LayoutPanesOptions.enableResize","file":"src/model/layout-options.ts","line":65,"kind":"property","signature":"enableResize: boolean;","status":"represented","note":"src/model/layout_options.rs LayoutPanesOptions.enable_resize"},
+    {"id":"LayoutPanesOptions.separatorColor","file":"src/model/layout-options.ts","line":72,"kind":"property","signature":"separatorColor: string;","status":"represented","note":"src/model/layout_options.rs LayoutPanesOptions.separator_color"},
+    {"id":"LayoutPanesOptions.separatorHoverColor","file":"src/model/layout-options.ts","line":79,"kind":"property","signature":"separatorHoverColor: string;","status":"represented","note":"src/model/layout_options.rs LayoutPanesOptions.separator_hover_color"},
+    {"id":"LayoutOptions.background","file":"src/model/layout-options.ts","line":89,"kind":"property","signature":"background: Background;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.background"},
+    {"id":"LayoutOptions.textColor","file":"src/model/layout-options.ts","line":96,"kind":"property","signature":"textColor: string;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.text_color"},
+    {"id":"LayoutOptions.fontSize","file":"src/model/layout-options.ts","line":103,"kind":"property","signature":"fontSize: number;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.font_size"},
+    {"id":"LayoutOptions.fontFamily","file":"src/model/layout-options.ts","line":110,"kind":"property","signature":"fontFamily: string;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.font_family"},
+    {"id":"LayoutOptions.panes","file":"src/model/layout-options.ts","line":117,"kind":"property","signature":"panes: LayoutPanesOptions;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.panes"},
+    {"id":"LayoutOptions.attributionLogo","file":"src/model/layout-options.ts","line":131,"kind":"property","signature":"attributionLogo: boolean;","status":"native","note":"Source default on; native default off intentionally retained; runtime toggle is native extension"},
+    {"id":"LayoutOptions.colorSpace","file":"src/model/layout-options.ts","line":144,"kind":"property","signature":"colorSpace: ColorSpace;","status":"partial","note":"F05: stored/snapshotted; no wide-gamut native rendering contract"},
+    {"id":"LayoutOptions.colorParsers","file":"src/model/layout-options.ts","line":174,"kind":"property","signature":"colorParsers: CustomColorParser[];","status":"gap","note":"F05: constructor parsers are not routed into chart rendering/validation"},
+    {"id":"LocalizationOptionsBase.locale","file":"src/model/localization-options.ts","line":26,"kind":"property","signature":"locale: string;","status":"partial","note":"F01/F09: constructor supported, no general runtime localization patch; Intl labels differ"},
+    {"id":"LocalizationOptionsBase.priceFormatter","file":"src/model/localization-options.ts","line":34,"kind":"property","signature":"priceFormatter?: PriceFormatterFn;","status":"gap","note":"F01: ignored by generic Chart price scales; yield wrapper has special handling"},
+    {"id":"LocalizationOptionsBase.tickmarksPriceFormatter","file":"src/model/localization-options.ts","line":41,"kind":"property","signature":"tickmarksPriceFormatter?: TickmarksPriceFormatterFn;","status":"gap","note":"F01: not routed into native scale ticks"},
+    {"id":"LocalizationOptionsBase.percentageFormatter","file":"src/model/localization-options.ts","line":48,"kind":"property","signature":"percentageFormatter?: PercentageFormatterFn;","status":"gap","note":"F01: native scale uses default PercentageFormatter"},
+    {"id":"LocalizationOptionsBase.tickmarksPercentageFormatter","file":"src/model/localization-options.ts","line":55,"kind":"property","signature":"tickmarksPercentageFormatter?: TickmarksPercentageFormatterFn;","status":"gap","note":"F01: not routed into native scale ticks"},
+    {"id":"LocalizationOptions.timeFormatter","file":"src/model/localization-options.ts","line":69,"kind":"property","signature":"timeFormatter?: TimeFormatterFn<HorzScaleItem>;","status":"partial","note":"F01: construction supported; no general Chart localization setter"},
+    {"id":"LocalizationOptions.dateFormat","file":"src/model/localization-options.ts","line":80,"kind":"property","signature":"dateFormat: string;","status":"partial","note":"F01: construction supported; no general Chart localization setter"},
+    {"id":"PriceLineOptions.id","file":"src/model/price-line-options.ts","line":10,"kind":"property","signature":"id?: string;","status":"mapped","note":"PriceLineOptions.external_id"},
+    {"id":"PriceLineOptions.price","file":"src/model/price-line-options.ts","line":16,"kind":"property","signature":"price: number;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.price"},
+    {"id":"PriceLineOptions.color","file":"src/model/price-line-options.ts","line":22,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.color"},
+    {"id":"PriceLineOptions.lineWidth","file":"src/model/price-line-options.ts","line":28,"kind":"property","signature":"lineWidth: LineWidth;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.line_width"},
+    {"id":"PriceLineOptions.lineStyle","file":"src/model/price-line-options.ts","line":34,"kind":"property","signature":"lineStyle: LineStyle;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.line_style"},
+    {"id":"PriceLineOptions.lineVisible","file":"src/model/price-line-options.ts","line":40,"kind":"property","signature":"lineVisible: boolean;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.line_visible"},
+    {"id":"PriceLineOptions.axisLabelVisible","file":"src/model/price-line-options.ts","line":46,"kind":"property","signature":"axisLabelVisible: boolean;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.axis_label_visible"},
+    {"id":"PriceLineOptions.title","file":"src/model/price-line-options.ts","line":52,"kind":"property","signature":"title: string;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.title"},
+    {"id":"PriceLineOptions.axisLabelColor","file":"src/model/price-line-options.ts","line":59,"kind":"property","signature":"axisLabelColor: string;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.axis_label_color"},
+    {"id":"PriceLineOptions.axisLabelTextColor","file":"src/model/price-line-options.ts","line":65,"kind":"property","signature":"axisLabelTextColor: string;","status":"represented","note":"src/model/price_line.rs PriceLineOptions.axis_label_text_color"},
+    {"id":"PriceScaleOptions.autoScale","file":"src/model/price-scale.ts","line":99,"kind":"property","signature":"autoScale: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.auto_scale"},
+    {"id":"PriceScaleOptions.mode","file":"src/model/price-scale.ts","line":106,"kind":"property","signature":"mode: PriceScaleMode;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.mode"},
+    {"id":"PriceScaleOptions.invertScale","file":"src/model/price-scale.ts","line":114,"kind":"property","signature":"invertScale: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.invert_scale"},
+    {"id":"PriceScaleOptions.alignLabels","file":"src/model/price-scale.ts","line":121,"kind":"property","signature":"alignLabels: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.align_labels"},
+    {"id":"PriceScaleOptions.scaleMargins","file":"src/model/price-scale.ts","line":137,"kind":"property","signature":"scaleMargins: PriceScaleMargins;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.scale_margins"},
+    {"id":"PriceScaleOptions.borderVisible","file":"src/model/price-scale.ts","line":144,"kind":"property","signature":"borderVisible: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.border_visible"},
+    {"id":"PriceScaleOptions.borderColor","file":"src/model/price-scale.ts","line":151,"kind":"property","signature":"borderColor: string;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.border_color"},
+    {"id":"PriceScaleOptions.textColor","file":"src/model/price-scale.ts","line":159,"kind":"property","signature":"textColor?: string;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.text_color"},
+    {"id":"PriceScaleOptions.entireTextOnly","file":"src/model/price-scale.ts","line":166,"kind":"property","signature":"entireTextOnly: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.entire_text_only"},
+    {"id":"PriceScaleOptions.visible","file":"src/model/price-scale.ts","line":174,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.visible"},
+    {"id":"PriceScaleOptions.ticksVisible","file":"src/model/price-scale.ts","line":181,"kind":"property","signature":"ticksVisible: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.ticks_visible"},
+    {"id":"PriceScaleOptions.minimumWidth","file":"src/model/price-scale.ts","line":195,"kind":"property","signature":"minimumWidth: number;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.minimum_width"},
+    {"id":"PriceScaleOptions.ensureEdgeTickMarksVisible","file":"src/model/price-scale.ts","line":204,"kind":"property","signature":"ensureEdgeTickMarksVisible: boolean;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.ensure_edge_tick_marks_visible"},
+    {"id":"PriceScaleOptions.tickMarkDensity","file":"src/model/price-scale.ts","line":213,"kind":"property","signature":"tickMarkDensity: number;","status":"represented","note":"src/model/price_scale.rs PriceScaleOptions.tick_mark_density"},
+    {"id":"CandlestickStyleOptions.upColor","file":"src/model/series-options.ts","line":19,"kind":"property","signature":"upColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.up_color"},
+    {"id":"CandlestickStyleOptions.downColor","file":"src/model/series-options.ts","line":26,"kind":"property","signature":"downColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.down_color"},
+    {"id":"CandlestickStyleOptions.wickVisible","file":"src/model/series-options.ts","line":33,"kind":"property","signature":"wickVisible: boolean;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.wick_visible"},
+    {"id":"CandlestickStyleOptions.borderVisible","file":"src/model/series-options.ts","line":40,"kind":"property","signature":"borderVisible: boolean;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.border_visible"},
+    {"id":"CandlestickStyleOptions.borderColor","file":"src/model/series-options.ts","line":47,"kind":"property","signature":"borderColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.border_color"},
+    {"id":"CandlestickStyleOptions.borderUpColor","file":"src/model/series-options.ts","line":54,"kind":"property","signature":"borderUpColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.border_up_color"},
+    {"id":"CandlestickStyleOptions.borderDownColor","file":"src/model/series-options.ts","line":61,"kind":"property","signature":"borderDownColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.border_down_color"},
+    {"id":"CandlestickStyleOptions.wickColor","file":"src/model/series-options.ts","line":68,"kind":"property","signature":"wickColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.wick_color"},
+    {"id":"CandlestickStyleOptions.wickUpColor","file":"src/model/series-options.ts","line":75,"kind":"property","signature":"wickUpColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.wick_up_color"},
+    {"id":"CandlestickStyleOptions.wickDownColor","file":"src/model/series-options.ts","line":82,"kind":"property","signature":"wickDownColor: string;","status":"represented","note":"src/model/series_options.rs CandlestickStyleOptions.wick_down_color"},
+    {"id":"BarStyleOptions.upColor","file":"src/model/series-options.ts","line":123,"kind":"property","signature":"upColor: string;","status":"represented","note":"src/model/series_options.rs BarStyleOptions.up_color"},
+    {"id":"BarStyleOptions.downColor","file":"src/model/series-options.ts","line":130,"kind":"property","signature":"downColor: string;","status":"represented","note":"src/model/series_options.rs BarStyleOptions.down_color"},
+    {"id":"BarStyleOptions.openVisible","file":"src/model/series-options.ts","line":137,"kind":"property","signature":"openVisible: boolean;","status":"represented","note":"src/model/series_options.rs BarStyleOptions.open_visible"},
+    {"id":"BarStyleOptions.thinBars","file":"src/model/series-options.ts","line":144,"kind":"property","signature":"thinBars: boolean;","status":"represented","note":"src/model/series_options.rs BarStyleOptions.thin_bars"},
+    {"id":"LineStyleOptions.color","file":"src/model/series-options.ts","line":156,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.color"},
+    {"id":"LineStyleOptions.lineStyle","file":"src/model/series-options.ts","line":163,"kind":"property","signature":"lineStyle: LineStyle;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.line_style"},
+    {"id":"LineStyleOptions.lineWidth","file":"src/model/series-options.ts","line":170,"kind":"property","signature":"lineWidth: LineWidth;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.line_width"},
+    {"id":"LineStyleOptions.lineType","file":"src/model/series-options.ts","line":177,"kind":"property","signature":"lineType: LineType;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.line_type"},
+    {"id":"LineStyleOptions.lineVisible","file":"src/model/series-options.ts","line":184,"kind":"property","signature":"lineVisible: boolean;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.line_visible"},
+    {"id":"LineStyleOptions.pointMarkersVisible","file":"src/model/series-options.ts","line":191,"kind":"property","signature":"pointMarkersVisible: boolean;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.point_markers_visible"},
+    {"id":"LineStyleOptions.pointMarkersRadius","file":"src/model/series-options.ts","line":197,"kind":"property","signature":"pointMarkersRadius?: number;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.point_markers_radius"},
+    {"id":"LineStyleOptions.crosshairMarkerVisible","file":"src/model/series-options.ts","line":204,"kind":"property","signature":"crosshairMarkerVisible: boolean;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.crosshair_marker_visible"},
+    {"id":"LineStyleOptions.crosshairMarkerRadius","file":"src/model/series-options.ts","line":210,"kind":"property","signature":"crosshairMarkerRadius: number;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.crosshair_marker_radius"},
+    {"id":"LineStyleOptions.crosshairMarkerBorderColor","file":"src/model/series-options.ts","line":216,"kind":"property","signature":"crosshairMarkerBorderColor: string;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.crosshair_marker_border_color"},
+    {"id":"LineStyleOptions.crosshairMarkerBackgroundColor","file":"src/model/series-options.ts","line":222,"kind":"property","signature":"crosshairMarkerBackgroundColor: string;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.crosshair_marker_background_color"},
+    {"id":"LineStyleOptions.crosshairMarkerBorderWidth","file":"src/model/series-options.ts","line":228,"kind":"property","signature":"crosshairMarkerBorderWidth: number;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.crosshair_marker_border_width"},
+    {"id":"LineStyleOptions.lastPriceAnimation","file":"src/model/series-options.ts","line":235,"kind":"property","signature":"lastPriceAnimation: LastPriceAnimationMode;","status":"represented","note":"src/model/series_options.rs LineStyleOptions.last_price_animation"},
+    {"id":"AreaStyleOptions.topColor","file":"src/model/series-options.ts","line":247,"kind":"property","signature":"topColor: string;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.top_color"},
+    {"id":"AreaStyleOptions.bottomColor","file":"src/model/series-options.ts","line":254,"kind":"property","signature":"bottomColor: string;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.bottom_color"},
+    {"id":"AreaStyleOptions.relativeGradient","file":"src/model/series-options.ts","line":262,"kind":"property","signature":"relativeGradient: boolean;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.relative_gradient"},
+    {"id":"AreaStyleOptions.invertFilledArea","file":"src/model/series-options.ts","line":269,"kind":"property","signature":"invertFilledArea: boolean;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.invert_filled_area"},
+    {"id":"AreaStyleOptions.lineColor","file":"src/model/series-options.ts","line":276,"kind":"property","signature":"lineColor: string;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.line_color"},
+    {"id":"AreaStyleOptions.lineStyle","file":"src/model/series-options.ts","line":283,"kind":"property","signature":"lineStyle: LineStyle;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.line_style"},
+    {"id":"AreaStyleOptions.lineWidth","file":"src/model/series-options.ts","line":290,"kind":"property","signature":"lineWidth: LineWidth;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.line_width"},
+    {"id":"AreaStyleOptions.lineType","file":"src/model/series-options.ts","line":297,"kind":"property","signature":"lineType: LineType;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.line_type"},
+    {"id":"AreaStyleOptions.lineVisible","file":"src/model/series-options.ts","line":304,"kind":"property","signature":"lineVisible: boolean;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.line_visible"},
+    {"id":"AreaStyleOptions.pointMarkersVisible","file":"src/model/series-options.ts","line":311,"kind":"property","signature":"pointMarkersVisible: boolean;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.point_markers_visible"},
+    {"id":"AreaStyleOptions.pointMarkersRadius","file":"src/model/series-options.ts","line":317,"kind":"property","signature":"pointMarkersRadius?: number;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.point_markers_radius"},
+    {"id":"AreaStyleOptions.crosshairMarkerVisible","file":"src/model/series-options.ts","line":324,"kind":"property","signature":"crosshairMarkerVisible: boolean;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.crosshair_marker_visible"},
+    {"id":"AreaStyleOptions.crosshairMarkerRadius","file":"src/model/series-options.ts","line":330,"kind":"property","signature":"crosshairMarkerRadius: number;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.crosshair_marker_radius"},
+    {"id":"AreaStyleOptions.crosshairMarkerBorderColor","file":"src/model/series-options.ts","line":336,"kind":"property","signature":"crosshairMarkerBorderColor: string;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.crosshair_marker_border_color"},
+    {"id":"AreaStyleOptions.crosshairMarkerBackgroundColor","file":"src/model/series-options.ts","line":342,"kind":"property","signature":"crosshairMarkerBackgroundColor: string;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.crosshair_marker_background_color"},
+    {"id":"AreaStyleOptions.crosshairMarkerBorderWidth","file":"src/model/series-options.ts","line":348,"kind":"property","signature":"crosshairMarkerBorderWidth: number;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.crosshair_marker_border_width"},
+    {"id":"AreaStyleOptions.lastPriceAnimation","file":"src/model/series-options.ts","line":355,"kind":"property","signature":"lastPriceAnimation: LastPriceAnimationMode;","status":"represented","note":"src/model/series_options.rs AreaStyleOptions.last_price_animation"},
+    {"id":"BaselineStyleOptions.baseValue","file":"src/model/series-options.ts","line":387,"kind":"property","signature":"baseValue: BaseValueType;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.base_value"},
+    {"id":"BaselineStyleOptions.relativeGradient","file":"src/model/series-options.ts","line":394,"kind":"property","signature":"relativeGradient: boolean;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.relative_gradient"},
+    {"id":"BaselineStyleOptions.topFillColor1","file":"src/model/series-options.ts","line":400,"kind":"property","signature":"topFillColor1: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.top_fill_color1"},
+    {"id":"BaselineStyleOptions.topFillColor2","file":"src/model/series-options.ts","line":406,"kind":"property","signature":"topFillColor2: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.top_fill_color2"},
+    {"id":"BaselineStyleOptions.topLineColor","file":"src/model/series-options.ts","line":412,"kind":"property","signature":"topLineColor: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.top_line_color"},
+    {"id":"BaselineStyleOptions.bottomFillColor1","file":"src/model/series-options.ts","line":419,"kind":"property","signature":"bottomFillColor1: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.bottom_fill_color1"},
+    {"id":"BaselineStyleOptions.bottomFillColor2","file":"src/model/series-options.ts","line":425,"kind":"property","signature":"bottomFillColor2: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.bottom_fill_color2"},
+    {"id":"BaselineStyleOptions.bottomLineColor","file":"src/model/series-options.ts","line":431,"kind":"property","signature":"bottomLineColor: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.bottom_line_color"},
+    {"id":"BaselineStyleOptions.lineWidth","file":"src/model/series-options.ts","line":438,"kind":"property","signature":"lineWidth: LineWidth;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.line_width"},
+    {"id":"BaselineStyleOptions.lineStyle","file":"src/model/series-options.ts","line":444,"kind":"property","signature":"lineStyle: LineStyle;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.line_style"},
+    {"id":"BaselineStyleOptions.lineType","file":"src/model/series-options.ts","line":450,"kind":"property","signature":"lineType: LineType;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.line_type"},
+    {"id":"BaselineStyleOptions.lineVisible","file":"src/model/series-options.ts","line":457,"kind":"property","signature":"lineVisible: boolean;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.line_visible"},
+    {"id":"BaselineStyleOptions.pointMarkersVisible","file":"src/model/series-options.ts","line":464,"kind":"property","signature":"pointMarkersVisible: boolean;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.point_markers_visible"},
+    {"id":"BaselineStyleOptions.pointMarkersRadius","file":"src/model/series-options.ts","line":470,"kind":"property","signature":"pointMarkersRadius?: number;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.point_markers_radius"},
+    {"id":"BaselineStyleOptions.crosshairMarkerVisible","file":"src/model/series-options.ts","line":477,"kind":"property","signature":"crosshairMarkerVisible: boolean;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.crosshair_marker_visible"},
+    {"id":"BaselineStyleOptions.crosshairMarkerRadius","file":"src/model/series-options.ts","line":483,"kind":"property","signature":"crosshairMarkerRadius: number;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.crosshair_marker_radius"},
+    {"id":"BaselineStyleOptions.crosshairMarkerBorderColor","file":"src/model/series-options.ts","line":489,"kind":"property","signature":"crosshairMarkerBorderColor: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.crosshair_marker_border_color"},
+    {"id":"BaselineStyleOptions.crosshairMarkerBackgroundColor","file":"src/model/series-options.ts","line":495,"kind":"property","signature":"crosshairMarkerBackgroundColor: string;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.crosshair_marker_background_color"},
+    {"id":"BaselineStyleOptions.crosshairMarkerBorderWidth","file":"src/model/series-options.ts","line":501,"kind":"property","signature":"crosshairMarkerBorderWidth: number;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.crosshair_marker_border_width"},
+    {"id":"BaselineStyleOptions.lastPriceAnimation","file":"src/model/series-options.ts","line":508,"kind":"property","signature":"lastPriceAnimation: LastPriceAnimationMode;","status":"represented","note":"src/model/series_options.rs BaselineStyleOptions.last_price_animation"},
+    {"id":"HistogramStyleOptions.color","file":"src/model/series-options.ts","line":520,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/series_options.rs HistogramStyleOptions.color"},
+    {"id":"HistogramStyleOptions.base","file":"src/model/series-options.ts","line":527,"kind":"property","signature":"base: number;","status":"represented","note":"src/model/series_options.rs HistogramStyleOptions.base"},
+    {"id":"CustomStyleOptions.color","file":"src/model/series-options.ts","line":537,"kind":"property","signature":"color: string;","status":"represented","note":"src/model/series_options.rs CustomStyleOptions.color"},
+    {"id":"PriceFormatBuiltIn.type","file":"src/model/series-options.ts","line":558,"kind":"property","signature":"type: 'price' | 'volume' | 'percent';","status":"native","note":"PriceFormatBuiltIn.kind enum"},
+    {"id":"PriceFormatBuiltIn.precision","file":"src/model/series-options.ts","line":566,"kind":"property","signature":"precision: number;","status":"represented","note":"src/model/series_options.rs PriceFormatBuiltIn.precision"},
+    {"id":"PriceFormatBuiltIn.minMove","file":"src/model/series-options.ts","line":573,"kind":"property","signature":"minMove: number;","status":"represented","note":"src/model/series_options.rs PriceFormatBuiltIn.min_move"},
+    {"id":"PriceFormatBuiltIn.base","file":"src/model/series-options.ts","line":579,"kind":"property","signature":"base?: number;","status":"represented","note":"src/model/series_options.rs PriceFormatBuiltIn.base"},
+    {"id":"PriceFormatCustom.type","file":"src/model/series-options.ts","line":589,"kind":"property","signature":"type: 'custom';","status":"native","note":"PriceFormat::Custom enum variant"},
+    {"id":"PriceFormatCustom.formatter","file":"src/model/series-options.ts","line":594,"kind":"property","signature":"formatter: PriceFormatterFn;","status":"represented","note":"src/model/series_options.rs PriceFormatCustom.formatter"},
+    {"id":"PriceFormatCustom.tickmarksFormatter","file":"src/model/series-options.ts","line":599,"kind":"property","signature":"tickmarksFormatter?: TickmarksPriceFormatterFn;","status":"gap","note":"F02: stored but omitted by SeriesValueFormatter and scale batch path"},
+    {"id":"PriceFormatCustom.minMove","file":"src/model/series-options.ts","line":606,"kind":"property","signature":"minMove: number;","status":"represented","note":"src/model/series_options.rs PriceFormatCustom.min_move"},
+    {"id":"PriceFormatCustom.base","file":"src/model/series-options.ts","line":612,"kind":"property","signature":"base?: number;","status":"represented","note":"src/model/series_options.rs PriceFormatCustom.base"},
+    {"id":"SeriesOptionsCommon.lastValueVisible","file":"src/model/series-options.ts","line":701,"kind":"property","signature":"lastValueVisible: boolean;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.last_value_visible"},
+    {"id":"SeriesOptionsCommon.title","file":"src/model/series-options.ts","line":708,"kind":"property","signature":"title: string;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.title"},
+    {"id":"SeriesOptionsCommon.priceScaleId","file":"src/model/series-options.ts","line":715,"kind":"property","signature":"priceScaleId?: string;","status":"gap","note":"F03: stored but option changes do not reattach to a different price scale"},
+    {"id":"SeriesOptionsCommon.seriesLastValueMode","file":"src/model/series-options.ts","line":720,"kind":"property","signature":"seriesLastValueMode?: PriceAxisLastValueMode;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.series_last_value_mode"},
+    {"id":"SeriesOptionsCommon.visible","file":"src/model/series-options.ts","line":729,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.visible"},
+    {"id":"SeriesOptionsCommon.hitTestTolerance","file":"src/model/series-options.ts","line":736,"kind":"property","signature":"hitTestTolerance: number;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.hit_test_tolerance"},
+    {"id":"SeriesOptionsCommon.priceLineVisible","file":"src/model/series-options.ts","line":743,"kind":"property","signature":"priceLineVisible: boolean;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_line_visible"},
+    {"id":"SeriesOptionsCommon.priceLineSource","file":"src/model/series-options.ts","line":750,"kind":"property","signature":"priceLineSource: PriceLineSource;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_line_source"},
+    {"id":"SeriesOptionsCommon.priceLineWidth","file":"src/model/series-options.ts","line":757,"kind":"property","signature":"priceLineWidth: LineWidth;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_line_width"},
+    {"id":"SeriesOptionsCommon.priceLineColor","file":"src/model/series-options.ts","line":765,"kind":"property","signature":"priceLineColor: string;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_line_color"},
+    {"id":"SeriesOptionsCommon.priceLineStyle","file":"src/model/series-options.ts","line":772,"kind":"property","signature":"priceLineStyle: LineStyle;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_line_style"},
+    {"id":"SeriesOptionsCommon.priceFormat","file":"src/model/series-options.ts","line":779,"kind":"property","signature":"priceFormat: PriceFormat;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.price_format"},
+    {"id":"SeriesOptionsCommon.baseLineVisible","file":"src/model/series-options.ts","line":786,"kind":"property","signature":"baseLineVisible: boolean;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.base_line_visible"},
+    {"id":"SeriesOptionsCommon.baseLineColor","file":"src/model/series-options.ts","line":793,"kind":"property","signature":"baseLineColor: string;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.base_line_color"},
+    {"id":"SeriesOptionsCommon.baseLineWidth","file":"src/model/series-options.ts","line":800,"kind":"property","signature":"baseLineWidth: LineWidth;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.base_line_width"},
+    {"id":"SeriesOptionsCommon.baseLineStyle","file":"src/model/series-options.ts","line":807,"kind":"property","signature":"baseLineStyle: LineStyle;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.base_line_style"},
+    {"id":"SeriesOptionsCommon.autoscaleInfoProvider","file":"src/model/series-options.ts","line":855,"kind":"property","signature":"autoscaleInfoProvider?: AutoscaleInfoProvider;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.autoscale_info_provider"},
+    {"id":"SeriesOptionsCommon.conflationThresholdFactor","file":"src/model/series-options.ts","line":871,"kind":"property","signature":"conflationThresholdFactor?: number;","status":"represented","note":"src/model/series_options.rs SeriesOptionsCommon.conflation_threshold_factor"},
+    {"id":"HorzScaleOptions.rightOffset","file":"src/model/time-scale.ts","line":70,"kind":"property","signature":"rightOffset: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.right_offset"},
+    {"id":"HorzScaleOptions.rightOffsetPixels","file":"src/model/time-scale.ts","line":78,"kind":"property","signature":"rightOffsetPixels?: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.right_offset_pixels"},
+    {"id":"HorzScaleOptions.barSpacing","file":"src/model/time-scale.ts","line":85,"kind":"property","signature":"barSpacing: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.bar_spacing"},
+    {"id":"HorzScaleOptions.minBarSpacing","file":"src/model/time-scale.ts","line":92,"kind":"property","signature":"minBarSpacing: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.min_bar_spacing"},
+    {"id":"HorzScaleOptions.maxBarSpacing","file":"src/model/time-scale.ts","line":101,"kind":"property","signature":"maxBarSpacing: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.max_bar_spacing"},
+    {"id":"HorzScaleOptions.fixLeftEdge","file":"src/model/time-scale.ts","line":108,"kind":"property","signature":"fixLeftEdge: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.fix_left_edge"},
+    {"id":"HorzScaleOptions.fixRightEdge","file":"src/model/time-scale.ts","line":115,"kind":"property","signature":"fixRightEdge: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.fix_right_edge"},
+    {"id":"HorzScaleOptions.lockVisibleTimeRangeOnResize","file":"src/model/time-scale.ts","line":122,"kind":"property","signature":"lockVisibleTimeRangeOnResize: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.lock_visible_time_range_on_resize"},
+    {"id":"HorzScaleOptions.rightBarStaysOnScroll","file":"src/model/time-scale.ts","line":129,"kind":"property","signature":"rightBarStaysOnScroll: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.right_bar_stays_on_scroll"},
+    {"id":"HorzScaleOptions.borderVisible","file":"src/model/time-scale.ts","line":136,"kind":"property","signature":"borderVisible: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.border_visible"},
+    {"id":"HorzScaleOptions.borderColor","file":"src/model/time-scale.ts","line":143,"kind":"property","signature":"borderColor: string;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.border_color"},
+    {"id":"HorzScaleOptions.visible","file":"src/model/time-scale.ts","line":150,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.visible"},
+    {"id":"HorzScaleOptions.timeVisible","file":"src/model/time-scale.ts","line":157,"kind":"property","signature":"timeVisible: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.time_visible"},
+    {"id":"HorzScaleOptions.secondsVisible","file":"src/model/time-scale.ts","line":164,"kind":"property","signature":"secondsVisible: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.seconds_visible"},
+    {"id":"HorzScaleOptions.shiftVisibleRangeOnNewBar","file":"src/model/time-scale.ts","line":173,"kind":"property","signature":"shiftVisibleRangeOnNewBar: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.shift_visible_range_on_new_bar"},
+    {"id":"HorzScaleOptions.allowShiftVisibleRangeOnWhitespaceReplacement","file":"src/model/time-scale.ts","line":183,"kind":"property","signature":"allowShiftVisibleRangeOnWhitespaceReplacement: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.allow_shift_visible_range_on_whitespace_replacement"},
+    {"id":"HorzScaleOptions.ticksVisible","file":"src/model/time-scale.ts","line":190,"kind":"property","signature":"ticksVisible: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.ticks_visible"},
+    {"id":"HorzScaleOptions.tickMarkMaxCharacterLength","file":"src/model/time-scale.ts","line":197,"kind":"property","signature":"tickMarkMaxCharacterLength?: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.tick_mark_max_character_length"},
+    {"id":"HorzScaleOptions.uniformDistribution","file":"src/model/time-scale.ts","line":202,"kind":"property","signature":"uniformDistribution: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.uniform_distribution"},
+    {"id":"HorzScaleOptions.minimumHeight","file":"src/model/time-scale.ts","line":216,"kind":"property","signature":"minimumHeight: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.minimum_height"},
+    {"id":"HorzScaleOptions.allowBoldLabels","file":"src/model/time-scale.ts","line":223,"kind":"property","signature":"allowBoldLabels: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.allow_bold_labels"},
+    {"id":"HorzScaleOptions.ignoreWhitespaceIndices","file":"src/model/time-scale.ts","line":233,"kind":"property","signature":"ignoreWhitespaceIndices: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.ignore_whitespace_indices"},
+    {"id":"HorzScaleOptions.enableConflation","file":"src/model/time-scale.ts","line":243,"kind":"property","signature":"enableConflation: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.enable_conflation"},
+    {"id":"HorzScaleOptions.conflationThresholdFactor","file":"src/model/time-scale.ts","line":262,"kind":"property","signature":"conflationThresholdFactor?: number;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.conflation_threshold_factor"},
+    {"id":"HorzScaleOptions.precomputeConflationOnInit","file":"src/model/time-scale.ts","line":278,"kind":"property","signature":"precomputeConflationOnInit: boolean;","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.precompute_conflation_on_init"},
+    {"id":"HorzScaleOptions.precomputeConflationPriority","file":"src/model/time-scale.ts","line":292,"kind":"property","signature":"precomputeConflationPriority: 'background' | 'user-visible' | 'user-blocking';","status":"represented","note":"src/model/time_scale_options.rs HorzScaleOptions.precompute_conflation_priority"},
+    {"id":"YieldCurveOptions.baseResolution","file":"src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts","line":12,"kind":"property","signature":"baseResolution: number;","status":"represented","note":"src/model/yield_curve_horz_scale_behavior.rs YieldCurveOptions.base_resolution"},
+    {"id":"YieldCurveOptions.minimumTimeRange","file":"src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts","line":19,"kind":"property","signature":"minimumTimeRange: number;","status":"represented","note":"src/model/yield_curve_horz_scale_behavior.rs YieldCurveOptions.minimum_time_range"},
+    {"id":"YieldCurveOptions.startTimeRange","file":"src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts","line":26,"kind":"property","signature":"startTimeRange: number;","status":"represented","note":"src/model/yield_curve_horz_scale_behavior.rs YieldCurveOptions.start_time_range"},
+    {"id":"YieldCurveOptions.formatTime","file":"src/model/yield-curve-horz-scale-behavior/yield-curve-chart-options.ts","line":34,"kind":"property","signature":"formatTime?: (months: number) => string;","status":"native","note":"YieldCurveChart.set_maturity_formatter"},
+    {"id":"ImageWatermarkOptions.maxWidth","file":"src/plugins/image-watermark/options.ts","line":7,"kind":"property","signature":"maxWidth?: number;","status":"represented","note":"src/api/image_watermark.rs ImageWatermarkOptions.max_width"},
+    {"id":"ImageWatermarkOptions.maxHeight","file":"src/plugins/image-watermark/options.ts","line":13,"kind":"property","signature":"maxHeight?: number;","status":"represented","note":"src/api/image_watermark.rs ImageWatermarkOptions.max_height"},
+    {"id":"ImageWatermarkOptions.padding","file":"src/plugins/image-watermark/options.ts","line":20,"kind":"property","signature":"padding: number;","status":"represented","note":"src/api/image_watermark.rs ImageWatermarkOptions.padding"},
+    {"id":"ImageWatermarkOptions.alpha","file":"src/plugins/image-watermark/options.ts","line":27,"kind":"property","signature":"alpha: number;","status":"represented","note":"src/api/image_watermark.rs ImageWatermarkOptions.alpha"},
+    {"id":"SeriesMarkersOptions.autoScale","file":"src/plugins/series-markers/options.ts","line":28,"kind":"property","signature":"autoScale: boolean;","status":"represented","note":"src/model/series_markers.rs SeriesMarkersOptions.auto_scale"},
+    {"id":"SeriesMarkersOptions.zOrder","file":"src/plugins/series-markers/options.ts","line":35,"kind":"property","signature":"zOrder: SeriesMarkerZOrder;","status":"represented","note":"src/model/series_markers.rs SeriesMarkersOptions.z_order"},
+    {"id":"TextWatermarkOptions.visible","file":"src/plugins/text-watermark/options.ts","line":11,"kind":"property","signature":"visible: boolean;","status":"represented","note":"src/api/text_watermark.rs TextWatermarkOptions.visible"},
+    {"id":"TextWatermarkOptions.horzAlign","file":"src/plugins/text-watermark/options.ts","line":18,"kind":"property","signature":"horzAlign: HorzAlign;","status":"native","note":"TextWatermarkOptions.horizontal_alignment"},
+    {"id":"TextWatermarkOptions.vertAlign","file":"src/plugins/text-watermark/options.ts","line":25,"kind":"property","signature":"vertAlign: VertAlign;","status":"native","note":"TextWatermarkOptions.vertical_alignment"},
+    {"id":"TextWatermarkOptions.lines","file":"src/plugins/text-watermark/options.ts","line":33,"kind":"property","signature":"lines: TextWatermarkLineOptions[];","status":"represented","note":"src/api/text_watermark.rs TextWatermarkOptions.lines"},
+    {"id":"TextWatermarkLineOptions.color","file":"src/plugins/text-watermark/options.ts","line":43,"kind":"property","signature":"color: string;","status":"represented","note":"src/api/text_watermark.rs TextWatermarkLine.color"},
+    {"id":"TextWatermarkLineOptions.text","file":"src/plugins/text-watermark/options.ts","line":49,"kind":"property","signature":"text: string;","status":"represented","note":"src/api/text_watermark.rs TextWatermarkLine.text"},
+    {"id":"TextWatermarkLineOptions.fontSize","file":"src/plugins/text-watermark/options.ts","line":56,"kind":"property","signature":"fontSize: number;","status":"represented","note":"src/api/text_watermark.rs TextWatermarkLine.font_size"},
+    {"id":"TextWatermarkLineOptions.lineHeight","file":"src/plugins/text-watermark/options.ts","line":63,"kind":"property","signature":"lineHeight?: number;","status":"represented","note":"src/api/text_watermark.rs TextWatermarkLine.line_height"},
+    {"id":"TextWatermarkLineOptions.fontFamily","file":"src/plugins/text-watermark/options.ts","line":70,"kind":"property","signature":"fontFamily: string;","status":"native","note":"TextWatermarkLine.font.family (Iced Font)"},
+    {"id":"TextWatermarkLineOptions.fontStyle","file":"src/plugins/text-watermark/options.ts","line":77,"kind":"property","signature":"fontStyle: string;","status":"native","note":"TextWatermarkLine.font.style (Iced Font)"},
+    {"id":"UpDownMarkersPluginOptions.positiveColor","file":"src/plugins/up-down-markers-plugin/options.ts","line":9,"kind":"property","signature":"positiveColor: string;","status":"represented","note":"src/api/up_down_markers.rs UpDownMarkersOptions.positive_color"},
+    {"id":"UpDownMarkersPluginOptions.negativeColor","file":"src/plugins/up-down-markers-plugin/options.ts","line":15,"kind":"property","signature":"negativeColor: string;","status":"represented","note":"src/api/up_down_markers.rs UpDownMarkersOptions.negative_color"},
+    {"id":"UpDownMarkersPluginOptions.updateVisibilityDuration","file":"src/plugins/up-down-markers-plugin/options.ts","line":22,"kind":"property","signature":"updateVisibilityDuration: number;","status":"represented","note":"src/api/up_down_markers.rs UpDownMarkersOptions.update_visibility_duration"}
+  ]
+}
