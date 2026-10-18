@@ -1,6 +1,7 @@
 # Public series data operations
 
-Date: 2026-10-18. Status: planned; implementation has not started.
+Date: 2026-10-18. Status: complete; automated/source/capture verification passed.
+Available software/wgpu mouse acceptance passed in all three chart modes.
 Baseline: `71c8419`. Checklist: [series-data-todo.md](series-data-todo.md).
 Feature-specific files follow the repository's existing planning convention and
 preserve earlier plans and their unfinished acceptance records.

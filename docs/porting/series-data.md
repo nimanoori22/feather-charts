@@ -1,6 +1,7 @@
 # Public series data operations
 
-Status: source contract frozen; implementation in progress, 2026-10-18.
+Status: complete, 2026-10-18. Automated, source and renderer verification passed;
+available software/wgpu mouse acceptance passed in all three chart modes.
 Plan: [series-data-plan.md](../../tasks/series-data-plan.md).
 
 ## Source and consumer contract
@@ -69,7 +70,139 @@ history through public data/set_data. Unrelated custom payloads are not cloned.
 Baseline source hashes verified against target/series-order/final/protocol.json;
 96 prior compatibility images copied to target/series-data/before. The new 288-image
 matrix was frozen before production edits in target/series-data/baseline.json.
-Implementation, automated/capture/native verification and final report are pending.
+The first complete automated/capture runs passed. A final pass after the bounded
+bulk-pop improvement is recorded below; native mouse acceptance is pending.
 Previous drawing-order mouse acceptance, timing and unavailable-device gates remain
 open independently. Direct visible-price-range controls/new events/export are not
 part of this milestone.
+
+
+## Source behavior retained and JS patterns discarded
+
+Mutation flows remain synchronous. Existing plot/data-layer infrastructure owns
+canonical membership and custom payloads; no JS object aliasing, nullable retained
+SeriesApi objects or hand-managed destroy methods were introduced. Read results
+are owned and time endpoints are paired in one Option. Built-in IDs become invalid
+after removal; typed custom handles retain their already-established readable data
+semantics. Queries do not create new view ownership or expose borrow guards.
+Public metadata remains the existing `()` contract; this milestone does not add
+arbitrary JSON metadata. Typed custom payload fields remain application-defined.
+
+The oracle compares six complete native/source pop/query states. Additional browser
+observations for all built-in styles, original calendar items, custom payloads and
+yield behavior are frozen separately and covered by typed native behavioral tests.
+Source imports/interface calls were traced through graph and direct search; the
+existing up/down wrapper was read to verify ordinary pop has no plugin interception.
+
+## Exact files changed
+
+Production:
+- `src/api/series_data.rs`: public BarsInfo, owned built-in queries/pop, shared range/search/conversion helpers.
+- `src/api/mod.rs`: module registration and BarsInfo export.
+- `src/api/chart.rs`: InvalidDataQuery error variant.
+- `src/api/interaction.rs`: pointer events reuse the same row conversion.
+- `src/api/custom_series.rs`: typed owned queries and attached-handle pop.
+- `src/api/yield_curve.rs` and `src/api/yield_curve/custom_series.rs`: explicit protected pop forwarding.
+- `src/model/series.rs`: tail-first existing custom-row removal, preserving input result order and cache invalidation.
+
+Tests and examples:
+- `tests/series_data.rs`: seven public data/query/lifecycle tests.
+- `tests/pane_management_interaction.rs`: actual pop cancellation, no-op/read preservation, marker expiry and kinetic coverage.
+- `tests/primitive_editing.rs`: captured edit cancellation/stale-token coverage includes pop.
+- `examples/pane_management.rs`: opt-in --series-data controls and current-last-bar live feed.
+- `examples/pane_management/data.rs`: shared three-family setup, readouts, pop/append and mode tests.
+- `examples/pane_management/host.rs`: existing host forwards new data operations.
+- `examples/pane_management/captures.rs`: partial/empty/append snapshots and retained-frame checks.
+- `scripts/capture_series_order.py`: shared runner preserves default ordering behavior and accepts the data matrix.
+- `scripts/capture_series_data.py`: small wrapper reusing that runner.
+- `scripts/check_series_data_reference.cjs`, source/state JSON, README and this report/plan/checklist retain the contract and evidence.
+
+## Targeted bulk-pop investigation
+
+Final review found CustomSeries.pop_indices scanning the entire prefix for each
+newest-first removal. Caller/coverage checks and direct reads confirmed sorted,
+unique canonical rows and preserved cache semantics. The production change uses
+`rposition` in place of `position`: normal public tail pops now start searching at
+the matching end, without a new fast-path abstraction or payload copies.
+
+Same diagnostic, 16,384 typed custom bars, debug build:
+
+| Traversal | Three elapsed samples |
+|---|---|
+| From the start | 788.480, 772.661, 760.490 ms |
+| From the tail | 15.050, 13.674, 13.524 ms |
+
+Evidence: `target/series-data/bulk-before-repeats.log` and
+`bulk-after-repeats.log`. The test also asserts newest-first values, zero payload
+copies, empty surviving data and retained owner registration. It prints timing
+without imposing a machine-sensitive threshold. This is a bounded mutation result,
+not acceptance of any earlier frame/update timing exception.
+
+## Automated verification
+
+Final results: **730 tests passed in 71 suites**, zero failed or ignored;
+**2 compile-fail doctests passed**. Strict all-target Clippy, all-target cargo check,
+formatting and diff hygiene pass. Evidence:
+- `target/series-data/all-targets-final-accepted.log`
+- `target/series-data/doctests-accepted.log`
+- `target/series-data/clippy-final-accepted.log`
+- `target/series-data/check-accepted.log`
+
+The first full run after query/test setup corrections passed 729 tests; the final
+bulk-pop ownership test adds one. Initial failing evidence is retained: red.log and
+custom-red.log show absent APIs. Initial dense-test setup used the multi-pane-only
+frame accessor on a one-pane chart; it was corrected to retain the existing single
+frame, with actual immutable raster checks in the capture suite. No engine defect
+was claimed for that test setup issue, and no threshold or assertion was disabled.
+
+Seven behavioral tests cover original times/styles for all six built-ins; canonical
+queries under conflation; zero/empty/oversized/newest-first removal; direction and
+gap/fractional-range semantics; invalid queries; subsequent latest updates; typed
+custom removal/foreign handles/detached reads; zero-copy survivor reindexing; yield
+private support and retained domain; and bulk custom removal. Empty built-in/custom charts
+prepare at short/fractional sizes and recover at regular size after pop.
+Existing Canvas gesture, kinetic, primitive edit, marker expiry and pointer suites
+verify integration. Nine generic demo tests cover all three chart families in normal,
+ordering and data modes, including short-height recovery, pop-to-empty and append.
+
+## Capture and source verification
+
+First complete run passed **288 feature images and 96 exact baseline comparisons**.
+Final-build replay also passed **288 feature images and 96 exact comparisons**:
+`target/series-data/accepted/{protocol,results}.json` and `captures-accepted.log`.
+Original results remain in `final/` and `captures.log`.
+The frozen sizes/DPR/backend/scenes are unchanged. Retained frames draw identically
+after pop, pane changes, transfer, removal and chart drop.
+
+Both the initial and final-build sets of **32 source comparisons passed**.
+The final replay is `target/series-data/oracles-accepted/results.json`; original logs remain in
+`oracles-final/`. Existing expectations are unchanged.
+
+Software calendar partial-pop at 800x500, strike empty selected data at 300x300 and
+maturity append-after-pop at 300x90 were visually inspected. Shared peers and private
+support retain the expected axes; the emptied selected series and its box disappear.
+A final-build wgpu strike append-after-pop frame at DPR 1.5 was also visually
+inspected and passed. Native mouse results passed as recorded below.
+
+## Native mouse acceptance
+
+| Backend | Calendar / strike / maturity | Result |
+|---|---|---|
+| tiny-skia | Pop/queries/append/reset, live navigation, axes, box edits at three sizes and short-height recovery | User reported all checks passed in all three modes; all windows closed normally (exit 0) |
+| wgpu | Same checks | User reported all checks passed in all three modes; all windows closed normally (exit 0) |
+
+Both user confirmations were received on 2026-10-18. Runs used the normal
+`pane_management --series-data --live-feed` demo, with `--options` for strike
+and `--yield-curve` for maturity, and explicit `ICED_BACKEND=tiny-skia` or
+`ICED_BACKEND=wgpu`. Checks included both blue built-in and typed custom selections,
+Pop 1/3/all, newest-first removed values, Append/Inspect/Reset, remaining empty until
+Append/Reset, and pop after pane transfer/order changes. Live-feed wheel zoom,
+diagonal dragging, price-axis wheel/drag and box move/resize/Escape passed at regular,
+narrow and the earlier problem size; short-height shrink/enlarge recovery passed.
+All six demo processes exited 0. Logs are
+`target/series-data/mouse-{calendar,price,yield}-{tiny-skia,wgpu}.log`.
+
+Do not infer physical acceptance from deterministic captures. Previous drawing-order
+mouse acceptance retains its own pending record; this milestone does not silently
+close it. Touchpad/touchscreen/high-DPI physical and historical timing gates also
+retain their previous status.
