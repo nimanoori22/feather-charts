@@ -664,6 +664,20 @@ indices and nonfinite/reversed ranges return `ChartError::InvalidDataQuery`.
 Maturity charts protect private support data and retain the established scaffold.
 See the [source contract and evidence](docs/porting/series-data.md).
 
+```bash
+cargo run --example pane_management -- --series-data --live-feed
+cargo run --example pane_management -- --series-data --options --live-feed
+cargo run --example pane_management -- --series-data --yield-curve --live-feed
+```
+
+Use the selected-series toggle, Pop 1/3/all, Append and Inspect controls. The
+readout reports removed values newest first, the canonical count, a nearest-right
+lookup at logical index 0 and range information for 0..10. Toolbars scroll
+horizontally. Feed ticks update surviving bars and do not resurrect an emptied
+series; use Append or Reset to restore data.
+
+## Price scales and runtime configuration
+
 Applications can read and set a pane's vertical range with `visible_price_range`
 and `set_visible_price_range`, control autoscaling with
 `set_price_scale_auto_scale`, and update an existing scale (including named
@@ -691,15 +705,3 @@ cargo run --example pane_management -- --price-scale-configuration --yield-curve
 
 Use `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to choose the native renderer.
 See the [configuration contract and evidence](docs/porting/price-scale-configuration.md).
-
-```bash
-cargo run --example pane_management -- --series-data --live-feed
-cargo run --example pane_management -- --series-data --options --live-feed
-cargo run --example pane_management -- --series-data --yield-curve --live-feed
-```
-
-Use the selected-series toggle, Pop 1/3/all, Append and Inspect controls. The
-readout reports removed values newest first, the canonical count, a nearest-right
-lookup at logical index 0 and range information for 0..10. Toolbars scroll
-horizontally. Feed ticks update surviving bars and do not resurrect an emptied
-series; use Append or Reset to restore data.

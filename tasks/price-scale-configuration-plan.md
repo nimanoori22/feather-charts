@@ -1,6 +1,6 @@
 # Public price-scale controls and runtime configuration
 
-Date: 2026-10-18. Status: proposed; implementation not started.
+Date: 2026-10-18. Status: implementation and verification in progress.
 Baseline: `ea7198a`. Checklist: [price-scale-configuration-todo.md](price-scale-configuration-todo.md).
 This uses the repository's feature-specific planning convention; existing plans
 and independent unfinished acceptance records remain intact.
