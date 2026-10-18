@@ -48,6 +48,9 @@ impl YieldCurveChart {
     pub fn scroll_to_real_time(&mut self) {
         self.core.scroll_to_real_time();
     }
+    pub fn remove_price_line(&mut self, id: PriceLineId) -> Result<(), ChartError> {
+        self.core.remove_price_line(id)
+    }
     pub fn last_value_data(
         &mut self,
         id: SeriesId,

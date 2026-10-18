@@ -148,3 +148,10 @@ The source probe likewise waits for rendering before checking direct synthetic
 notifications. Source viewport refresh may separately emit pointer callbacks;
 Rust retains its existing explicit `update` pointer-delivery boundary and owned
 range/layout notifications from `prepare`.
+
+The linked demo owns the second chart directly in its optional panel; it routes
+owned events through the host, with no cross-chart reference or callback cycle.
+The exact Iced Container height API was checked for the split layout. Flowsurface's
+separate crosshair-cache invalidation was consulted as a reference pattern, while
+source behavior and this port's existing selection/event boundary define the
+implementation. Both reference paths passed best-effort coverage checks.

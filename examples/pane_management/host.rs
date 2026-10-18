@@ -8,6 +8,17 @@ use feather_charts::model::{
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
 pub trait Host: region::RegionHost + Sized + 'static {
+    fn helper_action(
+        &mut self,
+        action: helpers::Action,
+        id: SeriesId,
+    ) -> Result<String, ChartError>;
+    fn synthetic(
+        &mut self,
+        id: SeriesId,
+        item: Option<&Self::Item>,
+        price: f64,
+    ) -> Result<(), ChartError>;
     fn fresh_screenshot(
         &mut self,
         layers: ScreenshotLayers,
@@ -121,6 +132,87 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn synthetic(
+            &mut self,
+            id: SeriesId,
+            item: Option<&Self::Item>,
+            price: f64,
+        ) -> Result<(), ChartError> {
+            if let Some(item) = item {
+                self.set_crosshair_at(id, item, price)?;
+            } else {
+                self.clear_crosshair_position()?;
+            }
+            Ok(())
+        }
+        fn helper_action(
+            &mut self,
+            action: helpers::Action,
+            id: SeriesId,
+        ) -> Result<String, ChartError> {
+            use helpers::Action;
+            match action {
+                Action::Range => self.set_visible_horizontal_range(HorizontalRange {
+                    from: Self::key(4),
+                    to: Self::key(18),
+                })?,
+                Action::Reset => self.reset_time_scale(),
+                Action::Live => self.scroll_to_real_time(),
+                Action::Invalid => {
+                    let before = self.visible_logical_range();
+                    assert!(
+                        self.set_visible_horizontal_range(HorizontalRange {
+                            from: Self::key(18),
+                            to: Self::key(4)
+                        })
+                        .is_err()
+                    );
+                    assert_eq!(self.visible_logical_range(), before);
+                    return Ok("Invalid reversed range rejected; current range preserved".into());
+                }
+                Action::Crosshair => {
+                    let price = self
+                        .last_value_data(id, true)?
+                        .map_or(4.5, |value| value.price);
+                    let placed = self.set_crosshair_at(id, &Self::key(12), price)?;
+                    return Ok(format!(
+                        "Synthetic crosshair placed={placed}; no pointer event emitted"
+                    ));
+                }
+                Action::Clear => self.clear_crosshair_position()?,
+                Action::Lines => {
+                    if let Some(line) = self.price_lines(id)?.first() {
+                        self.remove_price_line(*line)?;
+                    } else {
+                        self.add_price_line(id, PriceLineOptions::new(4.5))?;
+                    }
+                }
+                Action::Inspect | Action::Sync => {}
+            }
+            let range = self.visible_horizontal_range();
+            let logical = self.visible_logical_range();
+            let last = self.last_value_data(id, true)?;
+            let roundtrip = if let Some(last) = &last {
+                if let Some(y) = self.price_to_coordinate(id, last.price)? {
+                    self.coordinate_to_price(id, y)?
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+            let formatted =
+                self.with_series_formatter(id, |f| f.format(last.as_ref().map_or(4.5, |v| v.price)))?;
+            Ok(format!(
+                "{:?} pane={} scale={:?} lines={} item={range:?} logical={logical:?} last={:?} roundtrip={roundtrip:?} formatted={formatted}",
+                self.series_type(id)?,
+                self.series_pane(id)?,
+                self.series_price_scale(id)?,
+                self.price_lines(id)?.len(),
+                last.map(|v| v.price)
+            ))
+        }
+
         fn fresh_screenshot(
             &mut self,
             layers: ScreenshotLayers,

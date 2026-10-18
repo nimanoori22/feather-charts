@@ -340,3 +340,12 @@ edge-label alignment now follows the existing engine policy through public setti
 See [axis-interaction.md](axis-interaction.md) for final validation and acceptance;
 this does not resolve construction-only default-visible-scale configuration or
 any older device/timing exception.
+
+
+Milestone D follow-up: F06 now has checked owner range/navigation helpers,
+creation-order price-line enumeration, typed/scoped option and formatter reads,
+owned last values, current membership, price/domain conversions and silent
+synthetic crosshair placement. Scoped options deliberately preserve Rust callback
+ownership rather than reproducing JavaScript cloning. See
+[public-helpers.md](public-helpers.md) for individual dispositions and validation;
+this does not resolve other findings or older acceptance exceptions.

@@ -938,3 +938,47 @@ The [local 5.2.1 parity audit](docs/porting/public-parity-audit.md) records the
 remaining API, option-routing and edge-case differences after the feature roadmap.
 It includes a 374-member inventory and reproducible source/native diagnostics.
 The audit identifies gaps; its successful diagnostic command is not a parity pass.
+
+### Public queries and crosshair synchronization
+
+The reusable owner exposes `visible_logical_range`, `visible_horizontal_range`,
+`set_visible_horizontal_range`, `reset_time_scale`, `scroll_position` and
+`scroll_to_real_time` (the configured right offset, animated over 400 ms).
+Horizontal range endpoints are inclusive. Queries resolve current lazy range
+caches without consuming events or preparing a frame. Queued navigation settles at the next `prepare`.
+
+Use `series_pane`, `series_type`, `series_price_scale`, `price_lines` and
+`last_value_data` for checked current ownership/readbacks. IDs and returned values
+are owned; removed/foreign series are rejected. `with_series_options` and
+`with_series_formatter` provide scoped reads without copying application callbacks.
+Typed custom handles expose `with_options`, `with_formatter` and
+`with_view_options(&chart, ...)`; model reads survive detachment, view reads do not.
+Do not retain references from these scoped reads.
+
+`price_to_coordinate` and `coordinate_to_price` use the selected series' actual
+scale and visible first value, including log/percentage modes. Coordinates are
+pane-local; prepare after data, layout or scale changes. Empty/unavailable
+conversions return `None`. Horizontal conversion uses `horizontal_to_index`,
+`horizontal_to_coordinate`, `coordinate_to_horizontal`, `logical_to_coordinate`
+and `coordinate_to_logical`. The last two preserve source integer-index rounding;
+use primitive transforms for continuous drawing positions.
+
+`set_crosshair_at(series, &item, price)` and `clear_crosshair_position` emit no
+pointer event, so hosts can synchronize charts without event feedback. As in the
+source, the series selects the pane, its **default price scale** supplies Y, and
+horizontal lookup uses the next available item. This differs from series-specific
+price conversion when a pane has multiple scales. Placement returns `false` when
+no usable domain or scale exists.
+
+```sh
+cargo run --example pane_management -- --public-helpers --series-order --series-data --scale-assignment --screenshot-export --live-feed
+# Add --options, --yield-curve or --custom-domain for the other domains.
+```
+
+Select blue/custom, then try Items 4..18, Reset axis, Go live, Inspect,
+Add/remove line, Place/Clear crosshair, Invalid range and Sync. Inspect reports
+current ranges/ownership/formatting and a price round trip. Move the pointer on
+either chart to synchronize crosshairs; deliveries should stop while idle. Data,
+pane/scale transfers and export controls remain available. Reset the application
+between destructive sequences. Crosshair buttons target the main chart; linked
+updates follow actual pointer events.

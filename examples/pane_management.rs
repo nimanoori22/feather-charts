@@ -15,6 +15,10 @@ mod events;
 mod export;
 #[path = "pane_management/formatting.rs"]
 mod formatting;
+#[path = "pane_management/helper_captures.rs"]
+mod helper_captures;
+#[path = "pane_management/helpers.rs"]
+mod helpers;
 #[path = "pane_management/host.rs"]
 mod host;
 #[path = "numeric_custom_series/view.rs"]
@@ -47,6 +51,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    helpers: Option<helpers::Panel<C>>,
     axis_mode: bool,
     assignment: Option<scale_assignment::Panel>,
     formatting: Option<formatting::Panel>,
@@ -74,6 +79,8 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Helper(helpers::Action),
+    Peer(ChartMessage),
     Axis(axis_interaction::Action),
     Assign(scale_assignment::Action),
     Formatting(formatting::Action),
@@ -159,6 +166,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            helpers: None,
             axis_mode: false,
             assignment: None,
             formatting: None,
@@ -228,6 +236,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Helper(action) => self.helper_action(action)?,
             Message::Axis(action) => self.axis_action(action)?,
             Message::Assign(action) => self.assignment_action(action)?,
             Message::Formatting(action) => self.formatting_action(action)?,
@@ -277,6 +286,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let helper_mode = self.helpers.is_some();
                 let axis_mode = self.axis_mode;
                 let assignment = self.assignment.is_some();
                 let formatting = self.formatting.is_some();
@@ -291,6 +301,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if helper_mode {
+                    self.enable_helpers()?;
+                }
                 if axis_mode {
                     self.enable_axis()?;
                 }
@@ -327,6 +340,7 @@ impl<C: Host> App<C> {
     }
     fn consume_events(&mut self, events: Vec<ChartEvent<C::Item>>) {
         for event in events {
+            self.sync_helper_crosshair(&event);
             if let Some(m) = &mut self.events {
                 m.observe(&event);
             }
@@ -363,6 +377,11 @@ impl<C: Host> App<C> {
         if let Err(e) = self.chart.prepare(self.size, self.ratio, at) {
             self.status = e.to_string();
         }
+        if let Some(panel) = &mut self.helpers
+            && let Err(error) = panel.peer.prepare(panel.size, self.ratio, at)
+        {
+            panel.status = error.to_string();
+        }
         let events = self.chart.take_events();
         self.consume_events(events);
     }
@@ -376,6 +395,9 @@ impl<C: Host> App<C> {
                 self.prepare(Instant::now());
             }
             Message::Window(_, _) => {}
+            Message::Peer(m) => {
+                self.update_peer(m);
+            }
             Message::Chart(m) => {
                 if let ChartMessage::Bounds(s) = m {
                     self.size = s;
@@ -486,6 +508,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.helpers.is_some() {
+            content = content.push(self.helper_controls());
+        }
         if self.axis_mode {
             content = content.push(self.axis_controls());
         }
@@ -501,13 +526,26 @@ impl<C: Host> App<C> {
         if self.export.is_some() {
             content = content.push(self.export_controls());
         }
-        content
+        let content = content
             .push(text(owners).size(12).wrapping(text::Wrapping::None))
             .push(text(&self.status).size(12).wrapping(text::Wrapping::None))
-            .push(self.chart.core().element().map(Message::Chart))
-            .spacing(6)
-            .into()
+            .push(
+                iced::widget::container(self.chart.core().element().map(Message::Chart))
+                    .height(iced::Length::FillPortion(3)),
+            );
+        let content = if let Some(panel) = &self.helpers {
+            content
+                .push(text("Linked chart: move the pointer on either plot").size(12))
+                .push(
+                    iced::widget::container(panel.peer.core().element().map(Message::Peer))
+                        .height(iced::Length::FillPortion(1)),
+                )
+        } else {
+            content
+        };
+        content.spacing(6).into()
     }
+
     fn subscription(&self) -> Subscription<Message> {
         Subscription::batch([
             iced::window::events().map(|(id, e)| Message::Window(id, e)),
@@ -542,6 +580,7 @@ struct RunOptions {
     formatting: bool,
     assignment: bool,
     axis_mode: bool,
+    helpers: bool,
 }
 fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
     iced::application(
@@ -553,6 +592,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.helpers {
+                app.enable_helpers().unwrap();
+            }
             if options.axis_mode {
                 app.enable_axis().unwrap();
             }
@@ -618,6 +660,13 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args.iter().position(|a| a == "--public-helper-captures") {
+        helper_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--axis-interaction-captures") {
         axis_interaction::captures(
             std::path::Path::new(&args[i + 1]),
@@ -635,6 +684,7 @@ fn main() -> iced::Result {
         attribution: args.iter().any(|a| a == "--attribution"),
         formatting: args.iter().any(|a| a == "--formatting"),
         assignment: args.iter().any(|a| a == "--scale-assignment"),
+        helpers: args.iter().any(|a| a == "--public-helpers"),
         axis_mode: args.iter().any(|a| a == "--axis-interaction"),
     };
     if args.iter().any(|a| a == "--custom-domain") {

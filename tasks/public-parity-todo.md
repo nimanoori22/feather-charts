@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D is next.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D implementation in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -61,9 +61,9 @@ and its pinned evidence record.
 
 ### D — Reusable public helpers
 
-- [ ] D0: Add current range queries and horizontal navigation helpers. (depends: C3).
-- [ ] D1: Complete series and annotation readbacks. (depends: D0).
-- [ ] D2: Expose coordinate and domain-based crosshair helpers. (depends: D1).
+- [x] D0: Add current range queries and horizontal navigation helpers. (depends: C3).
+- [x] D1: Complete series and annotation readbacks. (depends: D0).
+- [x] D2: Expose coordinate and domain-based crosshair helpers. (depends: D1).
 - [ ] D3: Validate an external consumer and accept milestone D. (depends: D2).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 
