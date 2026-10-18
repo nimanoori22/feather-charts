@@ -5,6 +5,7 @@ mod markers;
 mod pane_management;
 mod price_lines;
 mod primitives;
+mod scale_assignment;
 
 use crate::model::{
     axis_snapshots::{
@@ -714,6 +715,14 @@ where
         side: PriceAxisSide,
         y: f64,
     ) -> Result<(), ChartModelError> {
+        self.start_scroll_price_on_scale(pane, &Self::axis_position(side), y)
+    }
+    pub(crate) fn start_scroll_price_on_scale(
+        &mut self,
+        pane: usize,
+        position: &PriceScalePosition,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
         use crate::model::price_scale::PriceScaleStatePatch;
         if !y.is_finite() {
             return Err(ChartModelError::InvalidPriceInteraction);
@@ -722,7 +731,9 @@ where
             .panes
             .get_mut(pane)
             .ok_or(ChartModelError::InvalidPane(pane))?;
-        let scale = state.axis_price_scale_mut(side);
+        let scale = state
+            .price_scale_mut_existing(position)
+            .ok_or_else(|| ChartModelError::Pane(PaneError::UnknownPriceScale(position.clone())))?;
         if scale.is_empty() || scale.is_percentage() || scale.is_indexed_to_100() {
             return Ok(());
         }
@@ -731,7 +742,7 @@ where
             ..Default::default()
         });
         state
-            .start_scroll_price(Self::axis_position(side), y.into())
+            .start_scroll_price(position.clone(), y.into())
             .map_err(ChartModelError::Pane)?;
         self.light_update();
         self.flush_effects();
@@ -744,6 +755,14 @@ where
         side: PriceAxisSide,
         y: f64,
     ) -> Result<(), ChartModelError> {
+        self.scroll_price_to_on_scale(pane, &Self::axis_position(side), y)
+    }
+    pub(crate) fn scroll_price_to_on_scale(
+        &mut self,
+        pane: usize,
+        position: &PriceScalePosition,
+        y: f64,
+    ) -> Result<(), ChartModelError> {
         if !y.is_finite() {
             return Err(ChartModelError::InvalidPriceInteraction);
         }
@@ -751,7 +770,7 @@ where
             .panes
             .get_mut(pane)
             .ok_or(ChartModelError::InvalidPane(pane))?
-            .scroll_price_to(Self::axis_position(side), y.into())
+            .scroll_price_to(position.clone(), y.into())
             .map_err(ChartModelError::Pane)?;
         self.consume_pane_effects(effects);
         self.flush_effects();
@@ -763,10 +782,17 @@ where
         pane: usize,
         side: PriceAxisSide,
     ) -> Result<(), ChartModelError> {
+        self.end_scroll_price_on_scale(pane, &Self::axis_position(side))
+    }
+    pub(crate) fn end_scroll_price_on_scale(
+        &mut self,
+        pane: usize,
+        position: &PriceScalePosition,
+    ) -> Result<(), ChartModelError> {
         self.panes
             .get_mut(pane)
             .ok_or(ChartModelError::InvalidPane(pane))?
-            .end_scroll_price(Self::axis_position(side))
+            .end_scroll_price(position.clone())
             .map_err(ChartModelError::Pane)?;
         Ok(())
     }
@@ -912,20 +938,19 @@ where
     pub fn replace_series_options(
         &mut self,
         id: SeriesId,
-        options: SeriesOptionsMap,
+        mut options: SeriesOptionsMap,
     ) -> Result<(), ChartModelError> {
-        let entry = self
-            .series
-            .get(&id)
-            .ok_or(ChartModelError::UnknownSeries(id))?;
-        let handle = entry
+        let target = self.preview_series_options(id, &options)?;
+        options.common_mut().price_scale_id = Some(target.id().into());
+        self.series[&id]
             .built_in()
-            .ok_or(ChartModelError::WrongUpdateKind(id))?;
-        handle
+            .expect("validated built-in")
             .borrow_mut()
             .replace_options(options)
             .map_err(ChartModelError::Construction)?;
-        self.panes[entry.pane].refresh_formatter_sources();
+        self.set_series_price_scale(id, target)?;
+        let pane = self.series[&id].pane;
+        self.panes[pane].refresh_formatter_sources();
         self.recalculate_requested = true;
         self.full_update();
         self.flush_effects();
@@ -964,7 +989,7 @@ where
         &mut self,
         id: SeriesId,
         kind: SeriesType,
-        options: SeriesOptionsMap,
+        mut options: SeriesOptionsMap,
         pane: usize,
         position: PriceScalePosition,
     ) -> Result<(), ChartModelError> {
@@ -972,6 +997,8 @@ where
         if kind == SeriesType::Custom {
             return Err(ChartModelError::CustomSeriesRequiresTypedRegistration);
         }
+        self.validate_scale_position(&position)?;
+        options.common_mut().price_scale_id = Some(position.id().into());
         let handle = Rc::new(RefCell::new(
             Series::new(id, kind, options).map_err(ChartModelError::Construction)?,
         ));
@@ -1000,6 +1027,11 @@ where
     ) -> Result<(), ChartModelError> {
         let id = handle.borrow().id();
         self.validate_registration(id, pane)?;
+        self.validate_scale_position(&position)?;
+        crate::model::series::projection::SeriesProjection::set_price_scale_id(
+            &mut *handle.borrow_mut(),
+            position.id().into(),
+        );
         let effects = self.panes[pane]
             .attach_custom_series(handle.clone(), position)
             .map_err(ChartModelError::Pane)?;

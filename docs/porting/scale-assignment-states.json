@@ -1,0 +1,222 @@
+[
+  {
+    "custom": false,
+    "stage": "initial",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "left",
+    "position": "left",
+    "option": "left",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "same-left",
+    "position": "left",
+    "option": "left",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "shared",
+    "position": "shared",
+    "option": "shared",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "other",
+    "position": "other",
+    "option": "other",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": true,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "empty",
+    "position": "",
+    "option": "",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": false,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "right",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": false,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "omitted",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": false,
+    "stage": "new-pane",
+    "position": "right",
+    "option": "right",
+    "order": 0,
+    "pane": 1,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": null
+  },
+  {
+    "custom": false,
+    "stage": "left-new-pane",
+    "position": "left",
+    "option": "left",
+    "order": 0,
+    "pane": 1,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": null
+  },
+  {
+    "custom": true,
+    "stage": "initial",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "left",
+    "position": "left",
+    "option": "left",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "same-left",
+    "position": "left",
+    "option": "left",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "shared",
+    "position": "shared",
+    "option": "shared",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "other",
+    "position": "other",
+    "option": "other",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": true,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "empty",
+    "position": "",
+    "option": "",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": false,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "right",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": false,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "omitted",
+    "position": "right",
+    "option": "right",
+    "order": 1,
+    "pane": 0,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": false
+  },
+  {
+    "custom": true,
+    "stage": "new-pane",
+    "position": "right",
+    "option": "right",
+    "order": 0,
+    "pane": 1,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": null
+  },
+  {
+    "custom": true,
+    "stage": "left-new-pane",
+    "position": "left",
+    "option": "left",
+    "order": 0,
+    "pane": 1,
+    "points": 3,
+    "oldOverlayAlive": null,
+    "sharedAuto": null
+  }
+]

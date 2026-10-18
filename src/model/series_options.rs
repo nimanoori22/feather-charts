@@ -545,6 +545,30 @@ pub enum SeriesOptionsMap {
     Histogram(HistogramSeriesOptions),
     Custom(CustomSeriesOptions),
 }
+impl SeriesOptionsMap {
+    pub(crate) fn common(&self) -> &SeriesOptionsCommon {
+        match self {
+            Self::Bar(o) => &o.common,
+            Self::Candlestick(o) => &o.common,
+            Self::Area(o) => &o.common,
+            Self::Baseline(o) => &o.common,
+            Self::Line(o) => &o.common,
+            Self::Histogram(o) => &o.common,
+            Self::Custom(o) => &o.common,
+        }
+    }
+    pub(crate) fn common_mut(&mut self) -> &mut SeriesOptionsCommon {
+        match self {
+            Self::Bar(o) => &mut o.common,
+            Self::Candlestick(o) => &mut o.common,
+            Self::Area(o) => &mut o.common,
+            Self::Baseline(o) => &mut o.common,
+            Self::Line(o) => &mut o.common,
+            Self::Histogram(o) => &mut o.common,
+            Self::Custom(o) => &mut o.common,
+        }
+    }
+}
 pub enum SeriesPartialOptionsMap {
     Bar(BarSeriesOptionsPatch),
     Candlestick(CandlestickSeriesOptionsPatch),

@@ -30,6 +30,23 @@ pub enum PriceScalePosition {
     Overlay(String),
 }
 
+impl PriceScalePosition {
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Left => LEFT_PRICE_SCALE_ID,
+            Self::Right => RIGHT_PRICE_SCALE_ID,
+            Self::Overlay(id) => id,
+        }
+    }
+    pub(crate) fn from_id(id: &str) -> Self {
+        match id {
+            LEFT_PRICE_SCALE_ID => Self::Left,
+            RIGHT_PRICE_SCALE_ID => Self::Right,
+            id => Self::Overlay(id.into()),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum DefaultVisiblePriceScale {
     Left,

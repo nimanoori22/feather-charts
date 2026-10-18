@@ -42,6 +42,13 @@ impl YieldCurveChart {
     pub fn apply_localization_options(&mut self, patch: LocalizationOptionsPatch<Maturity>) {
         self.core.apply_localization_options(patch);
     }
+    pub fn set_series_price_scale(
+        &mut self,
+        id: SeriesId,
+        position: PriceScalePosition,
+    ) -> Result<(), ChartError> {
+        self.core.set_series_price_scale(id, position)
+    }
     pub fn set_mouse_navigation_options(&mut self, options: MouseNavigationOptions) {
         self.core.set_mouse_navigation_options(options);
     }

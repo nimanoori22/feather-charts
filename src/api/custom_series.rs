@@ -93,6 +93,11 @@ where
     pub const fn id(&self) -> SeriesId {
         self.id
     }
+    /// Owned stored assignment, retained after detachment like the handle's data.
+    /// Use Chart::series_price_scale for checked current chart membership.
+    pub fn price_scale_id(&self) -> Option<String> {
+        self.model.borrow().options().common.price_scale_id.clone()
+    }
     pub fn data_at(&self, index: TimePointIndex) -> Option<V::Data> {
         let model = self.model.borrow();
         let at = model.rows().partition_point(|row| row.base.index < index);
@@ -367,6 +372,7 @@ impl<B: ChartBehavior> Chart<B> {
         <V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData: Clone + 'static,
     {
         validate_options(&options)?;
+        self.model.validate_scale_position(&position)?;
         let id = super::chart::NEXT_SERIES
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
             .map(SeriesId::new)
@@ -527,7 +533,7 @@ impl<B: ChartBehavior> Chart<B> {
     pub fn replace_custom_series_options<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        options: CustomSeriesOptions,
+        mut options: CustomSeriesOptions,
     ) -> Result<(), ChartError>
     where
         V: CustomSeriesPaneView<
@@ -539,7 +545,23 @@ impl<B: ChartBehavior> Chart<B> {
     {
         handle.attached_view(self)?;
         validate_options(&options)?;
+        let target = options
+            .common
+            .price_scale_id
+            .as_deref()
+            .map(PriceScalePosition::from_id)
+            .unwrap_or(self.model.series_price_scale(handle.id)?);
+        let changed = self.model.preview_scale_assignment(handle.id, &target)?;
+        if changed {
+            self.cancel_interaction();
+        }
+        options.common.price_scale_id = Some(target.id().into());
         handle.model.borrow_mut().replace_options(options);
+        self.model.set_series_price_scale(handle.id, target)?;
+        if changed {
+            self.last_hit = None;
+            self.last_primitive = None;
+        }
         // Reapply the typed owner handoff so pane autoscale and crosshair settle.
         self.model.custom_options_changed(handle.id);
         self.revision += 1;

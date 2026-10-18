@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B started on user instruction.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; B3 validation in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -35,9 +35,9 @@ GPU result is inferred. See formatting-evidence.json.
 
 ### B — Series price-scale assignment
 
-- [ ] B0: Freeze series-to-scale transfer semantics. (depends: A4).
-- [ ] B1: Implement one checked scale-transfer operation. (depends: B0).
-- [ ] B2: Route public series options through scale assignment. (depends: B1).
+- [x] B0: Freeze series-to-scale transfer semantics. (depends: A4).
+- [x] B1: Implement one checked scale-transfer operation. (depends: B0).
+- [x] B2: Route public series options through scale assignment. (depends: B1).
 - [ ] B3: Demonstrate scale assignment and accept milestone B. (depends: B2).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

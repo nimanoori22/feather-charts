@@ -214,15 +214,7 @@ fn matches_type(series_type: SeriesType, options: &SeriesOptionsMap) -> bool {
 }
 
 fn common(options: &SeriesOptionsMap) -> &SeriesOptionsCommon {
-    match options {
-        SeriesOptionsMap::Bar(options) => &options.common,
-        SeriesOptionsMap::Candlestick(options) => &options.common,
-        SeriesOptionsMap::Area(options) => &options.common,
-        SeriesOptionsMap::Baseline(options) => &options.common,
-        SeriesOptionsMap::Line(options) => &options.common,
-        SeriesOptionsMap::Histogram(options) => &options.common,
-        SeriesOptionsMap::Custom(options) => &options.common,
-    }
+    options.common()
 }
 
 /// The built-in source uses close values for single-value series and the
@@ -408,16 +400,22 @@ where
         &mut self,
         options: SeriesOptionsMap,
     ) -> Result<(), SeriesConstructionError> {
-        if !matches_type(self.series_type, &options) {
-            return Err(SeriesConstructionError::OptionsDoNotMatchSeriesType {
-                series_type: self.series_type,
-            });
-        }
-        validate_visual_options(&options)?;
+        self.validate_replacement_options(&options)?;
         self.formatter = formatter_for(&common(&options).price_format);
         self.options = options;
         self.invalidate_pane_data();
         Ok(())
+    }
+    pub(crate) fn validate_replacement_options(
+        &self,
+        options: &SeriesOptionsMap,
+    ) -> Result<(), SeriesConstructionError> {
+        if !matches_type(self.series_type, options) {
+            return Err(SeriesConstructionError::OptionsDoNotMatchSeriesType {
+                series_type: self.series_type,
+            });
+        }
+        validate_visual_options(options)
     }
     pub fn common_options(&self) -> &SeriesOptionsCommon {
         common(&self.options)

@@ -115,3 +115,31 @@ impl<B: ChartBehavior> Chart<B> {
         Ok(())
     }
 }
+
+impl<B: ChartBehavior> Chart<B> {
+    /// Fresh assignment in the series' current pane. Named overlays have no axis width.
+    pub fn series_price_scale(
+        &self,
+        id: crate::model::data_layer::SeriesId,
+    ) -> Result<PriceScalePosition, ChartError> {
+        self.kind(id)?;
+        Ok(self.model.series_price_scale(id)?)
+    }
+    /// Move the existing series without replacing its data, handles or annotations.
+    /// Missing overlays are created in the current pane. Equal assignments are inert.
+    pub fn set_series_price_scale(
+        &mut self,
+        id: crate::model::data_layer::SeriesId,
+        target: PriceScalePosition,
+    ) -> Result<(), ChartError> {
+        self.kind(id)?;
+        if !self.model.preview_scale_assignment(id, &target)? {
+            return Ok(());
+        }
+        self.cancel_interaction();
+        self.model.set_series_price_scale(id, target)?;
+        self.last_hit = None;
+        self.last_primitive = None;
+        Ok(())
+    }
+}

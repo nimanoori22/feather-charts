@@ -22,6 +22,7 @@ impl PlotRowLike for ProjectedRow<'_> {
 pub(crate) trait SeriesProjection<O> {
     fn id(&self) -> SeriesId;
     fn common_options(&self) -> &SeriesOptionsCommon;
+    fn set_price_scale_id(&mut self, id: String);
     fn series_type(&self) -> SeriesType;
     fn visible(&self) -> bool {
         self.common_options().visible
@@ -49,6 +50,10 @@ impl<I: Clone, O: Clone, M: Clone> SeriesProjection<O> for Series<I, O, M> {
     }
     fn common_options(&self) -> &SeriesOptionsCommon {
         self.common_options()
+    }
+    fn set_price_scale_id(&mut self, id: String) {
+        self.options.common_mut().price_scale_id = Some(id);
+        self.invalidate_pane_data();
     }
     fn series_type(&self) -> SeriesType {
         self.series_type()
@@ -106,6 +111,10 @@ impl<I, O, D, M> SeriesProjection<O> for CustomSeries<I, O, D, M> {
     }
     fn common_options(&self) -> &SeriesOptionsCommon {
         &self.options.common
+    }
+    fn set_price_scale_id(&mut self, id: String) {
+        self.options.common.price_scale_id = Some(id);
+        self.invalidate_pane_data();
     }
     fn series_type(&self) -> SeriesType {
         SeriesType::Custom

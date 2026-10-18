@@ -63,7 +63,7 @@ pub enum ChartEvent<T = Time> {
 }
 pub(crate) struct PlotPan {
     pub pane: usize,
-    side: PriceAxisSide,
+    scale: crate::model::pane::PriceScalePosition,
     anchor_y: f32,
     price_started: bool,
 }
@@ -106,14 +106,12 @@ impl<B: super::ChartBehavior> Chart<B> {
     }
     fn start_plot_pan(&mut self, pane: usize, start: iced::Point) {
         self.cancel_plot_pan();
-        let side = if self.model.panes()[pane].default_price_scale().id() == "left" {
-            PriceAxisSide::Left
-        } else {
-            PriceAxisSide::Right
-        };
+        let scale = crate::model::pane::PriceScalePosition::from_id(
+            self.model.panes()[pane].default_price_scale().id(),
+        );
         self.plot_pan = Some(PlotPan {
             pane,
-            side,
+            scale,
             anchor_y: start.y,
             price_started: false,
         });
@@ -122,13 +120,16 @@ impl<B: super::ChartBehavior> Chart<B> {
     fn move_plot_pan(&mut self, position: iced::Point) -> Result<(), ChartError> {
         if let Some(pan) = &mut self.plot_pan {
             if !pan.price_started && position.y != pan.anchor_y {
-                self.model
-                    .start_scroll_price(pan.pane, pan.side, f64::from(pan.anchor_y))?;
+                self.model.start_scroll_price_on_scale(
+                    pan.pane,
+                    &pan.scale,
+                    f64::from(pan.anchor_y),
+                )?;
                 pan.price_started = true;
             }
             if pan.price_started {
                 self.model
-                    .scroll_price_to(pan.pane, pan.side, f64::from(position.y))?;
+                    .scroll_price_to_on_scale(pan.pane, &pan.scale, f64::from(position.y))?;
             }
             self.model.scroll_time_to(f64::from(position.x).into());
         }
@@ -213,7 +214,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     fn cancel_plot_pan(&mut self) {
         self.model.end_scroll_time();
         if let Some(pan) = self.plot_pan.take() {
-            let _ = self.model.end_scroll_price(pan.pane, pan.side);
+            let _ = self.model.end_scroll_price_on_scale(pan.pane, &pan.scale);
         }
     }
     fn cancel_price_axis(&mut self) {

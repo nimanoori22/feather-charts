@@ -377,7 +377,16 @@ impl<B: ChartBehavior> Chart<B> {
         options: SeriesOptionsMap,
     ) -> Result<(), ChartError> {
         self.kind(id)?;
+        let target = self.model.preview_series_options(id, &options)?;
+        let changed = self.model.preview_scale_assignment(id, &target)?;
+        if changed {
+            self.cancel_interaction();
+        }
         self.model.replace_series_options(id, options)?;
+        if changed {
+            self.last_hit = None;
+            self.last_primitive = None;
+        }
         Ok(())
     }
     pub fn add_price_line(
