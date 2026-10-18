@@ -5,6 +5,8 @@ mod captures;
 mod configuration;
 #[path = "pane_management/data.rs"]
 mod data;
+#[path = "pane_management/events.rs"]
+mod events;
 #[path = "pane_management/host.rs"]
 mod host;
 #[path = "numeric_custom_series/view.rs"]
@@ -31,6 +33,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    events: Option<events::Monitor>,
     config_mode: bool,
     config_pane: usize,
     config_left: bool,
@@ -52,6 +55,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Events(events::Action),
     Config(configuration::Action),
     Chart(ChartMessage),
     Window(iced::window::Id, iced::window::Event),
@@ -131,6 +135,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            events: None,
             config_mode: false,
             config_pane: 0,
             config_left: false,
@@ -194,6 +199,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Events(action) => self.event_action(action)?,
             Message::Config(action) => self.configuration_action(action)?,
             Message::Pop(count) => self.pop_selected(count)?,
             Message::Append => self.append_selected()?,
@@ -238,11 +244,12 @@ impl<C: Host> App<C> {
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
-                *self = Self::with_configuration(
+                *self = Self::with_public_events(
                     live,
                     self.order_mode,
                     self.data_mode,
                     self.config_mode,
+                    self.events.is_some(),
                 );
                 self.size = size;
                 self.ratio = ratio;
@@ -266,10 +273,39 @@ impl<C: Host> App<C> {
         }
         Ok(())
     }
+    fn consume_events(&mut self, events: Vec<ChartEvent<C::Item>>) {
+        for event in events {
+            if let Some(m) = &mut self.events {
+                m.observe(&event);
+            }
+            match event {
+                ChartEvent::DataChanged { .. }
+                | ChartEvent::DoubleClick(_)
+                | ChartEvent::VisibleLogicalRangeChanged(_)
+                | ChartEvent::VisibleHorizontalRangeChanged(_)
+                | ChartEvent::HorizontalAxisSizeChanged { .. } => {}
+                ChartEvent::PrimitiveEdit(e) => {
+                    if let Err(e) = self.region.edit(&mut self.chart, &e) {
+                        self.status = e.to_string();
+                    }
+                }
+                ChartEvent::Click(p) | ChartEvent::CrosshairMoved(p) => {
+                    let data = p.custom_data(&self.custom).map(|d| d.value);
+                    let hit = p.custom_hit_data(&self.custom);
+                    self.status = format!(
+                        "Pane {:?} time={:?} original={data:?} hit={hit:?}",
+                        p.pane, p.time
+                    );
+                }
+            }
+        }
+    }
     fn prepare(&mut self, at: Instant) {
         if let Err(e) = self.chart.prepare(self.size, self.ratio, at) {
             self.status = e.to_string();
         }
+        let events = self.chart.take_events();
+        self.consume_events(events);
     }
     fn update(&mut self, m: Message) -> Task<Message> {
         match m {
@@ -287,23 +323,7 @@ impl<C: Host> App<C> {
                 }
                 match self.chart.update(m) {
                     Ok(events) => {
-                        for event in events {
-                            match event {
-                                ChartEvent::PrimitiveEdit(e) => {
-                                    if let Err(e) = self.region.edit(&mut self.chart, &e) {
-                                        self.status = e.to_string();
-                                    }
-                                }
-                                ChartEvent::Click(p) | ChartEvent::CrosshairMoved(p) => {
-                                    let data = p.custom_data(&self.custom).map(|d| d.value);
-                                    let hit = p.custom_hit_data(&self.custom);
-                                    self.status = format!(
-                                        "Pane {:?} time={:?} original={data:?} hit={hit:?}",
-                                        p.pane, p.time
-                                    );
-                                }
-                            }
-                        }
+                        self.consume_events(events);
                     }
                     Err(e) => self.status = e.to_string(),
                 }
@@ -405,6 +425,7 @@ impl<C: Host> App<C> {
             } else {
                 row![].into()
             },
+            self.event_controls(),
             text(owners).size(12).wrapping(text::Wrapping::None),
             text(&self.status).size(12).wrapping(text::Wrapping::None),
             self.chart.core().element().map(Message::Chart)
@@ -428,10 +449,11 @@ fn run<C: Host>(
     ordered: bool,
     data: bool,
     config: bool,
+    events: bool,
     title: &'static str,
 ) -> iced::Result {
     iced::application(
-        move || App::<C>::with_configuration(live, ordered, data, config),
+        move || App::<C>::with_public_events(live, ordered, data, config, events),
         App::update,
         App::view,
     )
@@ -448,9 +470,11 @@ fn main() -> iced::Result {
             args.iter().any(|a| a == "--series-order"),
             args.iter().any(|a| a == "--series-data"),
             args.iter().any(|a| a == "--price-scale-configuration"),
+            args.iter().any(|a| a == "--public-events"),
         );
         return Ok(());
     }
+    let events = args.iter().any(|a| a == "--public-events");
     let config = args.iter().any(|a| a == "--price-scale-configuration");
     let data = args.iter().any(|a| a == "--series-data");
     let ordered = args.iter().any(|a| a == "--series-order");
@@ -461,6 +485,7 @@ fn main() -> iced::Result {
             ordered,
             data,
             config,
+            events,
             "Feather Charts — maturity pane management",
         )
     } else if args.iter().any(|a| a == "--options") {
@@ -469,6 +494,7 @@ fn main() -> iced::Result {
             ordered,
             data,
             config,
+            events,
             "Feather Charts — strike pane management",
         )
     } else {
@@ -477,6 +503,7 @@ fn main() -> iced::Result {
             ordered,
             data,
             config,
+            events,
             "Feather Charts — calendar pane management",
         )
     }

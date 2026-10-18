@@ -71,6 +71,30 @@ lifetime restriction on the generic engine's horizontal-item type.
 
 ## Validation and remaining work
 
-The real source probe currently passes source-only. Native tests, demo, full source
-suite, backend captures and physical mouse acceptance are pending. Earlier timing,
+The native/source data and range sequences pass. Focused native, Canvas cancellation,
+custom ownership and demo controls pass. Full-source rerun, final backend captures
+and physical mouse acceptance are pending. Earlier timing,
 drawing-order and unavailable-device exceptions remain independent.
+
+## Frozen acceptance matrix
+
+Three modes (calendar, price, yield), four scenes (initial, data-change,
+fractional, hidden), three chart sizes (800x500, 300x300, 300x90), DPR
+1/1.25/1.5/2, and two asserted actual backends (tiny-skia/wgpu): 288 feature
+images. Each scene asserts event scopes/counts or range/size causes and then
+asserts no idle events. Retained frames must draw identically after mutations,
+reorder, transfer, removal and owner drop. The runner also requires 96 unchanged
+compatibility images from the previously accepted baseline; prior gates remain.
+
+Initial all-target tests passed. The first source runner timed out at conflation
+while its Cargo child waited behind concurrent build work; the 180-second limit
+and checks were retained for an uncontended retry. Logs are retained under
+`target/public-events`. Review added deterministic regression cases for plot pairing
+cancellation, including release outside and divider hit priority.
+
+A final cancellation-order regression reproduced `[range, logical, cancellation,
+data]` when clearing a series during a captured box edit. Cancellation now enters
+the same queue immediately, yielding `[cancellation, range, logical, data]`. This
+also removes the old separate edit-event queue. A boolean retains the existing
+animation wake-up condition until the consuming drain. The regression and original
+edit/autoscale suites verify the corrected behavior.

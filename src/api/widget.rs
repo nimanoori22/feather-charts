@@ -374,6 +374,15 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 })
             })
         });
+        if over_divider
+            && matches!(
+                event,
+                canvas::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Left))
+            )
+        {
+            state.click = None;
+            state.click_sequence.cancel();
+        }
         let plot_dragging = if self.multi.is_some() {
             state.multi_input.is_dragging()
         } else {
@@ -386,6 +395,8 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                     .update(event, local, self.axis_layouts(), &self.axis_scaling)
             {
                 state.touch_input.cancel(now);
+                state.click = None;
+                state.click_sequence.cancel();
                 return Some(self.publish(ChartMessage::PriceAxis(action)).and_capture());
             }
             if state.axis_input.is_dragging() && matches!(event, canvas::Event::Mouse(_)) {

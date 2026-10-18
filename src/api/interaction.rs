@@ -351,7 +351,6 @@ impl<B: super::ChartBehavior> Chart<B> {
             self.model.crosshair().position(),
             self.model.crosshair().origin(),
         );
-        self.flush_edit_events();
         let mut clicked = None;
         let mut double_click = false;
         let mut now = Instant::now();
@@ -471,7 +470,6 @@ impl<B: super::ChartBehavior> Chart<B> {
             return Ok(self.take_events());
         }
         self.prepare(self.size, self.ratio, now)?;
-        self.flush_edit_events();
         if let Some((pane, position)) = clicked {
             let pointer = self.pointer_event_at(
                 Some(pane),

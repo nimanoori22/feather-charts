@@ -192,7 +192,8 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub(super) fn cancel_primitive_edit(&mut self, reason: PrimitiveEditCancelReason) {
         if let Some(mut event) = self.finish_primitive_edit() {
             event.phase = PrimitiveEditPhase::Cancel(reason);
-            self.pending_primitive_edits.push(event);
+            self.pending_edit_cancellation = true;
+            self.push_event(super::ChartEvent::PrimitiveEdit(event));
         }
     }
     pub(super) fn cancel_primitive_edit_for(

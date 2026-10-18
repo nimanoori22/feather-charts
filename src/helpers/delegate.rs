@@ -251,6 +251,18 @@ mod tests {
     };
 
     #[test]
+    fn payload_can_borrow_while_the_listener_owns_its_captures() {
+        let text = String::from("borrowed payload");
+        let delegate = Delegate::new();
+        let received = Rc::new(RefCell::new(String::new()));
+        let output = received.clone();
+        let _subscription =
+            delegate.subscribe(move |event: &&str| output.borrow_mut().push_str(event));
+        delegate.emit(&text.as_str());
+        assert_eq!(*received.borrow(), text);
+    }
+
+    #[test]
     fn subscribe_then_emit_runs_callback() {
         let delegate = Delegate::new();
         let received = Rc::new(Cell::new(0));

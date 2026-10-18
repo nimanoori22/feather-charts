@@ -42,7 +42,7 @@ def main(feature='series-order'):
         'fixtures': {str(p): digest(p) for p in fixtures},
         'vendor_sources': {str(p): digest(p) for p in sorted(Path('vendor').rglob('*.rs'))},
         'fontconfig_identity': fonts,
-        'modes': ['calendar', 'price', 'yield'], 'scenes': ({'series-order': ['initial','reordered','hovered','transferred-reordered'], 'series-data': ['initial','partial-pop','empty','append-after-pop'], 'price-scale-configuration':['automatic','manual','live-manual','restored','appearance','log-manual']}[feature]),
+        'modes': ['calendar', 'price', 'yield'], 'scenes': ({'series-order': ['initial','reordered','hovered','transferred-reordered'], 'series-data': ['initial','partial-pop','empty','append-after-pop'], 'public-events':['initial','data-change','fractional','hidden'], 'price-scale-configuration':['automatic','manual','live-manual','restored','appearance','log-manual']}[feature]),
         'sizes': [[800, 500], [300, 300], [300, 90]], 'dpr': [1, 1.25, 1.5, 2],
         'clock': 'Feed and peer pulse disabled; frames are immutable snapshots.',
     }

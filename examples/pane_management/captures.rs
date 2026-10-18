@@ -3,7 +3,14 @@ use iced::advanced::{
     graphics::geometry::Renderer as _,
     renderer::{Headless, Renderer as _},
 };
-pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool, config: bool) {
+pub fn run(
+    dir: &std::path::Path,
+    wgpu: bool,
+    ordered: bool,
+    data: bool,
+    config: bool,
+    events: bool,
+) {
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
         iced::Font::DEFAULT,
         iced::Pixels(12.),
@@ -17,9 +24,30 @@ pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool, config:
         ),
         "backend fallback"
     );
-    capture::<Chart>(&mut renderer, &dir.join("calendar"), ordered, data, config);
-    capture::<OptionsChart>(&mut renderer, &dir.join("price"), ordered, data, config);
-    capture::<YieldCurveChart>(&mut renderer, &dir.join("yield"), ordered, data, config);
+    capture::<Chart>(
+        &mut renderer,
+        &dir.join("calendar"),
+        ordered,
+        data,
+        config,
+        events,
+    );
+    capture::<OptionsChart>(
+        &mut renderer,
+        &dir.join("price"),
+        ordered,
+        data,
+        config,
+        events,
+    );
+    capture::<YieldCurveChart>(
+        &mut renderer,
+        &dir.join("yield"),
+        ordered,
+        data,
+        config,
+        events,
+    );
 }
 fn capture<C: Host>(
     renderer: &mut iced::Renderer,
@@ -27,11 +55,14 @@ fn capture<C: Host>(
     ordered: bool,
     data: bool,
     config: bool,
+    events: bool,
 ) {
     std::fs::create_dir_all(dir).unwrap();
     for (w, h) in [(800., 500.), (300., 300.), (300., 90.)] {
         for ratio in [1., 1.25, 1.5, 2.] {
-            let scenes: &[&str] = if config {
+            let scenes: &[&str] = if events {
+                &["initial", "data-change", "fractional", "hidden"]
+            } else if config {
                 &[
                     "automatic",
                     "manual",
@@ -55,7 +86,7 @@ fn capture<C: Host>(
                 ]
             };
             for &scene in scenes {
-                let mut app = App::<C>::with_configuration(false, ordered, data, config);
+                let mut app = App::<C>::with_public_events(false, ordered, data, config, events);
                 app.size = Size::new(w, h);
                 app.ratio = ratio;
                 let action = match scene {
@@ -111,6 +142,67 @@ fn capture<C: Host>(
                 }
                 let now = Instant::now();
                 app.chart.prepare(app.size, ratio, now).unwrap();
+                if events {
+                    let initial = app.chart.take_events();
+                    assert!(
+                        initial
+                            .iter()
+                            .any(|e| matches!(e, ChartEvent::HorizontalAxisSizeChanged { .. }))
+                    );
+                    assert!(
+                        initial
+                            .iter()
+                            .any(|e| matches!(e, ChartEvent::VisibleLogicalRangeChanged(_)))
+                    );
+                    if scene == "data-change" {
+                        app.event_action(events::Action::Replace).unwrap();
+                        app.event_action(events::Action::Change).unwrap();
+                    }
+                    if scene == "fractional" {
+                        app.event_action(events::Action::Fractional).unwrap();
+                    }
+                    if scene == "hidden" {
+                        app.event_action(events::Action::Axis).unwrap();
+                    }
+                    app.chart.prepare(app.size, ratio, now).unwrap();
+                    let emitted = app.chart.take_events();
+                    if scene == "data-change" {
+                        let data: Vec<_> = emitted
+                            .iter()
+                            .filter_map(|e| match e {
+                                ChartEvent::DataChanged { series, scope } => {
+                                    assert_eq!(*series, app.line);
+                                    Some(*scope)
+                                }
+                                _ => None,
+                            })
+                            .collect();
+                        assert_eq!(data, [DataChangeScope::Full, DataChangeScope::Update]);
+                    }
+                    if scene == "fractional" {
+                        assert!(
+                            emitted
+                                .iter()
+                                .any(|e| matches!(e, ChartEvent::VisibleLogicalRangeChanged(_)))
+                        );
+                    }
+                    if scene == "hidden" {
+                        assert!(emitted.iter().any(|e| matches!(
+                            e,
+                            ChartEvent::HorizontalAxisSizeChanged {
+                                width: 0.,
+                                height: 0.
+                            }
+                        )));
+                    }
+                    app.chart.prepare(app.size, ratio, now).unwrap();
+                    assert!(app.chart.take_events().is_empty(), "idle events");
+                    std::fs::write(
+                        dir.join(format!("{scene}-{w}x{h}-{ratio}.events")),
+                        format!("initial={initial:?}\noperation={emitted:?}\n"),
+                    )
+                    .unwrap();
+                }
                 if config {
                     let auto = app
                         .chart

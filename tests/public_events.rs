@@ -418,3 +418,206 @@ fn source_range_sequence() {
     println!("RANGES_REFERENCE [{}]", result.join(","));
     assert_eq!(result.len(), 5);
 }
+
+#[test]
+fn calendar_range_endpoints_retain_original_strings() {
+    let mut c = Chart::default();
+    let id = add(&mut c);
+    let dates = [Time::from("2024-01-02"), Time::from("2024-01-05")];
+    let rows = dates
+        .iter()
+        .enumerate()
+        .map(|(i, time)| {
+            let mut item = row(i as f64 + 1., i as f64 + 10.);
+            *item.time_mut() = time.clone();
+            item
+        })
+        .collect();
+    c.set_data(id, rows).unwrap();
+    c.set_event_interests(EventInterests {
+        visible_horizontal_range: true,
+        ..Default::default()
+    });
+    c.fit_content();
+    c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+        .unwrap();
+    let ranges: Vec<_> = c
+        .take_events()
+        .into_iter()
+        .filter_map(|e| match e {
+            ChartEvent::VisibleHorizontalRangeChanged(Some(r)) => Some(r),
+            _ => None,
+        })
+        .collect();
+    assert!(!ranges.is_empty());
+    for range in ranges {
+        assert_eq!(range.from, dates[0]);
+        assert_eq!(range.to, dates[1]);
+    }
+}
+
+#[test]
+fn cancelled_native_sequences_never_pair_with_the_next_plot_click() {
+    use iced::{
+        Point, Rectangle, mouse,
+        widget::canvas::{Event, Program},
+    };
+    fn send(c: &mut Chart, state: &mut ChartState, event: Event, p: Point) -> Vec<ChartEvent> {
+        let message = c
+            .program(std::convert::identity)
+            .update(
+                state,
+                &event,
+                Rectangle::with_size(iced::Size::new(800., 500.)),
+                mouse::Cursor::Available(p),
+            )
+            .and_then(|a| a.into_inner().0);
+        message.map_or_else(Vec::new, |m| c.update(m).unwrap())
+    }
+    fn click(c: &mut Chart, state: &mut ChartState, p: Point) -> Vec<ChartEvent> {
+        send(
+            c,
+            state,
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+            p,
+        );
+        send(
+            c,
+            state,
+            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+            p,
+        )
+    }
+    let p = Point::new(200., 100.);
+    for cause in [
+        "drag", "leave", "focus", "revision", "outside", "axis", "divider",
+    ] {
+        let mut c = Chart::default();
+        let id = add(&mut c);
+        c.set_data(id, vec![row(1., 1.), row(2., 2.)]).unwrap();
+        c.fit_content();
+        if cause == "divider" {
+            c.add_pane();
+        }
+        c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+            .unwrap();
+        c.set_event_interests(EventInterests {
+            double_click: true,
+            ..Default::default()
+        });
+        let mut state = ChartState::default();
+        assert!(
+            click(&mut c, &mut state, p)
+                .iter()
+                .any(|e| matches!(e, ChartEvent::Click(_)))
+        );
+        match cause {
+            "drag" => {
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+                    p,
+                );
+                let moved = Point::new(230., 120.);
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::CursorMoved { position: moved }),
+                    moved,
+                );
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+                    moved,
+                );
+            }
+            "leave" => {
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::CursorLeft),
+                    p,
+                );
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::CursorEntered),
+                    p,
+                );
+            }
+            "focus" => {
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Window(iced::window::Event::Unfocused),
+                    p,
+                );
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Window(iced::window::Event::Focused),
+                    p,
+                );
+            }
+            "revision" => {
+                c.add_pane();
+                c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+                    .unwrap();
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Window(iced::window::Event::RedrawRequested(
+                        std::time::Instant::now(),
+                    )),
+                    p,
+                );
+            }
+            "outside" => {
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+                    p,
+                );
+                send(
+                    &mut c,
+                    &mut state,
+                    Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+                    Point::new(-100., 100.),
+                );
+            }
+            "divider" => {
+                let y = c.multi_frame().unwrap().layout.separators[0].origin.y as f32 - 2.;
+                let events = click(&mut c, &mut state, Point::new(200., y));
+                assert!(
+                    !events
+                        .iter()
+                        .any(|e| matches!(e, ChartEvent::Click(_) | ChartEvent::DoubleClick(_))),
+                    "divider cannot click the plot"
+                );
+            }
+            "axis" => {
+                let events = click(&mut c, &mut state, Point::new(795., 100.));
+                assert!(
+                    !events
+                        .iter()
+                        .any(|e| matches!(e, ChartEvent::Click(_) | ChartEvent::DoubleClick(_)))
+                );
+            }
+            _ => unreachable!(),
+        }
+        let events = click(&mut c, &mut state, p);
+        assert!(
+            events.iter().any(|e| matches!(e, ChartEvent::Click(_))),
+            "{cause}: {events:?}"
+        );
+        assert!(
+            !events
+                .iter()
+                .any(|e| matches!(e, ChartEvent::DoubleClick(_))),
+            "{cause}"
+        );
+    }
+}

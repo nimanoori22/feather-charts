@@ -78,6 +78,80 @@ fn prepare(chart: &mut Chart) {
 }
 
 #[test]
+fn data_notifications_survive_edit_fast_return_and_failed_preparation() {
+    use feather_charts::api::{ChartEvent, ChartMessage, ChartState, EventInterests};
+    let (mut chart, _, _) = setup_edit();
+    let series = chart.series_ids().next().unwrap();
+    chart.set_event_interests(EventInterests {
+        data_changed: true,
+        ..Default::default()
+    });
+    chart
+        .set_data(series, chart.series_data(series).unwrap())
+        .unwrap();
+    let mut state = ChartState::default();
+    let message = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+    let events = chart.update(message).unwrap();
+    assert!(matches!(
+        events.first(),
+        Some(ChartEvent::DataChanged { .. })
+    ));
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, ChartEvent::PrimitiveEdit(_)))
+    );
+    assert!(chart.take_events().is_empty());
+    chart
+        .set_data(series, chart.series_data(series).unwrap())
+        .unwrap();
+    assert!(
+        chart
+            .prepare(Size::new(640., 480.), 0., Instant::now())
+            .is_err()
+    );
+    let events = chart.take_events();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|e| matches!(e, ChartEvent::DataChanged { .. }))
+            .count(),
+        1
+    );
+    assert!(chart.take_events().is_empty());
+    assert!(
+        chart
+            .update(ChartMessage::Click {
+                pane: 999,
+                position: Point::ORIGIN
+            })
+            .is_err()
+    );
+}
+
+#[test]
+fn edit_cancellation_precedes_later_range_and_data_notifications() {
+    use feather_charts::api::{ChartEvent, ChartState, EventInterests, PrimitiveEditPhase};
+    let (mut chart, _, _) = setup_edit();
+    let series = chart.series_ids().next().unwrap();
+    chart.set_event_interests(EventInterests::ALL);
+    let mut state = ChartState::default();
+    let message = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+    chart.update(message).unwrap();
+    chart.set_data(series, vec![]).unwrap();
+    let events = chart.take_events();
+    assert!(
+        matches!(events.first(),Some(ChartEvent::PrimitiveEdit(e)) if matches!(e.phase,PrimitiveEditPhase::Cancel(_))),
+        "{events:?}"
+    );
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(e, ChartEvent::DataChanged { .. }))
+    );
+}
+
+#[test]
 fn appearance_patch_preserves_edit_and_autoscale_restoration() {
     use feather_charts::{api::*, model::price_scale::PriceScaleOptionsPatch};
     let (mut chart, _, _) = setup_edit();

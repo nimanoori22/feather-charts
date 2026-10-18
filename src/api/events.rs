@@ -62,18 +62,10 @@ impl<B: ChartBehavior> Chart<B> {
     /// Consumes the same stream returned by `update`. Drain after each batch when
     /// interests are enabled; the queue is lossless and has no implicit size cap.
     pub fn take_events(&mut self) -> Vec<ChartEvent<B::Item>> {
-        self.flush_edit_events();
+        self.pending_edit_cancellation = false;
         std::mem::take(&mut *self.pending_events.borrow_mut())
     }
-    pub(super) fn flush_edit_events(&mut self) {
-        self.pending_events.borrow_mut().extend(
-            self.pending_primitive_edits
-                .drain(..)
-                .map(ChartEvent::PrimitiveEdit),
-        );
-    }
     pub(super) fn push_event(&mut self, event: ChartEvent<B::Item>) {
-        self.flush_edit_events();
         self.pending_events.borrow_mut().push(event);
     }
     pub(super) fn data_changed(&mut self, series: SeriesId, scope: DataChangeScope) {

@@ -89,7 +89,7 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub(super) up_down:
         BTreeMap<super::PrimitiveId, super::up_down_markers::Controller<B::Item, B::Key>>,
     pub(super) primitive_edit: Option<super::primitive_editing::EditSession>,
-    pub(super) pending_primitive_edits: Vec<super::PrimitiveEditEvent>,
+    pub(super) pending_edit_cancellation: bool,
     pub(crate) extension_order: u64,
     pub(crate) marker_orders: BTreeMap<super::MarkerCollectionId, u64>,
     pub(super) last_primitive: Option<super::PrimitiveHit>,
@@ -165,7 +165,7 @@ impl<B: ChartBehavior> Chart<B> {
             last_axis_size: None,
             up_down: BTreeMap::new(),
             primitive_edit: None,
-            pending_primitive_edits: vec![],
+            pending_edit_cancellation: false,
             extension_order: 0,
             marker_orders: BTreeMap::new(),
             last_primitive: None,
@@ -593,7 +593,7 @@ impl<B: ChartBehavior> Chart<B> {
         };
         self.controller.is_active()
             || changed
-            || !self.pending_primitive_edits.is_empty()
+            || self.pending_edit_cancellation
             || self.has_pending_conflation()
     }
     pub fn fit_content(&mut self) {

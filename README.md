@@ -705,3 +705,41 @@ cargo run --example pane_management -- --price-scale-configuration --yield-curve
 
 Use `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to choose the native renderer.
 See the [configuration contract and evidence](docs/porting/price-scale-configuration.md).
+
+## Public application events
+
+Enable `EventInterests` for data changes, plot double-clicks, visible logical and
+original-item horizontal ranges, and horizontal-axis dimensions. These additions
+default to off. Existing click, crosshair and edit events remain enabled.
+
+```rust
+# use feather_charts::api::{Chart, EventInterests};
+let mut chart = Chart::default();
+chart.set_event_interests(EventInterests::ALL);
+// Apply a batch of setters and prepare the frame, then:
+for event in chart.take_events() {
+    // React after the mutable chart borrow ends.
+    println!("{event:?}");
+}
+```
+
+`Chart::update` returns and consumes the same queue. Process that returned batch;
+do not expect it again in `take_events`. Enabled hosts must drain after every
+batch: the API queue is lossless and uncapped. Events own their payloads; a data
+event contains a series ID and `Full`/`Update` scope. Guard range equality when
+linking charts or loading history in reaction to events.
+
+Try event counters, family toggles, equal replacement, latest change, fractional
+offset and axis visibility, with pop/append and pane controls:
+
+```sh
+cargo run --example pane_management -- --public-events --live-feed
+cargo run --example pane_management -- --public-events --options --live-feed
+cargo run --example pane_management -- --public-events --yield-curve --live-feed
+```
+
+The demo keeps only twelve history summaries; API delivery remains lossless.
+Exhaustive matches on `ChartEvent`, `ChartMessage` and `TouchAction` must handle
+the added variants. With double-click interest enabled, a successful second plot
+click/tap produces `DoubleClick` instead of another `Click`; default input behavior
+is unchanged. See the [event contract and evidence](docs/porting/public-events.md).

@@ -1,6 +1,6 @@
 # Additional public chart events
 
-Date: 2026-10-18. Status: proposed; implementation not started.
+Date: 2026-10-18. Status: implementing; core API checkpoint `f17b20d`.
 Baseline: `dd3f1c8`. Checklist: [public-events-todo.md](public-events-todo.md).
 Use the existing feature-specific planning convention. Earlier plans and their
 independent acceptance records remain intact.

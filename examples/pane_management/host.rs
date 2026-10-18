@@ -8,6 +8,10 @@ use feather_charts::model::{
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
 pub trait Host: region::RegionHost + Sized + 'static {
+    fn interests(&mut self, interests: EventInterests);
+    fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>>;
+    fn axis_visible(&mut self, visible: bool);
+    fn offset(&mut self, offset: f64);
     fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError>;
     fn set_range(
         &mut self,
@@ -91,6 +95,23 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn interests(&mut self, interests: EventInterests) {
+            self.set_event_interests(interests);
+        }
+        fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>> {
+            self.take_events()
+        }
+        fn axis_visible(&mut self, visible: bool) {
+            self.apply_time_scale_options(
+                feather_charts::model::time_scale_options::HorzScaleOptionsPatch {
+                    visible: Some(visible),
+                    ..Default::default()
+                },
+            );
+        }
+        fn offset(&mut self, offset: f64) {
+            self.set_right_offset(offset);
+        }
         fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
             self.apply_chart_options(patch)
         }
