@@ -98,3 +98,80 @@ the same queue immediately, yielding `[cancellation, range, logical, data]`. Thi
 also removes the old separate edit-event queue. A boolean retains the existing
 animation wake-up condition until the consuming drain. The regression and original
 edit/autoscale suites verify the corrected behavior.
+
+## Files changed
+
+- `README.md`
+- `docs/porting/public-events-baseline.json`
+- `docs/porting/public-events-source.json`
+- `docs/porting/public-events-states.json`
+- `docs/porting/public-events.md`
+- `examples/options_chart.rs`
+- `examples/pane_management.rs`
+- `examples/pane_management/captures.rs`
+- `examples/pane_management/events.rs`
+- `examples/pane_management/host.rs`
+- `examples/public_chart.rs`
+- `examples/support/chart_demo.rs`
+- `examples/yield_curve.rs`
+- `scripts/capture_public_events.py`
+- `scripts/capture_series_order.py`
+- `scripts/check_public_events_reference.cjs`
+- `src/api/chart.rs`
+- `src/api/click_sequence.rs`
+- `src/api/custom_series.rs`
+- `src/api/events.rs`
+- `src/api/interaction.rs`
+- `src/api/mod.rs`
+- `src/api/primitive_editing.rs`
+- `src/api/series_data.rs`
+- `src/api/touch.rs`
+- `src/api/touch_input.rs`
+- `src/api/widget.rs`
+- `src/api/yield_curve.rs`
+- `src/helpers/delegate.rs`
+- `src/model/time_scale.rs`
+- `tasks/public-events-plan.md`
+- `tasks/public-events-todo.md`
+- `tests/primitive_editing.rs`
+- `tests/public_events.rs`
+- `tests/series_markers.rs`
+
+## Behavioral test coverage
+
+The public-events integration suite covers full/update scopes, empty/equal and
+rejected commits, custom data without drain-time payload copies, all three native
+frontends, public identity after removal/drop, up/down wrapper deduplication,
+1,000-update drain/default-disabled batches, host reactions, the animation fast
+return, strict versus fractional ranges, original calendar strings, snapshot-only
+preparation, hidden/restored/failed axis preparation, and Canvas double-click
+payloads/cancellation. Deterministic recognizer and touch tests use supplied time
+without sleeping. Primitive-edit tests cover cancellation ordering, the edit early
+return and preservation through failed preparation. Generic demo tests cover
+exactly-once consumption, interest changes, Clear, Reset and bounded history.
+
+The implementation deliberately keeps existing source correspondence, synchronous
+plugin/model invalidation and native axis behavior. No dependencies were added.
+Screenshot/export and attribution drawing remain separate feature work. Earlier
+timing, drawing-order and unavailable-device checks remain independently open.
+
+## Physical mouse acceptance
+
+Software: user reported “All checks passed in all three modes; idle counters
+passed; windows closed.” Calendar, strike and maturity processes each exited 0.
+The run covered event controls, typed readouts, data scopes, double-click/axis
+priority, idle counters, live-feed interactions at three sizes and short-height
+recovery. It used the final gesture/rendering code; the later metadata cancellation
+ordering fix is verified by the targeted regression and final automated matrix.
+GPU: user reported “All checks passed in all three modes; idle counters passed;
+windows closed.” All three explicit `ICED_BACKEND=wgpu` processes exited 0.
+The same controls, gestures, size changes and idle checks passed.
+Touchpad, touchscreen and high-DPI physical devices remain untested independently;
+fractional-DPR automated captures do not replace those physical checks.
+
+The final touch lifecycle audit reproduced a stale double-tap pair after adding a
+pane between taps. The Canvas adapter now clears only the saved tap pair on
+revision, geometry, owner, focus, epoch or interest invalidation, independently
+of whether a finger is currently down. The red/green Canvas regression retains
+this case. Mouse recognition/rendering is unchanged by this touch-only correction;
+physical touch devices remain outside accepted scope.

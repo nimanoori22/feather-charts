@@ -155,6 +155,15 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             .touch_epoch
             .replace(self.touch_epoch)
             .is_some_and(|old| old != self.touch_epoch);
+        if revision_changed
+            || bounds_changed
+            || membership_changed
+            || touch_changed
+            || state.unfocused
+            || !self.double_click
+        {
+            state.touch_input.cancel_tap_pair();
+        }
         if state.touch_input.is_active()
             && (touch_changed
                 || bounds_changed

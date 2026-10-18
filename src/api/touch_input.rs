@@ -52,6 +52,9 @@ pub(super) struct TouchInput {
     suppress_mouse_until: Option<Instant>,
 }
 impl TouchInput {
+    pub fn cancel_tap_pair(&mut self) {
+        self.tap_sequence.cancel();
+    }
     fn output(&self, now: Instant, action: TouchAction, capture: bool) -> Option<TouchOutput> {
         Some(TouchOutput {
             input: TouchInteraction {

@@ -1,6 +1,6 @@
 # Additional public events checklist
 
-Status: implementing, 2026-10-18. Core API checkpoint: `f17b20d`.
+Status: implementing, 2026-10-18. Core API checkpoint: `f17b20d`; demo/order checkpoint: `bc2fcbf`.
 Plan: [public-events-plan.md](public-events-plan.md). Baseline: `dd3f1c8`.
 Previous timing, drawing-order and untested-device records stay independent.
 
@@ -89,8 +89,8 @@ Verification: three-family demo tests/builds pass; no duplicate event handling.
 
 - [ ] Freeze exact event/raster matrix and pass new plus all 33 existing source comparisons.
 - [ ] Pass both asserted renderers, sizes/DPRs and unchanged compatibility images; inspect real output.
-- [ ] Obtain software mouse results in all modes, including idle counters and short-height recovery.
-- [ ] Obtain matching GPU results and normal exits; retain and resolve any failure.
+- [x] Obtain software mouse results in all modes, including idle counters and short-height recovery.
+- [x] Obtain matching GPU results and normal exits; retain and resolve any failure.
 
 Verification: manifests, event assertions and actual physical user responses support acceptance.
 

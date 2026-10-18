@@ -621,3 +621,63 @@ fn cancelled_native_sequences_never_pair_with_the_next_plot_click() {
         );
     }
 }
+
+#[test]
+fn touch_double_tap_pair_does_not_survive_a_pane_revision() {
+    use iced::{
+        Point, Rectangle, mouse,
+        touch::{Event as FingerEvent, Finger},
+        widget::canvas::{Event, Program},
+    };
+    let mut c = Chart::default();
+    let id = add(&mut c);
+    c.set_data(id, vec![row(1., 1.), row(2., 2.)]).unwrap();
+    c.fit_content();
+    let size = iced::Size::new(800., 500.);
+    c.prepare(size, 1., std::time::Instant::now()).unwrap();
+    c.set_event_interests(EventInterests {
+        double_click: true,
+        ..Default::default()
+    });
+    let mut state = ChartState::default();
+    let p = Point::new(200., 100.);
+    for round in 0..2 {
+        if round == 1 {
+            c.add_pane();
+            c.prepare(size, 1., std::time::Instant::now()).unwrap();
+        }
+        let mut clicks = vec![];
+        for event in [
+            FingerEvent::FingerPressed {
+                id: Finger(1),
+                position: p,
+            },
+            FingerEvent::FingerLifted {
+                id: Finger(1),
+                position: p,
+            },
+        ] {
+            let message = c
+                .program(std::convert::identity)
+                .update(
+                    &mut state,
+                    &Event::Touch(event),
+                    Rectangle::with_size(size),
+                    mouse::Cursor::Unavailable,
+                )
+                .and_then(|a| a.into_inner().0);
+            if let Some(message) = message {
+                clicks.extend(c.update(message).unwrap());
+            }
+        }
+        assert!(
+            clicks.iter().any(|e| matches!(e, ChartEvent::Click(_))),
+            "round {round}: {clicks:?}"
+        );
+        assert!(
+            !clicks
+                .iter()
+                .any(|e| matches!(e, ChartEvent::DoubleClick(_)))
+        );
+    }
+}
