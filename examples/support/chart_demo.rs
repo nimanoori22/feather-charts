@@ -87,6 +87,7 @@ enum Message {
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
     PriceAxis(PriceAxisInteraction),
+    TimeAxis(feather_charts::ui::time_axis_input::TimeAxisAction),
     Bounds(Size),
     Tick(Instant),
     Window(iced::window::Id, iced::window::Event),
@@ -335,6 +336,14 @@ impl Demo {
                 self.error = self
                     .chart
                     .update(ChartMessage::Touch(input))
+                    .err()
+                    .map(|e| format!("{e:?}"));
+                return iced::Task::none();
+            }
+            Message::TimeAxis(input) => {
+                self.error = self
+                    .chart
+                    .update(ChartMessage::TimeAxis(input))
                     .err()
                     .map(|e| format!("{e:?}"));
                 return iced::Task::none();
@@ -621,6 +630,7 @@ impl From<ChartMessage> for Message {
             ChartMessage::Interaction(input) => Self::Interaction(input),
             ChartMessage::PaneInteraction(input) => Self::PaneInteraction(input),
             ChartMessage::PriceAxis(input) => Self::PriceAxis(input),
+            ChartMessage::TimeAxis(input) => Self::TimeAxis(input),
             ChartMessage::Bounds(size) => Self::Bounds(size),
             ChartMessage::Tick(now) => Self::Tick(now),
             ChartMessage::Click { pane, position }

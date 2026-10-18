@@ -1,9 +1,9 @@
-//! Successful plot releases only; callers cancel when gesture ownership changes.
+//! Successful releases only; callers cancel when gesture ownership changes.
 use iced::Point;
 use std::time::{Duration, Instant};
 
 #[derive(Default)]
-pub(super) struct ClickSequence {
+pub(crate) struct ClickSequence {
     first: Option<(usize, Point, Instant)>,
 }
 impl ClickSequence {

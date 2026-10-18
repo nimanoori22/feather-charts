@@ -1262,6 +1262,23 @@ where
         self.consume_time_effects(effects);
         self.flush_effects();
     }
+    pub(crate) fn start_scale_time(&mut self, x: f64) {
+        if x.is_finite() && !self.time_scale.is_empty() {
+            self.time_scale.start_scale(x.into());
+        }
+    }
+    pub(crate) fn scale_time_to(&mut self, x: f64) {
+        if !x.is_finite() || self.time_scale.is_empty() {
+            return;
+        }
+        let effects = self.time_scale.scale_to(x.into());
+        self.consume_time_effects(effects);
+        self.flush_effects();
+    }
+    pub(crate) fn end_scale_time(&mut self) {
+        self.time_scale.end_scale();
+        self.light_update();
+    }
     pub fn start_scroll_time(&mut self, point: crate::model::coordinate::Coordinate) {
         if !point.value().is_finite() || self.time_scale.is_empty() {
             return;

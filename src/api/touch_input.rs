@@ -41,7 +41,7 @@ pub(super) struct TouchOutput {
 #[derive(Default)]
 pub(super) struct TouchInput {
     pub double_tap_enabled: bool,
-    tap_sequence: super::click_sequence::ClickSequence,
+    tap_sequence: crate::helpers::click_sequence::ClickSequence,
     fingers: Vec<(Finger, Point)>,
     primary: Option<Finger>,
     down: Option<Point>,

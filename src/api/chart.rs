@@ -126,6 +126,7 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub(super) touch_pending_pan: Option<(iced::Point, std::time::Instant)>,
     pub(super) touch_tracking: bool,
     pub(super) touch_epoch: u64,
+    pub(crate) active_time_axis: bool,
     pub(crate) active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     pub(super) kinds: BTreeMap<SeriesId, SeriesType>,
     pub(super) views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
@@ -203,6 +204,7 @@ impl<B: ChartBehavior> Chart<B> {
             touch_pending_pan: None,
             touch_tracking: false,
             touch_epoch: 0,
+            active_time_axis: false,
             active_price_axis: None,
             views: (0..usize::from(options.add_default_pane))
                 .map(|_| vec![])

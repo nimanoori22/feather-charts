@@ -5,3 +5,5 @@ pub mod logger;
 pub mod make_font;
 pub mod mathex;
 pub mod strict_type_checks;
+
+pub(crate) mod click_sequence;

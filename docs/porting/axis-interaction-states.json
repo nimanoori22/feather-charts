@@ -1,0 +1,130 @@
+[
+  {
+    "mask": 0,
+    "scaled": false,
+    "spacing": 18,
+    "offset": 8,
+    "manual": false,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 1,
+    "scaled": true,
+    "spacing": 18,
+    "offset": 8,
+    "manual": false,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 2,
+    "scaled": false,
+    "spacing": 9,
+    "offset": 3,
+    "manual": false,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 3,
+    "scaled": true,
+    "spacing": 9,
+    "offset": 3,
+    "manual": false,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 4,
+    "scaled": false,
+    "spacing": 18,
+    "offset": 8,
+    "manual": true,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 5,
+    "scaled": true,
+    "spacing": 18,
+    "offset": 8,
+    "manual": true,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 6,
+    "scaled": false,
+    "spacing": 9,
+    "offset": 3,
+    "manual": true,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 7,
+    "scaled": true,
+    "spacing": 9,
+    "offset": 3,
+    "manual": true,
+    "autoAfterReset": false
+  },
+  {
+    "mask": 8,
+    "scaled": false,
+    "spacing": 18,
+    "offset": 8,
+    "manual": false,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 9,
+    "scaled": true,
+    "spacing": 18,
+    "offset": 8,
+    "manual": false,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 10,
+    "scaled": false,
+    "spacing": 9,
+    "offset": 3,
+    "manual": false,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 11,
+    "scaled": true,
+    "spacing": 9,
+    "offset": 3,
+    "manual": false,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 12,
+    "scaled": false,
+    "spacing": 18,
+    "offset": 8,
+    "manual": true,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 13,
+    "scaled": true,
+    "spacing": 18,
+    "offset": 8,
+    "manual": true,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 14,
+    "scaled": false,
+    "spacing": 9,
+    "offset": 3,
+    "manual": true,
+    "autoAfterReset": true
+  },
+  {
+    "mask": 15,
+    "scaled": true,
+    "spacing": 9,
+    "offset": 3,
+    "manual": true,
+    "autoAfterReset": true
+  }
+]

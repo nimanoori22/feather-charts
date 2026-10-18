@@ -21,6 +21,7 @@ pub enum ChartMessage {
     Interaction(ChartInteraction),
     PaneInteraction(MultiPaneInteraction),
     PriceAxis(PriceAxisInteraction),
+    TimeAxis(crate::ui::time_axis_input::TimeAxisAction),
     Bounds(iced::Size),
     Tick(Instant),
     Click { pane: usize, position: iced::Point },
@@ -217,6 +218,11 @@ impl<B: super::ChartBehavior> Chart<B> {
             let _ = self.model.end_scroll_price_on_scale(pan.pane, &pan.scale);
         }
     }
+    pub(crate) fn cancel_time_axis(&mut self) {
+        if std::mem::take(&mut self.active_time_axis) {
+            self.model.end_scale_time();
+        }
+    }
     fn cancel_price_axis(&mut self) {
         if let Some((pane, side)) = self.active_price_axis.take() {
             let _ = self.model.end_scale_price(pane, side);
@@ -247,6 +253,9 @@ impl<B: super::ChartBehavior> Chart<B> {
         }
         use crate::model::coordinate::Coordinate;
         self.touch_tracking = false;
+        if input.navigation.is_some() {
+            self.cancel_time_axis();
+        }
         match input.navigation {
             Some(Navigation::StopAnimation) => {
                 self.stop_time_scale_animation();
@@ -308,6 +317,7 @@ impl<B: super::ChartBehavior> Chart<B> {
         self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
         self.cancel_plot_pan();
         self.cancel_price_axis();
+        self.cancel_time_axis();
         self.stop_time_scale_animation();
         self.touch_pending_pan = None;
         self.touch_epoch = self.touch_epoch.wrapping_add(1);
@@ -319,11 +329,12 @@ impl<B: super::ChartBehavior> Chart<B> {
     }
     pub(crate) fn cancel_viewport_interaction(&mut self) {
         self.cancel_primitive_edit(super::PrimitiveEditCancelReason::ViewportChanged);
-        if self.plot_pan.is_some() || self.active_price_axis.is_some() {
+        if self.plot_pan.is_some() || self.active_price_axis.is_some() || self.active_time_axis {
             self.revision += 1;
         }
         self.cancel_plot_pan();
         self.cancel_price_axis();
+        self.cancel_time_axis();
         self.stop_time_scale_animation();
         self.touch_pending_pan = None;
         self.touch_epoch = self.touch_epoch.wrapping_add(1);
@@ -383,8 +394,37 @@ impl<B: super::ChartBehavior> Chart<B> {
             ChartMessage::Interaction(_)
             | ChartMessage::PaneInteraction(_)
             | ChartMessage::PriceAxis(_)
+            | ChartMessage::TimeAxis(_)
                 if self.primitive_edit.is_some() => {}
+            ChartMessage::TimeAxis(action) => {
+                use crate::ui::time_axis_input::TimeAxisAction;
+                match action {
+                    TimeAxisAction::Start { x } => {
+                        self.stop_time_scale_animation();
+                        self.cancel_plot_pan();
+                        self.cancel_price_axis();
+                        self.cancel_time_axis();
+                        self.touch_pending_pan = None;
+                        self.touch_tracking = false;
+                        self.model.set_crosshair_position(0, None)?;
+                        if !self.model.time_scale().is_empty() {
+                            self.model.start_scale_time(x);
+                            self.active_time_axis = true;
+                        }
+                    }
+                    TimeAxisAction::Move { x } if self.active_time_axis => {
+                        self.model.scale_time_to(x)
+                    }
+                    TimeAxisAction::Move { .. } => {}
+                    TimeAxisAction::End => self.cancel_time_axis(),
+                    TimeAxisAction::Reset => {
+                        self.cancel_viewport_interaction();
+                        self.model.reset_time_scale();
+                    }
+                }
+            }
             ChartMessage::PriceAxis(input) => {
+                self.cancel_time_axis();
                 self.stop_time_scale_animation();
                 self.touch_pending_pan = None;
                 self.touch_epoch = self.touch_epoch.wrapping_add(1);
@@ -694,6 +734,11 @@ impl<B: super::ChartBehavior> Chart<B> {
                     && *lower_stretch > 0.
             }
             ChartMessage::PaneInteraction(MultiPaneInteraction::Cancel) => panes > 0,
+            ChartMessage::TimeAxis(action) => match action {
+                crate::ui::time_axis_input::TimeAxisAction::Start { x }
+                | crate::ui::time_axis_input::TimeAxisAction::Move { x } => x.is_finite(),
+                _ => true,
+            },
             ChartMessage::PriceAxis(input) => {
                 input.pane < panes
                     && match input.action {

@@ -18,7 +18,7 @@ mod defaults;
 mod markers;
 pub use chart::{Chart, ChartError};
 mod attribution_input;
-mod click_sequence;
+
 mod interaction;
 mod primitive_edit_input;
 mod primitive_editing;

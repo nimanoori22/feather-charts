@@ -19,3 +19,6 @@ pub mod custom_series;
 pub(crate) mod text_watermark;
 
 pub(crate) mod screenshot_layers;
+
+pub(crate) mod axis_pointer;
+pub mod time_axis_input;

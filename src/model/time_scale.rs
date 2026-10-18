@@ -296,6 +296,7 @@ where
         self.do_fix_left_edge();
         self.do_fix_right_edge();
         if let Some(spacing) = patch.bar_spacing {
+            self.options.bar_spacing = spacing;
             self.set_bar_spacing(spacing);
         }
         if let Some(offset) = patch.right_offset {
@@ -338,20 +339,14 @@ where
         effects
     }
     pub fn restore_default(&mut self) -> Vec<TimeScaleEffect> {
-        let defaults = HorzScaleOptions::default();
-        self.options.right_offset_pixels = defaults.right_offset_pixels;
-        self.set_bar_spacing(defaults.bar_spacing);
+        self.set_bar_spacing(self.options.bar_spacing);
         self.set_right_offset(
-            defaults
+            self.options
                 .right_offset_pixels
                 .map(|p| p / self.bar_spacing)
-                .unwrap_or(defaults.right_offset),
+                .unwrap_or(self.options.right_offset),
         );
-        self.update_conflation_factor();
-        let mut effects = viewport_changed_effects();
-        effects.push(TimeScaleEffect::OptionsApplied);
-        self.options_applied.emit(&());
-        effects
+        viewport_changed_effects()
     }
     pub fn set_indices_with_data(&mut self, indices: BTreeSet<usize>, version: u64) {
         if self.indices_with_data != indices || self.indices_with_data_version != version {
