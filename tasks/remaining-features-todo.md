@@ -40,13 +40,13 @@ runtime formatting changes do not silently reinterpret populated horizontal keys
 
 ## C — Attribution logo
 
-- [ ] C0: Audit/freeze vector, text-color theme, last-pane placement, construction/
+- [x] C0: Audit/freeze vector, text-color theme, last-pane placement, construction/
   runtime policy, activation priority and source screenshot exclusion.
-- [ ] C1: Render/cache native logo geometry and add supported configuration/readback;
+- [x] C1: Render/cache native logo geometry and add supported configuration/readback;
   preserve existing default-off pixels, layout/autoscale and snapshot ownership.
-- [ ] C2: Route fixed-destination activation to the host; migrate enum callers and
+- [x] C2: Route fixed-destination activation to the host; migrate enum callers and
   test cancellation without plot/edit/axis/divider interference.
-- [ ] Checkpoint C-input: review lifetime/input policy and save tested local commit.
+- [x] Checkpoint C-input: review lifetime/input policy and save tested local commit.
 - [ ] C3: Pass source, disabled-baseline, enabled visual/export and both backend
   mouse checks; record final report/evidence and a local milestone commit.
 

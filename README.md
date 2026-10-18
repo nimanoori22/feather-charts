@@ -810,3 +810,43 @@ updates, history, append/pop/empty/reset, labels, invalid items, pane transfers 
 export. The box moves and resizes; Escape cancels edits. Capture saves raw RGBA plus
 size metadata to `target/custom-horizontal/preview.{rgba,json}` and displays an
 owned image. See the [contract and evidence](docs/porting/custom-horizontal.md).
+
+## Attribution logo
+
+Enable the source logo at construction with
+`ChartModelOptions::layout.attribution_logo`, or update it through
+`ChartOptionsPatch.model.layout = Some(LayoutOptionsPatch {
+ attribution_logo: Some(true), ..Default::default()
+})`. Runtime readback is `chart.runtime_options().model.layout.attribution_logo`.
+The native default remains **off**. Runtime toggling is a native extension.
+
+The 35×19 vector stays 10 logical pixels from the last plot's left/bottom edges.
+Its theme follows text brightness. Drawing and input are clipped to that plot;
+it follows pane reorder/removal and does not affect layout or autoscaling.
+All screenshot layer combinations exclude it, matching TradingView's DOM overlay.
+
+A click/tap emits `ChartEvent::AttributionActivated { url }` even with default event
+interests. The fixed destination is `https://www.tradingview.com/`. The host chooses
+whether to open it; the chart engine never launches a browser. Dragging, outside
+release, Escape, lost focus and changed owner/bounds cancel activation. Existing
+drags retain ownership when they cross the logo. Hovering it clears plot hover.
+
+```sh
+cargo run --example pane_management -- --attribution --screenshot-export --live-feed
+cargo run --example pane_management -- --attribution --screenshot-export --options --live-feed
+cargo run --example pane_management -- --attribution --screenshot-export --yield-curve --live-feed
+cargo run --example pane_management -- --attribution --screenshot-export --custom-domain --live-feed
+```
+
+Set `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to select the renderer. Logo
+visibility, background and text/theme controls are independent. The demo displays
+a persistent activation counter and host link action without opening a URL. Pane
+controls and Reset exercise last-pane ownership; screenshot preview/file controls
+exercise source export exclusion. Press F8 while hovering the chart to capture it.
+
+Migration: exhaustive matches need the new `ChartMessage::AttributionActivated` and
+`ChartEvent::AttributionActivated` arms. Complete layout/frame struct literals need
+the new attribution fields (`None` for a manually constructed frame); prefer
+`..Default::default()` where applicable. Existing constructors keep their defaults.
+See the [source contract and verification](docs/porting/attribution.md) and the
+[preserved source notices](docs/porting/attribution-source/NOTICE).

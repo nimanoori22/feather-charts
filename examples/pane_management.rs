@@ -1,4 +1,6 @@
 //! Reorganize live calendar, strike or maturity panes through the public API.
+#[path = "pane_management/attribution.rs"]
+mod attribution;
 #[path = "pane_management/captures.rs"]
 mod captures;
 #[path = "pane_management/configuration.rs"]
@@ -17,6 +19,8 @@ mod interval;
 mod region;
 #[path = "pane_management/screenshot_captures.rs"]
 mod screenshot_captures;
+#[path = "custom_horizontal/behavior.rs"]
+mod session_behavior;
 use feather_charts::{
     api::*,
     model::{
@@ -37,6 +41,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    attribution: Option<attribution::Panel>,
     export: Option<export::Panel>,
     events: Option<events::Monitor>,
     config_mode: bool,
@@ -60,6 +65,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Attribution(attribution::Action),
     Export(export::Action),
     Events(events::Action),
     Config(configuration::Action),
@@ -141,6 +147,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            attribution: None,
             export: None,
             events: None,
             config_mode: false,
@@ -206,6 +213,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Attribution(action) => self.attribution_action(action)?,
             Message::Export(action) => self.export_action(action)?,
             Message::Events(action) => self.event_action(action)?,
             Message::Config(action) => self.configuration_action(action)?,
@@ -251,6 +259,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let attribution = self.attribution.is_some();
                 let export = self.export.take();
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
                 *self = Self::with_public_events(
@@ -261,6 +270,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if attribution {
+                    self.enable_attribution()?;
+                }
                 self.size = size;
                 self.ratio = ratio;
             }
@@ -291,6 +303,10 @@ impl<C: Host> App<C> {
             match event {
                 ChartEvent::AttributionActivated { url } => {
                     self.status = format!("Host link action: {url}");
+                    if let Some(panel) = &mut self.attribution {
+                        panel.activations += 1;
+                        panel.status = format!("Host action {}: {url}", panel.activations);
+                    }
                 }
                 ChartEvent::DataChanged { .. }
                 | ChartEvent::DoubleClick(_)
@@ -440,6 +456,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.attribution.is_some() {
+            content = content.push(self.attribution_controls());
+        }
         if self.export.is_some() {
             content = content.push(self.export_controls());
         }
@@ -473,20 +492,30 @@ impl<C: Host> App<C> {
         ])
     }
 }
-fn run<C: Host>(
+struct RunOptions {
     live: bool,
     ordered: bool,
     data: bool,
     config: bool,
     events: bool,
-    title: &'static str,
     exports: bool,
-) -> iced::Result {
+    attribution: bool,
+}
+fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
     iced::application(
         move || {
-            let mut app = App::<C>::with_public_events(live, ordered, data, config, events);
-            if exports {
+            let mut app = App::<C>::with_public_events(
+                options.live,
+                options.ordered,
+                options.data,
+                options.config,
+                options.events,
+            );
+            if options.exports {
                 app.export = Some(export::Panel::new());
+            }
+            if options.attribution {
+                app.enable_attribution().unwrap();
             }
             app
         },
@@ -517,42 +546,33 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
-    let exports = args.iter().any(|a| a == "--screenshot-export");
-    let events = args.iter().any(|a| a == "--public-events");
-    let config = args.iter().any(|a| a == "--price-scale-configuration");
-    let data = args.iter().any(|a| a == "--series-data");
-    let ordered = args.iter().any(|a| a == "--series-order");
-    let live = args.iter().any(|a| a == "--live-feed");
-    if args.iter().any(|a| a == "--yield-curve") {
-        run::<YieldCurveChart>(
-            live,
-            ordered,
-            data,
-            config,
-            events,
-            "Feather Charts — maturity pane management",
-            exports,
+    if let Some(i) = args.iter().position(|a| a == "--attribution-captures") {
+        attribution::captures(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
+    let options = RunOptions {
+        live: args.iter().any(|a| a == "--live-feed"),
+        ordered: args.iter().any(|a| a == "--series-order"),
+        data: args.iter().any(|a| a == "--series-data"),
+        config: args.iter().any(|a| a == "--price-scale-configuration"),
+        events: args.iter().any(|a| a == "--public-events"),
+        exports: args.iter().any(|a| a == "--screenshot-export"),
+        attribution: args.iter().any(|a| a == "--attribution"),
+    };
+    if args.iter().any(|a| a == "--custom-domain") {
+        run::<Chart<session_behavior::Sessions>>(
+            options,
+            "Feather Charts — session/phase attribution",
         )
+    } else if args.iter().any(|a| a == "--yield-curve") {
+        run::<YieldCurveChart>(options, "Feather Charts — maturity pane management")
     } else if args.iter().any(|a| a == "--options") {
-        run::<OptionsChart>(
-            live,
-            ordered,
-            data,
-            config,
-            events,
-            "Feather Charts — strike pane management",
-            exports,
-        )
+        run::<OptionsChart>(options, "Feather Charts — strike pane management")
     } else {
-        run::<Chart>(
-            live,
-            ordered,
-            data,
-            config,
-            events,
-            "Feather Charts — calendar pane management",
-            exports,
-        )
+        run::<Chart>(options, "Feather Charts — calendar pane management")
     }
 }
 

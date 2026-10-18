@@ -317,6 +317,42 @@ impl Host for Chart {
     }
     common!();
 }
+impl Host for Chart<session_behavior::Sessions> {
+    type Item = session_behavior::SessionPoint;
+    type Internal = session_behavior::SessionKey;
+    type Behavior = session_behavior::Sessions;
+    fn side() -> PriceScalePosition {
+        PriceScalePosition::Right
+    }
+    fn new() -> Self {
+        Chart::with_custom_behavior(
+            || session_behavior::Sessions::new(Default::default()),
+            Default::default(),
+            Default::default(),
+            feather_charts::model::localization_options::LocalizationOptions::new("en-US", ""),
+        )
+        .unwrap()
+    }
+    fn key(i: usize) -> Self::Item {
+        session_behavior::SessionPoint::at(i * 2 + i / 5 * 3)
+    }
+    fn core(&self) -> &Self {
+        self
+    }
+    fn line(&mut self, p: usize, pulse: bool) -> SeriesId {
+        self.add_series(
+            SeriesOptionsMap::Line(options(pulse)),
+            p,
+            PriceScalePosition::Right,
+        )
+        .unwrap()
+    }
+    fn area(&mut self, p: usize) -> SeriesId {
+        self.add_series(SeriesOptionsMap::Area(area_options()), p, Self::side())
+            .unwrap()
+    }
+    common!();
+}
 impl Host for OptionsChart {
     type Item = HorizontalPrice;
     type Internal = HorizontalPrice;
