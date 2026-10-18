@@ -1,6 +1,6 @@
 # Horizontal-axis input and independent settings (milestone C)
 
-Baseline: `2c42782`. Status: C0–C2 implemented; C3 demo and automated gates pass; available physical acceptance pending.
+Baseline: `2c42782`. Status: C0–C3 complete; automated gates and available software/GPU mouse acceptance pass.
 
 ## Source and consumers
 
@@ -239,5 +239,13 @@ formatting 576, scale assignment 768). No old scene or threshold was weakened.
 The [pinned evidence record](axis-interaction-evidence.json) records binary,
 source/protocol/result and log hashes. The capture protocol's production/demo hashes
 match the current files and tested normal binary. Core checkpoints: `c5b8ce5`,
-`846497c`, `f757d68`, `d38d521`. Mouse acceptance remains pending on each renderer;
-earlier timing and device exceptions retain their own status.
+`846497c`, `f757d68`, `d38d521`; demo checkpoint `a276689`.
+
+Available mouse acceptance passed on both tiny-skia and wgpu in calendar, strike,
+maturity and sessions modes. The user confirmed bottom-axis drag/double-click,
+independent time/price drag/reset toggles, Defaults and All off/on; live-feed
+zoom/pan, price-axis gestures, box move/resize/Escape, release outside and
+short-height recovery at regular, narrow and the earlier problem size; and
+preview/export checks. All eight normal sessions exited 0 using the tested binary.
+The evidence record pins both session manifests. Earlier formatting-GPU, timing,
+series-order and untested-device exceptions retain their separate status.

@@ -1,5 +1,5 @@
 {
-  "status": "Core and demo implemented; automated gates pass; software/GPU physical acceptance pending",
+  "status": "Milestone C accepted: automated gates and four-mode software/GPU mouse acceptance pass",
   "core_checkpoints": [
     "c5b8ce5",
     "846497c",
@@ -335,8 +335,8 @@
     "status": "Original narrow touch-reset failure retained; no engine defect established. Removed duplicate fixture preparation; final unchanged 500ms pairing and scenes pass after profiling suites."
   },
   "physical_acceptance": {
-    "tiny-skia": "pending",
-    "wgpu": "pending"
+    "tiny-skia": "User: All checks passed in all four modes; previews/exports passed; windows closed. All four sessions exited 0.",
+    "wgpu": "User: All checks passed in all four modes; previews/exports passed; windows closed. All four sessions exited 0."
   },
   "independent_exceptions": [
     "formatting separate GPU physical record",
@@ -347,5 +347,16 @@
     "physical high-DPI",
     "Intl outside existing support contract",
     "Display-P3 target"
-  ]
+  ],
+  "demo_checkpoint": "a276689",
+  "physical_sessions": {
+    "tiny-skia": {
+      "path": "target/axis-interaction/mouse/tiny-skia/sessions.json",
+      "sha256": "d06105c45cfb1db4ced60294f6645e3a1b866bc7d16bc512061a5362023e6be6"
+    },
+    "wgpu": {
+      "path": "target/axis-interaction/mouse/wgpu/sessions.json",
+      "sha256": "bf41257e0295e4a299f02a3975626edd44876f3424e365a4abd2b36b94dec19b"
+    }
+  }
 }
