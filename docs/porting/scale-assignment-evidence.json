@@ -1,5 +1,5 @@
 {
-  "status": "Core, demo and automated gates pass; software/GPU physical acceptance pending",
+  "status": "Milestone B accepted: core, demo, unchanged automated gates and four-mode software/GPU mouse acceptance pass",
   "core_checkpoint": "1bdbc68",
   "source_manifest": "docs/porting/scale-assignment-source.json",
   "source_states": 20,
@@ -221,8 +221,8 @@
     "target/scale-assignment/red-overlay-pan.log": "32c08f2ad64a5781135585e87fd42692073f54e781fe557c5607b1adf949ba62"
   },
   "physical_acceptance": {
-    "tiny-skia": "pending",
-    "wgpu": "pending"
+    "tiny-skia": "User: All checks passed in all four modes; previews/exports passed; windows closed. All four sessions exited 0.",
+    "wgpu": "User: All checks passed in all four modes; previews/exports passed; windows closed. All four sessions exited 0."
   },
   "independent_exceptions": [
     "formatting separate GPU physical record",
@@ -262,5 +262,16 @@
     }
   ],
   "compatibility_results_sha256": "eee074ab1d796345bbdcb089b1cf107371bedf49c844293aedd650f8da4b2466",
-  "accepted_images_unchanged": 3558
+  "accepted_images_unchanged": 3558,
+  "physical_sessions": {
+    "tiny-skia": {
+      "path": "target/scale-assignment/mouse/tiny-skia/sessions.json",
+      "sha256": "d20c8cb24825beedde56e59ebe579fe68ec9979c0828f5fcb7dff2830e626130"
+    },
+    "wgpu": {
+      "path": "target/scale-assignment/mouse/wgpu/sessions.json",
+      "sha256": "d967e00ea9bd8ff7200ce0f01e35ba0c5133a4c6cd208b845b3ce18dfe3d328f"
+    }
+  },
+  "demo_checkpoint": "618dc49"
 }

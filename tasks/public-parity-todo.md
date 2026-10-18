@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; B3 automated gates pass; mouse acceptance pending.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -38,12 +38,12 @@ GPU result is inferred. See formatting-evidence.json.
 - [x] B0: Freeze series-to-scale transfer semantics. (depends: A4).
 - [x] B1: Implement one checked scale-transfer operation. (depends: B0).
 - [x] B2: Route public series options through scale assignment. (depends: B1).
-- [ ] B3: Demonstrate scale assignment and accept milestone B. (depends: B2).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] B3: Demonstrate scale assignment and accept milestone B. (depends: B2).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 
 B3 automated evidence: 816 tests, 39 source comparisons, 768 screen replays and
-retained exports; 3558 accepted compatibility images unchanged. Software/GPU
-physical acceptance remains pending. See [scale-assignment.md](../docs/porting/scale-assignment.md)
+retained exports; 3558 accepted compatibility images unchanged. Four-mode software/GPU
+physical checks, previews/exports and normal window exits pass. See [scale-assignment.md](../docs/porting/scale-assignment.md)
 and its pinned evidence record.
 
 ### C — Horizontal-axis input and settings

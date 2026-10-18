@@ -1,6 +1,6 @@
 # Series price-scale assignment (public parity milestone B)
 
-Status: B0–B2 implemented in `1bdbc68`; B3 demo and automated gates pass; physical acceptance pending. Baseline `0c27d0c`.
+Status: B0–B2 implemented in `1bdbc68`; B3 accepted: demo, automated gates and four-mode software/GPU mouse acceptance pass. Baseline `0c27d0c`.
 Formatting was accepted for progression by the user; its separate GPU mouse record
 remains pending and is not inferred from that statement.
 
@@ -112,8 +112,7 @@ exports. Each retained screenshot is rerendered after moving its owner to anothe
 scale, resizing and dropping the chart. Existing protocols, counts, thresholds and
 accepted image hashes remain independent compatibility gates.
 
-Remaining B3 work: available mouse acceptance;
-preserve prior formatting GPU, timing, drawing-order and unavailable-device records.
+B3 complete. Preserve prior formatting GPU, timing, drawing-order and unavailable-device records.
 
 ## Files and review
 
@@ -133,7 +132,7 @@ demonstration styling; applications needing assignment alone should use the sett
 
 ## Remaining dependencies
 
-B3 still requires available physical mouse acceptance on each renderer. Horizontal
+B3 physical mouse acceptance passed on both renderers. Horizontal
 axis input/settings (C), broader public helper/readback APIs (D), pane pixel sizing
 (E), metadata (F/G), locale defaults (H) and color parsing/gamut policy (I) remain
 separate milestones. No automatic closure of older timing or device exceptions.
@@ -179,4 +178,12 @@ separately; synthetic captures do not establish physical smoothness.
 
 All five unchanged compatibility protocols pass: events (912), custom horizontal
 (240), screenshot/export (1158), attribution (672), and formatting (576): **3558
-previously accepted images unchanged**. B3 remains open only for physical acceptance.
+previously accepted images unchanged**. B3 physical acceptance is recorded below.
+
+Software physical acceptance: the user reported all checks, previews and exports
+passed in calendar, strike, maturity and sessions. All four pinned-binary sessions
+exited 0. GPU physical acceptance also passed all four modes, previews and exports, with
+all four sessions exiting 0. Older formatting/device exceptions
+are not inferred from these scale-assignment checks.
+
+Reviewed local checkpoints: core `1bdbc68`, demo/evidence `618dc49`; no push requested.
