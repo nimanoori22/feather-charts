@@ -642,3 +642,36 @@ cargo run --example pane_management -- --series-order --yield-curve --live-feed
 Select the blue line or custom intervals, then use Backward/Forward/To back/To
 front. The second toolbar displays the selected series' order and controls hover
 raising. Both toolbars scroll horizontally. Pane controls and Reset remain available.
+
+## Canonical series data and trailing removal
+
+`series_data(id)` returns fulfilled built-in bars oldest first.
+`data_by_index(id, index, direction)` searches the shared logical axis using
+`MismatchDirection::{None, NearestLeft, NearestRight}`.
+`bars_in_logical_range(id, range)` returns fractional before/after counts and an
+optional pair of original horizontal items. Counts can be negative; whitespace
+and conflated drawing samples are excluded from these data results.
+
+`pop_data(id, count)` removes fulfilled trailing bars and returns them newest first.
+Zero and empty pops do nothing; oversized counts remove all fulfilled bars.
+Whitespace/shared horizontal memberships remain as required. The series, options,
+pane and attachments survive, and updates can resume afterward.
+
+Typed custom handles expose `data()`, `data_by_index` and `bars_in_logical_range`;
+`pop_custom_data(&handle, count)` removes typed custom data through its owning chart.
+Detached handles keep readable data but cannot mutate a chart. Nonfinite query
+indices and nonfinite/reversed ranges return `ChartError::InvalidDataQuery`.
+Maturity charts protect private support data and retain the established scaffold.
+See the [source contract and evidence](docs/porting/series-data.md).
+
+```bash
+cargo run --example pane_management -- --series-data --live-feed
+cargo run --example pane_management -- --series-data --options --live-feed
+cargo run --example pane_management -- --series-data --yield-curve --live-feed
+```
+
+Use the selected-series toggle, Pop 1/3/all, Append and Inspect controls. The
+readout reports removed values newest first, the canonical count, a nearest-right
+lookup at logical index 0 and range information for 0..10. Toolbars scroll
+horizontally. Feed ticks update surviving bars and do not resurrect an emptied
+series; use Append or Reset to restore data.

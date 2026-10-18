@@ -11,15 +11,15 @@ def digest(p):
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
-def main():
-    output = Path(sys.argv[1] if len(sys.argv) > 1 else 'target/series-order/final')
+def main(feature='series-order'):
+    output = Path(sys.argv[1] if len(sys.argv) > 1 else f'target/{feature}/final')
     output.mkdir(parents=True, exist_ok=False)
-    baseline = Path('target/series-order/before')
+    baseline = Path(f'target/{feature}/before')
     commands = []
     for backend in ('tiny-skia', 'wgpu'):
         flag = ['--wgpu'] if backend == 'wgpu' else []
         commands.extend([
-            ('feature', backend, ['target/debug/examples/pane_management', '--captures', str(output / 'feature' / backend), '--series-order'] + flag),
+            ('feature', backend, ['target/debug/examples/pane_management', '--captures', str(output / 'feature' / backend), '--' + feature] + flag),
             ('calendar', backend, ['target/debug/examples/public_chart', '--line', '--conflation', '--up-down-captures', str(output / 'calendar' / backend)] + flag),
             ('custom', backend, ['target/debug/examples/custom_series', '--capture-dir', str(output / 'custom' / backend)] + flag),
             ('price', backend, ['target/debug/examples/options_chart', '--captures', str(output / 'price' / backend)] + flag),
@@ -42,7 +42,7 @@ def main():
         'fixtures': {str(p): digest(p) for p in fixtures},
         'vendor_sources': {str(p): digest(p) for p in sorted(Path('vendor').rglob('*.rs'))},
         'fontconfig_identity': fonts,
-        'modes': ['calendar', 'price', 'yield'], 'scenes': ['initial','reordered','hovered','transferred-reordered'],
+        'modes': ['calendar', 'price', 'yield'], 'scenes': ({'series-order': ['initial','reordered','hovered','transferred-reordered'], 'series-data': ['initial','partial-pop','empty','append-after-pop']}[feature]),
         'sizes': [[800, 500], [300, 300], [300, 90]], 'dpr': [1, 1.25, 1.5, 2],
         'clock': 'Feed and peer pulse disabled; frames are immutable snapshots.',
     }

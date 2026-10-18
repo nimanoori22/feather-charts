@@ -17,6 +17,16 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn core(&self) -> &Chart<Self::Behavior>;
     fn line(&mut self, pane: usize, pulse: bool) -> SeriesId;
     fn area(&mut self, pane: usize) -> SeriesId;
+    fn pop_data(
+        &mut self,
+        id: SeriesId,
+        count: usize,
+    ) -> Result<Vec<BuiltInSeriesDataItem<Self::Item>>, ChartError>;
+    fn pop_custom_data(
+        &mut self,
+        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        count: usize,
+    ) -> Result<Vec<interval::Datum<Self::Item>>, ChartError>;
     fn raw_data(
         &mut self,
         id: SeriesId,
@@ -28,6 +38,11 @@ pub trait Host: region::RegionHost + Sized + 'static {
         &mut self,
         pane: usize,
     ) -> CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>;
+    fn update_custom(
+        &mut self,
+        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        row: CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>,
+    ) -> Result<(), ChartError>;
     fn custom_data(
         &mut self,
         h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
@@ -57,6 +72,20 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn pop_data(
+            &mut self,
+            id: SeriesId,
+            count: usize,
+        ) -> Result<Vec<BuiltInSeriesDataItem<Self::Item>>, ChartError> {
+            self.pop_data(id, count)
+        }
+        fn pop_custom_data(
+            &mut self,
+            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            count: usize,
+        ) -> Result<Vec<interval::Datum<Self::Item>>, ChartError> {
+            self.pop_custom_data(h, count)
+        }
         fn raw_data(
             &mut self,
             id: SeriesId,
@@ -81,6 +110,13 @@ macro_rules! common {
                 Self::side(),
             )
             .unwrap()
+        }
+        fn update_custom(
+            &mut self,
+            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            row: CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>,
+        ) -> Result<(), ChartError> {
+            self.update_custom_data(h, row, false)
         }
         fn custom_data(
             &mut self,

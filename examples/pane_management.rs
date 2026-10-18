@@ -1,6 +1,8 @@
 //! Reorganize live calendar, strike or maturity panes through the public API.
 #[path = "pane_management/captures.rs"]
 mod captures;
+#[path = "pane_management/data.rs"]
+mod data;
 #[path = "pane_management/host.rs"]
 mod host;
 #[path = "numeric_custom_series/view.rs"]
@@ -10,7 +12,7 @@ mod region;
 use feather_charts::{
     api::*,
     model::{
-        data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem},
+        data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem, TimedData},
         data_layer::SeriesId,
         icustom_series::CustomSeriesDataItem,
         pane::PriceScalePosition,
@@ -30,6 +32,9 @@ struct App<C: Host> {
     chart: C,
     line: SeriesId,
     order_mode: bool,
+    data_mode: bool,
+    data_next: usize,
+    data_status: String,
     selected_custom: bool,
     custom: CustomSeriesHandle<interval::View<C::Item, C::Internal>>,
     markers: UpDownMarkersId,
@@ -61,6 +66,9 @@ enum Message {
     ToBack,
     ToFront,
     HoverRaise,
+    Pop(usize),
+    Append,
+    Inspect,
 }
 fn line_row<C: Host>(i: usize, shift: f64) -> BuiltInSeriesDataItem<C::Item> {
     BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
@@ -120,6 +128,9 @@ impl<C: Host> App<C> {
             chart,
             line,
             order_mode: false,
+            data_mode: false,
+            data_next: 24,
+            data_status: String::new(),
             selected_custom: false,
             custom,
             markers,
@@ -174,6 +185,9 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Pop(count) => self.pop_selected(count)?,
+            Message::Append => self.append_selected()?,
+            Message::Inspect => self.inspect_data()?,
             Message::SelectSeries => self.selected_custom = !self.selected_custom,
             Message::HoverRaise => self
                 .chart
@@ -214,7 +228,7 @@ impl<C: Host> App<C> {
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
-                *self = Self::with_order(live, self.order_mode);
+                *self = Self::with_modes(live, self.order_mode, self.data_mode);
                 self.size = size;
                 self.ratio = ratio;
             }
@@ -223,11 +237,15 @@ impl<C: Host> App<C> {
                 if self.live && self.chart.core().series_ids().any(|id| id == self.line) =>
             {
                 self.step += 1;
-                self.chart.update_data(
-                    self.markers,
-                    line_row::<C>(23, [-0.1, 0., 0.1][self.step % 3]),
-                    at,
-                )?;
+                let mut item = line_row::<C>(23, [-0.1, 0., 0.1][self.step % 3]);
+                if self.data_mode {
+                    let rows = self.chart.core().series_data(self.line)?;
+                    let Some(last) = rows.last() else {
+                        return Ok(());
+                    };
+                    *item.time_mut() = last.time().clone();
+                }
+                self.chart.update_data(self.markers, item, at)?;
             }
             _ => {}
         }
@@ -349,6 +367,24 @@ impl<C: Host> App<C> {
             iced::widget::scrollable(order_controls).direction(
                 iced::widget::scrollable::Direction::Horizontal(Default::default())
             ),
+            iced::widget::scrollable(if self.data_mode {
+                row![
+                    button("Pop 1").on_press(Message::Pop(1)),
+                    button("Pop 3").on_press(Message::Pop(3)),
+                    button("Pop all").on_press(Message::Pop(usize::MAX)),
+                    button("Append").on_press(Message::Append),
+                    button("Inspect index 0 / range 0..10").on_press(Message::Inspect),
+                    text(&self.data_status)
+                        .size(12)
+                        .wrapping(text::Wrapping::None)
+                ]
+                .spacing(6)
+            } else {
+                row![]
+            })
+            .direction(iced::widget::scrollable::Direction::Horizontal(
+                Default::default()
+            )),
             text(owners).size(12).wrapping(text::Wrapping::None),
             text(&self.status).size(12).wrapping(text::Wrapping::None),
             self.chart.core().element().map(Message::Chart)
@@ -367,9 +403,9 @@ impl<C: Host> App<C> {
         ])
     }
 }
-fn run<C: Host>(live: bool, ordered: bool, title: &'static str) -> iced::Result {
+fn run<C: Host>(live: bool, ordered: bool, data: bool, title: &'static str) -> iced::Result {
     iced::application(
-        move || App::<C>::with_order(live, ordered),
+        move || App::<C>::with_modes(live, ordered, data),
         App::update,
         App::view,
     )
@@ -384,17 +420,34 @@ fn main() -> iced::Result {
             std::path::Path::new(&args[i + 1]),
             args.iter().any(|a| a == "--wgpu"),
             args.iter().any(|a| a == "--series-order"),
+            args.iter().any(|a| a == "--series-data"),
         );
         return Ok(());
     }
+    let data = args.iter().any(|a| a == "--series-data");
     let ordered = args.iter().any(|a| a == "--series-order");
     let live = args.iter().any(|a| a == "--live-feed");
     if args.iter().any(|a| a == "--yield-curve") {
-        run::<YieldCurveChart>(live, ordered, "Feather Charts — maturity pane management")
+        run::<YieldCurveChart>(
+            live,
+            ordered,
+            data,
+            "Feather Charts — maturity pane management",
+        )
     } else if args.iter().any(|a| a == "--options") {
-        run::<OptionsChart>(live, ordered, "Feather Charts — strike pane management")
+        run::<OptionsChart>(
+            live,
+            ordered,
+            data,
+            "Feather Charts — strike pane management",
+        )
     } else {
-        run::<Chart>(live, ordered, "Feather Charts — calendar pane management")
+        run::<Chart>(
+            live,
+            ordered,
+            data,
+            "Feather Charts — calendar pane management",
+        )
     }
 }
 

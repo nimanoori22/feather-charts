@@ -3,7 +3,7 @@ use iced::advanced::{
     graphics::geometry::Renderer as _,
     renderer::{Headless, Renderer as _},
 };
-pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool) {
+pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool) {
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
         iced::Font::DEFAULT,
         iced::Pixels(12.),
@@ -17,15 +17,22 @@ pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool) {
         ),
         "backend fallback"
     );
-    capture::<Chart>(&mut renderer, &dir.join("calendar"), ordered);
-    capture::<OptionsChart>(&mut renderer, &dir.join("price"), ordered);
-    capture::<YieldCurveChart>(&mut renderer, &dir.join("yield"), ordered);
+    capture::<Chart>(&mut renderer, &dir.join("calendar"), ordered, data);
+    capture::<OptionsChart>(&mut renderer, &dir.join("price"), ordered, data);
+    capture::<YieldCurveChart>(&mut renderer, &dir.join("yield"), ordered, data);
 }
-fn capture<C: Host>(renderer: &mut iced::Renderer, dir: &std::path::Path, ordered: bool) {
+fn capture<C: Host>(
+    renderer: &mut iced::Renderer,
+    dir: &std::path::Path,
+    ordered: bool,
+    data: bool,
+) {
     std::fs::create_dir_all(dir).unwrap();
     for (w, h) in [(800., 500.), (300., 300.), (300., 90.)] {
         for ratio in [1., 1.25, 1.5, 2.] {
-            let scenes: &[&str] = if ordered {
+            let scenes: &[&str] = if data {
+                &["initial", "partial-pop", "empty", "append-after-pop"]
+            } else if ordered {
                 &["initial", "reordered", "hovered", "transferred-reordered"]
             } else {
                 &[
@@ -38,7 +45,7 @@ fn capture<C: Host>(renderer: &mut iced::Renderer, dir: &std::path::Path, ordere
                 ]
             };
             for &scene in scenes {
-                let mut app = App::<C>::with_order(false, ordered);
+                let mut app = App::<C>::with_modes(false, ordered, data);
                 app.size = Size::new(w, h);
                 app.ratio = ratio;
                 let action = match scene {
@@ -57,6 +64,19 @@ fn capture<C: Host>(renderer: &mut iced::Renderer, dir: &std::path::Path, ordere
                     app.action(Message::LineNext).unwrap();
                     app.action(Message::CustomToLine).unwrap();
                     app.action(Message::ToFront).unwrap();
+                }
+                if data && scene != "initial" {
+                    let count = if scene == "empty" { usize::MAX } else { 3 };
+                    app.action(Message::Pop(count)).unwrap();
+                    app.action(Message::SelectSeries).unwrap();
+                    app.action(Message::Pop(count)).unwrap();
+                    if scene == "append-after-pop" {
+                        app.action(Message::Append).unwrap();
+                    }
+                    app.action(Message::SelectSeries).unwrap();
+                    if scene == "append-after-pop" {
+                        app.action(Message::Append).unwrap();
+                    }
                 }
                 let now = Instant::now();
                 app.chart.prepare(app.size, ratio, now).unwrap();
@@ -113,6 +133,11 @@ fn capture<C: Host>(renderer: &mut iced::Renderer, dir: &std::path::Path, ordere
                     };
                 let pixels = draw(&retained);
                 assert!(pixels == draw(&retained), "unstable snapshot");
+                if data {
+                    app.action(Message::Pop(usize::MAX)).unwrap();
+                    app.chart.prepare(size, ratio, now).unwrap();
+                    assert!(pixels == draw(&retained), "snapshot changed after pop");
+                }
                 if ordered {
                     app.action(Message::ToFront).unwrap();
                     app.chart.prepare(size, ratio, now).unwrap();
