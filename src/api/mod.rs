@@ -2,7 +2,9 @@
 mod behavior;
 mod chart;
 mod pane_management;
+mod series_data;
 pub use behavior::ChartBehavior;
+pub use series_data::BarsInfo;
 mod conflation;
 mod custom_series;
 pub use custom_series::{CustomHitData, CustomSeriesEventData, CustomSeriesHandle};

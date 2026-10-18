@@ -23,6 +23,20 @@ impl YieldCurveChart {
         self.custom_price_format(&mut options);
         self.core.add_custom_series(view, options, pane, position)
     }
+    pub fn pop_custom_data<V>(
+        &mut self,
+        handle: &CustomSeriesHandle<V>,
+        count: usize,
+    ) -> Result<Vec<V::Data>, ChartError>
+    where
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>
+            + 'static,
+        V::Data: 'static,
+    {
+        let removed = self.core.pop_custom_data(handle, count)?;
+        self.dirty |= !removed.is_empty();
+        Ok(removed)
+    }
     pub fn set_custom_data<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,

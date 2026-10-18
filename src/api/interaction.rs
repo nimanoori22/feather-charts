@@ -513,15 +513,6 @@ impl<B: super::ChartBehavior> Chart<B> {
         logical: Option<crate::model::time_data::TimePointIndex>,
         y: Option<f64>,
     ) -> PointerEvent<B::Item> {
-        use crate::model::{
-            data_consumer::{
-                AreaData, AreaDataItem, BarData, BarDataItem, BaselineData, BaselineDataItem,
-                CandlestickData, CandlestickDataItem, HistogramData, HistogramDataItem, LineData,
-                LineDataItem,
-            },
-            plot_data::{MutablePlotRow, PlotRowLike},
-            series_data::SeriesPlotRow,
-        };
         let time = logical
             .and_then(|index| self.model.time_scale().index_to_original_time(index))
             .cloned();
@@ -552,75 +543,8 @@ impl<B: super::ChartBehavior> Chart<B> {
                 else {
                     continue;
                 };
-                let data = match row {
-                    SeriesPlotRow::Line(row) => {
-                        BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
-                            time: row.original_time().clone(),
-                            value: PlotRowLike::values(row)[3],
-                            color: row.color.clone(),
-                            custom_values: row.base.custom_values,
-                        }))
-                    }
-                    SeriesPlotRow::Area(row) => {
-                        BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
-                            time: row.original_time().clone(),
-                            value: PlotRowLike::values(row)[3],
-                            line_color: row.line_color.clone(),
-                            top_color: row.top_color.clone(),
-                            bottom_color: row.bottom_color.clone(),
-                            custom_values: row.base.custom_values,
-                        }))
-                    }
-                    SeriesPlotRow::Bar(row) => {
-                        let v = PlotRowLike::values(row);
-                        BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
-                            time: row.original_time().clone(),
-                            open: v[0],
-                            high: v[1],
-                            low: v[2],
-                            close: v[3],
-                            color: row.color.clone(),
-                            custom_values: row.base.custom_values,
-                        }))
-                    }
-                    SeriesPlotRow::Baseline(row) => {
-                        BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(BaselineData {
-                            time: row.original_time().clone(),
-                            value: PlotRowLike::values(row)[3],
-                            top_line_color: row.top_line_color.clone(),
-                            bottom_line_color: row.bottom_line_color.clone(),
-                            top_fill_color1: row.top_fill_color1.clone(),
-                            top_fill_color2: row.top_fill_color2.clone(),
-                            bottom_fill_color1: row.bottom_fill_color1.clone(),
-                            bottom_fill_color2: row.bottom_fill_color2.clone(),
-                            custom_values: row.base.custom_values,
-                        }))
-                    }
-                    SeriesPlotRow::Histogram(row) => {
-                        BuiltInSeriesDataItem::Histogram(HistogramDataItem::Data(HistogramData {
-                            time: row.original_time().clone(),
-                            value: PlotRowLike::values(row)[3],
-                            color: row.color.clone(),
-                            custom_values: row.base.custom_values,
-                        }))
-                    }
-                    SeriesPlotRow::Candlestick(row) => {
-                        let v = PlotRowLike::values(row);
-                        BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(
-                            CandlestickData {
-                                time: row.original_time().clone(),
-                                open: v[0],
-                                high: v[1],
-                                low: v[2],
-                                close: v[3],
-                                color: row.color.clone(),
-                                border_color: row.border_color.clone(),
-                                wick_color: row.wick_color.clone(),
-                                custom_values: row.base.custom_values,
-                            },
-                        ))
-                    }
-                    _ => continue,
+                let Some(data) = super::series_data::public_data(row) else {
+                    continue;
                 };
                 series_data.push((*id, data));
             }

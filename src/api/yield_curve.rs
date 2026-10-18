@@ -161,6 +161,15 @@ impl YieldCurveChart {
         self.dirty = true;
         Ok(())
     }
+    pub fn pop_data(
+        &mut self,
+        id: SeriesId,
+        count: usize,
+    ) -> Result<Vec<BuiltInSeriesDataItem<Maturity>>, ChartError> {
+        let removed = self.core.pop_data(id, count)?;
+        self.dirty |= !removed.is_empty();
+        Ok(removed)
+    }
     pub fn remove_series(&mut self, id: SeriesId) -> Result<(), ChartError> {
         self.core.remove_series(id)?;
         self.dirty = true;

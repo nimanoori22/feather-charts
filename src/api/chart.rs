@@ -49,6 +49,7 @@ pub enum ChartError {
     UnsupportedSeries,
     HistoricalUpdateWithConflation(SeriesId),
     InvalidData { index: usize },
+    InvalidDataQuery,
     UnorderedData { index: usize },
     IdExhausted,
     InvalidInteraction,

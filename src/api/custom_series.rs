@@ -101,6 +101,40 @@ where
         *data.time_mut() = row.base.original_time.clone();
         Some(data)
     }
+    /// Owned canonical fulfilled data in chronological order; readable after detachment.
+    pub fn data(&self) -> Vec<V::Data> {
+        self.model
+            .borrow()
+            .rows()
+            .iter()
+            .map(|row| {
+                let mut data = row.data.clone();
+                *data.time_mut() = row.base.original_time.clone();
+                data
+            })
+            .collect()
+    }
+    pub fn data_by_index(
+        &self,
+        index: TimePointIndex,
+        direction: crate::model::plot_list::MismatchDirection,
+    ) -> Result<Option<V::Data>, ChartError> {
+        super::series_data::validate_index(index)?;
+        let model = self.model.borrow();
+        Ok(
+            super::series_data::find_row(model.rows(), index, direction).map(|row| {
+                let mut data = row.data.clone();
+                *data.time_mut() = row.base.original_time.clone();
+                data
+            }),
+        )
+    }
+    pub fn bars_in_logical_range(
+        &self,
+        range: Option<crate::model::time_data::LogicalRange>,
+    ) -> Result<Option<super::BarsInfo<V::Item>>, ChartError> {
+        super::series_data::range_info(self.model.borrow().rows(), range)
+    }
     fn attached_view<B: ChartBehavior>(
         &self,
         chart: &Chart<B>,
@@ -364,6 +398,44 @@ impl<B: ChartBehavior> Chart<B> {
             model,
             view: Rc::downgrade(&owned),
         })
+    }
+    /// Remove canonical fulfilled custom bars, newest first, retaining typed ownership.
+    pub fn pop_custom_data<V>(
+        &mut self,
+        handle: &CustomSeriesHandle<V>,
+        count: usize,
+    ) -> Result<Vec<V::Data>, ChartError>
+    where
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            > + 'static,
+        V::Data: 'static,
+    {
+        handle.attached_view(self)?;
+        if count == 0 || handle.model.borrow().rows().is_empty() {
+            return Ok(vec![]);
+        }
+        let (indices, update) = self
+            .layer
+            .pop_custom_series_data(handle.id, count)
+            .map_err(B::data_error)?;
+        // Payloads use old indices; the shared update reindexes surviving rows.
+        let removed = handle.model.borrow_mut().pop_indices(&indices);
+        self.cancel_interaction();
+        self.model.apply_data_update(update)?;
+        self.last_hit = None;
+        self.last_primitive = None;
+        Ok(removed
+            .into_iter()
+            .map(|row| {
+                let mut data = row.data;
+                *data.time_mut() = row.base.original_time;
+                data
+            })
+            .collect())
     }
     pub fn set_custom_data<V>(
         &mut self,
