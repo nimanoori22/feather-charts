@@ -39,6 +39,9 @@ impl YieldCurveChart {
     pub fn apply_chart_options(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
         self.core.apply_chart_options(patch)
     }
+    pub fn apply_localization_options(&mut self, patch: LocalizationOptionsPatch<Maturity>) {
+        self.core.apply_localization_options(patch);
+    }
     pub fn set_mouse_navigation_options(&mut self, options: MouseNavigationOptions) {
         self.core.set_mouse_navigation_options(options);
     }

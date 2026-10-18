@@ -141,3 +141,18 @@ Self-review covered dispatch precedence, custom callback cardinality, ownership,
 cache invalidation and unchanged default labels; no new dependencies or devices.
 Runtime update tests, actual renderer captures, full unchanged compatibility replay
 and physical acceptance are still required at A3/A4. No milestone acceptance claim.
+
+## Runtime checkpoint (A3)
+
+Added LocalizationOptionsPatch, detached localization_options readback and synchronous
+apply_localization_options on generic Chart and YieldCurveChart. Both horizontal
+behaviors and all scale caches refresh together. Empty/equal patches do nothing;
+Rc pointer identity compares callbacks without running application code.
+
+Runtime tests cover set/clear, actual axis labels, retained snapshot strings,
+callback lifetime with retained readback, unchanged data, pending events and active
+pan on empty/equal updates, plus percentage batch fallback and future named overlays.
+The new API first failed compilation before implementation; all runtime tests then
+pass. Library/formatting/yield tests and focused Clippy pass. Unknown locale/date
+strings retain existing fallback; full locale parity remains milestone H.
+No physical/render acceptance has been inferred from these tests.

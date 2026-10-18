@@ -1377,6 +1377,24 @@ where
         self.flush_effects();
     }
 
+    pub(crate) fn set_localization_options(
+        &mut self,
+        data_layer: &mut DataLayer<B, M>,
+        localization: crate::model::localization_options::LocalizationOptions<B::Item>,
+    ) where
+        B::Converter: HorzScaleItemConverter<B::Item, B::InternalItem, Error = B::Error>,
+    {
+        self.time_scale.set_localization_options(localization);
+        data_layer
+            .behavior_mut()
+            .update_formatter(self.time_scale.localization());
+        for pane in &mut self.panes {
+            pane.set_localization(self.time_scale.localization().base.clone());
+        }
+        self.full_update();
+        self.flush_effects();
+    }
+
     pub fn set_time_formatter(
         &mut self,
         data_layer: &mut DataLayer<B, M>,

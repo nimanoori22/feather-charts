@@ -3,6 +3,7 @@ pub use crate::model::chart_configuration::{
     ChartModelOptionsPatch, GridLineOptionsPatch, GridOptionsPatch, LayoutAppearance,
     LayoutOptionsPatch, PaneLayoutOptionsPatch, RuntimeModelOptions,
 };
+pub use crate::model::localization_options::LocalizationOptionsPatch;
 pub use crate::ui::chart_input::MouseNavigationOptions;
 
 /// Model presentation patches and component input settings are validated together.
@@ -71,5 +72,25 @@ impl<B: ChartBehavior> Chart<B> {
             self.mouse_options = options;
             self.revision = self.revision.wrapping_add(1);
         }
+    }
+}
+
+impl<B: ChartBehavior> Chart<B> {
+    /// Detached configuration readback. Clones strings and Rc callback handles only.
+    pub fn localization_options(
+        &self,
+    ) -> crate::model::localization_options::LocalizationOptions<B::Item> {
+        self.model.time_scale().localization().clone()
+    }
+    /// Refreshes price, percentage and horizontal formatters together. Empty/equal
+    /// patches are inert; changing labels preserves data, queued events and gestures.
+    /// Callback equality uses Rc identity. Unknown locale strings keep behavior-specific fallback.
+    pub fn apply_localization_options(&mut self, patch: LocalizationOptionsPatch<B::Item>) {
+        let mut next = self.localization_options();
+        if !patch.apply_to(&mut next) {
+            return;
+        }
+        self.model.set_localization_options(&mut self.layer, next);
+        self.revision = self.revision.wrapping_add(1);
     }
 }
