@@ -850,7 +850,8 @@ impl<I, O, D, M> CustomSeries<I, O, D, M> {
     pub fn pop_indices(&mut self, indices: &[TimePointIndex]) -> Vec<CustomPlotRow<I, O, D, M>> {
         let mut removed = vec![];
         for index in indices {
-            if let Some(position) = self.data.iter().position(|row| row.base.index == *index) {
+            // Public pop supplies newest indices first; avoid rescanning the prefix.
+            if let Some(position) = self.data.iter().rposition(|row| row.base.index == *index) {
                 self.data_cache.invalidate(Some(*index));
                 removed.push(self.data.remove(position));
             }

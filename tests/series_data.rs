@@ -434,3 +434,48 @@ fn canonical_queries_stay_pure_under_conflation_and_pop_invalidates_derived_rows
     drop(c);
     assert_eq!(old.plot.series_id, Some(id));
 }
+
+#[test]
+fn bulk_custom_pop_returns_owned_payloads_newest_first_without_cloning() {
+    use std::{cell::Cell, rc::Rc, time::Instant};
+    use support::*;
+    let mut c = OptionsChart::new_options(Default::default()).unwrap();
+    let h = c
+        .add_custom_series(
+            View::<HorizontalPrice, HorizontalPrice>::default(),
+            Default::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let copies = Rc::new(Cell::new(0));
+    c.set_custom_data(
+        &h,
+        (0..16384)
+            .map(|i| {
+                feather_charts::model::icustom_series::CustomSeriesDataItem::Data(Datum {
+                    time: HorizontalPrice::new(i as f64).unwrap(),
+                    value: i as f64,
+                    low: i as f64 - 1.,
+                    high: i as f64 + 1.,
+                    clones: Some(copies.clone()),
+                })
+            })
+            .collect(),
+    )
+    .unwrap();
+    copies.set(0);
+    let start = Instant::now();
+    let popped = c.pop_custom_data(&h, usize::MAX).unwrap();
+    println!("custom bulk pop elapsed={:?}", start.elapsed());
+    assert_eq!(copies.get(), 0);
+    assert_eq!(popped.len(), 16384);
+    assert!(
+        popped
+            .iter()
+            .enumerate()
+            .all(|(i, d)| d.value == (16383 - i) as f64)
+    );
+    assert!(h.data().is_empty());
+    assert_eq!(c.series_ids().collect::<Vec<_>>(), [h.id()]);
+}
