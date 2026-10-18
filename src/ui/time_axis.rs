@@ -43,7 +43,8 @@ pub(crate) fn axis_font(
 pub struct IcedTimeAxis {
     pub required_height: f64,
     pub size: Size,
-    primitives: Vec<AxisPrimitive>,
+    pub(crate) primitives: Vec<AxisPrimitive>,
+    pub(crate) screenshot_layers: Vec<crate::ui::screenshot_layers::ContentLayer>,
 }
 impl IcedTimeAxis {
     pub fn from_commands(
@@ -52,7 +53,23 @@ impl IcedTimeAxis {
     ) -> Result<Self, TimeAxisUiError> {
         let size = Size::new(commands.bounds.width as f32, commands.bounds.height as f32);
         let mut primitives = vec![];
-        for command in &commands.commands {
+        let mut screenshot_layers = vec![];
+        for (index, command) in commands.commands.iter().enumerate() {
+            use crate::ui::screenshot_layers::ContentLayer;
+            let start = primitives.len();
+            let layer = if commands.screenshot_crosshair.contains(&index) {
+                ContentLayer::Crosshair
+            } else if commands.screenshot_top_labels.contains(&index)
+                || matches!(
+                    command,
+                    TimeAxisCommand::PrimitiveLayer(crate::api::PrimitiveLayer::Top)
+                )
+            {
+                ContentLayer::Top
+            } else {
+                ContentLayer::Base
+            };
+
             match command {
                 TimeAxisCommand::PrimitiveLayer(layer) => {
                     primitives.push(AxisPrimitive::PrimitiveLayer(*layer))
@@ -111,8 +128,10 @@ impl IcedTimeAxis {
                     );
                 }
             }
+            screenshot_layers.extend(std::iter::repeat_n(layer, primitives.len() - start));
         }
         Ok(Self {
+            screenshot_layers,
             required_height: commands.required_height,
             size,
             primitives,

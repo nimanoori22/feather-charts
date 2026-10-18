@@ -1,0 +1,33 @@
+{
+  "images": [
+    {
+      "top": false,
+      "crosshair": false,
+      "width": 800,
+      "height": 500,
+      "sha256": "6a4a7ce30860229002992753121f4b3ed8fdab0a3440dbbaa5283ff3d17999d2"
+    },
+    {
+      "top": false,
+      "crosshair": true,
+      "width": 800,
+      "height": 500,
+      "sha256": "6a4a7ce30860229002992753121f4b3ed8fdab0a3440dbbaa5283ff3d17999d2"
+    },
+    {
+      "top": true,
+      "crosshair": false,
+      "width": 800,
+      "height": 500,
+      "sha256": "e0081295380622d058bd09c43aad7dfa818a198001b86b8e02059aae3fa2be11"
+    },
+    {
+      "top": true,
+      "crosshair": true,
+      "width": 800,
+      "height": 500,
+      "sha256": "32cdefd350723b2cd55a68ff27fdf3d1a7d7942edef933d264dbb4a42fe350d2"
+    }
+  ],
+  "mode": 1
+}

@@ -297,7 +297,8 @@ pub(crate) enum AxisPrimitive {
 pub struct IcedPriceAxis {
     pub required_width: f64,
     pub size: Size,
-    primitives: Vec<AxisPrimitive>,
+    pub(crate) primitives: Vec<AxisPrimitive>,
+    pub(crate) screenshot_layers: Vec<crate::ui::screenshot_layers::ContentLayer>,
 }
 impl IcedPriceAxis {
     pub fn from_commands(
@@ -306,7 +307,23 @@ impl IcedPriceAxis {
     ) -> Result<Self, PriceAxisUiError> {
         let size = Size::new(commands.bounds.width as f32, commands.bounds.height as f32);
         let mut primitives = vec![];
-        for command in &commands.commands {
+        let mut screenshot_layers = vec![];
+        for (index, command) in commands.commands.iter().enumerate() {
+            use crate::ui::screenshot_layers::ContentLayer;
+            let start = primitives.len();
+            let layer = if commands.screenshot_crosshair.contains(&index) {
+                ContentLayer::Crosshair
+            } else if commands.screenshot_top_labels.contains(&index)
+                || matches!(
+                    command,
+                    PriceAxisCommand::PrimitiveLayer(crate::api::PrimitiveLayer::Top)
+                )
+            {
+                ContentLayer::Top
+            } else {
+                ContentLayer::Base
+            };
+
             match command {
                 PriceAxisCommand::PrimitiveLayer(layer) => {
                     primitives.push(AxisPrimitive::PrimitiveLayer(*layer))
@@ -384,8 +401,10 @@ impl IcedPriceAxis {
                     );
                 }
             }
+            screenshot_layers.extend(std::iter::repeat_n(layer, primitives.len() - start));
         }
         Ok(Self {
+            screenshot_layers,
             required_width: commands.required_width,
             size,
             primitives,

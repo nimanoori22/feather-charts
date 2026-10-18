@@ -430,6 +430,8 @@ pub fn prepare_corner(
         required_height: 0.,
         bounds,
         commands: vec![],
+        screenshot_crosshair: 0..0,
+        screenshot_top_labels: 0..0,
     };
     if !axes.time.visible || !price.visible || bounds.width == 0. || bounds.height == 0. {
         return result;

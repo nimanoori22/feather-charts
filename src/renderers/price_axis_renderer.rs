@@ -49,6 +49,9 @@ pub enum PriceAxisCommand {
 }
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PreparedPriceAxis {
+    /// Command ranges on the separate overlay canvas, used by owned exports.
+    pub screenshot_crosshair: std::ops::Range<usize>,
+    pub screenshot_top_labels: std::ops::Range<usize>,
     pub required_width: f64,
     pub bounds: AxisBounds,
     pub commands: Vec<PriceAxisCommand>,
@@ -242,6 +245,8 @@ pub fn prepare_price_axis(
         required_width: measurement.required_width,
         bounds,
         commands: vec![],
+        screenshot_crosshair: 0..0,
+        screenshot_top_labels: 0..0,
     };
     let snapshot = &measurement.snapshot;
     if !snapshot.visible || bounds.width == 0. || bounds.height == 0. {
@@ -341,6 +346,7 @@ pub fn prepare_price_axis(
     result
         .commands
         .extend(labels::prepare(measurement, bounds, ratio, false));
+    let crosshair_start = result.commands.len();
     if let (Some(label), Some(metric)) = (&snapshot.crosshair_label, &measurement.floating_metrics)
     {
         let width = f64::from(
@@ -423,6 +429,7 @@ pub fn prepare_price_axis(
             color: label.color.clone(),
         });
     }
+    result.screenshot_crosshair = crosshair_start..result.commands.len();
     if snapshot.primitive_graphics {
         result.commands.push(PriceAxisCommand::PrimitiveLayer(
             crate::api::PrimitiveLayer::Top,
@@ -445,6 +452,8 @@ pub fn prepare_pane_price_labels(
         required_width: 0.,
         bounds,
         commands: labels::prepare(measurement, bounds, ratio, true),
+        screenshot_crosshair: 0..0,
+        screenshot_top_labels: 0..0,
     })
 }
 

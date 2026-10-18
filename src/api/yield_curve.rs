@@ -298,6 +298,14 @@ impl YieldCurveChart {
         self.settle()?;
         self.core.prepare(size, ratio, now)
     }
+    pub fn prepare_screenshot(
+        &mut self,
+        layers: ScreenshotLayers,
+        now: Instant,
+    ) -> Result<ChartScreenshot, ChartError> {
+        self.settle()?;
+        self.core.prepare_screenshot(layers, now)
+    }
     pub fn prepare_snapshot(
         &mut self,
         size: iced::Size,

@@ -38,6 +38,9 @@ pub enum TimeAxisCommand {
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct PreparedTimeAxis {
+    /// Command ranges on the separate overlay canvas, used by owned exports.
+    pub screenshot_crosshair: std::ops::Range<usize>,
+    pub screenshot_top_labels: std::ops::Range<usize>,
     pub required_height: f64,
     pub bounds: AxisBounds,
     pub commands: Vec<TimeAxisCommand>,
@@ -203,6 +206,8 @@ pub fn prepare_time_axis(
         required_height: measurement.required_height,
         bounds,
         commands: vec![],
+        screenshot_crosshair: 0..0,
+        screenshot_top_labels: 0..0,
     };
     let snapshot = &measurement.snapshot;
     if !snapshot.visible || bounds.width == 0. || bounds.height == 0. {
@@ -285,6 +290,7 @@ pub fn prepare_time_axis(
             crate::api::PrimitiveLayer::Normal,
         ));
     }
+    let labels_start = result.commands.len();
     let primitive_labels = snapshot
         .primitive_labels
         .iter()
@@ -295,7 +301,11 @@ pub fn prepare_time_axis(
         .as_ref()
         .zip(measurement.floating_width)
         .map(|(l, w)| (l, w, snapshot.ticks_visible));
-    for (label, text_width, tick_visible) in primitive_labels.chain(crosshair) {
+    for (label, text_width, tick_visible, is_crosshair) in primitive_labels
+        .map(|(l, w, t)| (l, w, t, false))
+        .chain(crosshair.map(|(l, w, t)| (l, w, t, true)))
+    {
+        let label_start = result.commands.len();
         let width = source_round(text_width) + 2. * f64::from(options.padding_horizontal);
         let mut x = (label.coordinate - width / 2.).floor() + 0.5;
         if x < 0. {
@@ -361,7 +371,11 @@ pub fn prepare_time_axis(
             font_family: options.font_family.clone(),
             color: label.color.clone(),
         });
+        if is_crosshair {
+            result.screenshot_crosshair = label_start..result.commands.len();
+        }
     }
+    result.screenshot_top_labels = labels_start..result.commands.len();
     if snapshot.primitive_graphics {
         result.commands.push(TimeAxisCommand::PrimitiveLayer(
             crate::api::PrimitiveLayer::Top,

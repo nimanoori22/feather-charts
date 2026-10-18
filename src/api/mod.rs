@@ -70,3 +70,9 @@ pub use crate::model::horz_scale_behavior_price::{
     HorizontalPrice, OptionsChartError, OptionsChartOptions,
 };
 pub use options_chart::OptionsChart;
+
+mod screenshot;
+pub use screenshot::*;
+
+mod exporter;
+pub use exporter::*;

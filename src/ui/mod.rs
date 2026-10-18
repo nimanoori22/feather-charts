@@ -17,3 +17,5 @@ pub(crate) mod primitive_hit_testing;
 pub mod custom_series;
 
 pub(crate) mod text_watermark;
+
+pub(crate) mod screenshot_layers;

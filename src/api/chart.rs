@@ -33,6 +33,7 @@ use std::{
 
 #[derive(Debug)]
 pub enum ChartError {
+    Screenshot(super::ScreenshotError),
     OptionsChart(crate::model::horz_scale_behavior_price::OptionsChartError),
     OptionsData(DataLayerError<crate::model::horz_scale_behavior_price::OptionsChartError>),
     YieldCurve(crate::model::yield_curve_horz_scale_behavior::YieldCurveError),
@@ -115,7 +116,8 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub(super) views: Vec<Vec<(SeriesId, SeriesPaneView)>>,
     pub(super) owner: MultiPaneChartFrameOwner,
     pub(crate) controller: TimeScaleAnimationController,
-    frame: IcedMultiPaneChartFrame,
+    pub(super) frame: IcedMultiPaneChartFrame,
+    pub(super) displayed_frame_valid: bool,
     prepared_revision: Option<u64>,
     fonts: AxisFontResolver,
     pub(super) background: String,
@@ -193,6 +195,7 @@ impl<B: ChartBehavior> Chart<B> {
             owner: Default::default(),
             controller: Default::default(),
             prepared_revision: None,
+            displayed_frame_valid: false,
             frame: Default::default(),
             fonts: Default::default(),
             background,
@@ -511,6 +514,7 @@ impl<B: ChartBehavior> Chart<B> {
                     });
                 }
                 self.frame = frame;
+                self.displayed_frame_valid = true;
                 self.prepared_revision = Some(self.revision);
                 Ok(())
             }
@@ -519,6 +523,7 @@ impl<B: ChartBehavior> Chart<B> {
                 self.last_hit = None;
                 self.last_primitive = None;
                 self.frame = Default::default();
+                self.displayed_frame_valid = false;
                 let mut pane = IcedChartFrame::default();
                 pane.layout.available = AxisBounds {
                     width: f64::from(size.width),
