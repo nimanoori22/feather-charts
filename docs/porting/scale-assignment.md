@@ -1,6 +1,6 @@
 # Series price-scale assignment (public parity milestone B)
 
-Status: B0 investigation and regression work. Baseline `0c27d0c`.
+Status: B0–B2 implemented in `1bdbc68`; B3 demo and automated gates pass; physical acceptance pending. Baseline `0c27d0c`.
 Formatting was accepted for progression by the user; its separate GPU mouse record
 remains pending and is not inferred from that statement.
 
@@ -95,4 +95,88 @@ no-op/failed active-pan preservation and successful cancellation. A custom-view
 counter proves transfers do not destroy the view or clone canonical payloads.
 The separately reproduced overlay plot-pan bug also passes after its fix.
 Library, existing pane-management, formatting and localization suites plus strict
-focused Clippy pass. Full renderer/source/compatibility and mouse gates remain B3.
+focused Clippy pass. B3 renderer/source checks pass; final compatibility and mouse gates are recorded below.
+
+## Public demo and capture protocol (B3)
+
+The `--scale-assignment` toolbar supports selected blue/custom series, setter versus
+option replacement, left/right/shared/named/empty overlays, manual/automatic range
+and an invalid-alias probe. Actual/stored IDs, pane and order are displayed together.
+Custom→line shares a pane; assigning both to Shared A demonstrates shared manual
+range and cleanup only after the last source leaves. Existing pane movement, live
+feed, box editing and screenshot preview/export controls remain available.
+
+`capture_scale_assignment.py` exercises four domains × eight scenes × three sizes
+× four pixel ratios on both strict renderers: 768 screen replays and retained
+exports. Each retained screenshot is rerendered after moving its owner to another
+scale, resizing and dropping the chart. Existing protocols, counts, thresholds and
+accepted image hashes remain independent compatibility gates.
+
+Remaining B3 work: available mouse acceptance;
+preserve prior formatting GPU, timing, drawing-order and unavailable-device records.
+
+## Files and review
+
+Core Rust changes: `src/api/chart.rs`, `custom_series.rs`, `interaction.rs`,
+`price_scale.rs`, `yield_curve.rs`; `src/model/chart_model.rs`,
+`chart_model/scale_assignment.rs`, `pane.rs`, `series.rs`, `series/projection.rs`,
+and `series_options.rs`. Behavioral regressions live in `tests/scale_assignment.rs`.
+The existing pane-management consumer adds `scale_assignment.rs` and
+`scale_assignment_captures.rs`, with small dispatch/host changes in
+`examples/pane_management.rs` and `examples/pane_management/host.rs`.
+
+Self-review checked option/membership atomicity, custom view ownership, shared-scale
+lifetime and existing pane source ordering. Demo actions reuse public APIs; optional
+controls stay in their own module. No dependencies or background engine work were
+added. Full replacement via the demo's options button intentionally reconstructs its
+demonstration styling; applications needing assignment alone should use the setter.
+
+## Remaining dependencies
+
+B3 still requires available physical mouse acceptance on each renderer. Horizontal
+axis input/settings (C), broader public helper/readback APIs (D), pane pixel sizing
+(E), metadata (F/G), locale defaults (H) and color parsing/gamut policy (I) remain
+separate milestones. No automatic closure of older timing or device exceptions.
+
+## Mouse acceptance procedure
+
+Use the normal live-feed demo in calendar, strike, maturity and sessions modes,
+first with `ICED_BACKEND=tiny-skia`, then `ICED_BACKEND=wgpu`.
+
+1. Select blue line and custom in turn. Try setter/options, Left, Right, Shared A,
+   Other B and Empty-name overlay. Actual and stored IDs must agree; order and data
+   must survive. Overlays share plot space without adding a dedicated axis.
+2. Reset; use Custom→line to share a pane. Assign both series to Shared A; Freeze
+   sets that shared scale to 0–10. Move one to Other B; the remaining series keeps
+   the frozen scale. Leave/recreate the overlay and check it returns to automatic.
+   Some values intentionally fall outside the demonstration manual range.
+3. Try Invalid alias; it must report rejection and preserve assignment. Move/swap
+   panes, move the line to a new pane, then Reset. The box follows the blue series.
+4. With feed running at regular, narrow and the earlier problem size, test wheel
+   zoom, diagonal plot drag, price-axis wheel/drag and box move/resize/Escape.
+   Plot drag follows the pane's default scale, which may differ from the selected
+   series' independent scale. Shrink to short height, enlarge and check recovery.
+5. Capture + save, inspect the preview, then Hide preview. Close all four windows
+   and report the renderer, passed checks or concrete failing gesture/size.
+
+An automated ratio capture is not physical high-DPI acceptance. A backend's physical
+result is recorded only after an explicit user report and normal session exit.
+
+## Validation record
+
+`cargo fmt -- --check`, `cargo test --offline --all-targets` (816 tests across 82
+suites), `cargo test --offline --doc` (2 tests), `cargo check --offline --all-targets`,
+`cargo clippy --offline --all-targets -- -D warnings`, and example builds pass.
+All 39 source comparisons pass, including the 20 frozen assignment states.
+Both strict renderers pass 768 exact screen replays and 768 retained exports.
+Representative left-axis, overlay, shared/manual and moved-pane captures were
+visually inspected across all four domains. Source and demo hashes match the tested
+binary's capture manifest. No timing or image threshold was relaxed.
+
+The machine-readable [evidence record](scale-assignment-evidence.json) pins source
+comparisons, binary, protocol/results and log hashes. Mouse acceptance is recorded
+separately; synthetic captures do not establish physical smoothness.
+
+All five unchanged compatibility protocols pass: events (912), custom horizontal
+(240), screenshot/export (1158), attribution (672), and formatting (576): **3558
+previously accepted images unchanged**. B3 remains open only for physical acceptance.

@@ -21,6 +21,11 @@ those API mappings; its original baseline is retained at `55ba7d7` and pinned by
 [the implementation manifest](public-parity-implementation-baseline.json). Formatting
 automated renderer checks pass; mouse acceptance is pending. Other finding groups remain open.
 
+Scale-assignment follow-up: [scale-assignment.md](scale-assignment.md) records the
+F03 implementation and the fresh series-to-scale query. Its eight behavioral tests
+and 20-case source comparison pass; renderer/mouse acceptance remains milestone B3.
+Baseline findings/evidence below continue to describe the original audited revision.
+
 ## Inventory and evidence standard
 
 [public-parity-inventory.json](public-parity-inventory.json) inventories **55

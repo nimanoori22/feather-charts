@@ -732,6 +732,31 @@ fallbacks; full Intl parity is still pending.
 
 See the [formatting contract, API example and acceptance record](docs/porting/formatting-parity.md).
 
+## Series price-scale assignment
+
+Use `set_series_price_scale(id, PriceScalePosition::Left/Right/Overlay(name))` to
+move an existing built-in or custom series within its current pane. Data, handles,
+drawing order and attached annotations remain with the series. `series_price_scale`
+returns a fresh checked assignment; no retained scale wrapper is required.
+
+Creation's explicit position argument wins over a conflicting `price_scale_id`.
+On option replacement, `Some(id)` requests reassignment and `None` keeps the current
+scale. Stored options are normalized to actual membership. Named overlays are created
+on demand, can have an empty name, and are removed when their last source leaves.
+Shared scales retain manual ranges. Typed Overlay("left")/Overlay("right") aliases
+are rejected; use the dedicated variants. A custom handle's `price_scale_id()` remains
+readable after detachment, while the chart query rejects detached/foreign IDs.
+
+```sh
+cargo run --example pane_management -- --scale-assignment --screenshot-export --live-feed
+```
+
+Add `--options`, `--yield-curve` or `--custom-domain` for other domains. Select blue
+line/custom, switch between setter/options, and try side axes, overlays and Freeze.
+Use Custom→line to share a pane before assigning both series to Shared A. Plot drag
+follows the pane's default scale; axis gestures control that axis independently.
+See the [assignment contract and evidence](docs/porting/scale-assignment.md).
+
 ## Public application events
 
 Enable `EventInterests` for data changes, plot double-clicks, visible logical and

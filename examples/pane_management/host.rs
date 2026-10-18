@@ -17,6 +17,19 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>>;
     fn axis_visible(&mut self, visible: bool);
     fn offset(&mut self, offset: f64);
+    fn assign_scale(
+        &mut self,
+        id: SeriesId,
+        position: PriceScalePosition,
+    ) -> Result<(), ChartError>;
+    fn assign_options(
+        &mut self,
+        id: SeriesId,
+        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        use_custom: bool,
+        target: &str,
+        pulse: bool,
+    ) -> Result<(), ChartError>;
     fn localize(&mut self, patch: LocalizationOptionsPatch<Self::Item>);
     fn format_series(
         &mut self,
@@ -131,6 +144,31 @@ macro_rules! common {
         }
         fn offset(&mut self, offset: f64) {
             self.set_right_offset(offset);
+        }
+        fn assign_scale(
+            &mut self,
+            id: SeriesId,
+            position: PriceScalePosition,
+        ) -> Result<(), ChartError> {
+            self.set_series_price_scale(id, position)
+        }
+        fn assign_options(
+            &mut self,
+            id: SeriesId,
+            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            use_custom: bool,
+            target: &str,
+            pulse: bool,
+        ) -> Result<(), ChartError> {
+            if use_custom {
+                let mut opts = CustomSeriesOptions::default();
+                opts.common.price_scale_id = Some(target.into());
+                self.replace_custom_series_options(custom, opts)
+            } else {
+                let mut opts = options(pulse);
+                opts.common.price_scale_id = Some(target.into());
+                self.replace_series_options(id, SeriesOptionsMap::Line(opts))
+            }
         }
         fn localize(&mut self, patch: LocalizationOptionsPatch<Self::Item>) {
             self.apply_localization_options(patch);
