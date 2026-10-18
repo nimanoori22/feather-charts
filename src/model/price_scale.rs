@@ -256,7 +256,8 @@ impl PriceScale {
         patch: PriceScaleOptionsPatch,
     ) -> Result<PriceScaleModeChange, PriceScaleOptionsError> {
         let margins = self.margins_after_patch(patch.scale_margins.as_ref())?;
-        let marks_changed = patch.scale_margins.is_some()
+        let marks_changed = patch.mode.is_some()
+            || patch.scale_margins.is_some()
             || patch.entire_text_only.is_some()
             || patch.tick_mark_density.is_some()
             || patch.ensure_edge_tick_marks_visible.is_some();
@@ -1345,6 +1346,28 @@ mod tests {
         scale.set_custom_price_range(None);
         assert!(!scale.is_custom_price_range());
         assert_eq!(scale.price_range(), None);
+    }
+
+    #[test]
+    fn option_mode_change_rebuilds_previously_rendered_manual_axis_marks() {
+        let mut scale = scale_with_range(PriceRangeImpl::new(4., 5.));
+        scale.add_data_source(formatting_source("value", 0, true));
+        scale.set_auto_scale(false);
+        let normal = scale.marks().to_vec();
+        assert!(!normal.is_empty());
+        scale
+            .apply_options(PriceScaleOptionsPatch {
+                mode: Some(PriceScaleMode::Logarithmic),
+                ..Default::default()
+            })
+            .unwrap();
+        let mut fresh = scale_with_range(PriceRangeImpl::new(4., 5.));
+        fresh.add_data_source(formatting_source("value", 0, true));
+        fresh.options.mode = PriceScaleMode::Logarithmic;
+        fresh.set_auto_scale(false);
+        let expected = fresh.marks().to_vec();
+        assert_ne!(normal, expected);
+        assert_eq!(scale.marks(), expected);
     }
 
     #[test]
