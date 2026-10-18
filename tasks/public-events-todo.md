@@ -1,6 +1,6 @@
 # Additional public events checklist
 
-Status: implementing, 2026-10-18. Core API checkpoint: `f17b20d`; demo/order checkpoint: `bc2fcbf`.
+Status: complete for available mouse scope, 2026-10-18. Core API checkpoint: `f17b20d`; demo/order checkpoint: `bc2fcbf`.
 Plan: [public-events-plan.md](public-events-plan.md). Baseline: `dd3f1c8`.
 Previous timing, drawing-order and untested-device records stay independent.
 
@@ -87,8 +87,8 @@ Verification: three-family demo tests/builds pass; no duplicate event handling.
 
 ## 10. Acceptance — depends on 9
 
-- [ ] Freeze exact event/raster matrix and pass new plus all 33 existing source comparisons.
-- [ ] Pass both asserted renderers, sizes/DPRs and unchanged compatibility images; inspect real output.
+- [x] Freeze exact event/raster matrix and pass new plus all 33 existing source comparisons.
+- [x] Pass both asserted renderers, sizes/DPRs and unchanged compatibility images; inspect real output.
 - [x] Obtain software mouse results in all modes, including idle counters and short-height recovery.
 - [x] Obtain matching GPU results and normal exits; retain and resolve any failure.
 
@@ -96,14 +96,14 @@ Verification: manifests, event assertions and actual physical user responses sup
 
 ## 11. Final validation — depends on 10
 
-- [ ] Formatting, all-target tests, doctests, cargo check, strict Clippy and diff hygiene pass.
-- [ ] Recheck consumers and complete source/design/files/test/evidence report and README.
-- [ ] Save final local commits with clean status; push only when requested.
+- [x] Formatting, all-target tests, doctests, cargo check, strict Clippy and diff hygiene pass.
+- [x] Recheck consumers and complete source/design/files/test/evidence report and README.
+- [x] Save final local commits with clean status; push only when requested.
 
 ## Feature acceptance
 
-- [ ] All five event families reach applications across the three chart frontends.
-- [ ] Ordering, scopes, original items, size units and single delivery match the frozen contract.
-- [ ] Existing input/edit/plugin behavior and ownership remain correct.
-- [ ] Automated/source/capture and available software/GPU mouse checks pass unchanged.
-- [ ] Earlier timing, drawing-order and unavailable-device exceptions retain independent status.
+- [x] All five event families reach applications across the three chart frontends.
+- [x] Ordering, scopes, original items, size units and single delivery match the frozen contract.
+- [x] Existing input/edit/plugin behavior and ownership remain correct.
+- [x] Automated/source/capture and available software/GPU mouse checks pass unchanged.
+- [x] Earlier timing, drawing-order and unavailable-device exceptions retain independent status.

@@ -1,6 +1,7 @@
 # Additional public chart events
 
-Date: 2026-10-18. Status: implementing; core API checkpoint `f17b20d`.
+Date: 2026-10-18. Status: implemented and accepted for available mouse scope.
+Core API `f17b20d`; demo/order `bc2fcbf`; touch lifecycle `582c760`.
 Baseline: `dd3f1c8`. Checklist: [public-events-todo.md](public-events-todo.md).
 Use the existing feature-specific planning convention. Earlier plans and their
 independent acceptance records remain intact.

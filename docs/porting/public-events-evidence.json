@@ -1,0 +1,106 @@
+{
+  "code_checkpoint": "582c760",
+  "tests": 763,
+  "suites": 74,
+  "doctests": 2,
+  "source_comparisons": 34,
+  "feature_captures": 288,
+  "exact_compatibility_comparisons": 96,
+  "final_feature_pixels_equal_initial_capture": true,
+  "mouse": {
+    "tiny-skia": "All checks passed in all three modes; idle counters passed; windows closed",
+    "wgpu": "All checks passed in all three modes; idle counters passed; windows closed"
+  },
+  "mouse_processes": {
+    "tiny-skia": [
+      {
+        "mode": "calendar",
+        "backend": "tiny-skia",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed"
+        ]
+      },
+      {
+        "mode": "price",
+        "backend": "tiny-skia",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed",
+          "--options"
+        ]
+      },
+      {
+        "mode": "yield",
+        "backend": "tiny-skia",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed",
+          "--yield-curve"
+        ]
+      }
+    ],
+    "wgpu": [
+      {
+        "mode": "calendar",
+        "backend": "wgpu",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed"
+        ]
+      },
+      {
+        "mode": "price",
+        "backend": "wgpu",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed",
+          "--options"
+        ]
+      },
+      {
+        "mode": "yield",
+        "backend": "wgpu",
+        "exit": 0,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--public-events",
+          "--live-feed",
+          "--yield-curve"
+        ]
+      }
+    ]
+  },
+  "logs_sha256": {
+    "target/public-events/all-targets-reviewed.log": "2a7a7f7652b1a64c784df74dd949175ee36d00a40b3c967f10aec6501497de1a",
+    "target/public-events/doctests-reviewed.log": "b707dddfda3098da892bac5418a7ac22579227bf7ec1dcec82e5acae3c8b4a34",
+    "target/public-events/check-reviewed.log": "500f5fc532c8592e5a0442f2be3fb888885987f0a5e6e967e679c400b9ab3dd8",
+    "target/public-events/clippy-accepted.log": "77bc20f4459f22b0a537f037eb0b81a92423dd8273869137cf0f89f1bf21f332",
+    "target/public-events/fmt-reviewed.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/public-events/build-reviewed.log": "0d0192d0d523fb1ff65925121a8844e4599a554d522198feb97bc3c43ab916ac",
+    "target/public-events/oracles-reviewed.log": "e13b7535b89a7c2a6bbff8125562d5b34aad99523d4669170799a38e44063358",
+    "target/public-events/captures-reviewed.log": "6e54c29d04078fd6d02945f34dd1770a6b2a89083bcd8ca8a35c03f59d9d675d"
+  },
+  "manifests_sha256": {
+    "target/public-events/reviewed/protocol.json": "fff94614946256a3e9b897f24e07f659bc25f8957b5a91be0bfe69b4b56a6645",
+    "target/public-events/reviewed/results.json": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298",
+    "target/public-events/oracles-reviewed/results.json": "1733e14e73a0f4501b55bfad2bd7e726036531918806896fcee2c164e258fe4f",
+    "docs/porting/public-events-source.json": "44c597f116389a6709cee0e13d61c9bbf929d073c6eee16f6f9c986874f371b6",
+    "docs/porting/public-events-baseline.json": "1a5bad8eec6465d0f7f27684de719e43d8ab2f463689117480c1544e4400dc91"
+  },
+  "independent_open_exceptions": [
+    "earlier timing exception",
+    "earlier drawing-order physical acceptance",
+    "touchpad/touchscreen/high-DPI physical devices"
+  ]
+}

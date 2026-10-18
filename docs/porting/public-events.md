@@ -1,6 +1,7 @@
 # Public events
 
-Status: implementation in progress. Baseline `dd3f1c8`.
+Status: implemented and accepted for available mouse scope, 2026-10-18.
+Baseline `dd3f1c8`; final code checkpoint `582c760`.
 
 ## Source and contract
 
@@ -23,6 +24,18 @@ Strict-range transitions emit horizontal before logical notifications, including
 when clamping makes two horizontal payloads equal. Fractional-only changes emit
 logical only. Hidden axis size is 0x0, measured in logical pixels.
 
+Source correspondence:
+
+| Source component | Responsibility |
+|---|---|
+| `src/api/series-api.ts` | Successful public data commits and notification scopes |
+| `src/api/time-scale-api.ts` | Logical/original-item ranges and logical axis dimensions |
+| `src/api/chart-api.ts` | Lazy public pointer-event conversion |
+| `src/model/time-scale.ts` | Separate strict/logical change causes and endpoint mapping |
+| `src/gui/time-axis-widget.ts` | Logical dimension-change notification |
+| `src/gui/pane-widget.ts`, `src/gui/mouse-event-handler.ts` | Plot click/double-click/tap recognition and forwarding |
+| `src/plugins/series-markers/primitive.ts` | Plugin invalidation and attachment lifetime |
+
 ## API and ownership decision
 
 Use ChartEvent with DataChanged, DoubleClick, VisibleLogicalRangeChanged,
@@ -40,6 +53,9 @@ linked charts/history loaders must guard equality to avoid feedback loops.
 
 Scale observation uses a typed internal delegate at existing strict/logical causes.
 Chart retains its RAII subscription; the delegate captures only a weak queue.
+Ownership is `Chart → queue`, `Chart → model → delegate → closure → Weak(queue)`,
+and `Chart → RAII subscription → Weak(delegate)`. Drop detaches the subscription;
+queued owned payloads already taken by the host survive chart/series removal.
 No chart/model reference or closure cycle exists. Disabled interests remove the
 subscription, so old applications perform no public-range payload cloning.
 
@@ -69,12 +85,28 @@ Delegate payloads no longer require `E: 'static`; callback storage still require
 `'static` captures. This permits a typed scale payload without imposing an unrelated
 lifetime restriction on the generic engine's horizontal-item type.
 
-## Validation and remaining work
+## Validation
 
-The native/source data and range sequences pass. Focused native, Canvas cancellation,
-custom ownership and demo controls pass. Full-source rerun, final backend captures
-and physical mouse acceptance are pending. Earlier timing,
-drawing-order and unavailable-device exceptions remain independent.
+The frozen final build passed:
+
+- `cargo test --offline --all-targets`: 763 tests across 74 suites.
+- `cargo test --offline --doc`: 2 doctests.
+- `cargo check --offline --all-targets`.
+- `cargo clippy --offline --all-targets -- -D warnings`.
+- `cargo fmt --check` and `git diff --check`.
+- All 34 source comparisons, including the 33 previous comparisons unchanged.
+- 288 event-feature captures with asserted tiny-skia/wgpu backends and 96 exact
+  compatibility-image comparisons. All final feature pixels also equal the earlier
+  inspected capture matrix, supporting the unchanged mouse/rendering scope after
+  the metadata-order and touch-only corrections.
+- Software and GPU mouse acceptance in all three modes; all six processes exited 0.
+
+[Machine-readable evidence](public-events-evidence.json) pins final logs/manifests,
+counts, public-source identity and the reported physical results. Raw logs, retained
+red regressions and capture matrices remain under `target/public-events/`; final
+runs are `*-reviewed.log`, `oracles-reviewed/` and `reviewed/`. No check or threshold
+was weakened. Earlier timing, drawing-order and unavailable-device exceptions
+remain independently open.
 
 ## Frozen acceptance matrix
 
@@ -102,6 +134,7 @@ edit/autoscale suites verify the corrected behavior.
 ## Files changed
 
 - `README.md`
+- `docs/porting/public-events-evidence.json`
 - `docs/porting/public-events-baseline.json`
 - `docs/porting/public-events-source.json`
 - `docs/porting/public-events-states.json`
@@ -152,6 +185,7 @@ exactly-once consumption, interest changes, Clear, Reset and bounded history.
 
 The implementation deliberately keeps existing source correspondence, synchronous
 plugin/model invalidation and native axis behavior. No dependencies were added.
+No further source component is a prerequisite for these event families.
 Screenshot/export and attribution drawing remain separate feature work. Earlier
 timing, drawing-order and unavailable-device checks remain independently open.
 
