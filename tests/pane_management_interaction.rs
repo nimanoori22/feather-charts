@@ -70,7 +70,7 @@ fn input(c: &mut Chart, state: &mut ChartState, event: Event, point: Point) {
 
 #[test]
 fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
-    for operation in 0..5 {
+    for operation in 0..6 {
         for gesture in 0..3 {
             let (mut c, id) = setup();
             let mut state = ChartState::default();
@@ -110,7 +110,8 @@ fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
                 1 => c.swap_panes(0, 1),
                 2 => c.move_series_to_pane(id, 1),
                 3 => c.remove_pane(0),
-                _ => c.set_series_order(id, usize::MAX),
+                4 => c.set_series_order(id, usize::MAX),
+                _ => c.pop_data(id, 1).map(|_| ()),
             }
             .unwrap();
             assert!(!c.is_panning());
@@ -178,6 +179,14 @@ fn rejected_and_identity_operations_preserve_active_drag() {
     c.swap_panes(1, 1).unwrap();
     c.move_series_to_pane(id, 0).unwrap();
     c.set_series_order(id, 0).unwrap();
+    assert!(c.pop_data(id, 0).unwrap().is_empty());
+    c.series_data(id).unwrap();
+    c.data_by_index(
+        id,
+        0.0.into(),
+        feather_charts::model::plot_list::MismatchDirection::NearestRight,
+    )
+    .unwrap();
     assert!(
         c.set_series_order(
             feather_charts::model::data_layer::SeriesId::new(u64::MAX),
@@ -326,6 +335,7 @@ fn transfer_keeps_update_marker_deadlines_and_idle_expiration() {
     let deadline = c.next_up_down_expiration().unwrap();
     c.move_series_to_pane(id, 1).unwrap();
     c.swap_panes(0, 1).unwrap();
+    c.pop_data(id, 1).unwrap();
     assert_eq!(c.next_up_down_expiration(), Some(deadline));
     assert_eq!(c.up_down_markers(markers, now).unwrap().len(), 1);
     c.update(ChartMessage::Tick(deadline)).unwrap();
@@ -335,7 +345,7 @@ fn transfer_keeps_update_marker_deadlines_and_idle_expiration() {
 #[test]
 fn pane_changes_stop_touch_and_kinetic_state() {
     use std::time::Duration;
-    for operation in 0..5 {
+    for operation in 0..6 {
         let (mut c, id) = setup();
         let now = Instant::now();
         for (ms, start, x) in [
@@ -367,7 +377,8 @@ fn pane_changes_stop_touch_and_kinetic_state() {
             1 => c.swap_panes(0, 1),
             2 => c.move_series_to_pane(id, 1),
             3 => c.remove_pane(0),
-            _ => c.set_series_order(id, usize::MAX),
+            4 => c.set_series_order(id, usize::MAX),
+            _ => c.pop_data(id, 1).map(|_| ()),
         }
         .unwrap();
         c.prepare(Size::new(800., 500.), 1., now + Duration::from_millis(100))

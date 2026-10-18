@@ -211,3 +211,226 @@ fn custom_pop_moves_payloads_before_shared_indices_change() {
     assert_eq!(h.data()[0].value, 20.);
     assert!(c.pop_custom_data(&h, 0).is_err());
 }
+
+#[test]
+fn all_builtin_queries_and_pop_preserve_original_times_and_style_fields() {
+    use feather_charts::model::series_options::*;
+    let t = Time::from("2024-01-01");
+    let cases = [
+        (
+            SeriesOptionsMap::Line(Default::default()),
+            BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+                time: t.clone(),
+                value: 12.,
+                color: Some("red".into()),
+                custom_values: Some(()),
+            })),
+        ),
+        (
+            SeriesOptionsMap::Histogram(Default::default()),
+            BuiltInSeriesDataItem::Histogram(HistogramDataItem::Data(HistogramData {
+                time: t.clone(),
+                value: 12.,
+                color: Some("red".into()),
+                custom_values: Some(()),
+            })),
+        ),
+        (
+            SeriesOptionsMap::Area(Default::default()),
+            BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
+                time: t.clone(),
+                value: 12.,
+                line_color: Some("red".into()),
+                top_color: Some("blue".into()),
+                bottom_color: Some("green".into()),
+                custom_values: Some(()),
+            })),
+        ),
+        (
+            SeriesOptionsMap::Baseline(Default::default()),
+            BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(BaselineData {
+                time: t.clone(),
+                value: 12.,
+                top_line_color: Some("red".into()),
+                bottom_line_color: Some("blue".into()),
+                top_fill_color1: Some("green".into()),
+                top_fill_color2: Some("pink".into()),
+                bottom_fill_color1: Some("cyan".into()),
+                bottom_fill_color2: Some("black".into()),
+                custom_values: Some(()),
+            })),
+        ),
+        (
+            SeriesOptionsMap::Bar(Default::default()),
+            BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
+                time: t.clone(),
+                open: 10.,
+                high: 15.,
+                low: 9.,
+                close: 12.,
+                color: Some("red".into()),
+                custom_values: Some(()),
+            })),
+        ),
+        (
+            SeriesOptionsMap::Candlestick(Default::default()),
+            BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(CandlestickData {
+                time: t,
+                open: 10.,
+                high: 15.,
+                low: 9.,
+                close: 12.,
+                color: Some("red".into()),
+                border_color: Some("blue".into()),
+                wick_color: Some("green".into()),
+                custom_values: Some(()),
+            })),
+        ),
+    ];
+    for (options, item) in cases {
+        let mut c = Chart::default();
+        let id = c.add_series(options, 0, PriceScalePosition::Right).unwrap();
+        c.set_data(id, vec![item.clone()]).unwrap();
+        assert_eq!(
+            c.series_data(id).unwrap().as_slice(),
+            std::slice::from_ref(&item)
+        );
+        assert_eq!(
+            c.data_by_index(id, 0.0.into(), MismatchDirection::None)
+                .unwrap(),
+            Some(item.clone())
+        );
+        assert_eq!(c.pop_data(id, 1).unwrap(), [item]);
+    }
+}
+
+#[test]
+fn custom_survivors_reindex_without_payload_copies_and_numeric_support_stays_private() {
+    use std::{cell::Cell, rc::Rc};
+    use support::*;
+    let mut c = OptionsChart::new_options(Default::default()).unwrap();
+    let a = c
+        .add_custom_series(
+            View::<HorizontalPrice, HorizontalPrice>::default(),
+            Default::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let b = c
+        .add_custom_series(
+            View::<HorizontalPrice, HorizontalPrice>::default(),
+            Default::default(),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    let copies = Rc::new(Cell::new(0));
+    c.set_custom_data(&a, vec![datum(HorizontalPrice::new(1.).unwrap(), 10.)])
+        .unwrap();
+    c.set_custom_data(
+        &b,
+        vec![
+            feather_charts::model::icustom_series::CustomSeriesDataItem::Data(Datum {
+                time: HorizontalPrice::new(3.).unwrap(),
+                low: 29.,
+                high: 31.,
+                value: 30.,
+                clones: Some(copies.clone()),
+            }),
+        ],
+    )
+    .unwrap();
+    copies.set(0);
+    c.pop_custom_data(&a, 1).unwrap();
+    assert_eq!(copies.get(), 0);
+    assert_eq!(b.data_at(0.0.into()).unwrap().value, 30.);
+    assert!(b.data_at(1.0.into()).is_none());
+    let mut y = YieldCurveChart::new(Default::default()).unwrap();
+    let line = y
+        .add_line_series(Default::default(), 0, PriceScalePosition::Left)
+        .unwrap();
+    y.set_data(
+        line,
+        vec![BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+            time: Maturity::from_months(420.).unwrap(),
+            value: 4.,
+            color: None,
+            custom_values: None,
+        }))],
+    )
+    .unwrap();
+    y.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+        .unwrap();
+    let support = y.model().panes()[0].attached_source_ids()[0];
+    assert!(y.pop_data(support, 1).is_err());
+    assert!(y.series_data(support).is_err());
+    y.pop_data(line, 99).unwrap();
+    y.prepare(iced::Size::new(300., 90.), 1.5, std::time::Instant::now())
+        .unwrap();
+    assert!(
+        y.model()
+            .time_scale()
+            .time_to_index(&Maturity::from_months(420.).unwrap(), false)
+            .is_some()
+    );
+    assert_eq!(y.series_ids().collect::<Vec<_>>(), [line]);
+}
+
+#[test]
+fn canonical_queries_stay_pure_under_conflation_and_pop_invalidates_derived_rows() {
+    use feather_charts::model::time_scale_options::HorzScaleOptionsPatch;
+    use std::time::Instant;
+    let mut c = Chart::default();
+    let id = add(&mut c);
+    c.apply_time_scale_options(HorzScaleOptionsPatch {
+        enable_conflation: Some(true),
+        ..Default::default()
+    });
+    c.set_data(
+        id,
+        (0..8192)
+            .map(|i| row(i as f64 + 1., 100. + (i % 10) as f64))
+            .collect(),
+    )
+    .unwrap();
+    c.fit_content();
+    c.prepare(iced::Size::new(300., 300.), 1., Instant::now())
+        .unwrap();
+    assert!(c.model().time_scale().conflation_factor() > 1);
+    let old = c.frame().clone();
+    assert_eq!(c.series_data(id).unwrap().len(), 8192);
+    assert_eq!(
+        c.data_by_index(id, 8191.0.into(), MismatchDirection::None)
+            .unwrap(),
+        Some(row(8192., 101.))
+    );
+    assert_eq!(c.pop_data(id, 17).unwrap().len(), 17);
+    assert_eq!(c.series_data(id).unwrap().len(), 8175);
+    c.prepare(iced::Size::new(300., 90.), 1.5, Instant::now())
+        .unwrap();
+    c.update_data(id, row(8175., 123.), false).unwrap();
+    c.update_data(id, row(8193., 120.), false).unwrap();
+    c.prepare(iced::Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    assert_eq!(value(c.series_data(id).unwrap().last().unwrap()), 120.);
+    for bad in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+        assert!(matches!(
+            c.data_by_index(id, bad.into(), MismatchDirection::NearestRight),
+            Err(ChartError::InvalidDataQuery)
+        ));
+    }
+    assert!(matches!(
+        c.bars_in_logical_range(
+            id,
+            Some(LogicalRange {
+                from: 3.0.into(),
+                to: 1.0.into()
+            })
+        ),
+        Err(ChartError::InvalidDataQuery)
+    ));
+    assert_eq!(c.series_data(id).unwrap().len(), 8176);
+    drop(c);
+    assert_eq!(old.plot.series_id, Some(id));
+}
