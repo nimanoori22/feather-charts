@@ -281,9 +281,25 @@ where
         pane: usize,
         point: Option<crate::renderers::line_renderer::Point>,
     ) -> Result<(), ChartModelError> {
+        self.set_crosshair_origin(pane, point, false)
+    }
+    pub(crate) fn set_synthetic_crosshair_position(
+        &mut self,
+        pane: usize,
+        point: crate::renderers::line_renderer::Point,
+    ) -> Result<(), ChartModelError> {
+        self.set_crosshair_origin(pane, Some(point), true)
+    }
+    fn set_crosshair_origin(
+        &mut self,
+        pane: usize,
+        point: Option<crate::renderers::line_renderer::Point>,
+        synthetic: bool,
+    ) -> Result<(), ChartModelError> {
         if pane >= self.panes.len() {
             return Err(ChartModelError::InvalidPane(pane));
         }
+        self.crosshair.synthetic = synthetic;
         self.crosshair.origin = point
             .filter(|p| p.x.is_finite() && p.y.is_finite())
             .map(|point| crate::model::crosshair::CrosshairOrigin { pane, point });
@@ -309,10 +325,11 @@ where
             return;
         };
         let ordered_ids = pane.ordered_source_ids().to_vec();
-        if origin.point.x < 0.
-            || origin.point.y < 0.
-            || origin.point.x >= self.time_scale.width()
-            || origin.point.y >= pane.height()
+        if !self.crosshair.synthetic
+            && (origin.point.x < 0.
+                || origin.point.y < 0.
+                || origin.point.x >= self.time_scale.width()
+                || origin.point.y >= pane.height())
         {
             return;
         }

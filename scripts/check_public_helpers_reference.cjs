@@ -49,7 +49,10 @@ async function main() {
    for(const mode of [0,1,2,3]) {s.priceScale().applyOptions({mode});await settle();roundtrips.push(Math.round(s.coordinateToPrice(s.priceToCoordinate(150))));}
    let events=0;c.subscribeCrosshairMove(()=>events++);
    c.setCrosshairPosition(150,50,s);const index=c._chartWidget.model().crosshairSource().appliedIndex();c.clearCrosshairPosition();
-   const result={range:[range.from,range.to],logical:[Math.round(logical.from),Math.round(logical.to)],global,visible,roundtrips,index,events,lines:s.priceLines().length,nearest:[c.timeScale().timeToIndex(0,true),c.timeScale().timeToIndex(101,true)],missing:c.timeScale().timeToIndex(0,false)};
+   c.timeScale().setVisibleRange({from:20,to:40});await settle();c.setCrosshairPosition(150,99,s);
+   const outside=[c._chartWidget.model().crosshairSource().appliedIndex()];
+   c.timeScale().setVisibleRange({from:50,to:70});await settle();outside.push(c._chartWidget.model().crosshairSource().appliedIndex());
+   const result={outside,range:[range.from,range.to],logical:[Math.round(logical.from),Math.round(logical.to)],global,visible,roundtrips,index,events,lines:s.priceLines().length,nearest:[c.timeScale().timeToIndex(0,true),c.timeScale().timeToIndex(101,true)],missing:c.timeScale().timeToIndex(0,false)};
    c.remove();return result;
   });
  } finally {await browser.close();}

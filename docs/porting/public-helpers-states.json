@@ -1,4 +1,8 @@
 {
+  "outside": [
+    39,
+    69
+  ],
   "range": [
     20,
     40
@@ -16,7 +20,7 @@
     150
   ],
   "index": 49,
-  "events": 0,
+  "events": 1,
   "lines": 2,
   "nearest": [
     0,

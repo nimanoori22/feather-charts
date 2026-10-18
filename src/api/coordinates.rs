@@ -115,7 +115,10 @@ impl<B: ChartBehavior> Chart<B> {
         if !y.is_finite() {
             return Ok(false);
         }
-        self.set_crosshair_position(pane, Some(crate::renderers::line_renderer::Point { x, y }))?;
+        self.model.set_synthetic_crosshair_position(
+            pane,
+            crate::renderers::line_renderer::Point { x, y },
+        )?;
         Ok(true)
     }
     /// Clear without generating an application pointer event.

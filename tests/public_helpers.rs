@@ -315,10 +315,127 @@ fn source_public_helper_states() {
             .value() as i32,
     ];
     assert!(c.horizontal_to_index(&item(0), false).unwrap().is_none());
+    c.set_visible_horizontal_range(HorizontalRange {
+        from: item(20),
+        to: item(40),
+    })
+    .unwrap();
+    prepare(&mut c);
+    c.set_crosshair_at(id, &item(99), 150.).unwrap();
+    let a = c.model().crosshair().position().unwrap().index.value();
+    c.set_visible_horizontal_range(HorizontalRange {
+        from: item(50),
+        to: item(70),
+    })
+    .unwrap();
+    prepare(&mut c);
+    let b = c.model().crosshair().position().unwrap().index.value();
     println!(
-        "HELPER_REFERENCE {{\"range\":[20,40],\"logical\":[{},{}],\"global\":{global},\"visible\":{visible},\"roundtrips\":{roundtrips:?},\"index\":{index},\"events\":{events},\"lines\":{},\"nearest\":{nearest:?},\"missing\":null}}",
+        "HELPER_REFERENCE {{\"outside\":[{a},{b}],\"range\":[20,40],\"logical\":[{},{}],\"global\":{global},\"visible\":{visible},\"roundtrips\":{roundtrips:?},\"index\":{index},\"events\":{events},\"lines\":{},\"nearest\":{nearest:?},\"missing\":null}}",
         logical.from.value().round(),
         logical.to.value().round(),
         c.price_lines(id).unwrap().len()
     );
+}
+
+#[test]
+fn synthetic_uses_pane_default_while_conversions_use_selected_series() {
+    use feather_charts::model::crosshair::{CrosshairMode, CrosshairOptions};
+    let (mut c, right) = chart();
+    let left = c
+        .add_series(
+            SeriesOptionsMap::Line(Default::default()),
+            0,
+            PriceScalePosition::Left,
+        )
+        .unwrap();
+    c.set_data(
+        left,
+        (1..=100)
+            .map(|i| {
+                BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+                    time: item(i),
+                    value: 1000. + i as f64 * 10.,
+                    color: None,
+                    custom_values: None,
+                }))
+            })
+            .collect(),
+    )
+    .unwrap();
+    c.fit_content();
+    c.set_crosshair_options(CrosshairOptions {
+        mode: CrosshairMode::Normal,
+        ..Default::default()
+    })
+    .unwrap();
+    prepare(&mut c);
+    let default_y = c.price_to_coordinate(right, 150.).unwrap().unwrap();
+    let selected_y = c.price_to_coordinate(left, 150.).unwrap().unwrap();
+    assert!((selected_y - default_y).abs() > 100.);
+    c.set_crosshair_at(left, &item(50), 150.).unwrap();
+    assert!((c.model().crosshair().origin().unwrap().point.y - default_y).abs() < 1e-8);
+    let empty = c
+        .add_series(
+            SeriesOptionsMap::Line(Default::default()),
+            0,
+            PriceScalePosition::Right,
+        )
+        .unwrap();
+    prepare(&mut c);
+    assert!(c.price_to_coordinate(empty, 150.).unwrap().is_none());
+    let mut hidden = feather_charts::model::series_options::LineSeriesOptions::default();
+    hidden.common.visible = false;
+    c.replace_series_options(left, SeriesOptionsMap::Line(hidden))
+        .unwrap();
+    prepare(&mut c);
+    assert_eq!(c.series_pane(left).unwrap(), 0);
+    assert!(c.coordinate_to_price(empty, 10.).unwrap().is_none());
+}
+
+#[test]
+fn synthetic_outside_view_keeps_origin_and_clamps_index_without_changing_pixel_input() {
+    use feather_charts::{
+        model::crosshair::{CrosshairMode, CrosshairOptions},
+        renderers::line_renderer::Point,
+    };
+    let (mut c, id) = chart();
+    c.set_crosshair_options(CrosshairOptions {
+        mode: CrosshairMode::Normal,
+        ..Default::default()
+    })
+    .unwrap();
+    c.set_visible_horizontal_range(HorizontalRange {
+        from: item(20),
+        to: item(40),
+    })
+    .unwrap();
+    prepare(&mut c);
+    c.take_events();
+    assert!(c.set_crosshair_at(id, &item(99), 150.).unwrap());
+    assert_eq!(c.model().crosshair().position().unwrap().index.value(), 39.);
+    let origin = c.model().crosshair().origin().unwrap().point;
+    assert!(origin.x > c.model().time_scale().width());
+    c.set_visible_horizontal_range(HorizontalRange {
+        from: item(50),
+        to: item(70),
+    })
+    .unwrap();
+    prepare(&mut c);
+    assert_eq!(c.model().crosshair().position().unwrap().index.value(), 69.);
+    assert_eq!(c.model().crosshair().origin().unwrap().point, origin);
+    c.set_crosshair_position(
+        0,
+        Some(Point {
+            x: origin.x,
+            y: origin.y,
+        }),
+    )
+    .unwrap();
+    assert!(
+        c.model().crosshair().position().is_none(),
+        "ordinary pixel input retains its existing bounds policy"
+    );
+    c.clear_crosshair_position().unwrap();
+    assert!(c.model().crosshair().origin().is_none());
 }

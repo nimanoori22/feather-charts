@@ -64,6 +64,7 @@ pub struct CrosshairMarker {
 }
 #[derive(Default)]
 pub struct Crosshair {
+    pub(crate) synthetic: bool,
     pub(crate) options: CrosshairOptions,
     pub(crate) origin: Option<CrosshairOrigin>,
     pub(crate) position: Option<CrosshairPosition>,
