@@ -1,0 +1,112 @@
+{
+  "states": [
+    {
+      "mode": 0,
+      "name": "manual",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 0,
+      "name": "update",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 0,
+      "name": "restored",
+      "auto": true,
+      "finite": true
+    },
+    {
+      "mode": 1,
+      "name": "manual",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 10
+      }
+    },
+    {
+      "mode": 1,
+      "name": "update",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 10
+      }
+    },
+    {
+      "mode": 1,
+      "name": "restored",
+      "auto": true,
+      "finite": true
+    },
+    {
+      "mode": 2,
+      "name": "manual",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 2,
+      "name": "update",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 2,
+      "name": "restored",
+      "auto": true,
+      "finite": true
+    },
+    {
+      "mode": 3,
+      "name": "manual",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 3,
+      "name": "update",
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 9
+      }
+    },
+    {
+      "mode": 3,
+      "name": "restored",
+      "auto": true,
+      "finite": true
+    }
+  ],
+  "defaults": [
+    {
+      "font": 17,
+      "vertical": false,
+      "invert": true
+    },
+    {
+      "font": 17,
+      "vertical": false,
+      "invert": false
+    }
+  ]
+}
