@@ -1,6 +1,8 @@
 //! Reorganize live calendar, strike or maturity panes through the public API.
 #[path = "pane_management/attribution.rs"]
 mod attribution;
+#[path = "pane_management/axis_interaction.rs"]
+mod axis_interaction;
 #[path = "pane_management/captures.rs"]
 mod captures;
 #[path = "pane_management/configuration.rs"]
@@ -45,6 +47,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    axis_mode: bool,
     assignment: Option<scale_assignment::Panel>,
     formatting: Option<formatting::Panel>,
     attribution: Option<attribution::Panel>,
@@ -71,6 +74,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Axis(axis_interaction::Action),
     Assign(scale_assignment::Action),
     Formatting(formatting::Action),
     Attribution(attribution::Action),
@@ -155,6 +159,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            axis_mode: false,
             assignment: None,
             formatting: None,
             attribution: None,
@@ -223,6 +228,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Axis(action) => self.axis_action(action)?,
             Message::Assign(action) => self.assignment_action(action)?,
             Message::Formatting(action) => self.formatting_action(action)?,
             Message::Attribution(action) => self.attribution_action(action)?,
@@ -271,6 +277,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let axis_mode = self.axis_mode;
                 let assignment = self.assignment.is_some();
                 let formatting = self.formatting.is_some();
                 let attribution = self.attribution.is_some();
@@ -284,6 +291,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if axis_mode {
+                    self.enable_axis()?;
+                }
                 if assignment {
                     self.enable_assignment()?;
                 }
@@ -476,6 +486,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.axis_mode {
+            content = content.push(self.axis_controls());
+        }
         if self.assignment.is_some() {
             content = content.push(self.assignment_controls());
         }
@@ -528,6 +541,7 @@ struct RunOptions {
     attribution: bool,
     formatting: bool,
     assignment: bool,
+    axis_mode: bool,
 }
 fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
     iced::application(
@@ -539,6 +553,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.axis_mode {
+                app.enable_axis().unwrap();
+            }
             if options.assignment {
                 app.enable_assignment().unwrap();
             }
@@ -601,6 +618,13 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args.iter().position(|a| a == "--axis-interaction-captures") {
+        axis_interaction::captures(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     let options = RunOptions {
         live: args.iter().any(|a| a == "--live-feed"),
         ordered: args.iter().any(|a| a == "--series-order"),
@@ -611,6 +635,7 @@ fn main() -> iced::Result {
         attribution: args.iter().any(|a| a == "--attribution"),
         formatting: args.iter().any(|a| a == "--formatting"),
         assignment: args.iter().any(|a| a == "--scale-assignment"),
+        axis_mode: args.iter().any(|a| a == "--axis-interaction"),
     };
     if args.iter().any(|a| a == "--custom-domain") {
         run::<Chart<session_behavior::Sessions>>(

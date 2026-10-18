@@ -732,6 +732,36 @@ fallbacks; full Intl parity is still pending.
 
 See the [formatting contract, API example and acceptance record](docs/porting/formatting-parity.md).
 
+## Axis interaction controls
+
+Drag the horizontal-axis labels left/right to change spacing about the right edge.
+Double-click restores the chart's configured spacing and right offset, including
+pixel offsets. Price-axis reset enables autoscaling. Both axes also support touch
+scaling and double-tap reset under their respective touch-direction settings.
+
+`AxisInteractionOptions` exposes independent `time_drag`, `time_reset`, `price_drag`
+and `price_reset` flags (all default to true). Use `set_axis_interaction_options`
+or `ChartOptionsPatch.axis_interaction`, and read `axis_interaction_options()` or
+`runtime_options().axis_interaction`. Disabling a drag cancels that axis's capture;
+unrelated axis flags preserve plot/edit gestures. Plot wheel and pinch remain separately configured; the existing native
+price-axis wheel extension stays available, including with the axis flags off.
+
+```sh
+cargo run --example pane_management -- --axis-interaction --screenshot-export --live-feed
+```
+
+Add `--options`, `--yield-curve` or `--custom-domain` for strike, maturity or sessions.
+Try the four independent toggles, Defaults 9 / +3, All off and All on.
+All off explicitly disables plot navigation as well; boundary labels align inside
+the static chart, and re-enabling navigation refreshes them. Resize/pane mutations
+cancel stale captures. Reset now uses configured defaults rather than global defaults;
+price-axis double-click reset occurs on the second successful release rather than
+on its press. Exhaustive `ChartMessage` consumers must handle the new `TimeAxis` variant.
+Explicit struct literals for the runtime patch/readback gain `axis_interaction`;
+using `..Default::default()` for patches remains compatible.
+
+See the [source contract and verification record](docs/porting/axis-interaction.md).
+
 ## Series price-scale assignment
 
 Use `set_series_price_scale(id, PriceScalePosition::Left/Right/Overlay(name))` to

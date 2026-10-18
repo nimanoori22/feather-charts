@@ -47,10 +47,10 @@ async function main() {
     const model=s._series.model(),widget=c._chartWidget._timeAxisWidget;
     const time=widget._topCanvasBinding.canvasElement;
     const price=c._chartWidget._paneWidgets[0]._rightPriceAxisWidget._topCanvasBinding.canvasElement;
-    function send(target,type,x,y){target.dispatchEvent(new MouseEvent(type,{bubbles:true,button:0,buttons:type==='mouseup'?0:1,clientX:x,clientY:y,view:window}));}
-    function drag(target,horizontal){const r=target.getBoundingClientRect();const x=r.x+r.width*(horizontal?0.6:0.5),y=r.y+r.height*0.5;send(target,'mousedown',x,y);send(document.documentElement,'mousemove',x-(horizontal?r.width*0.2:0),y+(horizontal?0:r.height*0.1));send(document.documentElement,'mouseup',x-(horizontal?r.width*0.2:0),y+(horizontal?0:r.height*0.1));}
+    function send(target,type,x,y){const event=new MouseEvent(type,{bubbles:true,button:0,buttons:type==='mouseup'?0:1,clientX:x,clientY:y,view:window});target.dispatchEvent(event);return event;}
+    function drag(target,horizontal){const r=target.getBoundingClientRect(),width=model.timeScale().width();const x=r.x+r.width*(horizontal?0.6:0.5),y=r.y+r.height*0.5;const down=send(target,'mousedown',x,y);const moved=send(document.documentElement,'mousemove',x-(horizontal?r.width*0.2:0),y+(horizontal?0:r.height*0.1));send(document.documentElement,'mouseup',x-(horizontal?r.width*0.2:0),y+(horizontal?0:r.height*0.1));return 9*(width-(moved.clientX-r.x))/(width-(down.clientX-r.x));}
     function twice(target){const r=target.getBoundingClientRect(),x=r.x+r.width*0.6,y=r.y+r.height*0.5;for(let i=0;i<2;i++){send(target,'mousedown',x,y);send(document.documentElement,'mouseup',x,y);}}
-    drag(time,true);await settle();const scaled=model.timeScale().barSpacing()!==9;if(scaled!==flags.timeDrag)throw new Error(`Unexpected source drag for mask ${mask}`);
+    const expected=drag(time,true);await settle();if(flags.timeDrag&&Math.abs(model.timeScale().barSpacing()-expected)>1e-8)throw new Error(`Source right-edge anchor mismatch for mask ${mask}`);const scaled=model.timeScale().barSpacing()!==9;if(scaled!==flags.timeDrag)throw new Error(`Unexpected source drag for mask ${mask}`);
     // Change the viewport without changing configured defaults.
     model.timeScale().setBarSpacing(18);model.timeScale().setRightOffset(8);model.lightUpdate();await settle();twice(time);await settle();
     const spacing=model.timeScale().barSpacing(),offset=model.timeScale().rightOffset();

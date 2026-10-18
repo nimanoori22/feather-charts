@@ -1,6 +1,6 @@
 # Horizontal-axis input and independent settings (milestone C)
 
-Baseline: `2c42782`. Status: C0–C2 implemented; C3 demo and final acceptance in progress.
+Baseline: `2c42782`. Status: C0–C2 implemented; C3 demo and automated gates pass; available physical acceptance pending.
 
 ## Source and consumers
 
@@ -133,7 +133,7 @@ compressed, reset, drag-off/reset-on, drag-on/reset-off, pane move and touch res
 Gestures are actual Canvas events returned to the public Chart owner, not direct
 engine scale calls. Retained exports are rerendered after settings/default/size
 changes and owner drop. The initial eight-scene output is retained as superseded;
-final evidence uses the separate milestone-captures directory. No old baseline or
+final evidence uses the separate completion-captures directory. No old baseline or
 threshold changes. Six unchanged compatibility protocols additionally cover events,
 custom domains, screenshot/export, attribution, formatting and scale assignment.
 
@@ -224,3 +224,20 @@ The unchanged legacy DPR/wheel regression caught overly broad idle cancellation.
 DPR now invalidates pointer ownership and edit state without discarding the first
 idle wheel event. That regression, all 13 axis tests and strict all-target Clippy
 pass. Its original zoom assertion was retained.
+
+## Final automated validation
+
+On the final source: format check, all-target tests (**832 in 83 suites**), doctests
+(**2**), all-target check, strict all-target Clippy, example builds, inventory drift
+and diff whitespace checks pass. All **40** source comparisons pass, including the
+unchanged 39 earlier scripts. Both strict renderers pass **864** exact screen replays
+and retained exports. Representative captures were visually inspected across all
+four domains. All **4326** accepted image hashes are unchanged across six prior
+protocols (events 912, custom horizontal 240, screenshot 1158, attribution 672,
+formatting 576, scale assignment 768). No old scene or threshold was weakened.
+
+The [pinned evidence record](axis-interaction-evidence.json) records binary,
+source/protocol/result and log hashes. The capture protocol's production/demo hashes
+match the current files and tested normal binary. Core checkpoints: `c5b8ce5`,
+`846497c`, `f757d68`, `d38d521`. Mouse acceptance remains pending on each renderer;
+earlier timing and device exceptions retain their own status.

@@ -331,3 +331,12 @@ management, custom horizontal behavior and attribution) passed all 52 tests.
 The final source/native probe completed with zero browser errors and saved all
 12 observations. These validate the diagnostics and preserve relevant existing
 behavior; the reproduced differences remain unresolved.
+
+
+Milestone C follow-up: horizontal-axis dragging/reset and independent price/time
+axis settings are implemented with source-backed Canvas regressions, including
+configured default/pixel-offset reset and release-time price reset. All-disabled
+edge-label alignment now follows the existing engine policy through public settings.
+See [axis-interaction.md](axis-interaction.md) for final validation and acceptance;
+this does not resolve construction-only default-visible-scale configuration or
+any older device/timing exception.

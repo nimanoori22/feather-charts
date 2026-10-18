@@ -11,7 +11,7 @@ const api={
   subscribeDblClick:'native|EventInterests.double_click / ChartEvent::DoubleClick',unsubscribeDblClick:'native|EventInterests.double_click',
   subscribeCrosshairMove:'native|ChartEvent::CrosshairMoved',unsubscribeCrosshairMove:'native|Host owns routing of pointer events',
   priceScale:'native|Chart methods use pane + PriceScalePosition',timeScale:'partial|F06: read-only model.time_scale; incomplete mutation facade',
-  applyOptions:'partial|F04/F05: Chart.apply_chart_options covers a subset; localization has its own typed patch',options:'partial|F04/F05: runtime_options plus localization_options readbacks; axis flags and color policy incomplete',
+  applyOptions:'partial|F04/F05: Chart.apply_chart_options covers axis input and presentation; default visible-scale selection and color policy incomplete',options:'partial|F04/F05: runtime/localization/axis-input readbacks; default visible-scale selection and color policy incomplete',
   takeScreenshot:'mapped|Chart.take_screenshot / prepare_screenshot + ScreenshotExporter',addPane:'native|Chart.add_pane then set_preserve_empty_pane',
   panes:'mapped|Chart.model().panes()',removePane:'mapped|Chart.remove_pane',swapPanes:'mapped|Chart.swap_panes',
   autoSizeActive:'platform|Iced host controls layout; no ResizeObserver',chartElement:'platform|Iced Canvas replaces DOM element',
@@ -107,7 +107,7 @@ const chartFields={width:'native|Chart.prepare and Iced layout',height:'native|C
  layout:'mapped|ChartModelOptions.layout',leftPriceScale:'mapped|PaneOptions.left_price_scale',rightPriceScale:'mapped|PaneOptions.right_price_scale',overlayPriceScales:'mapped|PaneOptions.overlay_price_scale',
  defaultVisiblePriceScaleId:'partial|F04: PaneOptions.default_visible_price_scale construction only',timeScale:'mapped|HorzScaleOptions / Chart.apply_time_scale_options',
  crosshair:'mapped|Chart.set_crosshair_options / apply_chart_options',grid:'mapped|ChartModelOptions.grid',handleScroll:'native|MouseNavigationOptions / TouchNavigationOptions',
- handleScale:'partial|F04: wheel/pinch supported, no axis-specific settings',kineticScroll:'mapped|KineticScrollOptions',trackingMode:'mapped|TouchNavigationOptions.tracking_exit',
+ handleScale:'mapped|AxisInteractionOptions plus MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch',kineticScroll:'mapped|KineticScrollOptions',trackingMode:'mapped|TouchNavigationOptions.tracking_exit',
  localization:'native|LocalizationOptions + Chart.apply_localization_options / localization_options; locale limitations tracked as F09',addDefaultPane:'mapped|ChartModelOptions.add_default_pane',hoveredSeriesOnTop:'mapped|Chart.set_hovered_series_on_top'};
 const files=[]; function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if(p.endsWith('.ts'))files.push(p)}}walk(path.join(root,'src'));
 const rows=[], declarations=[], hashes={};
@@ -134,8 +134,8 @@ for(const file of files.sort()){
    if(!finding&&owner==='ChartOptionsBase')finding=chartFields[member];
    if(!finding&&owner==='ChartOptionsImpl')finding='native|Generic LocalizationOptions + LocalizationOptionsPatch; typed domain formatter and owned callback readback';
    if(!finding&&owner==='HandleScrollOptions')finding='native|MouseNavigationOptions / TouchNavigationOptions';
-   if(!finding&&owner==='HandleScaleOptions')finding=['mouseWheel','pinch'].includes(member)?'native|MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch':'gap|F04: axis-specific controls absent';
-   if(!finding&&['AxisPressedMouseMoveOptions','AxisDoubleClickOptions'].includes(owner))finding='gap|F04: no independent '+member+' axis control';
+   if(!finding&&owner==='HandleScaleOptions')finding=['mouseWheel','pinch'].includes(member)?'native|MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch':'native|AxisInteractionOptions; independent drag/reset for both axes';
+   if(!finding&&['AxisPressedMouseMoveOptions','AxisDoubleClickOptions'].includes(owner))finding='native|AxisInteractionOptions.'+(member==='time'?'time':'price')+(owner==='AxisPressedMouseMoveOptions'?'_drag':'_reset');
    if(!finding&&owner==='TrackingModeOptions')finding='native|TouchNavigationOptions.tracking_exit';
    if(!finding&&owner==='MouseEventParams')finding=member==='sourceEvent'?'gap|F10: PointerEvent omits native input modifiers/source metadata':'native|PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated';
    if(!finding&&owner==='HoveredInfo')finding='native|ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane';

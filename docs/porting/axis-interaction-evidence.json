@@ -1,0 +1,351 @@
+{
+  "status": "Core and demo implemented; automated gates pass; software/GPU physical acceptance pending",
+  "core_checkpoints": [
+    "c5b8ce5",
+    "846497c",
+    "f757d68",
+    "d38d521"
+  ],
+  "source_manifest": "docs/porting/axis-interaction-source.json",
+  "source_states": 16,
+  "source_extra_assertions": [
+    "numeric right-edge formula from actual DOM event coordinates",
+    "all-disabled edge-label alignment",
+    "visible empty-axis reset"
+  ],
+  "source_comparisons": [
+    {
+      "script": "scripts/check_area_reference.cjs",
+      "sha256": "e4144036e3be44986f23e4835e5bb89392003ae31ad800ac13a9ac279f6daa80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_attribution_reference.cjs",
+      "sha256": "d77178b60480fc907962c52b755c5d795354501abe987a2765ff600fe9ef3275",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_axis_interaction_reference.cjs",
+      "sha256": "b866ac8da8367ad1baee489cbbdb7ac19a5d6666152372ecaad1c8f1646c8fb9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_bar_reference.cjs",
+      "sha256": "08861e9a2e3d8235710d19a9e16a3aa9593bd1f5e59acb579ebd60433b34132d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_baseline_reference.cjs",
+      "sha256": "85843ac9a648935b750d70bf64a22867e1c67bf2cead2fce4e45b9779b00c8be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_candlestick_reference.cjs",
+      "sha256": "897467468c6f88ecfa99c4e3826f9c04b2e9c912c78cc72cd35f409ed5f24973",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_chart_layout_reference.cjs",
+      "sha256": "823e3ac96f0a3ff696c434c5ee7087bcad6d019ec402f1b740a87a2e6023b108",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_conflation_reference.cjs",
+      "sha256": "0cd8c21c928bed6e5f4b76c6ba3dd8680764015981a90ba07d09cf4a0f0ebeff",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_horizontal_reference.cjs",
+      "sha256": "b4e8d739a2b4996478b704c92ba3f505d80498a15248b3e8d0dd8e15c6a410e1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_series_reference.cjs",
+      "sha256": "9f20fcea8fde6e589ede801a274c6cebc25b07e1b33a9d5a99d47fadf97b00b3",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_formatting_reference.cjs",
+      "sha256": "fcf3b32a66a26e9d08f696cea4afc359a16db320320935e5c617e927d968ca0f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_histogram_reference.cjs",
+      "sha256": "ae27286280d276f5f784ec063cec7e7ef8f75e246a6d3dd9e6f80dad3cdf1ca5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_hover_selection_reference.cjs",
+      "sha256": "1930dcc757e1ff14e10d7a11896d3e132107953b3b373f7ef72a66291da0558a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_image_watermark_reference.cjs",
+      "sha256": "4f4030f5d4fc7a1475799965372f7b7f9478b6fba6d62f973578f414ff999403",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_incremental_append_reference.cjs",
+      "sha256": "283d4c0328f4b4ab75557bc519f61c0c546d6f7cd4e877272251d878b8a283a2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_interaction_reference.cjs",
+      "sha256": "4c8fbb58eeffac0af6072acfa13bb42218eb51aca21b4e36083215abebf4ea75",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_kinetic_reference.cjs",
+      "sha256": "52c073e667b4d537cd241956f097eda4ad8d2b858fcf85c8b4fa7152f08bdd76",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_last_price_animation_reference.cjs",
+      "sha256": "7538dd5774106f9b36cab5b352636b5db8607e8194624fc4ab05eca012b25356",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_lazy_autoscale_reference.cjs",
+      "sha256": "cd50fe63879d1825407a7a995f9d9fa6a55fe029dfd0e458467b5d90816c1f80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_line_reference.cjs",
+      "sha256": "6cd0c7767a7cef55d7e19b91aaf7ca012cd5bda32c10c9d0810aa7cb27a48729",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_interaction_reference.cjs",
+      "sha256": "640b57bf60215777957539a97b9941a514cb0636c63fd96c0cf06d57a4b44cf1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_layout_reference.cjs",
+      "sha256": "3e9b702b450eda9d78bf7f70901f1cf66f0775dfa13aa1674c9db1ab717fbcfe",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_numeric_custom_series_reference.cjs",
+      "sha256": "8ef9ed1c34f1ffc85e97491ce43ac56036e0c5158fbc15ab717478c52cd6606f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_options_chart_reference.cjs",
+      "sha256": "a7605804f3f41c07d020b8a63340a15552e4bbae5f81b4897bbee3c4f131797a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_management_reference.cjs",
+      "sha256": "c4a79cd3a31c096f2c88d6f5961de565667930de5fcdd1c310b2f6ab9e727722",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_axis_reference.cjs",
+      "sha256": "edf3d724b527697f404533dfe1fbcf3b6e60ecb17d3f27d47bb2b6615a7b3f8c",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_lines_reference.cjs",
+      "sha256": "586357e035f77527087a4bb6bf8b6e16d6e87e97a34a2457b0306d3b699994cd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_scale_configuration_reference.cjs",
+      "sha256": "71af03522e8e0031aa7836c27b7d1783f8101ea2aedeaaf0cc018d7ffd64c2a9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_primitive_reference.cjs",
+      "sha256": "0a1638b6f557c0f0072b8533e3a443d1bf0df1d52f2d57fb7892a8c81f2c6691",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_events_reference.cjs",
+      "sha256": "2094c4ef89493786fd0d1b5a85ba1370efa4d57874f973bf0669ff51e7ae567b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_scale_assignment_reference.cjs",
+      "sha256": "6852d35b5781e5d2640939fac523c3c804f681cf957e6774cbc3d0ef78dbbdd5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_screenshot_reference.cjs",
+      "sha256": "03ddd594d120f98a257d340ee8d5e40c83a5b746293e125e2b82edffd8771ef1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_data_reference.cjs",
+      "sha256": "fe53408b9921be879eed847d93906df063b27eaa2a9be0bc663bbba05f9a7a6d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_markers_reference.cjs",
+      "sha256": "812c99052657cdb671d1b8cfa2e28d30e47230dfa0fb702c3eb98ca7c74d21be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_order_reference.cjs",
+      "sha256": "363ed48a528efe71a6847ba9a2a1ad904999bb4a9639f144e48a5834c58b3edc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_text_watermark_reference.cjs",
+      "sha256": "63b116f9b67835e75ccbd435bb52ffeb542bff79485b99286fae8c3beae26eae",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_axis_reference.cjs",
+      "sha256": "139cc120a78ae54e1a1a156968433968c858e53825a781b7fa9ce65c14ec580a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_touch_reference.cjs",
+      "sha256": "21c28e479913d41304c2b35a4ec5435142068d4fb41302085cbef6120e79c987",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_up_down_markers_reference.cjs",
+      "sha256": "16779689548d66ce99bf0803511320a0c7a59b9d6b64bbecaf65208bcc1440fd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_yield_curve_reference.cjs",
+      "sha256": "2259259b6ff1bd238cbc22d4c517d08831c13c5f5b5ac55d82710c402bd8066e",
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 832,
+    "suites": 83,
+    "doctests": 2,
+    "focused_axis_tests": 13
+  },
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    }
+  ],
+  "capture_protocol": "target/axis-interaction/completion-captures/protocol.json",
+  "capture_protocol_sha256": "6065490564a34f7905685ecf5afa3c7f238dd28ca3eb54892bc46a5de5eb1e3c",
+  "capture_results_sha256": "14fe5c98866c850d2e83b4f12a28e0ffb97103254a6101da43ed0495f339ea88",
+  "binary_sha256": "36d1afefa380163c545e264d93258f01ae0b33b586eb9b474900b37b02f1f42e",
+  "screens": 864,
+  "retained_exports": 864,
+  "compatibility": [
+    {
+      "script": "capture_public_events.py",
+      "exit": 0,
+      "accepted_images_unchanged": 912
+    },
+    {
+      "script": "capture_custom_horizontal.py",
+      "exit": 0,
+      "accepted_images_unchanged": 240
+    },
+    {
+      "script": "capture_screenshot_export.py",
+      "exit": 0,
+      "accepted_images_unchanged": 1158
+    },
+    {
+      "script": "capture_attribution.py",
+      "exit": 0,
+      "accepted_images_unchanged": 672
+    },
+    {
+      "script": "capture_formatting.py",
+      "exit": 0,
+      "accepted_images_unchanged": 576
+    },
+    {
+      "script": "capture_scale_assignment.py",
+      "exit": 0,
+      "accepted_images_unchanged": 768
+    }
+  ],
+  "compatibility_results_sha256": "ef1c0422d0034b0a84ff07a93a1fef0805f561c16b1cf8673c559a84eb3c9dc1",
+  "accepted_images_unchanged": 4326,
+  "logs": {
+    "target/axis-interaction/completion-build.log": "52ec6984d1062a54f8ff1bbdd0e4b981a39a942fccab4c5d61fb5bfb94f9600d",
+    "target/axis-interaction/completion-tests.log": "cb14ec3d92d56d7cc84adff17731de81294f37b2c659714ba30ecc924e0c8f47",
+    "target/axis-interaction/completion-check.log": "78501174d89ad2cdba40dd54f4b53611a348fc78a778df76f81c24ac93ecb9f9",
+    "target/axis-interaction/completion-clippy.log": "f4403412cb20dc7d8a0a94c08c9c8853e4bac9b3e8489158834f30512311ed97",
+    "target/axis-interaction/completion-doc.log": "267091e9ff0e7891d9c4948cc5f11f788502f1ac770aaa3b500f29d4d4cc1f7b",
+    "target/axis-interaction/red-canvas.log": "c7255f62a05c7d722fa9ffc125b00f25715640b4211e4ac51ca3a2c65bd2805a",
+    "target/axis-interaction/red-settings.log": "196d4b083b1eea57cf89bb863b409c84d4d9e43d3bd6821f8234f6b84acb8bdc",
+    "target/axis-interaction/red-static-labels.log": "bbe05845a543c261517cc18f963e45d5bbe032f09dc56ee7b3e18e8b8cb84f8d",
+    "target/axis-interaction/red-edge-lifecycle.log": "99c429a0df1ff9e599a53cec4b1f156d7503d2cc180b7af559c8278acc79a386",
+    "target/axis-interaction/milestone-tests.log": "4b58049843380e59c8ccdf16b4e76b9baf59e559199d54b255fddf3a48671792",
+    "target/axis-interaction/reset-diagnostic.log": "ca62e7a366fb6e31a01e9cb7b04e465c132e52fc2965288c4f7a2135d50d981f"
+  },
+  "failed_capture": {
+    "path": "target/axis-interaction/accepted-captures",
+    "results_sha256": "0991f21fb8dfa465bdf7651c2db28a0621df13fc64764e79fef9046340368c62",
+    "status": "Original narrow touch-reset failure retained; no engine defect established. Removed duplicate fixture preparation; final unchanged 500ms pairing and scenes pass after profiling suites."
+  },
+  "physical_acceptance": {
+    "tiny-skia": "pending",
+    "wgpu": "pending"
+  },
+  "independent_exceptions": [
+    "formatting separate GPU physical record",
+    "earlier timing acceptance",
+    "dedicated series drawing-order physical acceptance",
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI",
+    "Intl outside existing support contract",
+    "Display-P3 target"
+  ]
+}
