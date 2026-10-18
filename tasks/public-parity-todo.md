@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B started on user instruction.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -29,8 +29,9 @@ Preserve previous roadmap acceptance and independent exceptions.
 
 Formatting core evidence: [formatting-parity.md](../docs/porting/formatting-parity.md).
 A4 automated gates pass: 807 tests, 38 source checks, 576 screen replays and retained
-exports; 2982 accepted compatibility images unchanged. Software/GPU mouse acceptance
-remains open; four software demos are prepared. See formatting-evidence.json.
+exports; 2982 accepted compatibility images unchanged. The user accepted formatting and explicitly requested the next feature. Proceed to B
+under that instruction. A4 retains its missing separate GPU physical record; no
+GPU result is inferred. See formatting-evidence.json.
 
 ### B — Series price-scale assignment
 

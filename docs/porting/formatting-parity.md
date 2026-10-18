@@ -258,3 +258,12 @@ Four explicitly tiny-skia software demos are open for available-mouse acceptance
 Software and GPU physical checks are pending; A4 and milestone A remain unchecked.
 The roadmap proceeds to series price-scale reassignment after those checks pass.
 Local core checkpoints: `2343cc9`, `8cb4848`; no push was requested or performed.
+
+## User acceptance and progression
+
+The user replied “it's okay, let's go for the next feature” after receiving the
+software mouse acceptance procedure. This accepts formatting and explicitly
+authorizes milestone B. It is a general acceptance statement; no separate GPU mouse
+result or itemized device result is inferred. A4 retains that missing physical
+record. Automated evidence is unchanged. Later combined acceptance can supply the
+missing backend record, as with the previous screenshot milestone.

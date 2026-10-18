@@ -1,5 +1,5 @@
 {
-  "status": "A0-A3 complete; A4 automated gates passed; physical acceptance pending",
+  "status": "User accepted formatting and explicitly requested the next feature; separate GPU physical record remains pending",
   "core_checkpoints": [
     "2343cc9",
     "8cb4848"
@@ -218,8 +218,8 @@
     "target/public-parity/formatting/a4-runtime-clippy.log": "0049ef5476c65c0e60b57320cef17382b06d236920538304f44ca014c52ac911"
   },
   "physical_acceptance": {
-    "software": "pending: four tiny-skia demos opened; user question outstanding",
-    "wgpu": "pending"
+    "software": "User response: it is okay; proceed to next feature. General acceptance, no itemized checklist.",
+    "wgpu": "No separate physical result; not inferred from software/general acceptance"
   },
   "independent_exceptions": [
     "earlier timing acceptance",
