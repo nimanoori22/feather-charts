@@ -1,0 +1,470 @@
+{
+  "status": "Milestone D accepted: automated gates and four-mode software/GPU mouse acceptance pass",
+  "baseline": "09520ec",
+  "core_checkpoints": [
+    "e00f8c3",
+    "92fb8de",
+    "6d87dcc"
+  ],
+  "demo_checkpoint": "6f3fbcd",
+  "source_version": "5.2.1",
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "source_manifest": "docs/porting/public-helpers-source.json",
+  "source_states": {
+    "outside": [
+      39,
+      69
+    ],
+    "range": [
+      20,
+      40
+    ],
+    "logical": [
+      19,
+      39
+    ],
+    "global": 200,
+    "visible": 140,
+    "roundtrips": [
+      150,
+      150,
+      150,
+      150
+    ],
+    "index": 49,
+    "events": 0,
+    "lines": 2,
+    "nearest": [
+      0,
+      99
+    ],
+    "missing": null
+  },
+  "source_comparisons": [
+    {
+      "script": "scripts/check_area_reference.cjs",
+      "sha256": "e4144036e3be44986f23e4835e5bb89392003ae31ad800ac13a9ac279f6daa80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_attribution_reference.cjs",
+      "sha256": "d77178b60480fc907962c52b755c5d795354501abe987a2765ff600fe9ef3275",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_axis_interaction_reference.cjs",
+      "sha256": "b866ac8da8367ad1baee489cbbdb7ac19a5d6666152372ecaad1c8f1646c8fb9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_bar_reference.cjs",
+      "sha256": "08861e9a2e3d8235710d19a9e16a3aa9593bd1f5e59acb579ebd60433b34132d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_baseline_reference.cjs",
+      "sha256": "85843ac9a648935b750d70bf64a22867e1c67bf2cead2fce4e45b9779b00c8be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_candlestick_reference.cjs",
+      "sha256": "897467468c6f88ecfa99c4e3826f9c04b2e9c912c78cc72cd35f409ed5f24973",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_chart_layout_reference.cjs",
+      "sha256": "823e3ac96f0a3ff696c434c5ee7087bcad6d019ec402f1b740a87a2e6023b108",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_conflation_reference.cjs",
+      "sha256": "0cd8c21c928bed6e5f4b76c6ba3dd8680764015981a90ba07d09cf4a0f0ebeff",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_horizontal_reference.cjs",
+      "sha256": "b4e8d739a2b4996478b704c92ba3f505d80498a15248b3e8d0dd8e15c6a410e1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_series_reference.cjs",
+      "sha256": "9f20fcea8fde6e589ede801a274c6cebc25b07e1b33a9d5a99d47fadf97b00b3",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_formatting_reference.cjs",
+      "sha256": "fcf3b32a66a26e9d08f696cea4afc359a16db320320935e5c617e927d968ca0f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_histogram_reference.cjs",
+      "sha256": "ae27286280d276f5f784ec063cec7e7ef8f75e246a6d3dd9e6f80dad3cdf1ca5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_hover_selection_reference.cjs",
+      "sha256": "1930dcc757e1ff14e10d7a11896d3e132107953b3b373f7ef72a66291da0558a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_image_watermark_reference.cjs",
+      "sha256": "4f4030f5d4fc7a1475799965372f7b7f9478b6fba6d62f973578f414ff999403",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_incremental_append_reference.cjs",
+      "sha256": "283d4c0328f4b4ab75557bc519f61c0c546d6f7cd4e877272251d878b8a283a2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_interaction_reference.cjs",
+      "sha256": "4c8fbb58eeffac0af6072acfa13bb42218eb51aca21b4e36083215abebf4ea75",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_kinetic_reference.cjs",
+      "sha256": "52c073e667b4d537cd241956f097eda4ad8d2b858fcf85c8b4fa7152f08bdd76",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_last_price_animation_reference.cjs",
+      "sha256": "7538dd5774106f9b36cab5b352636b5db8607e8194624fc4ab05eca012b25356",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_lazy_autoscale_reference.cjs",
+      "sha256": "cd50fe63879d1825407a7a995f9d9fa6a55fe029dfd0e458467b5d90816c1f80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_line_reference.cjs",
+      "sha256": "6cd0c7767a7cef55d7e19b91aaf7ca012cd5bda32c10c9d0810aa7cb27a48729",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_interaction_reference.cjs",
+      "sha256": "640b57bf60215777957539a97b9941a514cb0636c63fd96c0cf06d57a4b44cf1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_layout_reference.cjs",
+      "sha256": "3e9b702b450eda9d78bf7f70901f1cf66f0775dfa13aa1674c9db1ab717fbcfe",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_numeric_custom_series_reference.cjs",
+      "sha256": "8ef9ed1c34f1ffc85e97491ce43ac56036e0c5158fbc15ab717478c52cd6606f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_options_chart_reference.cjs",
+      "sha256": "a7605804f3f41c07d020b8a63340a15552e4bbae5f81b4897bbee3c4f131797a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_management_reference.cjs",
+      "sha256": "c4a79cd3a31c096f2c88d6f5961de565667930de5fcdd1c310b2f6ab9e727722",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_axis_reference.cjs",
+      "sha256": "edf3d724b527697f404533dfe1fbcf3b6e60ecb17d3f27d47bb2b6615a7b3f8c",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_lines_reference.cjs",
+      "sha256": "586357e035f77527087a4bb6bf8b6e16d6e87e97a34a2457b0306d3b699994cd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_scale_configuration_reference.cjs",
+      "sha256": "71af03522e8e0031aa7836c27b7d1783f8101ea2aedeaaf0cc018d7ffd64c2a9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_primitive_reference.cjs",
+      "sha256": "0a1638b6f557c0f0072b8533e3a443d1bf0df1d52f2d57fb7892a8c81f2c6691",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_events_reference.cjs",
+      "sha256": "2094c4ef89493786fd0d1b5a85ba1370efa4d57874f973bf0669ff51e7ae567b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_helpers_reference.cjs",
+      "sha256": "8cc34724035c9466f78df7051173db9f663a177eb0d74c07b3c30ec07836d0cc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_scale_assignment_reference.cjs",
+      "sha256": "6852d35b5781e5d2640939fac523c3c804f681cf957e6774cbc3d0ef78dbbdd5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_screenshot_reference.cjs",
+      "sha256": "03ddd594d120f98a257d340ee8d5e40c83a5b746293e125e2b82edffd8771ef1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_data_reference.cjs",
+      "sha256": "fe53408b9921be879eed847d93906df063b27eaa2a9be0bc663bbba05f9a7a6d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_markers_reference.cjs",
+      "sha256": "812c99052657cdb671d1b8cfa2e28d30e47230dfa0fb702c3eb98ca7c74d21be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_order_reference.cjs",
+      "sha256": "363ed48a528efe71a6847ba9a2a1ad904999bb4a9639f144e48a5834c58b3edc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_text_watermark_reference.cjs",
+      "sha256": "63b116f9b67835e75ccbd435bb52ffeb542bff79485b99286fae8c3beae26eae",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_axis_reference.cjs",
+      "sha256": "139cc120a78ae54e1a1a156968433968c858e53825a781b7fa9ce65c14ec580a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_touch_reference.cjs",
+      "sha256": "21c28e479913d41304c2b35a4ec5435142068d4fb41302085cbef6120e79c987",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_up_down_markers_reference.cjs",
+      "sha256": "16779689548d66ce99bf0803511320a0c7a59b9d6b64bbecaf65208bcc1440fd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_yield_curve_reference.cjs",
+      "sha256": "2259259b6ff1bd238cbc22d4c517d08831c13c5f5b5ac55d82710c402bd8066e",
+      "exit": 0
+    }
+  ],
+  "previous_40_comparison_scripts_unchanged": true,
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "node",
+        "scripts/audit_public_surface.cjs",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 844,
+    "suites": 84,
+    "doctests": 2,
+    "focused_api": 8,
+    "consumer_domains": 4
+  },
+  "captures": {
+    "screens": 576,
+    "linked_screens": 72,
+    "retained_exports": 504,
+    "domains": [
+      "calendar",
+      "strike",
+      "maturity",
+      "sessions"
+    ],
+    "scenes": [
+      "range",
+      "reset",
+      "custom",
+      "moved",
+      "synced",
+      "empty",
+      "outside",
+      "peer"
+    ],
+    "sizes": [
+      [
+        800,
+        500
+      ],
+      [
+        300,
+        300
+      ],
+      [
+        300,
+        90
+      ]
+    ],
+    "ratios": [
+      1,
+      1.25,
+      2
+    ],
+    "binary_sha256": "f44f55734686273dea71ac66c9a62818d4def52640d4dffb4c728973d444eff3"
+  },
+  "accepted_compatibility": [
+    {
+      "script": "capture_public_events.py",
+      "exit": 0,
+      "accepted_images_unchanged": 912
+    },
+    {
+      "script": "capture_custom_horizontal.py",
+      "exit": 0,
+      "accepted_images_unchanged": 240
+    },
+    {
+      "script": "capture_screenshot_export.py",
+      "exit": 0,
+      "accepted_images_unchanged": 1158
+    },
+    {
+      "script": "capture_attribution.py",
+      "exit": 0,
+      "accepted_images_unchanged": 672
+    },
+    {
+      "script": "capture_formatting.py",
+      "exit": 0,
+      "accepted_images_unchanged": 576
+    },
+    {
+      "script": "capture_scale_assignment.py",
+      "exit": 0,
+      "accepted_images_unchanged": 768
+    },
+    {
+      "script": "capture_axis_interaction.py",
+      "exit": 0,
+      "accepted_images_unchanged": 864
+    }
+  ],
+  "accepted_images_unchanged": 5190,
+  "pinned_files": {
+    "target/public-helpers/accepted/validation.json": "3688a4c8ddd6e7ce0eaeddb14c7b97049ba83853b0a8af608dca4cf6341ff896",
+    "target/public-helpers/accepted/references/results.json": "97aca609f0f042ac144a329a86240d265a62176ae17a1c8aa450a9dc4cd72961",
+    "target/public-helpers/accepted/captures/protocol.json": "2b5c79de4cb21127ac81951091cc026b714a49d967416e6c31c0ca7bf69e54fa",
+    "target/public-helpers/accepted/captures/results.json": "b15f63d157d3b8f4295a6ea921fc5591249f57365a783900803ca1345f624252",
+    "target/public-helpers/accepted/compatibility/results.json": "eb0af6917f5f1852f3ba71e29d143f958f908280df1aeb6e11dc371aae13f4c6",
+    "docs/porting/public-helpers-source.json": "44c597f116389a6709cee0e13d61c9bbf929d073c6eee16f6f9c986874f371b6",
+    "docs/porting/public-helpers-states.json": "77a564228a391a1d6cd267a7eec37f610398b75874645dec6f484a78217d9d26"
+  },
+  "logs": {
+    "target/public-helpers/accepted/validation-build.log": "d8b6b332abf0f08c5ef0951bdbbed5801bf71a00104ce5fa5c415dd267f1a0bd",
+    "target/public-helpers/accepted/validation-check.log": "7dae01a616b186f2c924f0061c52506cc9bae2fa77e1de4d131972d347afefc9",
+    "target/public-helpers/accepted/validation-clippy.log": "875932c780b5e7f07c7c943779dc51710b9f905581621990dcce40134fea987d",
+    "target/public-helpers/accepted/validation-doc.log": "6cd64876fb047d8b0e813a3017b45529a75054a3dd20851844e2fcb5ff673e1f",
+    "target/public-helpers/accepted/validation-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/public-helpers/accepted/validation-inventory.log": "68a3a563b1921b35973888c2c9412f8c455cc4731ace03b5d009d93293639957",
+    "target/public-helpers/accepted/validation-tests.log": "701264ab09dc2d759f55b5a4c4ba99bde75bac2456079e4483543b45c14ba16d",
+    "target/public-helpers/red-ranges.log": "20866bb415b9334667c0d337eb8534b691ed61b10ae1426e1be25e273e9288da",
+    "target/public-helpers/red-readbacks.log": "acbeae5f2b3057a24603a3e71ee33f3f758f0f21bea94ac9c701d1090dd0d100",
+    "target/public-helpers/red-conversions.log": "4fac97de20702cc556e7a16c7c1ce540207e135a65fce7597a3c25c838af6d34",
+    "target/public-helpers/red-synthetic-outside.log": "f4b2e491ee0d0774f3b7f3abcde05258721faece2671172b88f0804ece370b76",
+    "target/public-helpers/red-synthetic-events.log": "bb0f67fa24827f9b1b5c925d21bb4eb8bbb56720ddd2095a91ee4a171de2126e",
+    "target/public-helpers/interrupted-tests.log": "ab909c98af1cb8fbe5cc01af9b76345853fd12505a7be9ee4472cbc6770f5e50"
+  },
+  "native_adaptations": [
+    "Scoped option/formatter reads preserve non-Clone callback/view ownership",
+    "Checked stale/foreign selectors and finite-input errors",
+    "Empty/unavailable synthetic placement returns false without mutation",
+    "Pointer notifications retain the existing explicit update boundary; prepare delivers owned range/layout observations"
+  ],
+  "investigations": [
+    "Initial validation launcher ended with SIGTERM without a test result; cause not established; corrected-build full validation passes",
+    "Off-screen synthetic placement and delayed synthetic hover events reproduced and fixed with source-derived regressions",
+    "Demo Clippy issue corrected; inventory regenerated after native source changes; earlier attempts retained"
+  ],
+  "physical_acceptance": {
+    "tiny-skia": "User: All checks passed in all four modes; idle counters and previews/exports passed; windows closed. All four sessions exited 0.",
+    "wgpu": "User: All checks passed in all four modes; idle counters and previews/exports passed; windows closed. All four sessions exited 0."
+  },
+  "independent_exceptions": [
+    "formatting separate GPU physical record",
+    "earlier timing acceptance",
+    "dedicated series drawing-order physical acceptance",
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI",
+    "Intl outside existing support contract",
+    "Display-P3 target"
+  ],
+  "physical_sessions": {
+    "tiny-skia": {
+      "path": "target/public-helpers/mouse/tiny-skia/sessions.json",
+      "sha256": "e822920f6ed52eb4545d605e426d6983b4bdd8b03309b6117f8534c20400129b"
+    },
+    "wgpu": {
+      "path": "target/public-helpers/mouse/wgpu/sessions.json",
+      "sha256": "068223bcf8e2d462194af3ddfdacb37f9806d4776e8c1cb88af8c820a63f3bf3"
+    }
+  }
+}

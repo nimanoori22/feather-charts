@@ -1,6 +1,6 @@
 # Reusable public helpers (milestone D)
 
-Baseline: `09520ec`. Status: D0–D2 implemented; D3 consumer passes; final validation and mouse acceptance pending.
+Baseline: `09520ec`. Status: D0–D3 complete; automated gates and four-mode software/GPU mouse acceptance pass.
 
 ## Source, consumers and contract
 
@@ -22,7 +22,9 @@ update tutorial (return to live), crosshair synchronization tutorial (no recursi
 synthetic pointer events), tooltip/drawing/volume-profile plugins (actual series
 price conversion), custom-series price-line tests and multi-pane crosshair tests.
 These require fresh membership after transfer, optional empty results, owned
-snapshots, and no user callbacks during chart mutation. Coverage checks reported no
+snapshots and no recursive notifications from direct synthetic placement. This
+port retains owned event delivery instead of invoking application listeners
+during owner mutations. Coverage checks reported no
 recorded issues for investigated native/API files (best-effort, not completeness).
 The source time-scale/series metadata is older than local edits, and coverage
 test subtrees are excluded; the relevant current source and consumers were read
@@ -39,8 +41,8 @@ custom handles strongly retain typed model data and weakly reference the view.
 Owned value snapshots survive removal. Series options contain Box callbacks and
 are deliberately scoped rather than cloned; typed custom model reads survive
 detachment. Scoped option/formatter callbacks borrow
-only for the call, cannot return a borrowed reference, and require neither a Clone
-view nor Clone options. No new Rc links, cycles, threads or async work are added.
+only for the call, cannot return references into the borrowed options, and require neither a Clone
+view nor Clone options. No new retained Rc links, cycles, threads or async work are added.
 
 Proposed API (names finalized with each slice):
 
@@ -81,8 +83,8 @@ price-line IDs, fresh pane/scale membership, all four price modes, missing items
 empty scales and silent synthetic placement. The local source/native probe
 checks ranges, nearest indices, values, conversions, enumeration and events.
 The four-domain consumer uses only public API and synchronizes two charts.
-Final common gates, strict renderer captures and available mouse acceptance
-remain pending. Preserve all earlier timing, formatting-GPU, series-order and untested
+Final common gates, strict renderer captures and available software/GPU mouse
+acceptance pass. Preserve all earlier timing, formatting-GPU, series-order and untested
 device exceptions. Locale/gamut and milestones E onward are outside D.
 
 
@@ -113,7 +115,7 @@ mutation. Locale, color, metadata and pane-height gaps remain separate milestone
 
 ## Files and validation procedure
 
-Core: `src/api/{time_scale,series_queries,coordinates,custom_series,yield_curve,mod}.rs`,
+Core: `src/api/{chart,time_scale,series_queries,coordinates,custom_series,yield_curve,mod}.rs`,
 `src/model/{chart_model,crosshair}.rs` and `src/model/series/projection.rs`.
 Behavior tests: `tests/public_helpers.rs`. External consumer and renderer fixtures:
 `examples/pane_management.rs`, `examples/pane_management/{host,helpers,helper_captures}.rs`.
@@ -155,3 +157,43 @@ The exact Iced Container height API was checked for the split layout. Flowsurfac
 separate crosshair-cache invalidation was consulted as a reference pattern, while
 source behavior and this port's existing selection/event boundary define the
 implementation. Both reference paths passed best-effort coverage checks.
+
+## Corrected-build automated results
+
+The corrected build passes **844 tests in 84 suites**, **2 doctests**, all-target
+check, strict all-target Clippy, example builds, formatting and inventory checks.
+All **41 source comparisons** pass; the previous 40 scripts are byte-for-byte
+unchanged from `09520ec`. Core checkpoints are `e00f8c3`, `92fb8de`, `6d87dcc`;
+the demo checkpoint is `6f3fbcd`.
+
+Both strict renderers pass **576 screen replays**, including **72 linked-chart
+replays**, and **504 retained exports**. The protocol covers calendar, strike,
+maturity and sessions; seven main-chart scenes (range, reset, custom, moved,
+synced, empty and outside), three sizes (800×500, 300×300, 300×90) and DPR 1,
+1.25 and 2. Snapshots remain unchanged after viewport reset, resize and dropping
+both owners. Representative current images, including off-screen placement and
+linked charts, were visually inspected. Production/demo files and the normal
+binary were checked against the capture protocol hashes.
+
+Current evidence lives under `target/public-helpers/accepted`. Earlier interrupted,
+pre-review and failing regression logs are retained under `target/public-helpers`;
+passing earlier captures are not used as evidence for the corrected binary.
+The first validation launcher ended with SIGTERM without a test result. Later
+runs exposed a demo Clippy issue and expected inventory drift after source changes;
+these were corrected, and the complete common gates above pass on the final code.
+All seven unchanged compatibility protocols pass with **5190 accepted images
+unchanged**: events 912, custom horizontal 240, screenshot 1158, attribution 672,
+formatting 576, scale assignment 768 and axis interaction 864. No previous scene,
+assertion, threshold or comparison script was weakened. The
+[pinned evidence record](public-helpers-evidence.json) records current binary,
+source/protocol/results and log hashes. Software and GPU mouse acceptance pass
+in calendar, strike, maturity and sessions. The user accepted helper controls,
+linked crosshairs in both directions, idle counters with feed paused, pane/scale
+transfers, live-feed navigation and box edits at regular, narrow and the earlier
+problem size, short-height recovery and previews/exports. All eight normal sessions
+exited successfully using the same pinned binary. Previous formatting-GPU, timing,
+series-order and device exceptions retain their own status.
+
+No further source component port blocks these helpers. Pane sizing, application
+and native pointer metadata, locales and color policy remain milestones E–I;
+previous independent acceptance exceptions are preserved.
