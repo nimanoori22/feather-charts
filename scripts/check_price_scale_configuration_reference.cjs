@@ -60,7 +60,11 @@ async function main() {
    c.applyOptions({rightPriceScale:{invertScale:true},layout:{fontSize:17},grid:{vertLines:{visible:false}}});
    const opts=()=>({font:c.options().layout.fontSize,vertical:c.options().grid.vertLines.visible,invert:c.options().rightPriceScale.invertScale});
    const defaults=[opts()]; c.priceScale('right',1).applyOptions({invertScale:false});defaults.push(opts());c.addPane();await settle();c.remove();
-   return {states,defaults};
+   const t=make(),ts=t.addSeries(L.LineSeries);ts.setData([{time:1,value:10},{time:2,value:20}]);t.timeScale().fitContent();await settle();
+   const ps=t.priceScale('right');ps.setVisibleRange({from:4,to:5});const transitions=[];
+   for (const mode of [1,0,2,3]) {ps.applyOptions({mode});await settle();transitions.push({mode,auto:ps.options().autoScale,range:ps.getVisibleRange(),defaultAuto:t.options().rightPriceScale.autoScale});}
+   t.remove();
+   return {states,defaults,transitions};
   });
   fs.writeFileSync('target/price-scale-configuration/source-results.json', JSON.stringify({ result, errors }, null, 2) + '\n');
   assert.deepEqual(errors, [], 'source browser errors');
@@ -68,6 +72,16 @@ async function main() {
   if (process.argv.includes('--freeze')) fs.writeFileSync(fixture, JSON.stringify(result, null, 2) + '\n');
   else assert.deepEqual(result, JSON.parse(fs.readFileSync(fixture)), 'source behavior changed');
 
+  if (!process.argv.includes('--source-only')) {
+   const native=spawnSync('cargo',['test','--offline','--test','price_scale_configuration','source_manual_range_sequence','--','--nocapture'],{encoding:'utf8'});
+   assert.equal(native.status,0,native.stdout+native.stderr);
+   const rows=native.stdout.split('\n').filter(l=>l.startsWith('CONFIG_REFERENCE ')).map(l=>JSON.parse(l.slice(17)));
+   assert.deepEqual(rows,result.states,'native/source range sequence');
+   const transitions=spawnSync('cargo',['test','--offline','--test','price_scale_configuration','option_mode_transitions','--','--nocapture'],{encoding:'utf8'});
+   assert.equal(transitions.status,0,transitions.stdout+transitions.stderr);
+   const changes=transitions.stdout.split('\n').filter(l=>l.startsWith('TRANSITION_REFERENCE ')).map(l=>JSON.parse(l.slice(21)));
+   assert.deepEqual(changes,result.transitions,'native/source manual mode transitions');
+  }
   console.log(JSON.stringify(result, null, 2));
  } finally { await browser.close(); }
 }

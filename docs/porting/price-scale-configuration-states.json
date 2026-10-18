@@ -108,5 +108,43 @@
       "vertical": false,
       "invert": false
     }
+  ],
+  "transitions": [
+    {
+      "mode": 1,
+      "auto": false,
+      "range": {
+        "from": 1,
+        "to": 10
+      },
+      "defaultAuto": false
+    },
+    {
+      "mode": 0,
+      "auto": false,
+      "range": {
+        "from": 4,
+        "to": 5
+      },
+      "defaultAuto": false
+    },
+    {
+      "mode": 2,
+      "auto": true,
+      "range": {
+        "from": 0,
+        "to": 100
+      },
+      "defaultAuto": false
+    },
+    {
+      "mode": 3,
+      "auto": true,
+      "range": {
+        "from": 100,
+        "to": 200
+      },
+      "defaultAuto": false
+    }
   ]
 }
