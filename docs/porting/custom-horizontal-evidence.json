@@ -106,11 +106,42 @@
   },
   "physical": {
     "tiny-skia": {
-      "status": "pending",
-      "process_file": "target/custom-horizontal/mouse/tiny-skia/process.json"
+      "status": "passed",
+      "response": "All checks passed; preview/export passed; window closed",
+      "process": {
+        "command": [
+          "target/debug/examples/custom_horizontal",
+          "--live-feed"
+        ],
+        "backend_requested": "tiny-skia",
+        "binary_sha256": "881993d5758868c84d7da718430af940d7eee48e048318c70634b01f1a69dd59",
+        "exit": 0,
+        "pid": 423132
+      },
+      "preview": {
+        "width": 1410,
+        "height": 1455,
+        "format": "straight-alpha sRGB RGBA8"
+      }
     },
     "wgpu": {
-      "status": "not started"
+      "status": "passed",
+      "response": "All checks passed; preview/export passed; window closed",
+      "process": {
+        "command": [
+          "target/debug/examples/custom_horizontal",
+          "--live-feed"
+        ],
+        "backend_requested": "wgpu",
+        "binary_sha256": "881993d5758868c84d7da718430af940d7eee48e048318c70634b01f1a69dd59",
+        "exit": 0,
+        "pid": 424353
+      },
+      "preview": {
+        "width": 1410,
+        "height": 1455,
+        "format": "straight-alpha sRGB RGBA8"
+      }
     }
   },
   "independent_exceptions": [
@@ -119,5 +150,7 @@
     "Touchpad/touchscreen/high-DPI physical checks"
   ],
   "next_milestone": "C attribution logo; not started",
-  "pushed": false
+  "pushed": false,
+  "demo_checkpoint": "82fa7c5",
+  "milestone_b_accepted": true
 }

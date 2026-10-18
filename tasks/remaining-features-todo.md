@@ -1,6 +1,6 @@
 # Remaining public features checklist
 
-Status: user accepted screenshot/export and authorized the custom-horizontal milestone, 2026-10-18.
+Status: custom-horizontal milestone B accepted on software/GPU with the available mouse, 2026-10-18.
 Plan: [remaining-features-plan.md](remaining-features-plan.md). Baseline `23476f1`.
 Do not overwrite earlier plans or close their independent exceptions.
 
@@ -32,7 +32,7 @@ all source flag combinations, custom/overlay content and immutable snapshots pas
   custom series, original-item events, primitives/navigation and screenshot export.
 - [x] Checkpoint B-public: review real external consumer and save tested local commit.
 - [x] B3: Deliver a genuine custom-domain demo using no library-private internals.
-- [ ] B4: Pass new source cases, old source/compatibility gates and both backend
+- [x] B4: Pass new source cases, old source/compatibility gates and both backend
   custom-domain mouse/export checks; save evidence and a local milestone commit.
 
 Verification: behavior-instance equivalence/isolation is documented and tested;
@@ -69,7 +69,7 @@ bounds at fractional DPR, and stays absent from source-compatible screenshot out
 
 - [ ] Apps obtain owned chart images with source-correct layer controls, safe output
   sizing and preserved chart/event/gesture ownership across existing modes.
-- [ ] An external application can construct and use a chart with its own horizontal
+- [x] An external application can construct and use a chart with its own horizontal
   behavior, typed custom data and export without private access or runtime wrapping.
 - [ ] Attribution renders/activates correctly when enabled, follows last-pane
   lifecycle and preserves source-compatible screenshot exclusion.
@@ -94,6 +94,7 @@ Public API/data-safety checkpoint: `b60bdf6`. Full regression validation passed
 control/idle-feed check, all-target check and strict Clippy. All 36 source comparisons,
 240 final custom-domain exports and 96 unchanged baseline comparisons pass.
 The source and renderer evidence is retained under `target/custom-horizontal`.
-Software/GPU mouse/export acceptance is in progress. B4 remains open until responses
-and normal process exits are recorded. See the [contract](../docs/porting/custom-horizontal.md)
+The user passed software/GPU mouse/export acceptance; both final-binary processes
+exited normally and saved RGBA lengths match their size metadata. B4 is accepted
+for the available mouse; independent device/timing exceptions remain open. See the [contract](../docs/porting/custom-horizontal.md)
 and [evidence](../docs/porting/custom-horizontal-evidence.json). Nothing was pushed.

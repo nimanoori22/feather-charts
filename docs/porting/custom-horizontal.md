@@ -1,7 +1,7 @@
 # Application-defined horizontal behavior
 
-Status: public factory and external consumer implemented; automated gates passed,
-physical mouse/export acceptance in progress. Screenshot accepted by the
+Status: public factory and external consumer implemented; automated gates and both
+available software/GPU mouse/export acceptance checks passed. Screenshot accepted by the
 user on 2026-10-18 with an explicit instruction to proceed. That instruction changes
 the prior sequencing gate; it does not fabricate a separate GPU mouse result.
 
@@ -146,3 +146,19 @@ Evidence: [custom-horizontal-evidence.json](custom-horizontal-evidence.json). Ar
 paths, hashes, failed red/mutation runs and earlier captures remain available under
 `target/custom-horizontal`. Software/GPU physical acceptance is not inferred from
 headless exports; it is recorded separately after the user checks and normal exits.
+
+
+## Physical acceptance and completion
+
+The user reported "All checks passed; preview/export passed; window closed" on both
+explicit tiny-skia and wgpu runs of the final binary. Both processes exited normally
+with code zero. The saved host RGBA byte lengths match their size metadata, and each
+backend's preview output is retained separately. Checks covered data/format/error
+controls, pane transfer/swap, original-item hover, live-feed mouse navigation, price
+axes and box edits at regular/narrow/problem sizes, short-height recovery and export
+preview. This accepts B4 for the available mouse on this machine, without claiming
+unavailable device checks or separate screenshot-milestone mode coverage.
+
+Local checkpoints: `b60bdf6` (public API and data safety) and `82fa7c5` (external demo
+and automated evidence). Nothing was pushed. Milestone C, attribution rendering and
+host-controlled activation, is next. Earlier independent exceptions remain open.
