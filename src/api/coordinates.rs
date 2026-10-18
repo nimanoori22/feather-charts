@@ -119,6 +119,7 @@ impl<B: ChartBehavior> Chart<B> {
             pane,
             crate::renderers::line_renderer::Point { x, y },
         )?;
+        self.synchronize_synthetic_selection();
         Ok(true)
     }
     /// Clear without generating an application pointer event.
@@ -126,6 +127,18 @@ impl<B: ChartBehavior> Chart<B> {
         if let Some(origin) = self.model.crosshair().origin() {
             self.set_crosshair_position(origin.pane, None)?;
         }
+        self.synchronize_synthetic_selection();
         Ok(())
+    }
+    fn synchronize_synthetic_selection(&mut self) {
+        use crate::ui::primitive_hit_testing::PaneHit;
+        let (hit, primitive) = match self.crosshair_selection() {
+            Some(PaneHit::BuiltIn(hit, _)) => (Some(hit), None),
+            Some(PaneHit::Primitive(hit)) => (None, Some(hit)),
+            None => (None, None),
+        };
+        // Do not turn a silent API placement into a hover event on the next tick.
+        self.last_hit = hit;
+        self.last_primitive = primitive;
     }
 }

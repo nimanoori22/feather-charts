@@ -625,14 +625,16 @@ impl<B: ChartBehavior> Chart<B> {
         }
         true
     }
-    fn has_other_animation_work(&self) -> bool {
-        use crate::ui::primitive_hit_testing::PaneHit;
-        let selection = self.model.crosshair().origin().and_then(|o| {
+    pub(super) fn crosshair_selection(&self) -> Option<crate::ui::primitive_hit_testing::PaneHit> {
+        self.model.crosshair().origin().and_then(|o| {
             self.frame_for_pane(o.pane)?
                 .plot
                 .selection(iced::Point::new(o.point.x as f32, o.point.y as f32))
-        });
-        let changed = match selection {
+        })
+    }
+    fn has_other_animation_work(&self) -> bool {
+        use crate::ui::primitive_hit_testing::PaneHit;
+        let changed = match self.crosshair_selection() {
             Some(PaneHit::BuiltIn(h, _)) => {
                 self.last_hit.as_ref() != Some(&h) || self.last_primitive.is_some()
             }

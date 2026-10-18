@@ -74,7 +74,7 @@ semantics. Readbacks do not keep views attached.
 
 ## Validation and remaining work
 
-The API checkpoint is `e00f8c3`. Seven focused public tests and four external
+The API checkpoint is `e00f8c3`. Eight focused public tests and four external
 consumer tests cover empty/invalid ranges, event queues, configured reset,
 animation cancellation, original items, retained custom handles, ordered
 price-line IDs, fresh pane/scale membership, all four price modes, missing items,
@@ -137,3 +137,14 @@ its prior bounds policy. A failing public regression and source observations for
 off-screen placement before/after a range change verify the correction; the new
 renderer protocol includes an outside-price/item scene. No new public mutable
 model boundary or callback ownership was introduced.
+
+A second regression covers a delayed-event trap: changing the synthetic selection
+without synchronizing the owner's cached hit could emit a hover event on a later
+animation tick. Synthetic set/clear now update that cache silently using the same
+selection function as animation scheduling, without constructing event payloads.
+The test advances prepare and Tick after each operation, rather than checking only
+the immediate queue. Actual pointer input keeps its existing delivery behavior.
+The source probe likewise waits for rendering before checking direct synthetic
+notifications. Source viewport refresh may separately emit pointer callbacks;
+Rust retains its existing explicit `update` pointer-delivery boundary and owned
+range/layout notifications from `prepare`.

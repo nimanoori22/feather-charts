@@ -439,3 +439,29 @@ fn synthetic_outside_view_keeps_origin_and_clamps_index_without_changing_pixel_i
     c.clear_crosshair_position().unwrap();
     assert!(c.model().crosshair().origin().is_none());
 }
+
+#[test]
+fn synthetic_set_and_clear_do_not_emit_delayed_hover_events() {
+    let (mut c, id) = chart();
+    c.fit_content();
+    prepare(&mut c);
+    c.take_events();
+    c.set_crosshair_at(id, &item(50), 150.).unwrap();
+    prepare(&mut c);
+    assert!(
+        !c.update(ChartMessage::Tick(Instant::now()))
+            .unwrap()
+            .iter()
+            .any(|e| matches!(e, ChartEvent::CrosshairMoved(_))),
+        "synthetic selection must not become a delayed mouse event"
+    );
+    c.clear_crosshair_position().unwrap();
+    prepare(&mut c);
+    assert!(
+        !c.update(ChartMessage::Tick(Instant::now()))
+            .unwrap()
+            .iter()
+            .any(|e| matches!(e, ChartEvent::CrosshairMoved(_))),
+        "synthetic clearing must not become a delayed leave event"
+    );
+}
