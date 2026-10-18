@@ -1,0 +1,26 @@
+{
+  "range": [
+    20,
+    40
+  ],
+  "logical": [
+    19,
+    39
+  ],
+  "global": 200,
+  "visible": 140,
+  "roundtrips": [
+    150,
+    150,
+    150,
+    150
+  ],
+  "index": 49,
+  "events": 0,
+  "lines": 2,
+  "nearest": [
+    0,
+    99
+  ],
+  "missing": null
+}

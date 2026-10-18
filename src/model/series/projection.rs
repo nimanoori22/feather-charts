@@ -24,6 +24,7 @@ pub(crate) trait SeriesProjection<O> {
     fn common_options(&self) -> &SeriesOptionsCommon;
     fn set_price_scale_id(&mut self, id: String);
     fn series_type(&self) -> SeriesType;
+    fn formatter(&self) -> &dyn PriceValueFormatter;
     fn visible(&self) -> bool {
         self.common_options().visible
     }
@@ -57,6 +58,9 @@ impl<I: Clone, O: Clone, M: Clone> SeriesProjection<O> for Series<I, O, M> {
     }
     fn series_type(&self) -> SeriesType {
         self.series_type()
+    }
+    fn formatter(&self) -> &dyn PriceValueFormatter {
+        self.formatter()
     }
     fn first_value(&self, range: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue> {
         self.first_value(range)
@@ -118,6 +122,9 @@ impl<I, O, D, M> SeriesProjection<O> for CustomSeries<I, O, D, M> {
     }
     fn series_type(&self) -> SeriesType {
         SeriesType::Custom
+    }
+    fn formatter(&self) -> &dyn PriceValueFormatter {
+        self.formatter()
     }
     fn first_value(&self, range: Option<&RangeImpl<TimePointIndex>>) -> Option<FirstValue> {
         self.first_value(range)

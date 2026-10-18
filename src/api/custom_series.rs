@@ -93,6 +93,36 @@ where
     pub const fn id(&self) -> SeriesId {
         self.id
     }
+    /// Scoped read of stored common/style options, also available after detachment.
+    pub fn with_options<R>(&self, read: impl FnOnce(&CustomSeriesOptions) -> R) -> R {
+        read(self.model.borrow().options())
+    }
+    /// Scoped formatter access; the typed model remains readable after detachment.
+    pub fn with_formatter<R>(
+        &self,
+        read: impl FnOnce(&dyn crate::formatters::iprice_formatter::PriceValueFormatter) -> R,
+    ) -> R {
+        read(self.model.borrow().formatter())
+    }
+    /// View-specific options exist only while attached to this chart. Neither
+    /// the view nor its options needs Clone; the borrow ends before returning.
+    pub fn with_view_options<B: ChartBehavior, R>(
+        &self,
+        chart: &Chart<B>,
+        read: impl FnOnce(&V::Options) -> R,
+    ) -> Result<R, ChartError>
+    where
+        V: CustomSeriesPaneView<
+                Frame,
+                Item = B::Item,
+                InternalTime = B::InternalItem,
+                Metadata = (),
+            >,
+    {
+        let view = self.attached_view(chart)?;
+        let view = view.borrow();
+        Ok(read(&view.options))
+    }
     /// Owned stored assignment, retained after detachment like the handle's data.
     /// Use Chart::series_price_scale for checked current chart membership.
     pub fn price_scale_id(&self) -> Option<String> {

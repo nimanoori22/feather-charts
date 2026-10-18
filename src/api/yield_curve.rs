@@ -30,6 +30,52 @@ impl Deref for YieldCurveChart {
     }
 }
 impl YieldCurveChart {
+    pub fn visible_logical_range(&mut self) -> Option<crate::model::time_data::LogicalRange> {
+        self.core.visible_logical_range()
+    }
+    pub fn visible_horizontal_range(&mut self) -> Option<HorizontalRange<Maturity>> {
+        self.core.visible_horizontal_range()
+    }
+    pub fn set_visible_horizontal_range(
+        &mut self,
+        range: HorizontalRange<Maturity>,
+    ) -> Result<(), ChartError> {
+        self.core.set_visible_horizontal_range(range)
+    }
+    pub fn reset_time_scale(&mut self) {
+        self.core.reset_time_scale();
+    }
+    pub fn scroll_to_real_time(&mut self) {
+        self.core.scroll_to_real_time();
+    }
+    pub fn last_value_data(
+        &mut self,
+        id: SeriesId,
+        global: bool,
+    ) -> Result<Option<crate::model::price_line::LastValueData>, ChartError> {
+        self.core.last_value_data(id, global)
+    }
+    pub fn price_to_coordinate(
+        &mut self,
+        id: SeriesId,
+        price: f64,
+    ) -> Result<Option<f64>, ChartError> {
+        self.core.price_to_coordinate(id, price)
+    }
+    pub fn coordinate_to_price(&mut self, id: SeriesId, y: f64) -> Result<Option<f64>, ChartError> {
+        self.core.coordinate_to_price(id, y)
+    }
+    pub fn set_crosshair_at(
+        &mut self,
+        id: SeriesId,
+        item: &Maturity,
+        price: f64,
+    ) -> Result<bool, ChartError> {
+        self.core.set_crosshair_at(id, item, price)
+    }
+    pub fn clear_crosshair_position(&mut self) -> Result<(), ChartError> {
+        self.core.clear_crosshair_position()
+    }
     pub fn set_event_interests(&mut self, interests: super::EventInterests) {
         self.core.set_event_interests(interests);
     }

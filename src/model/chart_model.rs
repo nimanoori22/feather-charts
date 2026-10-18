@@ -145,6 +145,16 @@ where
     pub fn time_scale(&self) -> &TimeScale<B> {
         &self.time_scale
     }
+    pub(crate) fn visible_horizontal_range(
+        &mut self,
+    ) -> Option<crate::model::time_data::ValueRange<B::Item>> {
+        self.time_scale
+            .visible_time_range()
+            .map(|range| crate::model::time_data::ValueRange {
+                from: range.from.original_time,
+                to: range.to.original_time,
+            })
+    }
     pub fn crosshair(&self) -> &crate::model::crosshair::Crosshair {
         &self.crosshair
     }
