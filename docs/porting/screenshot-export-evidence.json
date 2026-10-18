@@ -1,0 +1,103 @@
+{
+  "core_checkpoint": "801ed3b",
+  "tests": 772,
+  "suites": 75,
+  "doctests": 2,
+  "source_comparisons": 35,
+  "exports": 1158,
+  "old_event_captures": 288,
+  "exact_compatibility_comparisons": 96,
+  "validation": [
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "artifacts": {
+    "target/screenshot-export/validation-reviewed/results.json": "8a4f8dd73a5926cc3c27694a058b0c6a13d24e37807bb234380935a61bab1bcf",
+    "target/screenshot-export/oracles/results.json": "5c32486b62c4c73fbbae21970dd2c1ffaac3d0c72c6c0c86935872348ff69eb2",
+    "target/screenshot-export/reviewed/protocol.json": "4bf61ae3eb38f8f223b0427897fcca22a0c95381180c18dd136979127a619f42",
+    "target/screenshot-export/reviewed/results.json": "51d6ca6d770509643376849bee82d65c3d0eb4b04561c82f32d2dbf4953b36ba",
+    "target/screenshot-export/reviewed/compatibility/protocol.json": "64c5edf4b0539f918f868dd589181c55f8f9c414a702e3df5a25c8c64810c1cc",
+    "target/screenshot-export/reviewed/compatibility/results.json": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298"
+  },
+  "mouse": {
+    "tiny-skia": "pending",
+    "wgpu": "pending"
+  },
+  "failed_runs_retained": [
+    "target/screenshot-export/initial",
+    "target/screenshot-fractional-red-populated.log",
+    "target/screenshot-pane-labels-red.log",
+    "target/screenshot-export/validation/4.log"
+  ],
+  "remaining_milestones": [
+    "custom horizontal factory",
+    "attribution logo"
+  ],
+  "independent_exceptions": [
+    "timing acceptance",
+    "dedicated drawing-order mouse acceptance",
+    "touchpad/touchscreen/high-DPI physical checks"
+  ]
+}

@@ -8,6 +8,11 @@ use feather_charts::model::{
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
 pub trait Host: region::RegionHost + Sized + 'static {
+    fn fresh_screenshot(
+        &mut self,
+        layers: ScreenshotLayers,
+        now: Instant,
+    ) -> Result<ChartScreenshot, ChartError>;
     fn interests(&mut self, interests: EventInterests);
     fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>>;
     fn axis_visible(&mut self, visible: bool);
@@ -95,6 +100,13 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn fresh_screenshot(
+            &mut self,
+            layers: ScreenshotLayers,
+            now: Instant,
+        ) -> Result<ChartScreenshot, ChartError> {
+            self.prepare_screenshot(layers, now)
+        }
         fn interests(&mut self, interests: EventInterests) {
             self.set_event_interests(interests);
         }

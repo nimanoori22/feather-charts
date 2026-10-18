@@ -743,3 +743,36 @@ Exhaustive matches on `ChartEvent`, `ChartMessage` and `TouchAction` must handle
 the added variants. With double-click interest enabled, a successful second plot
 click/tap produces `DoubleClick` instead of another `Click`; default input behavior
 is unchanged. See the [event contract and evidence](docs/porting/public-events.md).
+
+## Chart screenshot/export
+
+`Chart::screenshot_of_prepared(layers)` captures the last successfully displayed
+frame. `prepare_screenshot(layers, now)` first prepares the current viewport,
+including yield-curve settlement. Both return an owned `ChartScreenshot`; queued
+host events remain available. Prepared capture can deliberately precede pending
+data changes. Neither method changes the live viewport for export sizing.
+
+Initialize `ChartExporter::new(ScreenshotBackend::Software)` or `Wgpu` once through
+the host runtime, then call `render(&snapshot, options)` repeatedly. Backend choice
+is explicit. Output is owned, tightly packed straight-alpha sRGB RGBA8 with physical
+dimensions. `ScreenshotImage::into_handle()` creates an Iced preview image; the host
+owns encoding/files. `ScreenshotRasterOptions` selects a pixel ratio or an explicit
+pixel canvas that uniformly fits the captured layout with padding (64 MiB output,
+8192px dimension limits). Load host fonts before chart preparation.
+
+`ScreenshotLayers::default()` excludes the top canvas and crosshair. Top primitives,
+top markers and the price pulse require `include_top_layer`; crosshair lines,
+markers and labels also require `include_crosshair`. Normal annotations remain.
+
+```sh
+cargo run --example pane_management -- --screenshot-export --live-feed
+cargo run --example pane_management -- --screenshot-export --options --live-feed
+cargo run --example pane_management -- --screenshot-export --yield-curve --live-feed
+```
+
+The toolbar offers capture, layers, ratio, uniform-fit canvas, preview and raw/PPM
+saving to `target/screenshot-export`. Press **F8 while hovering the chart** to retain
+a crosshair in the capture. Preview is a frozen image; Hide preview restores chart
+space. Iced's readback API can panic on device-loss/map/allocation failure; invalid
+user dimensions return typed errors before rendering. See the
+[screenshot contract and verification](docs/porting/screenshot-export.md).

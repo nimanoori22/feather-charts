@@ -7,12 +7,16 @@ mod configuration;
 mod data;
 #[path = "pane_management/events.rs"]
 mod events;
+#[path = "pane_management/export.rs"]
+mod export;
 #[path = "pane_management/host.rs"]
 mod host;
 #[path = "numeric_custom_series/view.rs"]
 mod interval;
 #[path = "support/editable_box.rs"]
 mod region;
+#[path = "pane_management/screenshot_captures.rs"]
+mod screenshot_captures;
 use feather_charts::{
     api::*,
     model::{
@@ -33,6 +37,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    export: Option<export::Panel>,
     events: Option<events::Monitor>,
     config_mode: bool,
     config_pane: usize,
@@ -55,6 +60,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Export(export::Action),
     Events(events::Action),
     Config(configuration::Action),
     Chart(ChartMessage),
@@ -135,6 +141,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            export: None,
             events: None,
             config_mode: false,
             config_pane: 0,
@@ -199,6 +206,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Export(action) => self.export_action(action)?,
             Message::Events(action) => self.event_action(action)?,
             Message::Config(action) => self.configuration_action(action)?,
             Message::Pop(count) => self.pop_selected(count)?,
@@ -243,6 +251,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let export = self.export.take();
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
                 *self = Self::with_public_events(
                     live,
@@ -251,6 +260,7 @@ impl<C: Host> App<C> {
                     self.config_mode,
                     self.events.is_some(),
                 );
+                self.export = export;
                 self.size = size;
                 self.ratio = ratio;
             }
@@ -376,7 +386,7 @@ impl<C: Host> App<C> {
         } else {
             row![]
         };
-        column![
+        let mut content = column![
             iced::widget::scrollable(
                 row![
                     button("First → last").on_press(Message::Down),
@@ -426,16 +436,32 @@ impl<C: Host> App<C> {
                 row![].into()
             },
             self.event_controls(),
-            text(owners).size(12).wrapping(text::Wrapping::None),
-            text(&self.status).size(12).wrapping(text::Wrapping::None),
-            self.chart.core().element().map(Message::Chart)
-        ]
-        .spacing(6)
-        .into()
+        ];
+        if self.export.is_some() {
+            content = content.push(self.export_controls());
+        }
+        content
+            .push(text(owners).size(12).wrapping(text::Wrapping::None))
+            .push(text(&self.status).size(12).wrapping(text::Wrapping::None))
+            .push(self.chart.core().element().map(Message::Chart))
+            .spacing(6)
+            .into()
     }
     fn subscription(&self) -> Subscription<Message> {
         Subscription::batch([
             iced::window::events().map(|(id, e)| Message::Window(id, e)),
+            if self.export.is_some() {
+                iced::event::listen_with(|event, _, _| match event {
+                    iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
+                        key: iced::keyboard::Key::Named(iced::keyboard::key::Named::F8),
+                        repeat: false,
+                        ..
+                    }) => Some(Message::Export(export::Action::Capture)),
+                    _ => None,
+                })
+            } else {
+                Subscription::none()
+            },
             if self.live {
                 iced::time::every(Duration::from_millis(800)).map(Message::Tick)
             } else {
@@ -451,9 +477,16 @@ fn run<C: Host>(
     config: bool,
     events: bool,
     title: &'static str,
+    exports: bool,
 ) -> iced::Result {
     iced::application(
-        move || App::<C>::with_public_events(live, ordered, data, config, events),
+        move || {
+            let mut app = App::<C>::with_public_events(live, ordered, data, config, events);
+            if exports {
+                app.export = Some(export::Panel::new());
+            }
+            app
+        },
         App::update,
         App::view,
     )
@@ -474,6 +507,14 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args.iter().position(|a| a == "--screenshot-captures") {
+        screenshot_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
+    let exports = args.iter().any(|a| a == "--screenshot-export");
     let events = args.iter().any(|a| a == "--public-events");
     let config = args.iter().any(|a| a == "--price-scale-configuration");
     let data = args.iter().any(|a| a == "--series-data");
@@ -487,6 +528,7 @@ fn main() -> iced::Result {
             config,
             events,
             "Feather Charts — maturity pane management",
+            exports,
         )
     } else if args.iter().any(|a| a == "--options") {
         run::<OptionsChart>(
@@ -496,6 +538,7 @@ fn main() -> iced::Result {
             config,
             events,
             "Feather Charts — strike pane management",
+            exports,
         )
     } else {
         run::<Chart>(
@@ -505,6 +548,7 @@ fn main() -> iced::Result {
             config,
             events,
             "Feather Charts — calendar pane management",
+            exports,
         )
     }
 }
