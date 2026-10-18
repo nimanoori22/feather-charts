@@ -1,6 +1,6 @@
 # Price-scale controls and runtime configuration checklist
 
-Status: implementation and verification in progress, 2026-10-18.
+Status: complete, 2026-10-18. Automated/source/capture verification and available software/GPU mouse acceptance passed in all three chart modes.
 Plan: [price-scale-configuration-plan.md](price-scale-configuration-plan.md).
 Baseline: `ea7198a`. Earlier feature/timing/device acceptance records are independent.
 
@@ -80,10 +80,10 @@ Verification: generic demo tests pass in all three modes.
 
 ## 9. Acceptance — depends on 8
 
-- [ ] Freeze and pass feature captures across three families, two asserted backends, sizes and DPRs.
-- [ ] Inspect real output; pass unchanged compatibility images and all source comparisons.
-- [ ] Obtain software mouse results at regular/narrow/problem sizes and short-height recovery.
-- [ ] Obtain matching GPU results; resolve reported defects and retain actual responses/exits.
+- [x] Freeze and pass feature captures across three families, two asserted backends, sizes and DPRs.
+- [x] Inspect real output; pass unchanged compatibility images and all source comparisons.
+- [x] Obtain software mouse results at regular/narrow/problem sizes and short-height recovery.
+- [x] Obtain matching GPU results; resolve reported defects and retain actual responses/exits.
 
 Verification: protocol, comparisons and physical user reports support every accepted claim.
 
@@ -91,12 +91,12 @@ Verification: protocol, comparisons and physical user reports support every acce
 
 - [x] Formatting, all-target tests, doctests, cargo check, strict Clippy and diff hygiene pass.
 - [x] Review consumers/diff and complete source/design/files/evidence report and README.
-- [ ] Save final local commits; push only on request.
+- [x] Save final local commits; push only on request.
 
 ## Feature acceptance
 
-- [ ] Read/manual/auto price-scale controls work across all three chart families.
-- [ ] Every inventoried supported runtime field updates state, rendering and future defaults correctly.
-- [ ] Ownership, validation, gestures and immutable frame contracts are preserved.
-- [ ] Automated/source/capture and available software/GPU mouse checks pass unchanged.
-- [ ] Historical timing, drawing-order and unavailable-device records retain independent status.
+- [x] Read/manual/auto price-scale controls work across all three chart families.
+- [x] Every inventoried supported runtime field updates state, rendering and future defaults correctly.
+- [x] Ownership, validation, gestures and immutable frame contracts are preserved.
+- [x] Automated/source/capture and available software/GPU mouse checks pass unchanged.
+- [x] Historical timing, drawing-order and unavailable-device records retain independent status.

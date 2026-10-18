@@ -1,6 +1,6 @@
 # Price-scale controls and runtime configuration
 
-Status: APIs, runtime routing and demos implemented; final verification and native acceptance in progress, 2026-10-18.
+Status: complete, 2026-10-18. Automated/source/capture checks and available software/GPU mouse acceptance passed in all three chart modes.
 Plan: [implementation slices](../../tasks/price-scale-configuration-plan.md).
 
 ## Source and consumers
@@ -178,8 +178,8 @@ tests, doctests, all-target check and strict Clippy are mandatory final gates.
 
 | Native backend | Calendar / strike / maturity | Result |
 |---|---|---|
-| tiny-skia | Range/auto/options controls, live mouse/box gestures at regular/narrow/problem sizes and short-height recovery | Pending |
-| wgpu | Same checks | Pending |
+| tiny-skia | Range/auto/options controls, live mouse/box gestures at regular/narrow/problem sizes and short-height recovery | User reported all checks passed in all three modes; all three windows closed normally (exit 0) |
+| wgpu | Same checks | User reported all checks passed in all three modes; all three windows closed normally (exit 0) |
 
 Physical acceptance is recorded only from actual user responses. Existing unrelated
 acceptance records stay open independently. No touchpad/touchscreen/high-DPI physical
@@ -206,8 +206,11 @@ and diff hygiene pass. Evidence:
 All **33 source comparisons passed**, including the 32 existing scripts unchanged:
 `target/price-scale-configuration/oracles-final-build/results.json`.
 The first corrected renderer replay passed **432 feature images and 96 exact
-compatibility comparisons** in `accepted-final/`; the last cache-invalidation
-build's replay is still in progress in `final-build/`.
+compatibility comparisons** in `accepted-final/`. The final cache-invalidation
+build also passed **432 feature images and 96 exact comparisons** in `final-build/`
+(`protocol.json`, `results.json` and `captures-final-build.log`). All recorded
+production, fixture, vendor and executable hashes were checked against current
+files. The summary is `target/price-scale-configuration/verification.json`.
 
 Tests cover manual/auto ranges in all modes, log rounding/source transitions,
 invalid inputs/targets, pane-owned ranges and overlays, future defaults, last-source
@@ -217,3 +220,31 @@ Existing pane/order/data/custom/marker/watermark/gesture suites remain passing.
 Twelve generic demo tests include three new configuration-control tests, one for
 each chart family. Captures additionally verify fixed ranges after the one explicit
 live-feed mutation; continuous feed and price pulse are disabled during rasterization.
+
+Software calendar appearance at 800x500, strike manual at 300x300 and maturity
+live-manual at 300x90 were visually inspected. Final-build wgpu strike appearance
+at DPR 1.5 (1200x750) was also inspected. Gradient, typography, fixed range and
+short-height geometry appeared as expected. These inspections do not substitute
+for physical acceptance.
+
+## Native acceptance completed
+
+On 2026-10-18 the user reported **“All checks passed in all three modes; windows
+closed”** for both software and GPU sessions. All six processes exited 0.
+Commands used explicit `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` with
+`target/debug/examples/pane_management --price-scale-configuration --live-feed`,
+plus `--options` for strike or `--yield-curve` for maturity. Logs:
+`target/price-scale-configuration/mouse-{calendar,price,yield}-{tiny-skia,wgpu}.log`.
+
+The accepted checks cover Manual range/Narrow/Widen/Freeze with feed running,
+restoring Autoscale, Mode/Invert/Margins, Appearance/Grid/Crosshair, invalid input,
+plot-mouse and pane-resize toggles and re-enabling them, and pane/axis selection.
+Wheel zoom, diagonal dragging, price-axis wheel/drag and box move/resize/Escape
+passed at regular, narrow and the earlier problem size. Short-height shrink/enlarge
+recovery passed. Controls act on the selected scale; empty-scale controls do not
+move series on another scale.
+
+This completes this milestone's available mouse scope. It does not close earlier
+independent drawing-order acceptance or timing exceptions, and does not imply
+physical touchpad/touchscreen/high-DPI testing. New public events, screenshot/export
+and attribution drawing remain separate development work.

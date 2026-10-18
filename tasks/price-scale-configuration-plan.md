@@ -1,6 +1,6 @@
 # Public price-scale controls and runtime configuration
 
-Date: 2026-10-18. Status: implementation and verification in progress.
+Date: 2026-10-18. Status: complete; automated/source/capture verification and available software/GPU mouse acceptance passed in all three chart modes.
 Baseline: `ea7198a`. Checklist: [price-scale-configuration-todo.md](price-scale-configuration-todo.md).
 This uses the repository's feature-specific planning convention; existing plans
 and independent unfinished acceptance records remain intact.
