@@ -428,6 +428,7 @@ impl<B: ChartBehavior> Chart<B> {
         self.model.apply_data_update(update)?;
         self.last_hit = None;
         self.last_primitive = None;
+        self.data_changed(handle.id, super::DataChangeScope::Update);
         Ok(removed
             .into_iter()
             .map(|row| {
@@ -467,6 +468,7 @@ impl<B: ChartBehavior> Chart<B> {
         }
         self.model.apply_custom_data_update(&handle.model, update)?;
         self.revision += 1;
+        self.data_changed(handle.id, super::DataChangeScope::Full);
         Ok(())
     }
     pub fn update_custom_data<V>(
@@ -500,6 +502,7 @@ impl<B: ChartBehavior> Chart<B> {
             .update_custom_series_data(handle.id, data, &Builder(view), historical)
             .map_err(B::data_error)?;
         self.model.apply_custom_data_update(&handle.model, update)?;
+        self.data_changed(handle.id, super::DataChangeScope::Update);
         Ok(())
     }
     pub fn replace_custom_view_options<V>(

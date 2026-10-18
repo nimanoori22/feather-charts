@@ -40,6 +40,8 @@ pub(super) struct TouchOutput {
 }
 #[derive(Default)]
 pub(super) struct TouchInput {
+    pub double_tap_enabled: bool,
+    tap_sequence: super::click_sequence::ClickSequence,
     fingers: Vec<(Finger, Point)>,
     primary: Option<Finger>,
     down: Option<Point>,
@@ -88,6 +90,7 @@ impl TouchInput {
         }
     }
     pub fn cancel(&mut self, now: Instant) -> Option<TouchOutput> {
+        self.tap_sequence.cancel();
         let pane = self.owner.map(|owner| owner.0).or(self.persistent_tracking);
         self.fingers.clear();
         self.primary = None;
@@ -119,6 +122,7 @@ impl TouchInput {
         ))
     }
     fn begin_pinch(&mut self, now: Instant) -> Option<TouchOutput> {
+        self.tap_sequence.cancel();
         if !self.pinch_eligible {
             return None;
         }
@@ -145,6 +149,7 @@ impl TouchInput {
                 && self.fingers.len() == 1
             {
                 self.pinch_eligible = false;
+                self.tap_sequence.cancel();
                 self.gesture = Gesture::Tracking {
                     origin,
                     base: None,
@@ -253,6 +258,7 @@ impl TouchInput {
                     if !zoom.is_finite() {
                         return self.cancel(now);
                     }
+                    self.tap_sequence.cancel();
                     self.gesture = Gesture::Pinch {
                         anchor,
                         distance,
@@ -280,6 +286,7 @@ impl TouchInput {
                             self.gesture = Gesture::Delegated;
                             return None;
                         }
+                        self.tap_sequence.cancel();
                         self.gesture = Gesture::Pan;
                         self.output(
                             now,
@@ -359,6 +366,7 @@ impl TouchInput {
                         return self.output(now, TouchAction::End, true);
                     }
                     if matches!(self.gesture, Gesture::Pinch { .. }) {
+                        self.tap_sequence.cancel();
                         self.gesture = Gesture::Suspended;
                         return self.output(now, TouchAction::End, true);
                     }
@@ -366,9 +374,22 @@ impl TouchInput {
                 }
                 let local = self.local(position)?;
                 let (action, capture) = match self.gesture {
-                    Gesture::Pressed { origin, .. } => (
+                    Gesture::Pressed { origin, deadline } => (
                         if manhattan(local, origin) < 5. {
-                            TouchAction::Tap { position: local }
+                            if self.double_tap_enabled
+                                && self.tap_sequence.release(
+                                    self.owner?.0,
+                                    origin,
+                                    deadline - Duration::from_millis(240),
+                                    local,
+                                    now,
+                                    30.,
+                                )
+                            {
+                                TouchAction::DoubleTap { position: local }
+                            } else {
+                                TouchAction::Tap { position: local }
+                            }
                         } else {
                             TouchAction::End
                         },
@@ -458,6 +479,41 @@ mod tests {
             None,
             now,
         )
+    }
+    #[test]
+    fn double_tap_pairs_successful_taps_and_drag_cancels_pairing() {
+        let now = Instant::now();
+        let mut input = TouchInput {
+            double_tap_enabled: true,
+            ..Default::default()
+        };
+        for (ms, expected_double) in [(0, false), (100, true), (200, false)] {
+            let t = now + Duration::from_millis(ms);
+            send(&mut input, 0, 1, 50., 50., t);
+            let action = send(&mut input, 2, 1, 50., 50., t + Duration::from_millis(10))
+                .unwrap()
+                .input
+                .action;
+            assert_eq!(
+                matches!(action, TouchAction::DoubleTap { .. }),
+                expected_double
+            );
+            assert!(matches!(
+                action,
+                TouchAction::Tap { .. } | TouchAction::DoubleTap { .. }
+            ));
+        }
+        send(&mut input, 0, 1, 50., 50., now + Duration::from_millis(300));
+        send(&mut input, 1, 1, 80., 50., now + Duration::from_millis(310));
+        send(&mut input, 2, 1, 80., 50., now + Duration::from_millis(320));
+        send(&mut input, 0, 1, 50., 50., now + Duration::from_millis(350));
+        assert!(matches!(
+            send(&mut input, 2, 1, 50., 50., now + Duration::from_millis(360))
+                .unwrap()
+                .input
+                .action,
+            TouchAction::Tap { .. }
+        ));
     }
     #[test]
     fn pinch_freezes_anchor_suspends_third_finger_and_restarts_pair() {

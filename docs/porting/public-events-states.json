@@ -1,0 +1,60 @@
+{
+  "events": [
+    "full",
+    "full",
+    "update",
+    "update",
+    "update",
+    "full",
+    "full",
+    "full"
+  ],
+  "rejected": true,
+  "ranges": [
+    [
+      "horizontal",
+      {
+        "from": 1,
+        "to": 3
+      }
+    ],
+    [
+      "logical",
+      {
+        "from": 0.10000000000000009,
+        "to": 2.1
+      }
+    ],
+    [
+      "logical",
+      {
+        "from": 0.20000000000000018,
+        "to": 2.2
+      }
+    ],
+    [
+      "horizontal",
+      {
+        "from": 2,
+        "to": 3
+      }
+    ],
+    [
+      "logical",
+      {
+        "from": 1,
+        "to": 3
+      }
+    ]
+  ],
+  "hidden": [
+    0,
+    0
+  ],
+  "sizeCount": 2,
+  "restored": true,
+  "clicks": [
+    "click",
+    "double"
+  ]
+}

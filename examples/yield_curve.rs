@@ -250,6 +250,11 @@ impl App {
                     Ok(events) => {
                         for event in events {
                             match event {
+                                ChartEvent::DataChanged { .. }
+                                | ChartEvent::DoubleClick(_)
+                                | ChartEvent::VisibleLogicalRangeChanged(_)
+                                | ChartEvent::VisibleHorizontalRangeChanged(_)
+                                | ChartEvent::HorizontalAxisSizeChanged { .. } => {}
                                 ChartEvent::PrimitiveEdit(e) => {
                                     if let Err(error) = self.region.edit(&mut self.chart, &e) {
                                         self.status = error.to_string();

@@ -606,7 +606,8 @@ impl From<ChartMessage> for Message {
             ChartMessage::PriceAxis(input) => Self::PriceAxis(input),
             ChartMessage::Bounds(size) => Self::Bounds(size),
             ChartMessage::Tick(now) => Self::Tick(now),
-            ChartMessage::Click { pane, position } => Self::Click { pane, position },
+            ChartMessage::Click { pane, position }
+            | ChartMessage::DoubleClick { pane, position } => Self::Click { pane, position },
         }
     }
 }

@@ -59,7 +59,7 @@ impl<E> Delegate<E> {
     }
 }
 
-impl<E: 'static> Delegate<E> {
+impl<E> Delegate<E> {
     /// Registers a callback until its returned subscription is dropped.
     pub fn subscribe(&self, callback: impl FnMut(&E) + 'static) -> Subscription<E> {
         self.subscribe_inner(callback, false)

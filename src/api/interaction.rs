@@ -23,6 +23,7 @@ pub enum ChartMessage {
     Bounds(iced::Size),
     Tick(Instant),
     Click { pane: usize, position: iced::Point },
+    DoubleClick { pane: usize, position: iced::Point },
 }
 #[derive(Clone, Debug)]
 pub struct PointerEvent<T = Time> {
@@ -40,6 +41,17 @@ pub struct PointerEvent<T = Time> {
 }
 #[derive(Clone, Debug)]
 pub enum ChartEvent<T = Time> {
+    DataChanged {
+        series: crate::model::data_layer::SeriesId,
+        scope: super::DataChangeScope,
+    },
+    DoubleClick(PointerEvent<T>),
+    VisibleLogicalRangeChanged(Option<crate::model::time_data::LogicalRange>),
+    VisibleHorizontalRangeChanged(Option<super::HorizontalRange<T>>),
+    HorizontalAxisSizeChanged {
+        width: f64,
+        height: f64,
+    },
     PrimitiveEdit(super::PrimitiveEditEvent),
     Click(PointerEvent<T>),
     CrosshairMoved(PointerEvent<T>),
@@ -177,7 +189,7 @@ impl<B: super::ChartBehavior> Chart<B> {
                     }),
                 )?;
             }
-            TouchAction::Tap { position } => {
+            TouchAction::Tap { position } | TouchAction::DoubleTap { position } => {
                 self.finish_pan(input.now, false);
                 return Ok(Some((input.pane, position)));
             }
@@ -332,29 +344,27 @@ impl<B: super::ChartBehavior> Chart<B> {
         if let ChartMessage::Tick(now) = message
             && self.sample_price_animation_tick(now)
         {
-            return Ok(vec![]);
+            return Ok(self.take_events());
         }
         let edit_message = matches!(message, ChartMessage::PrimitiveEdit(_));
         let previous = (
             self.model.crosshair().position(),
             self.model.crosshair().origin(),
         );
-        let mut events = self
-            .pending_primitive_edits
-            .drain(..)
-            .map(ChartEvent::PrimitiveEdit)
-            .collect::<Vec<_>>();
+        self.flush_edit_events();
         let mut clicked = None;
+        let mut double_click = false;
         let mut now = Instant::now();
         match message {
             ChartMessage::Touch(input) if self.primitive_edit.is_none() => {
                 now = input.now;
+                double_click = matches!(input.action, super::TouchAction::DoubleTap { .. });
                 clicked = self.apply_touch(input)?;
             }
             ChartMessage::Touch(_) => {}
             ChartMessage::PrimitiveEdit(event) => {
                 if let Some(event) = self.apply_primitive_edit(event) {
-                    events.push(ChartEvent::PrimitiveEdit(event));
+                    self.push_event(ChartEvent::PrimitiveEdit(event));
                 }
             }
             ChartMessage::Interaction(_)
@@ -449,35 +459,37 @@ impl<B: super::ChartBehavior> Chart<B> {
                 )?;
                 clicked = Some((pane, position));
             }
+            ChartMessage::DoubleClick { pane, position } => {
+                if self.primitive_edit.is_none() && self.event_interests.double_click {
+                    clicked = Some((pane, position));
+                    double_click = true;
+                }
+            }
         }
         if edit_message {
             // The host applies geometry before preparing once; avoid a discarded preview frame.
-            events.extend(
-                self.pending_primitive_edits
-                    .drain(..)
-                    .map(ChartEvent::PrimitiveEdit),
-            );
-            return Ok(events);
+            return Ok(self.take_events());
         }
         self.prepare(self.size, self.ratio, now)?;
-        events.extend(
-            self.pending_primitive_edits
-                .drain(..)
-                .map(ChartEvent::PrimitiveEdit),
-        );
+        self.flush_edit_events();
         if let Some((pane, position)) = clicked {
-            events.push(ChartEvent::Click(
-                self.pointer_event_at(
-                    Some(pane),
-                    Some(position),
-                    Some(
-                        self.model
-                            .time_scale()
-                            .coordinate_to_index(f64::from(position.x).into(), true),
-                    ),
-                    Some(f64::from(position.y)),
+            let pointer = self.pointer_event_at(
+                Some(pane),
+                Some(position),
+                Some(
+                    self.model
+                        .time_scale()
+                        .coordinate_to_index(f64::from(position.x).into(), true),
                 ),
-            ));
+                Some(f64::from(position.y)),
+            );
+            if double_click {
+                if self.event_interests.double_click {
+                    self.push_event(ChartEvent::DoubleClick(pointer));
+                }
+            } else {
+                self.push_event(ChartEvent::Click(pointer));
+            }
         }
         let pointer = self.pointer_event();
         if self.last_primitive != pointer.primitive
@@ -490,9 +502,9 @@ impl<B: super::ChartBehavior> Chart<B> {
         {
             self.last_hit = pointer.hit.clone();
             self.last_primitive = pointer.primitive.clone();
-            events.push(ChartEvent::CrosshairMoved(pointer));
+            self.push_event(ChartEvent::CrosshairMoved(pointer));
         }
-        Ok(events)
+        Ok(self.take_events())
     }
 }
 impl<B: super::ChartBehavior> Chart<B> {
@@ -646,7 +658,8 @@ impl<B: super::ChartBehavior> Chart<B> {
                             point_valid(anchor) && zoom.is_finite()
                         }
                         super::TouchAction::Track { position }
-                        | super::TouchAction::Tap { position } => point_valid(position),
+                        | super::TouchAction::Tap { position }
+                        | super::TouchAction::DoubleTap { position } => point_valid(position),
                         _ => true,
                     }
             }
@@ -677,7 +690,10 @@ impl<B: super::ChartBehavior> Chart<B> {
                         _ => true,
                     }
             }
-            ChartMessage::Click { pane, position } => *pane < panes && point_valid(*position),
+            ChartMessage::Click { pane, position }
+            | ChartMessage::DoubleClick { pane, position } => {
+                *pane < panes && point_valid(*position)
+            }
             ChartMessage::Bounds(size) => {
                 size.width.is_finite()
                     && size.height.is_finite()

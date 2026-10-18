@@ -31,6 +31,12 @@ impl Deref for YieldCurveChart {
     }
 }
 impl YieldCurveChart {
+    pub fn set_event_interests(&mut self, interests: super::EventInterests) {
+        self.core.set_event_interests(interests);
+    }
+    pub fn take_events(&mut self) -> Vec<ChartEvent<Maturity>> {
+        self.core.take_events()
+    }
     pub fn apply_chart_options(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
         self.core.apply_chart_options(patch)
     }

@@ -32,6 +32,7 @@ impl<B: super::ChartBehavior> Chart<B> {
             axis_scaling: self.axis_scaling(),
             active_price_axis: self.active_price_axis,
             animate: self.is_animating(),
+            double_click: self.event_interests.double_click,
             marker_deadline: self.next_up_down_expiration(),
             enabled: !self.model.time_scale().is_empty(),
             resize_panes: self.resize_panes,
@@ -62,6 +63,7 @@ pub struct ChartProgram<'a, Message> {
     axis_scaling: Vec<[bool; 2]>,
     active_price_axis: Option<(usize, crate::model::axis_snapshots::PriceAxisSide)>,
     animate: bool,
+    double_click: bool,
     marker_deadline: Option<Instant>,
     enabled: bool,
     resize_panes: bool,
@@ -89,7 +91,8 @@ pub struct ChartState {
     available: Option<AxisBounds>,
     revision: Option<u64>,
     membership: Vec<crate::model::data_layer::SeriesId>,
-    click: Option<(usize, iced::Point)>,
+    click: Option<(usize, iced::Point, Instant)>,
+    click_sequence: super::click_sequence::ClickSequence,
 }
 impl<Message> ChartProgram<'_, Message> {
     fn publish(&self, message: ChartMessage) -> canvas::Action<Message> {
@@ -115,6 +118,10 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             canvas::Event::Window(iced::window::Event::Unfocused) => state.unfocused = true,
             canvas::Event::Window(iced::window::Event::Focused) => state.unfocused = false,
             _ => {}
+        }
+        state.touch_input.double_tap_enabled = self.double_click;
+        if !self.double_click {
+            state.click_sequence.cancel();
         }
         let revision_changed = state
             .revision
@@ -239,6 +246,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             super::primitive_edit_input::EditAction::Capture(message) => {
                 state.touch_input.cancel(now);
                 state.click = None;
+                state.click_sequence.cancel();
                 state.input = ChartInput::default();
                 state.multi_input = MultiPaneInput::default();
                 return Some(message.map_or_else(
@@ -255,6 +263,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             state.input = ChartInput::default();
             state.multi_input = MultiPaneInput::default();
             state.click = None;
+            state.click_sequence.cancel();
             if let Some(end) = state.axis_input.cancel() {
                 return Some(self.publish(ChartMessage::PriceAxis(end)));
             }
@@ -285,21 +294,30 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                                 && f64::from(point.x) < plot.origin.x + plot.size.width
                                 && f64::from(point.y) >= plot.origin.y
                                 && f64::from(point.y) < plot.origin.y + plot.size.height)
-                                .then_some((pane, point))
+                                .then_some((pane, point, now))
                         })
                 });
+                if state.click.is_none() {
+                    state.click_sequence.cancel();
+                }
             }
             canvas::Event::Mouse(iced::mouse::Event::CursorMoved { .. }) => {
-                if state.click.is_some_and(|(_, start)| {
+                if state.click.is_some_and(|(_, start, _)| {
                     local.is_none_or(|p| (p.x - start.x).abs() + (p.y - start.y).abs() >= 5.)
                 }) {
                     state.click = None;
+                    state.click_sequence.cancel();
                 }
             }
             canvas::Event::Mouse(iced::mouse::Event::ButtonReleased(iced::mouse::Button::Left)) => {
             }
             canvas::Event::Mouse(iced::mouse::Event::WheelScrolled { .. })
-            | canvas::Event::Window(iced::window::Event::Unfocused) => state.click = None,
+            | canvas::Event::Mouse(iced::mouse::Event::CursorLeft)
+            | canvas::Event::Mouse(iced::mouse::Event::ButtonPressed(iced::mouse::Button::Right))
+            | canvas::Event::Window(iced::window::Event::Unfocused) => {
+                state.click = None;
+                state.click_sequence.cancel();
+            }
             _ => {}
         }
         let clicked = if matches!(
@@ -308,7 +326,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 iced::mouse::Button::Left
             ))
         ) {
-            state.click.take().and_then(|(pane, start)| {
+            state.click.take().and_then(|(pane, start, pressed)| {
                 local.and_then(|point| {
                     let plot = self.axis_layouts().get(pane)?.plot;
                     ((point.x - start.x).abs() + (point.y - start.y).abs() < 5.
@@ -316,18 +334,36 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                         && f64::from(point.x) < plot.origin.x + plot.size.width
                         && f64::from(point.y) >= plot.origin.y
                         && f64::from(point.y) < plot.origin.y + plot.size.height)
-                        .then_some(ChartMessage::Click {
-                            pane,
-                            position: iced::Point::new(
+                        .then(|| {
+                            let position = iced::Point::new(
                                 point.x - plot.origin.x as f32,
                                 point.y - plot.origin.y as f32,
-                            ),
+                            );
+                            if self.double_click
+                                && state
+                                    .click_sequence
+                                    .release(pane, start, pressed, point, now, 5.)
+                            {
+                                ChartMessage::DoubleClick { pane, position }
+                            } else {
+                                ChartMessage::Click { pane, position }
+                            }
                         })
                 })
             })
         } else {
             None
         };
+        if clicked.is_none()
+            && matches!(
+                event,
+                canvas::Event::Mouse(iced::mouse::Event::ButtonReleased(
+                    iced::mouse::Button::Left
+                ))
+            )
+        {
+            state.click_sequence.cancel();
+        }
         let over_divider = self.multi.is_some_and(|multi| {
             local.is_some_and(|p| {
                 multi.layout.separators.iter().any(|r| {

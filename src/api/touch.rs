@@ -61,6 +61,9 @@ pub enum TouchAction {
     Tap {
         position: Point,
     },
+    DoubleTap {
+        position: Point,
+    },
     End,
     ExitTracking,
     Cancel,

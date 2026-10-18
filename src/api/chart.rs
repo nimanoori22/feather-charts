@@ -78,6 +78,14 @@ pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
+    pub(super) event_interests: super::EventInterests,
+    pub(super) pending_events: std::rc::Rc<std::cell::RefCell<Vec<super::ChartEvent<B::Item>>>>,
+    pub(super) range_observer: Option<
+        crate::helpers::delegate::Subscription<
+            crate::model::time_scale::VisibleRangeChange<B::Item>,
+        >,
+    >,
+    last_axis_size: Option<AxisBounds>,
     pub(super) up_down:
         BTreeMap<super::PrimitiveId, super::up_down_markers::Controller<B::Item, B::Key>>,
     pub(super) primitive_edit: Option<super::primitive_editing::EditSession>,
@@ -151,6 +159,10 @@ impl<B: ChartBehavior> Chart<B> {
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
         Self {
+            event_interests: Default::default(),
+            pending_events: Default::default(),
+            range_observer: None,
+            last_axis_size: None,
             up_down: BTreeMap::new(),
             primitive_edit: None,
             pending_primitive_edits: vec![],
@@ -269,6 +281,7 @@ impl<B: ChartBehavior> Chart<B> {
             .set_series_data(id, kind, data)
             .map_err(B::data_error)?;
         self.model.apply_data_update(update)?;
+        self.data_changed(id, super::DataChangeScope::Full);
         Ok(())
     }
     /// Replace the latest bar or append. Historical updates require an existing time.
@@ -296,6 +309,7 @@ impl<B: ChartBehavior> Chart<B> {
             .update_series_data(id, item, historical)
             .map_err(B::data_error)?;
         self.model.apply_data_update(update)?;
+        self.data_changed(id, super::DataChangeScope::Update);
         Ok(())
     }
     pub(super) fn check_historical_conflation(
@@ -484,6 +498,18 @@ impl<B: ChartBehavior> Chart<B> {
             });
         match result {
             Ok(frame) => {
+                let axis_size = if self.model.time_scale().options().visible {
+                    frame.layout.chart.time_axis.size
+                } else {
+                    AxisBounds::default()
+                };
+                let changed = self.last_axis_size.replace(axis_size) != Some(axis_size);
+                if changed && self.event_interests.horizontal_axis_size {
+                    self.push_event(super::ChartEvent::HorizontalAxisSizeChanged {
+                        width: axis_size.width,
+                        height: axis_size.height,
+                    });
+                }
                 self.frame = frame;
                 self.prepared_revision = Some(self.revision);
                 Ok(())

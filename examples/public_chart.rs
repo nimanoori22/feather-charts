@@ -362,6 +362,11 @@ impl App {
                     Ok(events) => {
                         for event in events {
                             let (kind, data) = match event {
+                                ChartEvent::DataChanged { .. }
+                                | ChartEvent::DoubleClick(_)
+                                | ChartEvent::VisibleLogicalRangeChanged(_)
+                                | ChartEvent::VisibleHorizontalRangeChanged(_)
+                                | ChartEvent::HorizontalAxisSizeChanged { .. } => continue,
                                 ChartEvent::PrimitiveEdit(edit) => {
                                     let result = self
                                         .primitive_scene

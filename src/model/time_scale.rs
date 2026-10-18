@@ -29,6 +29,13 @@ pub struct TimeScaleUpdate<Internal, Original> {
     pub first_changed_point_index: usize,
 }
 
+/// Captured at the existing engine triggers, before later mutations can remap points.
+#[derive(Clone, Debug)]
+pub(crate) enum VisibleRangeChange<T> {
+    Horizontal(Option<ValueRange<T>>),
+    Logical(Option<LogicalRange>),
+}
+
 pub struct TimeScale<B: HorzScaleBehavior>
 where
     B::InternalItem: Clone,
@@ -59,6 +66,7 @@ where
     visible_bars_changed: Delegate<()>,
     logical_range_changed: Delegate<()>,
     options_applied: Delegate<()>,
+    range_changed: Delegate<VisibleRangeChange<B::Item>>,
     interactions_enabled: bool,
     conflation_factor: usize,
     device_pixel_ratio: f64,
@@ -114,6 +122,7 @@ where
             visible_bars_changed: Delegate::new(),
             logical_range_changed: Delegate::new(),
             options_applied: Delegate::new(),
+            range_changed: Delegate::new(),
             interactions_enabled: true,
             conflation_factor: 1,
             device_pixel_ratio: 1.0,
@@ -659,6 +668,12 @@ where
     ) -> Subscription<()> {
         self.visible_bars_changed.subscribe(callback)
     }
+    pub(crate) fn observe_ranges(
+        &self,
+        callback: impl FnMut(&VisibleRangeChange<B::Item>) + 'static,
+    ) -> Subscription<VisibleRangeChange<B::Item>> {
+        self.range_changed.subscribe(callback)
+    }
     pub fn subscribe_logical_range_changed(
         &self,
         callback: impl FnMut(&()) + 'static,
@@ -832,9 +847,24 @@ where
             )));
         }
         if !are_ranges_equal(old.strict_range(), self.visible_range.strict_range()) {
+            if self.range_changed.has_listeners() {
+                let range = self.visible_time_range().map(|r| ValueRange {
+                    from: r.from.original_time,
+                    to: r.to.original_time,
+                });
+                self.range_changed
+                    .emit(&VisibleRangeChange::Horizontal(range));
+            }
             self.visible_bars_changed.emit(&());
         }
         if !are_ranges_equal(old.logical_range(), self.visible_range.logical_range()) {
+            if self.range_changed.has_listeners() {
+                let range = self.visible_range.logical_range().map(|r| ValueRange {
+                    from: r.left(),
+                    to: r.right(),
+                });
+                self.range_changed.emit(&VisibleRangeChange::Logical(range));
+            }
             self.logical_range_changed.emit(&());
         }
         self.time_marks_cache = None;

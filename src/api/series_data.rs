@@ -215,6 +215,7 @@ impl<B: ChartBehavior> Chart<B> {
         self.model.apply_data_update(update)?;
         self.last_hit = None;
         self.last_primitive = None;
+        self.data_changed(id, super::DataChangeScope::Update);
         Ok(removed.iter().filter_map(public_data).collect())
     }
 }

@@ -1,6 +1,8 @@
 //! Synchronous chart ownership and the reusable Iced component.
 mod behavior;
 mod chart;
+mod events;
+pub use events::{DataChangeScope, EventInterests, HorizontalRange};
 mod configuration;
 mod pane_management;
 mod price_scale;
@@ -15,6 +17,7 @@ pub use custom_series::{CustomHitData, CustomSeriesEventData, CustomSeriesHandle
 mod defaults;
 mod markers;
 pub use chart::{Chart, ChartError};
+mod click_sequence;
 mod interaction;
 mod primitive_edit_input;
 mod primitive_editing;
