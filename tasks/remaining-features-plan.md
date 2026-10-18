@@ -1,6 +1,6 @@
 # Screenshot export, custom horizontal factories and attribution
 
-Date: 2026-10-18. Status: custom horizontal factories accepted; attribution milestone C pending.
+Date: 2026-10-18. Status: A/B/C implemented and accepted with the available mouse on software/GPU; combined final validation passed.
 Baseline: `23476f1`. Checklist: [remaining-features-todo.md](remaining-features-todo.md).
 Use the existing feature-specific plan convention; preserve earlier plans and
 their independent acceptance records.

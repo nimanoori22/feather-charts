@@ -150,7 +150,7 @@ README and the feature-specific roadmap/checklist record usage and remaining wor
 
 ## Remaining dependencies and review
 
-The public custom-horizontal factory and attribution milestones have not started.
+At the original screenshot checkpoint, the public custom-horizontal factory and attribution milestones had not started. Both are now implemented and accepted; see their feature reports.
 Attribution must remain outside canvas export as specified in their approved plan.
 PNG convenience, different logical-layout export, SVG/PDF and host file dialogs
 remain outside this screenshot milestone. Existing timing, drawing-order mouse and
@@ -162,3 +162,14 @@ renderer), bounded user inputs/file ownership, and runtime costs (no device or
 renderer initialization on chart frame/input paths). Source consumers were reread
 after implementation; the label-canvas replay issue found in that review has a
 red/green regression. No dependency, engine synchronization or async policy changed.
+
+
+## Final integrated acceptance
+
+On 2026-10-18 the final attribution build (`e037a3b`) replayed all 1158 accepted
+screenshot images exactly. The user then passed separate software/GPU physical
+preview/export and interaction checks across calendar, strike, maturity and
+session/phase domains. All eight processes exited normally. This supplies the
+previously missing backend-specific physical record for A6; the earlier general
+acceptance statement was not inferred to cover GPU. Saved-file artifact limits and
+the full report are recorded in [attribution.md](attribution.md) and its evidence.

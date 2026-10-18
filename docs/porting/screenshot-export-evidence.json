@@ -82,8 +82,8 @@
     "target/screenshot-export/reviewed/compatibility/results.json": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298"
   },
   "mouse": {
-    "tiny-skia": "pending",
-    "wgpu": "pending"
+    "tiny-skia": "passed in final integrated attribution checks",
+    "wgpu": "passed in final integrated attribution checks"
   },
   "failed_runs_retained": [
     "target/screenshot-export/initial",
@@ -91,10 +91,7 @@
     "target/screenshot-pane-labels-red.log",
     "target/screenshot-export/validation/4.log"
   ],
-  "remaining_milestones": [
-    "custom horizontal factory",
-    "attribution logo"
-  ],
+  "remaining_milestones": [],
   "independent_exceptions": [
     "timing acceptance",
     "dedicated drawing-order mouse acceptance",
@@ -104,7 +101,7 @@
     "statement": "screenshot is okay, let's go for the next step",
     "date": "2026-10-18",
     "proceed_to_next_milestone": true,
-    "backend_specific_scope": "No separate GPU physical result was supplied; do not infer one."
+    "backend_specific_scope": "At this earlier checkpoint no separate GPU physical result was supplied; later integrated acceptance is recorded separately below."
   },
   "mouse_processes": {
     "tiny-skia": [
@@ -144,5 +141,144 @@
         "exit": 0
       }
     ]
+  },
+  "final_integrated_acceptance": {
+    "date": "2026-10-18",
+    "runtime_checkpoint": "e037a3b",
+    "physical": {
+      "tiny-skia": {
+        "status": "passed",
+        "response": "All checks passed in all four modes; previews/exports passed; windows closed",
+        "processes": [
+          {
+            "mode": "calendar",
+            "backend_requested": "tiny-skia",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 500402,
+            "exit": 0
+          },
+          {
+            "mode": "strike",
+            "backend_requested": "tiny-skia",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--options"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 500403,
+            "exit": 0
+          },
+          {
+            "mode": "maturity",
+            "backend_requested": "tiny-skia",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--yield-curve"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 500404,
+            "exit": 0
+          },
+          {
+            "mode": "sessions",
+            "backend_requested": "tiny-skia",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--custom-domain"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 500405,
+            "exit": 0
+          }
+        ],
+        "saved_file_verification": "No target/screenshot-export.{json,rgba,ppm} files were present after the software run; preview/export acceptance is the user report. File serialization is covered by automated tests."
+      },
+      "wgpu": {
+        "status": "passed",
+        "response": "All checks passed in all four modes; previews/exports passed; windows closed",
+        "processes": [
+          {
+            "mode": "calendar",
+            "backend_requested": "wgpu",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 502125,
+            "exit": 0
+          },
+          {
+            "mode": "strike",
+            "backend_requested": "wgpu",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--options"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 502126,
+            "exit": 0
+          },
+          {
+            "mode": "maturity",
+            "backend_requested": "wgpu",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--yield-curve"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 502127,
+            "exit": 0
+          },
+          {
+            "mode": "sessions",
+            "backend_requested": "wgpu",
+            "command": [
+              "target/debug/examples/pane_management",
+              "--attribution",
+              "--screenshot-export",
+              "--live-feed",
+              "--custom-domain"
+            ],
+            "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+            "pid": 502128,
+            "exit": 0
+          }
+        ],
+        "last_saved_export": {
+          "metadata": {
+            "width": 640,
+            "height": 480,
+            "format": "straight-alpha sRGB RGBA8"
+          },
+          "scope": "Shared save path retains only the final saved image, not a separate artifact per mode."
+        }
+      }
+    },
+    "exact_accepted_image_matches": 1158,
+    "evidence": "docs/porting/attribution-evidence.json"
   }
 }

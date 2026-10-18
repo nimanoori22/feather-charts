@@ -1,6 +1,6 @@
 # Remaining public features checklist
 
-Status: custom-horizontal milestone B accepted on software/GPU with the available mouse, 2026-10-18.
+Status: milestones A/B/C and combined validation accepted with the available mouse on software/GPU, 2026-10-18.
 Plan: [remaining-features-plan.md](remaining-features-plan.md). Baseline `23476f1`.
 Do not overwrite earlier plans or close their independent exceptions.
 
@@ -16,7 +16,7 @@ Do not overwrite earlier plans or close their independent exceptions.
 - [x] A4: Deliver reusable renderer/export image API with checked dimensions,
   explicit actual backend, verified RGBA contract and bounded allocation.
 - [x] A5: Deliver public-API preview/file example and layer/ratio/size controls.
-- [ ] A6: Pass frozen source/capture/compatibility and both available mouse checks;
+- [x] A6: Pass frozen source/capture/compatibility and both available mouse checks;
   record normal exits, final validation and a local milestone commit.
 
 Verification: current-layout image sizing and fresh/prepared differences are explicit;
@@ -47,7 +47,7 @@ runtime formatting changes do not silently reinterpret populated horizontal keys
 - [x] C2: Route fixed-destination activation to the host; migrate enum callers and
   test cancellation without plot/edit/axis/divider interference.
 - [x] Checkpoint C-input: review lifetime/input policy and save tested local commit.
-- [ ] C3: Pass source, disabled-baseline, enabled visual/export and both backend
+- [x] C3: Pass source, disabled-baseline, enabled visual/export and both backend
   mouse checks; record final report/evidence and a local milestone commit.
 
 Verification: logo follows the last pane through reorder/removal, uses source theme/
@@ -55,25 +55,25 @@ bounds at fractional DPR, and stays absent from source-compatible screenshot out
 
 ## D — Combined completion (D0)
 
-- [ ] All-target tests, doctests, all-target check, formatting, strict Clippy and
+- [x] All-target tests, doctests, all-target check, formatting, strict Clippy and
   diff hygiene pass on the final unchanged source.
-- [ ] All 34 baseline source comparisons plus the new feature oracles pass;
+- [x] All 34 baseline source comparisons plus the new feature oracles pass;
   exact image scene/count matrices and compatibility checks remain unchanged.
-- [ ] Source/design/ownership/API/migration/changed-files/tests/evidence/remaining-
+- [x] Source/design/ownership/API/migration/changed-files/tests/evidence/remaining-
   dependency reports and README examples are complete.
-- [ ] Available software/GPU mouse and export acceptance is recorded for the final
+- [x] Available software/GPU mouse and export acceptance is recorded for the final
   relevant behavior; normal exits are verified and failed runs retained.
-- [ ] Final local commits and clean worktree; push only when requested.
+- [x] Final local commits and clean worktree; push only when requested.
 
 ## Feature acceptance
 
-- [ ] Apps obtain owned chart images with source-correct layer controls, safe output
+- [x] Apps obtain owned chart images with source-correct layer controls, safe output
   sizing and preserved chart/event/gesture ownership across existing modes.
 - [x] An external application can construct and use a chart with its own horizontal
   behavior, typed custom data and export without private access or runtime wrapping.
-- [ ] Attribution renders/activates correctly when enabled, follows last-pane
+- [x] Attribution renders/activates correctly when enabled, follows last-pane
   lifecycle and preserves source-compatible screenshot exclusion.
-- [ ] Earlier timing, dedicated drawing-order acceptance and unavailable physical
+- [x] Earlier timing, dedicated drawing-order acceptance and unavailable physical
   device checks retain their independent status; this checklist does not close them.
 
 ## Current checkpoint
@@ -98,3 +98,25 @@ The user passed software/GPU mouse/export acceptance; both final-binary processe
 exited normally and saved RGBA lengths match their size metadata. B4 is accepted
 for the available mouse; independent device/timing exceptions remain open. See the [contract](../docs/porting/custom-horizontal.md)
 and [evidence](../docs/porting/custom-horizontal-evidence.json). Nothing was pushed.
+
+
+## Attribution and combined completion checkpoint
+
+Core `ce8fd95`, four-domain demo `d02a839`, viewport/hover repair `e037a3b`.
+Final runtime source passes 796 tests/78 suites, two doctests, format/check/strict
+Clippy and all 37 source comparisons. Both actual backends pass 672 logo screens,
+2688 exact export-exclusion and 2688 retained-export comparisons. All 1158 accepted
+screenshot images, 240 custom-domain images and 96 legacy baseline images remain
+identical; the 288 event captures also pass.
+
+The user passed final software and GPU logo/interaction/preview/export checks in
+calendar, strike, maturity and sessions. All eight processes exited normally on
+the same final binary. These integrated screenshot controls complete A6's formerly
+missing backend-specific record; the earlier general statement was not treated as
+a GPU result. The final GPU saved image has valid 640×480 RGBA length. The shared
+save path retains one image, not a separate image per mode; no software-run saved
+file was present for inspection. File serialization also has automated coverage.
+See [the attribution report](../docs/porting/attribution.md) and
+[evidence](../docs/porting/attribution-evidence.json). A/B/C feature acceptance and
+D combined completion apply to the available mouse; independent timing,
+drawing-order and unavailable-device exceptions remain open. Nothing was pushed.

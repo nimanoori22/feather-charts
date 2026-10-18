@@ -1,6 +1,6 @@
 # Native attribution logo
 
-Milestone C, authorized 2026-10-18. Baseline `d9095de`. Implementation in progress.
+Milestone C, authorized 2026-10-18. Baseline `d9095de`. Implementation, automated gates and available-mouse software/GPU acceptance complete.
 
 ## Source contract and consumers
 
@@ -152,3 +152,53 @@ resolve or close the earlier independent timing exception.
 The repaired pre-final input-review matrix passed 672 screens, 2688 exact visibility/
 export comparisons and 2688 retained-export comparisons across both actual backends.
 Its artifacts are preserved; final-source replay and compatibility validation follow.
+
+
+Iced's exact Path/Fill/Frame APIs were checked for arc conversion, even-odd rules,
+headless drawing and clip/transform behavior. Flowsurface's OverlayCanvas update and
+cursor methods were inspected as a Canvas HUD example: controls are recognized before
+panning and receive a pointer cursor. Its graph has no concrete trait callback edges;
+actual snippets were read with clean best-effort path coverage. Existing native
+primitive/touch routing remains the implementation foundation; no Flowsurface
+architecture or code was copied.
+
+
+## Final automated results
+
+Final source at `e037a3b`: 796 tests across 78 suites and two doctests pass, along
+with formatting, all-target check, strict Clippy, generated-vector verification and
+all 37 local-source comparisons. Actual software/GPU replay passes 672 screen images,
+2688 exact export-exclusion comparisons and 2688 retained-export comparisons over
+four domains, seven scenes, three sizes and four DPR values. Both strict renderer
+identities were asserted. Final screen images match the pre-final input-review set.
+Representative light/dark/mismatched/tiny images were visually inspected.
+
+The unchanged legacy gate passes 288 event captures and 96 exact baseline images.
+All 240 accepted custom-domain images and all 1158 accepted screenshot images match
+exactly on the final source, including the original layer/alpha-fit scene matrix.
+No baseline, threshold or expected scene count was weakened. Failed runs and image
+differences remain under `target/attribution`. Heavy validation finished before the
+mouse sessions. See [attribution-evidence.json](attribution-evidence.json).
+
+
+## Final physical acceptance and completion
+
+On 2026-10-18 the user reported “All checks passed in all four modes;
+previews/exports passed; windows closed” separately for tiny-skia and wgpu.
+Each group covered calendar, strike, maturity and session/phase charts: logo
+visibility/theme and host link requests, drag-off cancellation, pane lifecycle,
+live-feed navigation/price-axis/box interaction at three window sizes, short-height
+recovery and screenshot layer/ratio/canvas/preview controls. All eight processes
+exited with status zero using the recorded final-binary SHA-256.
+
+The GPU run retained a 640×480 straight-alpha sRGB RGBA8 save with the exact expected
+byte length. The shared save path retains only the final image; no separate saved
+artifact per mode is claimed. No software-run saved file was present for inspection;
+that run's preview/export result is the user's report. Automated file round-trip
+tests provide separate serialization coverage.
+
+The integrated checks also supply A6's previously missing backend-specific
+screenshot acceptance. All A/B/C feature milestones and combined final validation
+are complete for the available mouse. Existing timing, dedicated drawing-order and
+unavailable physical-device exceptions remain independent. Changes are local and
+have not been pushed.

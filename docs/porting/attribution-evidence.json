@@ -1,0 +1,261 @@
+{
+  "date": "2026-10-18",
+  "core_checkpoint": "ce8fd95",
+  "demo_checkpoint": "d02a839",
+  "fix_checkpoint": "e037a3b",
+  "tests": 796,
+  "suites": 78,
+  "doctests": 2,
+  "validation": [
+    {
+      "name": "vector",
+      "command": [
+        "python",
+        "scripts/generate_attribution_paths.py",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doctests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    }
+  ],
+  "source_comparisons": 37,
+  "source_results": "target/attribution/final-oracles/results.json",
+  "screen_images": 672,
+  "export_exclusion_comparisons": 2688,
+  "retained_export_comparisons": 2688,
+  "actual_backends": [
+    "tiny-skia",
+    "wgpu"
+  ],
+  "capture_results": "target/attribution/final-captures/results.json",
+  "capture_protocol_sha256": "3f47f2039e2abb09be3d8054a61d6998700cb62d96e070a4b5a368081749cdbd",
+  "accepted_screenshot_exact_matches": 1158,
+  "screenshot_results": "target/attribution/final-screenshot-export/results.json",
+  "custom_domain_exact_matches": 240,
+  "custom_domain_results": "target/attribution/final-custom-horizontal/previous-image-comparison.json",
+  "legacy_exact_matches": 96,
+  "legacy_event_captures": 288,
+  "legacy_results": "target/attribution/final-compatibility/results.json",
+  "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+  "review": {
+    "vector_generator_check": "passed",
+    "export_exclusion_mutation": "mutation-export.log",
+    "visibility_failure": "red-populated-layout.log",
+    "visibility_repair": "green-populated-layout.log",
+    "hover_animation_failure": "red-hover-animation.log",
+    "hover_animation_repair": "green-hover-animation.log",
+    "failed_capture_runs_retained": [
+      "captures",
+      "diagnostic-captures"
+    ],
+    "pre_final_input_review_captures": "fixed-captures",
+    "pre_final_normal_images_match_final": 672,
+    "visual_samples": [
+      "tiny-skia/sessions/dark-300x300-1.25",
+      "wgpu/maturity/mismatch-300x300-1.5",
+      "wgpu/strike/removed-300x90-2"
+    ]
+  },
+  "physical": {
+    "tiny-skia": {
+      "status": "passed",
+      "response": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "processes": [
+        {
+          "mode": "calendar",
+          "backend_requested": "tiny-skia",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 500402,
+          "exit": 0
+        },
+        {
+          "mode": "strike",
+          "backend_requested": "tiny-skia",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 500403,
+          "exit": 0
+        },
+        {
+          "mode": "maturity",
+          "backend_requested": "tiny-skia",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 500404,
+          "exit": 0
+        },
+        {
+          "mode": "sessions",
+          "backend_requested": "tiny-skia",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 500405,
+          "exit": 0
+        }
+      ],
+      "saved_file_verification": "No target/screenshot-export.{json,rgba,ppm} files were present after the software run; preview/export acceptance is the user report. File serialization is covered by automated tests."
+    },
+    "wgpu": {
+      "status": "passed",
+      "response": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "processes": [
+        {
+          "mode": "calendar",
+          "backend_requested": "wgpu",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 502125,
+          "exit": 0
+        },
+        {
+          "mode": "strike",
+          "backend_requested": "wgpu",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 502126,
+          "exit": 0
+        },
+        {
+          "mode": "maturity",
+          "backend_requested": "wgpu",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 502127,
+          "exit": 0
+        },
+        {
+          "mode": "sessions",
+          "backend_requested": "wgpu",
+          "command": [
+            "target/debug/examples/pane_management",
+            "--attribution",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "66ad733174d3294db52a2f8f5b69b553749b031aabdcd0c59d8fd413a4a0a836",
+          "pid": 502128,
+          "exit": 0
+        }
+      ],
+      "last_saved_export": {
+        "metadata": {
+          "width": 640,
+          "height": 480,
+          "format": "straight-alpha sRGB RGBA8"
+        },
+        "scope": "Shared save path retains only the final saved image, not a separate artifact per mode."
+      }
+    }
+  },
+  "independent_exceptions": [
+    "Earlier timing exception",
+    "Dedicated series-order acceptance",
+    "Touchpad/touchscreen/high-DPI physical checks"
+  ],
+  "milestone_c_accepted": true,
+  "pushed": false,
+  "combined_plan_accepted_for_available_mouse": true
+}
