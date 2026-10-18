@@ -145,8 +145,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         let bounds_changed = state
             .available
             .replace(self.snapshot.layout.available)
-            .is_some_and(|old| old != self.snapshot.layout.available)
-            || ratio_changed;
+            .is_some_and(|old| old != self.snapshot.layout.available);
         let membership_changed = state.revision.is_some() && state.membership != self.membership;
         if membership_changed {
             state.membership.clone_from(&self.membership);
@@ -347,7 +346,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             local,
             target,
             self.primitive_edit,
-            revision_changed || bounds_changed || membership_changed,
+            revision_changed || bounds_changed || membership_changed || ratio_changed,
         ) {
             super::primitive_edit_input::EditAction::Capture(message) => {
                 state.touch_input.cancel(now);
@@ -363,7 +362,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             }
             super::primitive_edit_input::EditAction::Pass => {}
         }
-        if revision_changed || bounds_changed || membership_changed {
+        if revision_changed || bounds_changed || membership_changed || ratio_changed {
             let was_dragging = state.input.is_dragging()
                 || state.multi_input.is_dragging()
                 || state.axis_input.is_dragging()

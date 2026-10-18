@@ -133,7 +133,7 @@ compressed, reset, drag-off/reset-on, drag-on/reset-off, pane move and touch res
 Gestures are actual Canvas events returned to the public Chart owner, not direct
 engine scale calls. Retained exports are rerendered after settings/default/size
 changes and owner drop. The initial eight-scene output is retained as superseded;
-final evidence uses the separate verified-captures directory. No old baseline or
+final evidence uses the separate milestone-captures directory. No old baseline or
 threshold changes. Six unchanged compatibility protocols additionally cover events,
 custom domains, screenshot/export, attribution, formatting and scale assignment.
 
@@ -177,7 +177,8 @@ modes. At regular size:
 2. Toggle Time drag off, leaving Time reset on: dragging must stop, reset must work.
    Reverse the flags: dragging must work and reset must stop. Repeat for Price
    drag/reset on a populated axis. Price reset restores autoscaling. Use All on.
-3. Use All off: plot/axis dragging and zoom/pinch are disabled; hover still works.
+3. Use All off: plot wheel/pinch and plot/axis dragging/reset are disabled; hover
+   and the existing native price-axis wheel extension still work.
    All on restores inputs. Individual axis toggles do not disable plot wheel zoom
    or the native price-axis wheel extension. Touch X/Y toggles do not disable mouse.
 4. With live feed, test wheel zoom, diagonal plot drag, both populated price axes,
@@ -214,3 +215,12 @@ cancelled when it changes; disabling their remaining capability also clears them
 All 13 focused public axis tests pass, including both controllers' reset-only
 cancellation. Strict focused Clippy passes. These are lifecycle corrections inside
 C; they do not constitute physical high-DPI or touchscreen acceptance.
+
+The source DOM probe also asserts the numeric right-edge scaling formula using
+the actual dispatched client coordinates, accounting for browser coordinate
+quantization; the native Canvas regression independently asserts the same formula.
+
+The unchanged legacy DPR/wheel regression caught overly broad idle cancellation.
+DPR now invalidates pointer ownership and edit state without discarding the first
+idle wheel event. That regression, all 13 axis tests and strict all-target Clippy
+pass. Its original zoom assertion was retained.
