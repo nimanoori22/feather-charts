@@ -78,6 +78,57 @@ fn prepare(chart: &mut Chart) {
 }
 
 #[test]
+fn appearance_patch_preserves_edit_and_autoscale_restoration() {
+    use feather_charts::{api::*, model::price_scale::PriceScaleOptionsPatch};
+    let (mut chart, _, _) = setup_edit();
+    let mut state = ChartState::default();
+    let message = native(&chart, &mut state, &press(), Point::new(50., 50.)).unwrap();
+    let events = chart.update(message).unwrap();
+    let ChartEvent::PrimitiveEdit(begin) = &events[0] else {
+        panic!("begin")
+    };
+    let token = begin.id;
+    chart
+        .apply_price_scale_options(
+            0,
+            &PriceScalePosition::Right,
+            PriceScaleOptionsPatch {
+                text_color: Some(Some("red".into())),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    chart
+        .apply_chart_options(ChartOptionsPatch {
+            model: ChartModelOptionsPatch {
+                layout: Some(LayoutOptionsPatch {
+                    text_color: Some("blue".into()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .unwrap();
+    prepare(&mut chart);
+    chart.preview_primitive_update(token).unwrap();
+    let message = native(
+        &chart,
+        &mut state,
+        &Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+        Point::new(50., 50.),
+    )
+    .unwrap();
+    chart.update(message).unwrap();
+    assert!(
+        chart
+            .price_scale_options(0, &PriceScalePosition::Right)
+            .unwrap()
+            .auto_scale
+    );
+}
+
+#[test]
 fn continuous_coordinates_round_trip_fractional_and_offscreen_bounds() {
     let (mut chart, series) = chart();
     let detached = Rc::new(Cell::new(0));

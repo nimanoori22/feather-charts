@@ -293,6 +293,10 @@ impl PriceScale {
         if let Some(margins) = margins {
             self.options.scale_margins = margins;
         }
+        // Source applyOptions merges mode before setMode; manual ranges keep scale units.
+        if let Some(mode) = patch.mode {
+            self.options.mode = mode;
+        }
         let change = self.set_mode(PriceScaleStatePatch {
             auto_scale: patch.auto_scale,
             inverted: patch.invert_scale,
@@ -498,6 +502,13 @@ impl PriceScale {
         self.sources.retain(|s| !Rc::ptr_eq(s, source));
         let changed = before != self.sources.len();
         if changed {
+            if self.sources.is_empty() {
+                self.set_mode(PriceScaleStatePatch {
+                    auto_scale: Some(true),
+                    ..Default::default()
+                });
+                self.set_price_range(None);
+            }
             self.update_formatter_source();
         }
         changed

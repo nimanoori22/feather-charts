@@ -1,6 +1,6 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
-mod configuration;
+pub(crate) mod configuration;
 mod markers;
 mod pane_management;
 mod price_lines;
@@ -63,6 +63,7 @@ pub enum ChartModelError {
     InvalidDimensions,
     InvalidTimeScaleUpdate,
     InvalidTypography,
+    InvalidChartOptions(&'static str),
     InvalidPriceInteraction,
     Construction(SeriesConstructionError),
     Pane(PaneError),

@@ -97,6 +97,7 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub(crate) plot_pan: Option<super::interaction::PlotPan>,
     pub(super) touch_options: super::TouchNavigationOptions,
     pub(super) kinetic_options: super::KineticScrollOptions,
+    pub(super) mouse_options: super::MouseNavigationOptions,
     pub(super) kinetic: Option<crate::model::kinetic_animation::KineticSampler>,
     pub(super) touch_pending_pan: Option<(iced::Point, std::time::Instant)>,
     pub(super) touch_tracking: bool,
@@ -109,9 +110,9 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     frame: IcedMultiPaneChartFrame,
     prepared_revision: Option<u64>,
     fonts: AxisFontResolver,
-    background: String,
-    separator: String,
-    separator_hover: String,
+    pub(super) background: String,
+    pub(super) separator: String,
+    pub(super) separator_hover: String,
     pub(super) hover_color: iced::Color,
     pub(crate) resize_panes: bool,
     pub(crate) revision: u64,
@@ -168,6 +169,7 @@ impl<B: ChartBehavior> Chart<B> {
             plot_pan: None,
             touch_options: Default::default(),
             kinetic_options: Default::default(),
+            mouse_options: Default::default(),
             kinetic: None,
             touch_pending_pan: None,
             touch_tracking: false,
@@ -617,21 +619,18 @@ impl<B: ChartBehavior> Chart<B> {
         patch: crate::model::price_scale::PriceScaleOptionsPatch,
     ) -> Result<(), ChartError> {
         use crate::model::axis_snapshots::{PriceAxisOptionsError, PriceAxisSide};
-        let pane_state = self.model.panes().get(pane).ok_or(ChartError::PriceAxis(
-            PriceAxisOptionsError::InvalidPane(pane),
-        ))?;
+        if pane >= self.model.panes().len() {
+            return Err(ChartError::PriceAxis(PriceAxisOptionsError::InvalidPane(
+                pane,
+            )));
+        }
         let scale = match side {
-            PriceAxisSide::Left => pane_state.left_price_scale(),
-            PriceAxisSide::Right => pane_state.right_price_scale(),
+            PriceAxisSide::Left => PriceScalePosition::Left,
+            PriceAxisSide::Right => PriceScalePosition::Right,
         };
-        scale
-            .margins_after_patch(patch.scale_margins.as_ref())
-            .map_err(|e| ChartError::PriceAxis(PriceAxisOptionsError::Options(e)))?;
-        self.cancel_viewport_interaction();
-        self.model
-            .apply_price_axis_options(pane, side, patch)
-            .map_err(ChartError::PriceAxis)
+        self.apply_price_scale_options(pane, &scale, patch)
     }
+
     pub fn set_crosshair_options(
         &mut self,
         options: crate::model::crosshair::CrosshairOptions,

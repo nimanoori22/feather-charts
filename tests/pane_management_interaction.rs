@@ -69,6 +69,86 @@ fn input(c: &mut Chart, state: &mut ChartState, event: Event, point: Point) {
 }
 
 #[test]
+fn runtime_mouse_options_cancel_active_pan_and_reach_canvas_input() {
+    let (mut c, _) = setup();
+    let mut state = ChartState::default();
+    let p = Point::new(200., 100.);
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+        p,
+    );
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::CursorMoved {
+            position: Point::new(230., 120.),
+        }),
+        Point::new(230., 120.),
+    );
+    assert!(c.is_panning());
+    c.set_mouse_navigation_options(MouseNavigationOptions {
+        wheel_zoom: false,
+        wheel_scroll: false,
+        pressed_mouse_move: false,
+    });
+    assert!(!c.is_panning());
+    c.prepare(Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)),
+        p,
+    );
+    let before = (
+        c.model().time_scale().bar_spacing(),
+        c.model().time_scale().right_offset(),
+    );
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+        }),
+        p,
+    );
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)),
+        p,
+    );
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::CursorMoved {
+            position: Point::new(250., 150.),
+        }),
+        Point::new(250., 150.),
+    );
+    assert!(!c.is_panning());
+    assert_eq!(
+        before,
+        (
+            c.model().time_scale().bar_spacing(),
+            c.model().time_scale().right_offset()
+        )
+    );
+    c.set_mouse_navigation_options(Default::default());
+    input(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+        }),
+        p,
+    );
+    assert_ne!(before.0, c.model().time_scale().bar_spacing());
+}
+
+#[test]
 fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
     for operation in 0..6 {
         for gesture in 0..3 {
@@ -170,6 +250,32 @@ fn rejected_and_identity_operations_preserve_active_drag() {
         &mut state,
         Event::Mouse(mouse::Event::CursorMoved { position: moved }),
         moved,
+    );
+    assert!(c.is_panning());
+    c.apply_chart_options(ChartOptionsPatch {
+        model: ChartModelOptionsPatch {
+            layout: Some(LayoutOptionsPatch {
+                text_color: Some("red".into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        ..Default::default()
+    })
+    .unwrap();
+    c.apply_chart_options(Default::default()).unwrap();
+    assert!(
+        c.apply_chart_options(ChartOptionsPatch {
+            model: ChartModelOptionsPatch {
+                layout: Some(LayoutOptionsPatch {
+                    font_size: Some(f64::NAN),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .is_err()
     );
     assert!(c.is_panning());
     assert!(c.move_pane(0, 99).is_err());

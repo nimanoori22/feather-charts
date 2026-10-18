@@ -1,8 +1,10 @@
 //! Synchronous chart ownership and the reusable Iced component.
 mod behavior;
 mod chart;
+mod configuration;
 mod pane_management;
 mod price_scale;
+pub use configuration::*;
 mod series_data;
 pub use crate::model::price_range_impl::PriceRange;
 pub use behavior::ChartBehavior;

@@ -37,6 +37,9 @@ impl<B: ChartBehavior> Chart<B> {
             return Ok(());
         }
         self.cancel_viewport_interaction();
+        self.revision = self.revision.wrapping_add(1);
+        self.last_hit = None;
+        self.last_primitive = None;
         self.model.set_custom_price_range(pane, scale, r);
         Ok(())
     }
@@ -77,10 +80,37 @@ impl<B: ChartBehavior> Chart<B> {
         validation.apply_options(patch.clone()).map_err(|e| {
             ChartError::PriceAxis(crate::model::axis_snapshots::PriceAxisOptionsError::Options(e))
         })?;
-        if current.options() == validation.options() {
+        if !crate::model::chart_configuration::valid_scale(validation.options()) {
+            return Err(
+                crate::model::chart_model::ChartModelError::InvalidChartOptions("price scale")
+                    .into(),
+            );
+        }
+        let defaults_changed = if let Some(defaults) = self.model.scale_defaults(scale) {
+            let next = crate::model::chart_model::configuration::patched_scale_options(
+                defaults, &patch, 12.,
+            )
+            .map_err(|e| {
+                ChartError::PriceAxis(
+                    crate::model::axis_snapshots::PriceAxisOptionsError::Options(e),
+                )
+            })?;
+            defaults != &next
+        } else {
+            false
+        };
+        if current.options() == validation.options() && !defaults_changed {
             return Ok(());
         }
-        self.cancel_viewport_interaction();
+        if crate::model::chart_configuration::scale_geometry_changed(
+            current.options(),
+            validation.options(),
+        ) {
+            self.cancel_viewport_interaction();
+            self.revision = self.revision.wrapping_add(1);
+            self.last_hit = None;
+            self.last_primitive = None;
+        }
         self.model.apply_scale_options(pane, scale, patch);
         Ok(())
     }

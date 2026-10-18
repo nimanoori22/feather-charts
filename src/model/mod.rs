@@ -1,6 +1,7 @@
 pub mod autoscale_info_impl;
 pub mod axis_snapshots;
 pub mod bar;
+pub mod chart_configuration;
 pub mod chart_data_coordinator;
 pub mod chart_model;
 pub mod colors;

@@ -156,7 +156,7 @@ where
     M: Clone + 'static,
 {
     pub fn new(index: usize, options: PaneOptions, layout: &LayoutOptions) -> Self {
-        Self {
+        let mut pane = Self {
             index,
             left_price_scale: PriceScale::new(
                 LEFT_PRICE_SCALE_ID,
@@ -182,7 +182,17 @@ where
             visible_range: PriceScaleVisibleRange::default(),
             invalidation_generation: 0,
             marker: PhantomData,
+        };
+        for scale in [&mut pane.left_price_scale, &mut pane.right_price_scale] {
+            if matches!(
+                scale.options().mode,
+                crate::model::price_scale::PriceScaleMode::Percentage
+                    | crate::model::price_scale::PriceScaleMode::IndexedTo100
+            ) {
+                scale.set_auto_scale(true);
+            }
         }
+        pane
     }
 
     pub const fn index(&self) -> usize {
@@ -304,6 +314,64 @@ where
             LEFT_PRICE_SCALE_ID => Some(&self.left_price_scale),
             RIGHT_PRICE_SCALE_ID => Some(&self.right_price_scale),
             _ => self.overlay_price_scales.get(id),
+        }
+    }
+    pub(crate) fn preview_runtime_scales(
+        &self,
+        patch: &crate::model::chart_configuration::ChartModelOptionsPatch,
+    ) -> Result<(bool, bool), crate::model::chart_model::ChartModelError> {
+        use crate::model::{
+            chart_configuration::{scale_geometry_changed, valid_scale},
+            chart_model::{ChartModelError, configuration::patched_live_scale_options},
+        };
+        let scales = [
+            (&self.left_price_scale, patch.left_price_scale.as_ref()),
+            (&self.right_price_scale, patch.right_price_scale.as_ref()),
+        ]
+        .into_iter()
+        .chain(
+            self.overlay_price_scales
+                .values()
+                .map(|s| (s, patch.overlay_price_scales.as_ref())),
+        );
+        let mut changed = false;
+        let mut geometry = false;
+        for (s, p) in scales {
+            if let Some(p) = p {
+                let next = patched_live_scale_options(s.options(), p, self.layout_font_size)
+                    .map_err(|_| ChartModelError::InvalidChartOptions("scale margins"))?;
+                if !valid_scale(&next) {
+                    return Err(ChartModelError::InvalidChartOptions("price scale"));
+                }
+                changed |= s.options() != &next;
+                geometry |= scale_geometry_changed(s.options(), &next);
+            }
+        }
+        Ok((changed, geometry))
+    }
+    pub(crate) fn apply_runtime_scales(
+        &mut self,
+        patch: &crate::model::chart_configuration::ChartModelOptionsPatch,
+        defaults: &PaneOptions,
+    ) {
+        self.options = defaults.clone();
+        for (s, p) in [
+            (&mut self.left_price_scale, patch.left_price_scale.as_ref()),
+            (
+                &mut self.right_price_scale,
+                patch.right_price_scale.as_ref(),
+            ),
+        ]
+        .into_iter()
+        .chain(
+            self.overlay_price_scales
+                .values_mut()
+                .map(|s| (s, patch.overlay_price_scales.as_ref())),
+        ) {
+            if let Some(p) = p {
+                s.apply_options(p.clone())
+                    .expect("prevalidated scale patch");
+            }
         }
     }
 
@@ -647,7 +715,7 @@ where
                 .expect("registered price scale");
             if let Some(visible) = visible.filter(|_| has_sources) {
                 scale.invalidate_price_range(*visible);
-            } else {
+            } else if scale.is_auto_scale() {
                 scale.set_price_range(None);
             }
         }
@@ -687,7 +755,8 @@ where
             Some(visible) if has_sources => {
                 scale.recalculate_price_range(visible);
             }
-            _ => scale.set_price_range(None),
+            _ if scale.is_auto_scale() => scale.set_price_range(None),
+            _ => {}
         }
         if scale.price_range() == before {
             vec![]
@@ -821,7 +890,10 @@ where
         }
     }
 
-    fn price_scale_existing(&self, position: &PriceScalePosition) -> Option<&PriceScale> {
+    pub(crate) fn price_scale_existing(
+        &self,
+        position: &PriceScalePosition,
+    ) -> Option<&PriceScale> {
         match position {
             PriceScalePosition::Left => Some(&self.left_price_scale),
             PriceScalePosition::Right => Some(&self.right_price_scale),
@@ -852,6 +924,13 @@ where
                     .entry(id.clone())
                     .or_insert_with(|| {
                         let mut scale = PriceScale::new_with_font_size(id, options, font_size);
+                        if matches!(
+                            scale.options().mode,
+                            crate::model::price_scale::PriceScaleMode::Percentage
+                                | crate::model::price_scale::PriceScaleMode::IndexedTo100
+                        ) {
+                            scale.set_auto_scale(true);
+                        }
                         scale.set_height(height);
                         scale
                     })

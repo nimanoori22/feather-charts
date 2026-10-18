@@ -40,6 +40,7 @@ impl<B: super::ChartBehavior> Chart<B> {
             membership: self.series_ids().collect(),
             primitive_edit: self.primitive_edit_id(),
             touch_options: self.touch_options,
+            mouse_options: self.mouse_options,
             touch_epoch: self.touch_epoch,
             applied_crosshair: self.model.crosshair().position().and_then(|p| {
                 p.y.map(|y| (p.pane, iced::Point::new(p.x as f32, y as f32)))
@@ -69,6 +70,7 @@ pub struct ChartProgram<'a, Message> {
     membership: Vec<crate::model::data_layer::SeriesId>,
     primitive_edit: Option<super::PrimitiveEditId>,
     touch_options: super::TouchNavigationOptions,
+    mouse_options: super::MouseNavigationOptions,
     touch_epoch: u64,
     applied_crosshair: Option<(usize, iced::Point)>,
     on_message: fn(ChartMessage) -> Message,
@@ -355,6 +357,8 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             }
         }
         if !state.axis_input.is_dragging() {
+            state.input.options = self.mouse_options;
+            state.multi_input.options = self.mouse_options;
             if let Some(multi) = self.multi {
                 if let Some(action) = state.multi_input.update(
                     event,

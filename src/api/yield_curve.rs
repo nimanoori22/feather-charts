@@ -31,6 +31,12 @@ impl Deref for YieldCurveChart {
     }
 }
 impl YieldCurveChart {
+    pub fn apply_chart_options(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
+        self.core.apply_chart_options(patch)
+    }
+    pub fn set_mouse_navigation_options(&mut self, options: MouseNavigationOptions) {
+        self.core.set_mouse_navigation_options(options);
+    }
     pub fn set_visible_price_range(
         &mut self,
         pane: usize,

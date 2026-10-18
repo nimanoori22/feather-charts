@@ -47,7 +47,6 @@ pub struct PrimitiveEditEvent {
     pub position: Point,
     pub phase: PrimitiveEditPhase,
 }
-#[derive(PartialEq)]
 struct EditViewport {
     pane: usize,
     size: Size,
@@ -59,6 +58,29 @@ struct EditViewport {
     first: Option<f64>,
     scale: Option<(String, PriceScaleOptions, Option<PriceRangeImpl>)>,
     revision: u64,
+}
+impl PartialEq for EditViewport {
+    fn eq(&self, other: &Self) -> bool {
+        let scale_equal = match (&self.scale, &other.scale) {
+            (None, None) => true,
+            (Some((id, a, r)), Some((other_id, b, s))) => {
+                id == other_id
+                    && r == s
+                    && !crate::model::chart_configuration::scale_geometry_changed(a, b)
+            }
+            _ => false,
+        };
+        self.pane == other.pane
+            && self.size == other.size
+            && self.plot_size == other.plot_size
+            && self.stretches == other.stretches
+            && self.ratio == other.ratio
+            && self.x_origin == other.x_origin
+            && self.spacing == other.spacing
+            && self.first == other.first
+            && self.revision == other.revision
+            && scale_equal
+    }
 }
 pub(super) struct EditSession {
     pub event: PrimitiveEditEvent,
@@ -153,7 +175,11 @@ impl<B: super::ChartBehavior> Chart<B> {
                         .scale
                         .as_ref()
                         .is_some_and(|(id, options, _)| {
-                            scale.id() == id && scale.options() == options
+                            scale.id() == id
+                                && !crate::model::chart_configuration::scale_geometry_changed(
+                                    scale.options(),
+                                    options,
+                                )
                         })
                 });
             if unchanged {

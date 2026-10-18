@@ -25,7 +25,7 @@ pub struct ChartInteraction {
     pub navigation: Option<Navigation>,
     pub capture: bool,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MouseNavigationOptions {
     pub wheel_zoom: bool,
     pub wheel_scroll: bool,
