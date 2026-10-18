@@ -1,5 +1,6 @@
 //! Synchronous chart ownership and effect processing, independent of the UI.
 
+mod configuration;
 mod markers;
 mod pane_management;
 mod price_lines;

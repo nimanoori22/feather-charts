@@ -50,6 +50,7 @@ pub enum ChartError {
     HistoricalUpdateWithConflation(SeriesId),
     InvalidData { index: usize },
     InvalidDataQuery,
+    InvalidPriceRange,
     UnorderedData { index: usize },
     IdExhausted,
     InvalidInteraction,

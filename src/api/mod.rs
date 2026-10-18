@@ -2,7 +2,9 @@
 mod behavior;
 mod chart;
 mod pane_management;
+mod price_scale;
 mod series_data;
+pub use crate::model::price_range_impl::PriceRange;
 pub use behavior::ChartBehavior;
 pub use series_data::BarsInfo;
 mod conflation;

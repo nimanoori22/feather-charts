@@ -31,6 +31,30 @@ impl Deref for YieldCurveChart {
     }
 }
 impl YieldCurveChart {
+    pub fn set_visible_price_range(
+        &mut self,
+        pane: usize,
+        scale: &crate::model::pane::PriceScalePosition,
+        range: crate::model::price_range_impl::PriceRange,
+    ) -> Result<(), ChartError> {
+        self.core.set_visible_price_range(pane, scale, range)
+    }
+    pub fn set_price_scale_auto_scale(
+        &mut self,
+        pane: usize,
+        scale: &crate::model::pane::PriceScalePosition,
+        enabled: bool,
+    ) -> Result<(), ChartError> {
+        self.core.set_price_scale_auto_scale(pane, scale, enabled)
+    }
+    pub fn apply_price_scale_options(
+        &mut self,
+        pane: usize,
+        scale: &crate::model::pane::PriceScalePosition,
+        patch: crate::model::price_scale::PriceScaleOptionsPatch,
+    ) -> Result<(), ChartError> {
+        self.core.apply_price_scale_options(pane, scale, patch)
+    }
     pub fn new(options: YieldCurveOptions) -> Result<Self, ChartError> {
         let mut chart_options = ChartModelOptions::default();
         chart_options.pane.left_price_scale.visible = true;

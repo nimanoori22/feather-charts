@@ -400,6 +400,25 @@ impl PriceScale {
         self.ensure_price_range();
         self.range.get()
     }
+    /// Source API returns rounded prices for log scales and scale units otherwise.
+    pub fn visible_price_range(&self) -> Option<crate::model::price_range_impl::PriceRange> {
+        let mut range = self.price_range()?;
+        if self.is_log() {
+            range = convert_price_range_from_log(Some(range), self.log_formula)?;
+            let step = self
+                .selected_formatter_source
+                .as_ref()
+                .map_or(1., |source| 1. / source.borrow().base());
+            let precision = crate::model::series_options::precision_by_min_move(step);
+            let factor = 10_f64.powi(precision as i32);
+            let round = |v: f64| (((v / step + 0.5).floor() * step) * factor).round() / factor;
+            range = PriceRangeImpl::new(round(range.min_value()), round(range.max_value()));
+        }
+        Some(range.to_raw())
+    }
+    pub(crate) fn accepts_custom_range(&self, range: PriceRangeImpl) -> bool {
+        !self.is_log() || can_convert_price_range_from_log(Some(range), self.log_formula)
+    }
     pub fn is_empty(&self) -> bool {
         self.ensure_price_range();
         self.height <= 0.0 || self.range.get().is_none_or(|range| range.is_empty())
