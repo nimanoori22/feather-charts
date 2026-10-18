@@ -1,0 +1,67 @@
+{
+  "light": {
+    "width": 35,
+    "height": 19,
+    "left": 10,
+    "bottom": 10,
+    "dark": false,
+    "fill": "#131722",
+    "stroke": "#fff",
+    "lastPane": true
+  },
+  "moved": {
+    "width": 35,
+    "height": 19,
+    "left": 10,
+    "bottom": 10,
+    "dark": false,
+    "fill": "#131722",
+    "stroke": "#fff",
+    "lastPane": true
+  },
+  "removed": {
+    "width": 35,
+    "height": 19,
+    "left": 10,
+    "bottom": 10,
+    "dark": false,
+    "fill": "#131722",
+    "stroke": "#fff",
+    "lastPane": true
+  },
+  "themes": [
+    {
+      "width": 35,
+      "height": 19,
+      "left": 10,
+      "bottom": 10,
+      "dark": true,
+      "fill": "#D1D4DC",
+      "stroke": "#131722",
+      "lastPane": true
+    },
+    {
+      "width": 35,
+      "height": 19,
+      "left": 10,
+      "bottom": 10,
+      "dark": true,
+      "fill": "#D1D4DC",
+      "stroke": "#131722",
+      "lastPane": true
+    },
+    {
+      "width": 35,
+      "height": 19,
+      "left": 10,
+      "bottom": 10,
+      "dark": true,
+      "fill": "#D1D4DC",
+      "stroke": "#131722",
+      "lastPane": true
+    }
+  ],
+  "exportsExcludeLogo": true,
+  "activationDoesNotClickPlot": true,
+  "disabled": true
+}

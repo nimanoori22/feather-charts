@@ -15,6 +15,7 @@ use std::time::Instant;
 mod tests;
 #[derive(Clone, Debug)]
 pub enum ChartMessage {
+    AttributionActivated,
     Touch(super::TouchInteraction),
     PrimitiveEdit(super::PrimitiveEditEvent),
     Interaction(ChartInteraction),
@@ -41,6 +42,10 @@ pub struct PointerEvent<T = Time> {
 }
 #[derive(Clone, Debug)]
 pub enum ChartEvent<T = Time> {
+    /// Host-controlled navigation; the engine never opens this destination.
+    AttributionActivated {
+        url: &'static str,
+    },
     DataChanged {
         series: crate::model::data_layer::SeriesId,
         scope: super::DataChangeScope,
@@ -355,6 +360,14 @@ impl<B: super::ChartBehavior> Chart<B> {
         let mut double_click = false;
         let mut now = Instant::now();
         match message {
+            ChartMessage::AttributionActivated => {
+                if self.model.attribution_options().0 && self.frame.attribution.is_some() {
+                    self.push_event(ChartEvent::AttributionActivated {
+                        url: "https://www.tradingview.com/",
+                    });
+                }
+                return Ok(self.take_events());
+            }
             ChartMessage::Touch(input) if self.primitive_edit.is_none() => {
                 now = input.now;
                 double_click = matches!(input.action, super::TouchAction::DoubleTap { .. });
@@ -698,7 +711,7 @@ impl<B: super::ChartBehavior> Chart<B> {
                     && size.width >= 0.
                     && size.height >= 0.
             }
-            ChartMessage::Tick(_) => true,
+            ChartMessage::Tick(_) | ChartMessage::AttributionActivated => true,
         };
         if valid {
             Ok(())

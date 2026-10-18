@@ -37,6 +37,7 @@ fn filter_axis(
 }
 impl IcedMultiPaneChartFrame {
     pub(crate) fn filter_screenshot(&mut self, layers: ScreenshotLayers) {
+        self.attribution = None;
         for pane in &mut self.panes {
             let plot = &mut pane.plot;
             if !layers.include_top_layer || !layers.include_crosshair {

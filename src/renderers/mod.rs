@@ -31,3 +31,5 @@ pub(crate) mod text_watermark_renderer;
 pub(crate) mod image_watermark_renderer;
 
 pub(crate) mod up_down_markers_renderer;
+
+pub mod attribution_logo_renderer;

@@ -261,6 +261,9 @@ impl App {
                     Ok(events) => {
                         for event in events {
                             match event {
+                                ChartEvent::AttributionActivated { url } => {
+                                    self.status = format!("Host link action: {url}");
+                                }
                                 ChartEvent::DataChanged { .. }
                                 | ChartEvent::DoubleClick(_)
                                 | ChartEvent::VisibleLogicalRangeChanged(_)

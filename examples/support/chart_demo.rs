@@ -79,6 +79,7 @@ struct Demo {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    AttributionActivated,
     Touch(feather_charts::api::TouchInteraction),
     PrimitiveEdit(feather_charts::api::PrimitiveEditEvent),
     Click { pane: usize, position: iced::Point },
@@ -315,6 +316,21 @@ impl Demo {
             self.chart.cancel_interaction();
         }
         match message {
+            Message::AttributionActivated => {
+                match self.chart.update(ChartMessage::AttributionActivated) {
+                    Ok(events) => {
+                        for event in events {
+                            if let feather_charts::api::ChartEvent::AttributionActivated { url } =
+                                event
+                            {
+                                self.error = Some(format!("Host link action: {url}"));
+                            }
+                        }
+                    }
+                    Err(error) => self.error = Some(error.to_string()),
+                }
+                return iced::Task::none();
+            }
             Message::Touch(input) => {
                 self.error = self
                     .chart
@@ -599,6 +615,7 @@ impl Demo {
 impl From<ChartMessage> for Message {
     fn from(message: ChartMessage) -> Self {
         match message {
+            ChartMessage::AttributionActivated => Self::AttributionActivated,
             ChartMessage::Touch(input) => Self::Touch(input),
             ChartMessage::PrimitiveEdit(input) => Self::PrimitiveEdit(input),
             ChartMessage::Interaction(input) => Self::Interaction(input),

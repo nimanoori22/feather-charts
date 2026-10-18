@@ -511,8 +511,25 @@ impl<B: ChartBehavior> Chart<B> {
             .and_then(|snapshot| {
                 self.hover_color = crate::ui::line_chart::color(&self.separator_hover)
                     .map_err(|error| ChartError::Frame(ChartFrameError::Plot(error)))?;
-                IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, &self.separator)
-                    .map_err(ChartError::Frame)
+                let mut frame =
+                    IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, &self.separator)
+                        .map_err(ChartError::Frame)?;
+                let (enabled, text_color) = self.model.attribution_options();
+                if enabled
+                    && let Some((pane, owner)) = frame.panes.last().zip(self.primitive_panes.last())
+                {
+                    frame.attribution =
+                        crate::renderers::attribution_logo_renderer::AttributionLogo::prepare(
+                            pane.layout.plot,
+                            *owner,
+                            text_color,
+                            self.frame.attribution.as_ref(),
+                        )
+                        .map_err(|_| {
+                            ChartError::Model(ChartModelError::InvalidChartOptions("color"))
+                        })?;
+                }
+                Ok(frame)
             });
         match result {
             Ok(frame) => {

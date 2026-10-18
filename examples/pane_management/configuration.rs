@@ -148,6 +148,7 @@ impl<C: Host> App<C> {
                         separator_hover_color: Some("#ff8800".into()),
                         ..Default::default()
                     }),
+                    ..Default::default()
                 });
                 self.chart.configure(patch)?;
             }

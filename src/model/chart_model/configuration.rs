@@ -14,10 +14,17 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    pub(crate) fn attribution_options(&self) -> (bool, &str) {
+        (
+            self.options.layout.attribution_logo,
+            &self.options.layout.text_color,
+        )
+    }
     pub fn runtime_options(&self) -> RuntimeModelOptions {
         let l = &self.options.layout;
         RuntimeModelOptions {
             layout: LayoutAppearance {
+                attribution_logo: l.attribution_logo,
                 background: l.background.clone(),
                 text_color: l.text_color.clone(),
                 font_size: l.font_size,
@@ -118,6 +125,7 @@ where
     ) where
         B::Converter: HorzScaleItemConverter<B::Item, B::InternalItem, Error = B::Error>,
     {
+        self.options.layout.attribution_logo = next.layout.attribution_logo;
         self.options.layout.background = next.layout.background;
         self.options.layout.text_color = next.layout.text_color;
         self.options.layout.font_size = next.layout.font_size;

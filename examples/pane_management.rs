@@ -289,6 +289,9 @@ impl<C: Host> App<C> {
                 m.observe(&event);
             }
             match event {
+                ChartEvent::AttributionActivated { url } => {
+                    self.status = format!("Host link action: {url}");
+                }
                 ChartEvent::DataChanged { .. }
                 | ChartEvent::DoubleClick(_)
                 | ChartEvent::VisibleLogicalRangeChanged(_)

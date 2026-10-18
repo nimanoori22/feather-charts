@@ -21,6 +21,7 @@ impl<B: super::ChartBehavior> Chart<B> {
         on_message: fn(ChartMessage) -> Message,
     ) -> ChartProgram<'_, Message> {
         ChartProgram {
+            attribution: self.frame.attribution.as_ref(),
             snapshot: self.frame(),
             multi: self.multi_frame(),
             stretches: self
@@ -57,6 +58,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     }
 }
 pub struct ChartProgram<'a, Message> {
+    attribution: Option<&'a crate::renderers::attribution_logo_renderer::AttributionLogo>,
     snapshot: &'a IcedChartFrame,
     multi: Option<&'a IcedMultiPaneChartFrame>,
     stretches: Vec<f64>,
@@ -79,6 +81,7 @@ pub struct ChartProgram<'a, Message> {
 }
 #[derive(Default)]
 pub struct ChartState {
+    attribution_input: super::attribution_input::Input,
     geometry: canvas::Cache,
     touch_input: super::touch_input::TouchInput,
     touch_epoch: Option<u64>,
@@ -164,6 +167,76 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         {
             state.touch_input.cancel_tap_pair();
         }
+        let local = cursor
+            .position()
+            .map(|p| iced::Point::new(p.x - bounds.x, p.y - bounds.y));
+        let target = self
+            .attribution
+            .map(|logo| super::attribution_input::Target {
+                owner: logo.owner(),
+                bounds: logo.hit_bounds(),
+                dark: logo.dark(),
+            });
+        let eligible = !state.unfocused
+            && self.primitive_edit.is_none()
+            && !state.axis_input.is_dragging()
+            && !state.input.is_dragging()
+            && !state.multi_input.is_dragging()
+            && !state.touch_input.is_active()
+            && !state.touch_input.suppresses_mouse(now);
+        match state.attribution_input.update(
+            event,
+            local,
+            bounds.position(),
+            target,
+            super::attribution_input::Context {
+                eligible,
+                invalidated: touch_changed
+                    || bounds_changed
+                    || membership_changed
+                    || revision_changed
+                    || state.unfocused,
+                now,
+            },
+        ) {
+            super::attribution_input::Action::Pass => {}
+            action => {
+                state.click = None;
+                state.click_sequence.cancel();
+                state.touch_input.cancel_tap_pair();
+                return Some(
+                    if matches!(action, super::attribution_input::Action::Activate) {
+                        self.publish(ChartMessage::AttributionActivated)
+                            .and_capture()
+                    } else {
+                        canvas::Action::capture()
+                    },
+                );
+            }
+        }
+        let over_logo = eligible
+            && local.is_some_and(|p| self.attribution.is_some_and(|logo| logo.hit_test(p)));
+        if over_logo && matches!(event, canvas::Event::Mouse(_)) {
+            if matches!(
+                event,
+                canvas::Event::Mouse(iced::mouse::Event::CursorMoved { .. })
+            ) {
+                state.input = ChartInput::default();
+                state.multi_input = MultiPaneInput::default();
+                return Some(
+                    self.publish(ChartMessage::PaneInteraction(MultiPaneInteraction::Cancel))
+                        .and_capture(),
+                );
+            }
+            return Some(canvas::Action::capture());
+        }
+        // Keep animation deadlines running while the DOM-equivalent overlay
+        // shields the underlying plot from cursor replay on redraw.
+        let cursor = if over_logo {
+            iced::mouse::Cursor::Unavailable
+        } else {
+            cursor
+        };
         if state.touch_input.is_active()
             && (touch_changed
                 || bounds_changed
@@ -505,6 +578,18 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         if state.unfocused {
             return iced::mouse::Interaction::default();
         }
+        if self.primitive_edit.is_none()
+            && !state.input.is_dragging()
+            && !state.multi_input.is_dragging()
+            && !state.axis_input.is_dragging()
+            && cursor.position().is_some_and(|p| {
+                self.attribution.is_some_and(|logo| {
+                    logo.hit_test(iced::Point::new(p.x - bounds.x, p.y - bounds.y))
+                })
+            })
+        {
+            return iced::mouse::Interaction::Pointer;
+        }
         if let Some(cursor) = state.edit_input.cursor(self.primitive_edit) {
             return cursor;
         }
@@ -560,6 +645,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 }
             } else {
                 self.snapshot.draw(frame);
+                if let Some(logo) = self.attribution {
+                    logo.draw(frame);
+                }
             }
         });
         vec![geometry]

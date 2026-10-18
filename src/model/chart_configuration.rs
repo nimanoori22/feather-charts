@@ -10,6 +10,7 @@ use crate::model::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct LayoutAppearance {
+    pub attribution_logo: bool,
     pub background: Background,
     pub text_color: String,
     pub font_size: f64,
@@ -24,6 +25,7 @@ pub struct PaneLayoutOptionsPatch {
 }
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LayoutOptionsPatch {
+    pub attribution_logo: Option<bool>,
     pub background: Option<Background>,
     pub text_color: Option<String>,
     pub font_size: Option<f64>,
@@ -63,7 +65,15 @@ pub struct RuntimeModelOptions {
 macro_rules! merge_fields {($target:expr,$patch:expr,$($field:ident),+)=>{ $(if let Some(v)=$patch.$field {$target.$field=v;})+ };}
 impl LayoutOptionsPatch {
     pub(crate) fn apply(self, target: &mut LayoutAppearance) {
-        merge_fields!(target, self, background, text_color, font_size, font_family);
+        merge_fields!(
+            target,
+            self,
+            attribution_logo,
+            background,
+            text_color,
+            font_size,
+            font_family
+        );
         if let Some(p) = self.panes {
             merge_fields!(
                 target.panes,

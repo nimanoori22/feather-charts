@@ -526,6 +526,7 @@ impl MultiPaneChartFrameOwner {
 
 #[derive(Clone, Debug, Default)]
 pub struct IcedMultiPaneChartFrame {
+    pub attribution: Option<crate::renderers::attribution_logo_renderer::AttributionLogo>,
     pub layout: MultiPaneLayout,
     pub panes: Vec<IcedChartFrame>,
     pub series: Vec<Option<SeriesId>>,
@@ -538,6 +539,7 @@ impl IcedMultiPaneChartFrame {
         separator_color: &str,
     ) -> Result<Self, ChartFrameError> {
         Ok(Self {
+            attribution: None,
             layout: snapshot.layout,
             series: snapshot.series,
             panes: snapshot
@@ -570,6 +572,9 @@ impl IcedMultiPaneChartFrame {
                     )
                 });
             }
+        }
+        if let Some(logo) = &self.attribution {
+            logo.draw(frame);
         }
     }
 }
