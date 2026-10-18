@@ -42,7 +42,7 @@ def main(feature='series-order'):
         'fixtures': {str(p): digest(p) for p in fixtures},
         'vendor_sources': {str(p): digest(p) for p in sorted(Path('vendor').rglob('*.rs'))},
         'fontconfig_identity': fonts,
-        'modes': ['calendar', 'price', 'yield'], 'scenes': ({'series-order': ['initial','reordered','hovered','transferred-reordered'], 'series-data': ['initial','partial-pop','empty','append-after-pop']}[feature]),
+        'modes': ['calendar', 'price', 'yield'], 'scenes': ({'series-order': ['initial','reordered','hovered','transferred-reordered'], 'series-data': ['initial','partial-pop','empty','append-after-pop'], 'price-scale-configuration':['automatic','manual','live-manual','restored','appearance','log-manual']}[feature]),
         'sizes': [[800, 500], [300, 300], [300, 90]], 'dpr': [1, 1.25, 1.5, 2],
         'clock': 'Feed and peer pulse disabled; frames are immutable snapshots.',
     }
@@ -59,7 +59,7 @@ def main(feature='series-order'):
         directory = output / family / backend
         if status == 0:
             images = sorted(directory.glob('*/*.rgba') if family == 'feature' else directory.glob('*.ppm' if family == 'custom' else '*.rgba'))
-            assert len(images) == {'feature': 144, 'calendar': 72, 'custom': 120, 'price': 60, 'yield': 60}[family], (family, len(images))
+            assert len(images) == {'feature': 216 if feature=='price-scale-configuration' else 144, 'calendar': 72, 'custom': 120, 'price': 60, 'yield': 60}[family], (family, len(images))
             row['images'] = {str(p.relative_to(directory)): digest(p) for p in images}
             if family != 'feature':
                 references = sorted((baseline / family / backend).iterdir())
@@ -70,7 +70,7 @@ def main(feature='series-order'):
         (output / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
         print(f'{family}/{backend}: {status}', flush=True)
     assert all(r['exit'] == 0 for r in results), 'Failures retained; inspect logs.'
-    print('288 feature captures and 96 exact baseline comparisons pass.')
+    print(f"{432 if feature=='price-scale-configuration' else 288} feature captures and 96 exact baseline comparisons pass.")
 
 
 if __name__ == '__main__':

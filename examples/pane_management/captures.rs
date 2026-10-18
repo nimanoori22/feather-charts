@@ -3,7 +3,7 @@ use iced::advanced::{
     graphics::geometry::Renderer as _,
     renderer::{Headless, Renderer as _},
 };
-pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool) {
+pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool, config: bool) {
     let mut renderer = iced::futures::executor::block_on(<iced::Renderer as Headless>::new(
         iced::Font::DEFAULT,
         iced::Pixels(12.),
@@ -17,20 +17,30 @@ pub fn run(dir: &std::path::Path, wgpu: bool, ordered: bool, data: bool) {
         ),
         "backend fallback"
     );
-    capture::<Chart>(&mut renderer, &dir.join("calendar"), ordered, data);
-    capture::<OptionsChart>(&mut renderer, &dir.join("price"), ordered, data);
-    capture::<YieldCurveChart>(&mut renderer, &dir.join("yield"), ordered, data);
+    capture::<Chart>(&mut renderer, &dir.join("calendar"), ordered, data, config);
+    capture::<OptionsChart>(&mut renderer, &dir.join("price"), ordered, data, config);
+    capture::<YieldCurveChart>(&mut renderer, &dir.join("yield"), ordered, data, config);
 }
 fn capture<C: Host>(
     renderer: &mut iced::Renderer,
     dir: &std::path::Path,
     ordered: bool,
     data: bool,
+    config: bool,
 ) {
     std::fs::create_dir_all(dir).unwrap();
     for (w, h) in [(800., 500.), (300., 300.), (300., 90.)] {
         for ratio in [1., 1.25, 1.5, 2.] {
-            let scenes: &[&str] = if data {
+            let scenes: &[&str] = if config {
+                &[
+                    "automatic",
+                    "manual",
+                    "live-manual",
+                    "restored",
+                    "appearance",
+                    "log-manual",
+                ]
+            } else if data {
                 &["initial", "partial-pop", "empty", "append-after-pop"]
             } else if ordered {
                 &["initial", "reordered", "hovered", "transferred-reordered"]
@@ -45,7 +55,7 @@ fn capture<C: Host>(
                 ]
             };
             for &scene in scenes {
-                let mut app = App::<C>::with_modes(false, ordered, data);
+                let mut app = App::<C>::with_configuration(false, ordered, data, config);
                 app.size = Size::new(w, h);
                 app.ratio = ratio;
                 let action = match scene {
@@ -78,8 +88,53 @@ fn capture<C: Host>(
                         app.action(Message::Append).unwrap();
                     }
                 }
+                if config {
+                    use configuration::Action;
+                    if scene == "log-manual" {
+                        app.configuration_action(Action::Mode).unwrap();
+                    }
+                    if matches!(scene, "manual" | "live-manual" | "restored" | "log-manual") {
+                        app.configuration_action(Action::Manual).unwrap();
+                    }
+                    if matches!(scene, "live-manual" | "restored") {
+                        app.live = true;
+                        app.action(Message::Tick(Instant::now())).unwrap();
+                        app.live = false;
+                    }
+                    if scene == "restored" {
+                        app.configuration_action(Action::Auto).unwrap();
+                    }
+                    if scene == "appearance" {
+                        app.configuration_action(Action::Appearance).unwrap();
+                        app.configuration_action(Action::Grid).unwrap();
+                    }
+                }
                 let now = Instant::now();
                 app.chart.prepare(app.size, ratio, now).unwrap();
+                if config {
+                    let auto = app
+                        .chart
+                        .core()
+                        .price_scale_options(0, &C::side())
+                        .unwrap()
+                        .auto_scale;
+                    assert_eq!(
+                        auto,
+                        matches!(scene, "automatic" | "restored" | "appearance")
+                    );
+                    if matches!(scene, "manual" | "live-manual") {
+                        assert_eq!(
+                            app.chart.core().visible_price_range(0, &C::side()).unwrap(),
+                            Some(PriceRange {
+                                min_value: 3.5,
+                                max_value: 6.5
+                            })
+                        );
+                    }
+                    if scene == "appearance" {
+                        assert!(app.chart.core().frame().plot.background_gradient.is_some());
+                    }
+                }
                 if scene == "hovered" {
                     use feather_charts::ui::{
                         chart_input::ChartInteraction, hit_testing::HitGeometry,
@@ -144,6 +199,15 @@ fn capture<C: Host>(
                     assert!(
                         pixels == draw(&retained),
                         "snapshot changed after reordering"
+                    );
+                }
+                if config {
+                    app.configuration_action(configuration::Action::Appearance)
+                        .unwrap();
+                    app.chart.prepare(size, ratio, now).unwrap();
+                    assert!(
+                        pixels == draw(&retained),
+                        "snapshot changed after configuration"
                     );
                 }
                 app.action(Message::Swap).unwrap();

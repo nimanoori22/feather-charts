@@ -8,6 +8,25 @@ use feather_charts::model::{
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
 pub trait Host: region::RegionHost + Sized + 'static {
+    fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError>;
+    fn set_range(
+        &mut self,
+        pane: usize,
+        side: &PriceScalePosition,
+        range: PriceRange,
+    ) -> Result<(), ChartError>;
+    fn set_auto(
+        &mut self,
+        pane: usize,
+        side: &PriceScalePosition,
+        enabled: bool,
+    ) -> Result<(), ChartError>;
+    fn scale_patch(
+        &mut self,
+        pane: usize,
+        side: &PriceScalePosition,
+        patch: feather_charts::model::price_scale::PriceScaleOptionsPatch,
+    ) -> Result<(), ChartError>;
     type Item: Clone + PartialEq + std::fmt::Debug + 'static;
     type Internal: Clone + std::fmt::Debug + 'static;
     type Behavior: ChartBehavior<Item = Self::Item, InternalItem = Self::Internal>;
@@ -72,6 +91,33 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
+            self.apply_chart_options(patch)
+        }
+        fn set_range(
+            &mut self,
+            pane: usize,
+            side: &PriceScalePosition,
+            range: PriceRange,
+        ) -> Result<(), ChartError> {
+            self.set_visible_price_range(pane, side, range)
+        }
+        fn set_auto(
+            &mut self,
+            pane: usize,
+            side: &PriceScalePosition,
+            enabled: bool,
+        ) -> Result<(), ChartError> {
+            self.set_price_scale_auto_scale(pane, side, enabled)
+        }
+        fn scale_patch(
+            &mut self,
+            pane: usize,
+            side: &PriceScalePosition,
+            patch: feather_charts::model::price_scale::PriceScaleOptionsPatch,
+        ) -> Result<(), ChartError> {
+            self.apply_price_scale_options(pane, side, patch)
+        }
         fn pop_data(
             &mut self,
             id: SeriesId,

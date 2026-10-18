@@ -1,6 +1,8 @@
 //! Reorganize live calendar, strike or maturity panes through the public API.
 #[path = "pane_management/captures.rs"]
 mod captures;
+#[path = "pane_management/configuration.rs"]
+mod configuration;
 #[path = "pane_management/data.rs"]
 mod data;
 #[path = "pane_management/host.rs"]
@@ -29,6 +31,9 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    config_mode: bool,
+    config_pane: usize,
+    config_left: bool,
     chart: C,
     line: SeriesId,
     order_mode: bool,
@@ -47,6 +52,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Config(configuration::Action),
     Chart(ChartMessage),
     Window(iced::window::Id, iced::window::Event),
     Ratio(f32),
@@ -125,6 +131,9 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            config_mode: false,
+            config_pane: 0,
+            config_left: false,
             chart,
             line,
             order_mode: false,
@@ -185,6 +194,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Config(action) => self.configuration_action(action)?,
             Message::Pop(count) => self.pop_selected(count)?,
             Message::Append => self.append_selected()?,
             Message::Inspect => self.inspect_data()?,
@@ -228,7 +238,12 @@ impl<C: Host> App<C> {
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
-                *self = Self::with_modes(live, self.order_mode, self.data_mode);
+                *self = Self::with_configuration(
+                    live,
+                    self.order_mode,
+                    self.data_mode,
+                    self.config_mode,
+                );
                 self.size = size;
                 self.ratio = ratio;
             }
@@ -385,6 +400,11 @@ impl<C: Host> App<C> {
             .direction(iced::widget::scrollable::Direction::Horizontal(
                 Default::default()
             )),
+            if self.config_mode {
+                self.configuration_controls()
+            } else {
+                row![].into()
+            },
             text(owners).size(12).wrapping(text::Wrapping::None),
             text(&self.status).size(12).wrapping(text::Wrapping::None),
             self.chart.core().element().map(Message::Chart)
@@ -403,9 +423,15 @@ impl<C: Host> App<C> {
         ])
     }
 }
-fn run<C: Host>(live: bool, ordered: bool, data: bool, title: &'static str) -> iced::Result {
+fn run<C: Host>(
+    live: bool,
+    ordered: bool,
+    data: bool,
+    config: bool,
+    title: &'static str,
+) -> iced::Result {
     iced::application(
-        move || App::<C>::with_modes(live, ordered, data),
+        move || App::<C>::with_configuration(live, ordered, data, config),
         App::update,
         App::view,
     )
@@ -421,9 +447,11 @@ fn main() -> iced::Result {
             args.iter().any(|a| a == "--wgpu"),
             args.iter().any(|a| a == "--series-order"),
             args.iter().any(|a| a == "--series-data"),
+            args.iter().any(|a| a == "--price-scale-configuration"),
         );
         return Ok(());
     }
+    let config = args.iter().any(|a| a == "--price-scale-configuration");
     let data = args.iter().any(|a| a == "--series-data");
     let ordered = args.iter().any(|a| a == "--series-order");
     let live = args.iter().any(|a| a == "--live-feed");
@@ -432,6 +460,7 @@ fn main() -> iced::Result {
             live,
             ordered,
             data,
+            config,
             "Feather Charts — maturity pane management",
         )
     } else if args.iter().any(|a| a == "--options") {
@@ -439,6 +468,7 @@ fn main() -> iced::Result {
             live,
             ordered,
             data,
+            config,
             "Feather Charts — strike pane management",
         )
     } else {
@@ -446,6 +476,7 @@ fn main() -> iced::Result {
             live,
             ordered,
             data,
+            config,
             "Feather Charts — calendar pane management",
         )
     }

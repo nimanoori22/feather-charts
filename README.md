@@ -664,6 +664,34 @@ indices and nonfinite/reversed ranges return `ChartError::InvalidDataQuery`.
 Maturity charts protect private support data and retain the established scaffold.
 See the [source contract and evidence](docs/porting/series-data.md).
 
+Applications can read and set a pane's vertical range with `visible_price_range`
+and `set_visible_price_range`, control autoscaling with
+`set_price_scale_auto_scale`, and update an existing scale (including named
+overlays) with `apply_price_scale_options`. Methods take a pane index and
+`&PriceScalePosition`; results and option readbacks are owned values. Manual
+endpoints use scale units: normal prices, percentages/index values, or logarithmic
+units in log mode, matching the source API. Invalid or overflowing ranges fail
+before changing the viewport.
+
+`apply_chart_options(ChartOptionsPatch { model: ChartModelOptionsPatch { .. }, .. })`
+updates layout, grid, price/time scales and crosshair without rebuilding series.
+The same patch can include mouse/touch/kinetic settings. Unspecified fields stay
+unchanged; the complete patch is validated before application. `runtime_options`
+returns supported presentation/default/input settings, while `price_scale_options`
+returns the selected live scale's settings. Renderer construction options and
+attribution-logo drawing are outside this API.
+
+Try the scrollable configuration toolbars in any chart family:
+
+```sh
+cargo run --example pane_management -- --price-scale-configuration --live-feed
+cargo run --example pane_management -- --price-scale-configuration --options --live-feed
+cargo run --example pane_management -- --price-scale-configuration --yield-curve --live-feed
+```
+
+Use `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to choose the native renderer.
+See the [configuration contract and evidence](docs/porting/price-scale-configuration.md).
+
 ```bash
 cargo run --example pane_management -- --series-data --live-feed
 cargo run --example pane_management -- --series-data --options --live-feed
