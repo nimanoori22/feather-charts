@@ -691,3 +691,24 @@ fn logo_hover_keeps_last_price_animation_ticks_scheduled() {
         .expect("animation must keep scheduling over logo");
     assert!(matches!(action.into_inner().0, Some(ChartMessage::Tick(_))));
 }
+
+#[test]
+fn logo_hover_does_not_cancel_time_scale_animation() {
+    let mut c = data_chart();
+    let mut state = ChartState::default();
+    c.scroll_to_offset_animated(10., std::time::Duration::from_secs(3));
+    c.prepare(Size::new(800., 500.), 1., std::time::Instant::now())
+        .unwrap();
+    assert!(c.is_animating());
+    let p = logo_point(&c);
+    send(
+        &mut c,
+        &mut state,
+        Event::Mouse(mouse::Event::CursorMoved { position: p }),
+        p,
+    );
+    assert!(
+        c.is_animating(),
+        "overlay hover must only clear the crosshair"
+    );
+}

@@ -224,8 +224,14 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.input = ChartInput::default();
                 state.multi_input = MultiPaneInput::default();
                 return Some(
-                    self.publish(ChartMessage::PaneInteraction(MultiPaneInteraction::Cancel))
-                        .and_capture(),
+                    self.publish(ChartMessage::Interaction(
+                        crate::ui::chart_input::ChartInteraction {
+                            position: None,
+                            navigation: None,
+                            capture: false,
+                        },
+                    ))
+                    .and_capture(),
                 );
             }
             return Some(canvas::Action::capture());

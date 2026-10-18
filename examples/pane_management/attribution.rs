@@ -142,6 +142,47 @@ mod tests {
         assert_eq!(app.attribution.as_ref().unwrap().activations, 1);
     }
     #[test]
+    fn visibility_toggle_keeps_populated_layout_and_export_pixels() {
+        let mut exporter =
+            iced::futures::executor::block_on(ChartExporter::new(ScreenshotBackend::Software))
+                .unwrap();
+        let mut app = App::<Chart>::new(false);
+        app.enable_attribution().unwrap();
+        app.size = Size::new(800., 500.);
+        let now = Instant::now();
+        app.prepare(now);
+        let layout = app.chart.core().frame().layout;
+        let before = exporter
+            .render(
+                &app.chart
+                    .core()
+                    .screenshot_of_prepared(Default::default())
+                    .unwrap(),
+                Default::default(),
+            )
+            .unwrap();
+        app.attribution_action(Action::Visible).unwrap();
+        app.prepare(now);
+        assert_eq!(
+            layout,
+            app.chart.core().frame().layout,
+            "screen decoration must preserve settled axis allocation"
+        );
+        let after = exporter
+            .render(
+                &app.chart
+                    .core()
+                    .screenshot_of_prepared(Default::default())
+                    .unwrap(),
+                Default::default(),
+            )
+            .unwrap();
+        assert!(
+            before.rgba() == after.rgba(),
+            "decoration toggle changed exported pixels"
+        );
+    }
+    #[test]
     fn all_domain_controls() {
         controls::<Chart>();
         controls::<OptionsChart>();

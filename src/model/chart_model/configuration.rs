@@ -125,7 +125,23 @@ where
     ) where
         B::Converter: HorzScaleItemConverter<B::Item, B::InternalItem, Error = B::Error>,
     {
+        let mut content_options = self.runtime_options();
+        content_options.layout.attribution_logo = next.layout.attribution_logo;
+        let decoration_only = content_options == next
+            && patch.time_scale.is_none()
+            && patch.grid.is_none()
+            && patch.crosshair.is_none()
+            && patch.left_price_scale.is_none()
+            && patch.right_price_scale.is_none()
+            && patch.overlay_price_scales.is_none();
         self.options.layout.attribution_logo = next.layout.attribution_logo;
+        if decoration_only {
+            // Full invalidation may shrink settled axis allocations. A screen
+            // decoration must not change the viewport or recalculate autoscale.
+            self.light_update();
+            self.flush_effects();
+            return;
+        }
         self.options.layout.background = next.layout.background;
         self.options.layout.text_color = next.layout.text_color;
         self.options.layout.font_size = next.layout.font_size;

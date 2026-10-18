@@ -91,7 +91,7 @@ fn capture<C: Host>(
                     )
                 };
                 let normal = screen(&app);
-                assert_eq!(normal, screen(&app), "screen replay changed");
+                assert!(normal == screen(&app), "screen replay changed");
                 let file = dir.join(format!("{scene}-{w}x{h}-{ratio}.rgba"));
                 std::fs::write(file, &normal).unwrap();
                 images += 1;
@@ -152,26 +152,32 @@ fn capture<C: Host>(
                             },
                         )
                         .unwrap();
-                    assert_eq!(
-                        snapshots[index].1.rgba(),
-                        image.rgba(),
-                        "logo leaked into export: {mode}/{scene}"
+                    if snapshots[index].1.rgba() != image.rgba() {
+                        export::save(&dir.join("export-before"), &snapshots[index].1).unwrap();
+                        export::save(&dir.join("export-after"), &image).unwrap();
+                        eprintln!(
+                            "Export mismatch {mode}/{scene} {w}x{h} DPR {ratio} top={top} crosshair={crosshair}"
+                        );
+                    }
+                    assert!(
+                        snapshots[index].1.rgba() == image.rgba(),
+                        "visibility toggle changed exported pixels: {mode}/{scene}"
                     );
                 }
                 drop(app);
                 for (shot, image) in snapshots {
-                    assert_eq!(
-                        image.rgba(),
-                        exporter
-                            .render(
-                                &shot,
-                                ScreenshotRasterOptions {
-                                    pixel_ratio: ratio,
-                                    ..Default::default()
-                                }
-                            )
-                            .unwrap()
-                            .rgba(),
+                    assert!(
+                        image.rgba()
+                            == exporter
+                                .render(
+                                    &shot,
+                                    ScreenshotRasterOptions {
+                                        pixel_ratio: ratio,
+                                        ..Default::default()
+                                    }
+                                )
+                                .unwrap()
+                                .rgba(),
                         "retained export changed"
                     );
                 }

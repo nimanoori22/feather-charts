@@ -130,3 +130,25 @@ host policy, and this demo only displays the request. Browser title/focus/naviga
 infrastructure is not recreated by a Canvas overlay. Existing timing, drawing-order
 and unavailable touchpad/touchscreen/high-DPI physical checks remain independent;
 synthetic touch and fractional-DPR captures are not physical-device acceptance.
+
+
+## Renderer-matrix findings
+
+The first full matrix reproduced a populated-chart error that the empty-chart test
+could not expose: a visibility-only patch requested Full invalidation. Axis allocation
+then shrank from 56 to 46 pixels, moving chart content and changing exported pixels.
+Before/after RGBA/PNG images and a failing populated-layout regression are retained.
+A pure decoration patch now queues Light invalidation without touching autoscale or
+resetting settled axis allocations. Existing geometry/scale configuration keeps its
+original path. The regression passes with identical layout and exported bytes.
+
+Input review also found that using the generic navigation-cancel message for overlay
+hover stopped time-scale animations. Source mouseLeaveEvent only resets tracking/
+hover/crosshair; native hover now sends a position-only clear with no navigation.
+The failing animated-scroll test and passing repair are retained. Price-pulse and
+time-scale animation scheduling both have focused coverage. These fixes do not
+resolve or close the earlier independent timing exception.
+
+The repaired pre-final input-review matrix passed 672 screens, 2688 exact visibility/
+export comparisons and 2688 retained-export comparisons across both actual backends.
+Its artifacts are preserved; final-source replay and compatibility validation follow.
