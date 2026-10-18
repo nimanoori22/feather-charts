@@ -98,6 +98,13 @@ fn runtime_patch_updates_real_labels_preserves_old_snapshot_and_clears_callbacks
             .format_price_absolute(20.),
         "20.00"
     );
+    let cleared = c
+        .prepare_snapshot(iced::Size::new(800., 500.), 1., Instant::now())
+        .unwrap();
+    assert!(!cleared.panes[0].right.commands.iter().any(
+        |cmd| matches!(cmd,PriceAxisCommand::Text{label,..} if label.starts_with("runtime-"))
+    ));
+
     assert_eq!(c.localization_options().base.locale, "de-DE");
     assert!(weak.upgrade().is_some(), "detached readback owns callback");
     drop(readback);
@@ -142,6 +149,11 @@ fn empty_and_identity_equal_patches_preserve_events_marks_and_active_pan() {
         c.model().panes()[0].right_price_scale().marks_generation(),
         before
     );
+    assert!(c.is_panning());
+    c.apply_localization_options(LocalizationOptionsPatch {
+        price_formatter: FieldPatch::Set(Rc::new(|_| "changed".into())),
+        ..Default::default()
+    });
     assert!(c.is_panning());
     assert!(c.take_events().iter().any(
         |e| matches!(e,feather_charts::api::ChartEvent::DataChanged{series,..} if *series==id)

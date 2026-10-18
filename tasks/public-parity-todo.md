@@ -28,7 +28,9 @@ Preserve previous roadmap acceptance and independent exceptions.
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 
 Formatting core evidence: [formatting-parity.md](../docs/porting/formatting-parity.md).
-A4 renderer/mouse acceptance remains open.
+A4 automated gates pass: 807 tests, 38 source checks, 576 screen replays and retained
+exports; 2982 accepted compatibility images unchanged. Software/GPU mouse acceptance
+remains open; four software demos are prepared. See formatting-evidence.json.
 
 ### B — Series price-scale assignment
 

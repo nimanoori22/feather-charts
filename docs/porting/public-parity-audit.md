@@ -13,6 +13,14 @@ rendering or interaction implementation was changed. The previous “95% complet
 statement remains an informal feature estimate; these counts are not a completion
 percentage or an assertion that every remaining defect has been found.
 
+Implementation follow-up: the baseline findings and diagnostic evidence below
+remain a record of the audited revisions. Formatting core/runtime fixes are now
+tracked in [formatting-parity.md](formatting-parity.md), with separate red/green
+regressions and a 72-case source comparison. The generated inventory now reflects
+those API mappings; its original baseline is retained at `55ba7d7` and pinned by
+[the implementation manifest](public-parity-implementation-baseline.json). Formatting
+automated renderer checks pass; mouse acceptance is pending. Other finding groups remain open.
+
 ## Inventory and evidence standard
 
 [public-parity-inventory.json](public-parity-inventory.json) inventories **55

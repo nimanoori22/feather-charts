@@ -11,7 +11,7 @@ const api={
   subscribeDblClick:'native|EventInterests.double_click / ChartEvent::DoubleClick',unsubscribeDblClick:'native|EventInterests.double_click',
   subscribeCrosshairMove:'native|ChartEvent::CrosshairMoved',unsubscribeCrosshairMove:'native|Host owns routing of pointer events',
   priceScale:'native|Chart methods use pane + PriceScalePosition',timeScale:'partial|F06: read-only model.time_scale; incomplete mutation facade',
-  applyOptions:'partial|F01/F03/F04: Chart.apply_chart_options covers a subset',options:'partial|F01/F04: runtime_options omits localization and constructor callbacks',
+  applyOptions:'partial|F03/F04/F05: Chart.apply_chart_options covers a subset; localization has its own typed patch',options:'partial|F04/F05: runtime_options plus localization_options readbacks; axis flags and color policy incomplete',
   takeScreenshot:'mapped|Chart.take_screenshot / prepare_screenshot + ScreenshotExporter',addPane:'native|Chart.add_pane then set_preserve_empty_pane',
   panes:'mapped|Chart.model().panes()',removePane:'mapped|Chart.remove_pane',swapPanes:'mapped|Chart.swap_panes',
   autoSizeActive:'platform|Iced host controls layout; no ResizeObserver',chartElement:'platform|Iced Canvas replaces DOM element',
@@ -87,14 +87,14 @@ const special={
  'LayoutOptions.colorSpace':'partial|F05: stored/snapshotted; no wide-gamut native rendering contract',
  'LayoutOptions.colorParsers':'gap|F05: constructor parsers are not routed into chart rendering/validation',
  'SeriesOptionsCommon.priceScaleId':'gap|F03: stored but option changes do not reattach to a different price scale',
- 'PriceFormatCustom.tickmarksFormatter':'gap|F02: stored but omitted by SeriesValueFormatter and scale batch path',
- 'LocalizationOptionsBase.locale':'partial|F01/F09: constructor supported, no general runtime localization patch; Intl labels differ',
- 'LocalizationOptionsBase.priceFormatter':'gap|F01: ignored by generic Chart price scales; yield wrapper has special handling',
- 'LocalizationOptionsBase.tickmarksPriceFormatter':'gap|F01: not routed into native scale ticks',
- 'LocalizationOptionsBase.percentageFormatter':'gap|F01: native scale uses default PercentageFormatter',
- 'LocalizationOptionsBase.tickmarksPercentageFormatter':'gap|F01: not routed into native scale ticks',
- 'LocalizationOptions.timeFormatter':'partial|F01: construction supported; no general Chart localization setter',
- 'LocalizationOptions.dateFormat':'partial|F01: construction supported; no general Chart localization setter',
+ 'PriceFormatCustom.tickmarksFormatter':'mapped|Series formatter/source bridge and actual final axis batches; formatting-parity.md',
+ 'LocalizationOptionsBase.locale':'partial|F09: constructor/runtime locale updates supported; Intl labels still differ',
+ 'LocalizationOptionsBase.priceFormatter':'mapped|Chart price-scale localization, including YieldCurve defaults; scalar/batch precedence tested',
+ 'LocalizationOptionsBase.tickmarksPriceFormatter':'mapped|Chart-owned scale batch formatting; precedence and actual axis text tested',
+ 'LocalizationOptionsBase.percentageFormatter':'mapped|Chart-owned percentage formatting for scale, crosshair and last-value text',
+ 'LocalizationOptionsBase.tickmarksPercentageFormatter':'mapped|Chart-owned scale batch formatting; precedence and actual axis text tested',
+ 'LocalizationOptions.timeFormatter':'native|Construction plus Chart.apply_localization_options / localization_options; explicit callback Clear',
+ 'LocalizationOptions.dateFormat':'native|Construction plus Chart.apply_localization_options / localization_options; omitted string retains current value',
  'TimeScaleOptions.tickMarkFormatter':'native|TimeBehaviorOptions via with_custom_behavior / configure_horizontal_behavior',
  'YieldCurveOptions.formatTime':'native|YieldCurveChart.set_maturity_formatter',
  'WhitespaceData.customValues':'partial|F08: engine generic metadata; reusable Chart built-in inputs fix it to ()',
@@ -108,7 +108,7 @@ const chartFields={width:'native|Chart.prepare and Iced layout',height:'native|C
  defaultVisiblePriceScaleId:'partial|F04: PaneOptions.default_visible_price_scale construction only',timeScale:'mapped|HorzScaleOptions / Chart.apply_time_scale_options',
  crosshair:'mapped|Chart.set_crosshair_options / apply_chart_options',grid:'mapped|ChartModelOptions.grid',handleScroll:'native|MouseNavigationOptions / TouchNavigationOptions',
  handleScale:'partial|F04: wheel/pinch supported, no axis-specific settings',kineticScroll:'mapped|KineticScrollOptions',trackingMode:'mapped|TouchNavigationOptions.tracking_exit',
- localization:'partial|F01: constructor ownership supported; incomplete scale integration/runtime',addDefaultPane:'mapped|ChartModelOptions.add_default_pane',hoveredSeriesOnTop:'mapped|Chart.set_hovered_series_on_top'};
+ localization:'native|LocalizationOptions + Chart.apply_localization_options / localization_options; locale limitations tracked as F09',addDefaultPane:'mapped|ChartModelOptions.add_default_pane',hoveredSeriesOnTop:'mapped|Chart.set_hovered_series_on_top'};
 const files=[]; function walk(dir){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if(p.endsWith('.ts'))files.push(p)}}walk(path.join(root,'src'));
 const rows=[], declarations=[], hashes={};
 const snake=s=>s.replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
@@ -132,7 +132,7 @@ for(const file of files.sort()){
     finding=new RegExp('pub '+field+'\\s*:').test(body)?'represented|'+rust+' '+name+'.'+field:'review|Check renamed/native ownership field in '+rust;
    }
    if(!finding&&owner==='ChartOptionsBase')finding=chartFields[member];
-   if(!finding&&owner==='ChartOptionsImpl')finding='partial|F01: generic localization contract';
+   if(!finding&&owner==='ChartOptionsImpl')finding='native|Generic LocalizationOptions + LocalizationOptionsPatch; typed domain formatter and owned callback readback';
    if(!finding&&owner==='HandleScrollOptions')finding='native|MouseNavigationOptions / TouchNavigationOptions';
    if(!finding&&owner==='HandleScaleOptions')finding=['mouseWheel','pinch'].includes(member)?'native|MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch':'gap|F04: axis-specific controls absent';
    if(!finding&&['AxisPressedMouseMoveOptions','AxisDoubleClickOptions'].includes(owner))finding='gap|F04: no independent '+member+' axis control';

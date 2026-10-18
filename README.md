@@ -706,6 +706,32 @@ cargo run --example pane_management -- --price-scale-configuration --yield-curve
 Use `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to choose the native renderer.
 See the [configuration contract and evidence](docs/porting/price-scale-configuration.md).
 
+## Runtime formatting
+
+`Chart::apply_localization_options(LocalizationOptionsPatch)` updates price,
+percentage, tick and horizontal formatters together. Read an owned configuration
+with `localization_options()`. Callback fields use `FieldPatch::Unchanged`,
+`Set(Rc::new(...))` or `Clear`; omitted fields preserve settings. Clear restores
+series/default formatting. Batch callbacks must return one label per input value.
+
+For normal/log scales, chart-wide tick formatting takes precedence over chart-wide
+scalar formatting, then the per-series batch/scalar formatter. Percentage scales
+use the corresponding percentage hooks. Indexed-to-100 uses its own formatter.
+Series formatter queries stay series-specific. Yield charts provide their default
+three-decimal percentage text through chart localization.
+
+```sh
+cargo run --example pane_management -- --formatting --screenshot-export --live-feed
+```
+
+Add `--options`, `--yield-curve` or `--custom-domain` for the other domains. The
+formatting controls exercise callback precedence, explicit clearing and all scale
+modes. Existing export previews retain their original labels when configuration
+changes; capture again to refresh them. Locale updates retain current behavior's
+fallbacks; full Intl parity is still pending.
+
+See the [formatting contract, API example and acceptance record](docs/porting/formatting-parity.md).
+
 ## Public application events
 
 Enable `EventInterests` for data changes, plot double-clicks, visible logical and

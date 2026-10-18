@@ -1,0 +1,258 @@
+{
+  "status": "A0-A3 complete; A4 automated gates passed; physical acceptance pending",
+  "core_checkpoints": [
+    "2343cc9",
+    "8cb4848"
+  ],
+  "source_manifest": "docs/porting/formatting-source.json",
+  "source_cases": 72,
+  "source_comparisons": [
+    {
+      "script": "scripts/check_area_reference.cjs",
+      "sha256": "e4144036e3be44986f23e4835e5bb89392003ae31ad800ac13a9ac279f6daa80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_attribution_reference.cjs",
+      "sha256": "d77178b60480fc907962c52b755c5d795354501abe987a2765ff600fe9ef3275",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_bar_reference.cjs",
+      "sha256": "08861e9a2e3d8235710d19a9e16a3aa9593bd1f5e59acb579ebd60433b34132d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_baseline_reference.cjs",
+      "sha256": "85843ac9a648935b750d70bf64a22867e1c67bf2cead2fce4e45b9779b00c8be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_candlestick_reference.cjs",
+      "sha256": "897467468c6f88ecfa99c4e3826f9c04b2e9c912c78cc72cd35f409ed5f24973",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_chart_layout_reference.cjs",
+      "sha256": "823e3ac96f0a3ff696c434c5ee7087bcad6d019ec402f1b740a87a2e6023b108",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_conflation_reference.cjs",
+      "sha256": "0cd8c21c928bed6e5f4b76c6ba3dd8680764015981a90ba07d09cf4a0f0ebeff",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_horizontal_reference.cjs",
+      "sha256": "b4e8d739a2b4996478b704c92ba3f505d80498a15248b3e8d0dd8e15c6a410e1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_series_reference.cjs",
+      "sha256": "9f20fcea8fde6e589ede801a274c6cebc25b07e1b33a9d5a99d47fadf97b00b3",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_formatting_reference.cjs",
+      "sha256": "fcf3b32a66a26e9d08f696cea4afc359a16db320320935e5c617e927d968ca0f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_histogram_reference.cjs",
+      "sha256": "ae27286280d276f5f784ec063cec7e7ef8f75e246a6d3dd9e6f80dad3cdf1ca5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_hover_selection_reference.cjs",
+      "sha256": "1930dcc757e1ff14e10d7a11896d3e132107953b3b373f7ef72a66291da0558a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_image_watermark_reference.cjs",
+      "sha256": "4f4030f5d4fc7a1475799965372f7b7f9478b6fba6d62f973578f414ff999403",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_incremental_append_reference.cjs",
+      "sha256": "283d4c0328f4b4ab75557bc519f61c0c546d6f7cd4e877272251d878b8a283a2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_interaction_reference.cjs",
+      "sha256": "4c8fbb58eeffac0af6072acfa13bb42218eb51aca21b4e36083215abebf4ea75",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_kinetic_reference.cjs",
+      "sha256": "52c073e667b4d537cd241956f097eda4ad8d2b858fcf85c8b4fa7152f08bdd76",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_last_price_animation_reference.cjs",
+      "sha256": "7538dd5774106f9b36cab5b352636b5db8607e8194624fc4ab05eca012b25356",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_lazy_autoscale_reference.cjs",
+      "sha256": "cd50fe63879d1825407a7a995f9d9fa6a55fe029dfd0e458467b5d90816c1f80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_line_reference.cjs",
+      "sha256": "6cd0c7767a7cef55d7e19b91aaf7ca012cd5bda32c10c9d0810aa7cb27a48729",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_interaction_reference.cjs",
+      "sha256": "640b57bf60215777957539a97b9941a514cb0636c63fd96c0cf06d57a4b44cf1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_layout_reference.cjs",
+      "sha256": "3e9b702b450eda9d78bf7f70901f1cf66f0775dfa13aa1674c9db1ab717fbcfe",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_numeric_custom_series_reference.cjs",
+      "sha256": "8ef9ed1c34f1ffc85e97491ce43ac56036e0c5158fbc15ab717478c52cd6606f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_options_chart_reference.cjs",
+      "sha256": "a7605804f3f41c07d020b8a63340a15552e4bbae5f81b4897bbee3c4f131797a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_management_reference.cjs",
+      "sha256": "c4a79cd3a31c096f2c88d6f5961de565667930de5fcdd1c310b2f6ab9e727722",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_axis_reference.cjs",
+      "sha256": "edf3d724b527697f404533dfe1fbcf3b6e60ecb17d3f27d47bb2b6615a7b3f8c",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_lines_reference.cjs",
+      "sha256": "586357e035f77527087a4bb6bf8b6e16d6e87e97a34a2457b0306d3b699994cd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_scale_configuration_reference.cjs",
+      "sha256": "71af03522e8e0031aa7836c27b7d1783f8101ea2aedeaaf0cc018d7ffd64c2a9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_primitive_reference.cjs",
+      "sha256": "0a1638b6f557c0f0072b8533e3a443d1bf0df1d52f2d57fb7892a8c81f2c6691",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_events_reference.cjs",
+      "sha256": "2094c4ef89493786fd0d1b5a85ba1370efa4d57874f973bf0669ff51e7ae567b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_screenshot_reference.cjs",
+      "sha256": "03ddd594d120f98a257d340ee8d5e40c83a5b746293e125e2b82edffd8771ef1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_data_reference.cjs",
+      "sha256": "fe53408b9921be879eed847d93906df063b27eaa2a9be0bc663bbba05f9a7a6d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_markers_reference.cjs",
+      "sha256": "812c99052657cdb671d1b8cfa2e28d30e47230dfa0fb702c3eb98ca7c74d21be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_order_reference.cjs",
+      "sha256": "363ed48a528efe71a6847ba9a2a1ad904999bb4a9639f144e48a5834c58b3edc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_text_watermark_reference.cjs",
+      "sha256": "63b116f9b67835e75ccbd435bb52ffeb542bff79485b99286fae8c3beae26eae",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_axis_reference.cjs",
+      "sha256": "139cc120a78ae54e1a1a156968433968c858e53825a781b7fa9ce65c14ec580a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_touch_reference.cjs",
+      "sha256": "21c28e479913d41304c2b35a4ec5435142068d4fb41302085cbef6120e79c987",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_up_down_markers_reference.cjs",
+      "sha256": "16779689548d66ce99bf0803511320a0c7a59b9d6b64bbecaf65208bcc1440fd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_yield_curve_reference.cjs",
+      "sha256": "2259259b6ff1bd238cbc22d4c517d08831c13c5f5b5ac55d82710c402bd8066e",
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "suites": 81,
+    "passed": 807,
+    "doctests": 2
+  },
+  "capture_protocol": "target/public-parity/formatting/final-captures/protocol.json",
+  "capture_protocol_sha256": "4459f321a48f30341b447df9804ddc094b77bcfc056e3780c190afb55fa0dec9",
+  "capture_results_sha256": "c5216c37cd65863ea035830a634621d93bc3dd5075798fa0d25e3d81a184d10f",
+  "screens": 576,
+  "retained_exports": 576,
+  "binary_sha256": "edb4d9507668b6c87ca02d2eeaff27895373748831d970cfb052aa0a31dccfa2",
+  "logs": {
+    "target/public-parity/formatting/a4-tests.log": "f9084ae6a41a4d72f9df7c8d1fd8079b4377448f3048dc15d2301c11f6ea591d",
+    "target/public-parity/formatting/a4-check.log": "b0cf04591952d98c735e1238b12e59a32d8cc7be6ab2c91859b7c391dac7c01d",
+    "target/public-parity/formatting/a4-clippy.log": "097336d0ae0c4d076a73830298736b750b7598b097ef7880d4a45fa35d3a821d",
+    "target/public-parity/formatting/a4-doc.log": "92978b50fdac5f0499e4b63ad532e49dafe42c1dacb01c71ab22e1a402163807",
+    "target/public-parity/formatting/a4-runtime-final.log": "6ebc952561a2ed687ce4775eb8e5acd57c52e9f808a99bcdcfdaf5995cda41d0",
+    "target/public-parity/formatting/a4-runtime-clippy.log": "0049ef5476c65c0e60b57320cef17382b06d236920538304f44ca014c52ac911"
+  },
+  "physical_acceptance": {
+    "software": "pending: four tiny-skia demos opened; user question outstanding",
+    "wgpu": "pending"
+  },
+  "independent_exceptions": [
+    "earlier timing acceptance",
+    "dedicated series drawing-order mouse acceptance",
+    "touchpad",
+    "touchscreen",
+    "high-DPI",
+    "Intl beyond existing support",
+    "Display-P3 target"
+  ],
+  "compatibility": [
+    {
+      "script": "capture_public_events.py",
+      "exit": 0,
+      "accepted_images_unchanged": 912
+    },
+    {
+      "script": "capture_custom_horizontal.py",
+      "exit": 0,
+      "accepted_images_unchanged": 240
+    },
+    {
+      "script": "capture_screenshot_export.py",
+      "exit": 0,
+      "accepted_images_unchanged": 1158
+    },
+    {
+      "script": "capture_attribution.py",
+      "exit": 0,
+      "accepted_images_unchanged": 672
+    }
+  ],
+  "compatibility_results_sha256": "731c6fe54b2328226237e3c4c21b6b9b50278e82539e16de2ea6ffa27832eee5",
+  "accepted_images_unchanged": 2982,
+  "physical_sessions": "target/public-parity/formatting/mouse/tiny-skia/sessions.json"
+}

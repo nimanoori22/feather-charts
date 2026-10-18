@@ -17,6 +17,14 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>>;
     fn axis_visible(&mut self, visible: bool);
     fn offset(&mut self, offset: f64);
+    fn localize(&mut self, patch: LocalizationOptionsPatch<Self::Item>);
+    fn format_series(
+        &mut self,
+        id: SeriesId,
+        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        enabled: bool,
+        pulse: bool,
+    ) -> Result<(), ChartError>;
     fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError>;
     fn set_range(
         &mut self,
@@ -123,6 +131,25 @@ macro_rules! common {
         }
         fn offset(&mut self, offset: f64) {
             self.set_right_offset(offset);
+        }
+        fn localize(&mut self, patch: LocalizationOptionsPatch<Self::Item>) {
+            self.apply_localization_options(patch);
+        }
+        fn format_series(
+            &mut self,
+            id: SeriesId,
+            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            enabled: bool,
+            pulse: bool,
+        ) -> Result<(), ChartError> {
+            let mut line = options(pulse);
+            let mut opts = feather_charts::model::series_options::CustomSeriesOptions::default();
+            if enabled {
+                line.common.price_format = formatting::series_format();
+                opts.common.price_format = formatting::series_format();
+            }
+            self.replace_series_options(id, SeriesOptionsMap::Line(line))?;
+            self.replace_custom_series_options(custom, opts)
         }
         fn configure(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
             self.apply_chart_options(patch)

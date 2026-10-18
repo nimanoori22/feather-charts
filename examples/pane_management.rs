@@ -11,6 +11,8 @@ mod data;
 mod events;
 #[path = "pane_management/export.rs"]
 mod export;
+#[path = "pane_management/formatting.rs"]
+mod formatting;
 #[path = "pane_management/host.rs"]
 mod host;
 #[path = "numeric_custom_series/view.rs"]
@@ -41,6 +43,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    formatting: Option<formatting::Panel>,
     attribution: Option<attribution::Panel>,
     export: Option<export::Panel>,
     events: Option<events::Monitor>,
@@ -65,6 +68,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Formatting(formatting::Action),
     Attribution(attribution::Action),
     Export(export::Action),
     Events(events::Action),
@@ -147,6 +151,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            formatting: None,
             attribution: None,
             export: None,
             events: None,
@@ -213,6 +218,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Formatting(action) => self.formatting_action(action)?,
             Message::Attribution(action) => self.attribution_action(action)?,
             Message::Export(action) => self.export_action(action)?,
             Message::Events(action) => self.event_action(action)?,
@@ -259,6 +265,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let formatting = self.formatting.is_some();
                 let attribution = self.attribution.is_some();
                 let export = self.export.take();
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
@@ -270,6 +277,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if formatting {
+                    self.formatting = Some(Default::default());
+                }
                 if attribution {
                     self.enable_attribution()?;
                 }
@@ -456,6 +466,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.formatting.is_some() {
+            content = content.push(self.formatting_controls());
+        }
         if self.attribution.is_some() {
             content = content.push(self.attribution_controls());
         }
@@ -500,6 +513,7 @@ struct RunOptions {
     events: bool,
     exports: bool,
     attribution: bool,
+    formatting: bool,
 }
 fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
     iced::application(
@@ -511,6 +525,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.formatting {
+                app.formatting = Some(Default::default());
+            }
             if options.exports {
                 app.export = Some(export::Panel::new());
             }
@@ -553,6 +570,13 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args.iter().position(|a| a == "--formatting-captures") {
+        formatting::captures(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     let options = RunOptions {
         live: args.iter().any(|a| a == "--live-feed"),
         ordered: args.iter().any(|a| a == "--series-order"),
@@ -561,6 +585,7 @@ fn main() -> iced::Result {
         events: args.iter().any(|a| a == "--public-events"),
         exports: args.iter().any(|a| a == "--screenshot-export"),
         attribution: args.iter().any(|a| a == "--attribution"),
+        formatting: args.iter().any(|a| a == "--formatting"),
     };
     if args.iter().any(|a| a == "--custom-domain") {
         run::<Chart<session_behavior::Sessions>>(

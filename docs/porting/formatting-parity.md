@@ -1,6 +1,6 @@
 # Formatting parity (public parity milestone A)
 
-Status: source investigation and design; implementation in progress. Baseline
+Status: A0–A3 implemented; A4 automated gates passed; mouse acceptance pending. Baseline
 `f18ad0a`. Tasks P0/A0–A4 in `tasks/public-parity-todo.md`.
 
 ## Source, consumers and required contract
@@ -156,3 +156,105 @@ The new API first failed compilation before implementation; all runtime tests th
 pass. Library/formatting/yield tests and focused Clippy pass. Unknown locale/date
 strings retain existing fallback; full locale parity remains milestone H.
 No physical/render acceptance has been inferred from these tests.
+
+## Demo and acceptance protocol (A4, in progress)
+
+Run `cargo run --example pane_management -- --formatting --screenshot-export --live-feed`.
+Add `--options`, `--yield-curve` or `--custom-domain` for the other three domains.
+Set ICED_BACKEND=tiny-skia or wgpu explicitly for physical checks.
+
+Price/Price ticks toggle chart-wide price callbacks; Percent/Percent ticks toggle
+percentage callbacks. Scale mode cycles normal, logarithmic, percentage and indexed
+on every pane. Indexed labels deliberately ignore chart-wide/series callbacks.
+Series batch installs a shared-precision formatter on the blue line and custom
+intervals. Clear formatters reveals the per-series/default fallback. On maturity
+charts, Price starts enabled because yield formatting is a chart default; clearing
+it intentionally reveals ordinary price text. Horizontal changes crosshair/item
+labels; Locale changes locale/date format without interpreting stored keys again.
+
+Try those controls at regular size, pane/series moves and Reset, then live-feed
+zoom/pan, price-axis wheel/drag and box edits/Escape at regular, narrow and the earlier
+problem size. Shrink/enlarge to check recovery. Capture/export a formatted chart,
+change formatters, and verify that its existing preview remains unchanged; recapture
+must show the new policy. Do not infer touch/high-DPI acceptance from mouse results.
+
+`python scripts/capture_formatting.py <new-output-directory>` uses strict renderer
+identities and captures four domains × six scenes × three sizes × four pixel ratios
+on both renderers. Each image is replayed exactly; retained exports are rerendered
+after replacing policy, resizing and dropping the owner. This supplements existing
+unchanged protocols rather than replacing their baselines.
+
+## Port report and migration
+
+Source components: `src/model/{price-scale,series,price-tick-mark-builder,pane,
+chart-model,localization-options,price-formatter-fn}.ts`,
+`src/formatters/iprice-formatter.ts`, `src/api/{chart-api,yield-chart-api}.ts` in the
+local Lightweight Charts tree. The source graphics consumers named above require
+common batch precision, mode-specific chart localization and stable scalar fallback.
+The browser fixture freezes the exact consumed source hashes, not only HEAD.
+
+Required semantics are formatting precedence, final complete tick batches, shared
+localization across scales and correct runtime cache refresh. TS object mutation,
+manual destroy and undefined callbacks are incidental mechanisms. Native typed
+patches use explicit Clear and Rc ownership; no JS object identity or callback
+subscription machinery is reproduced. Identity comparison is used solely to avoid
+invalidating on a replacement by the exact same native callback.
+
+Production Rust files changed: `src/model/iprice_data_source.rs`,
+`price_formatter_fn.rs`, `series.rs`, `series/projection.rs`, `price_scale.rs`,
+`localization_options.rs`, `pane.rs`, `chart_model.rs`, `src/api/configuration.rs`,
+`yield_curve.rs` and `yield_curve/custom_series.rs`. Tests:
+`tests/formatting_parity.rs`, `tests/localization_runtime.rs` and the public consumer
+in `examples/pane_management/{formatting,formatting_captures}.rs`, connected through
+`examples/pane_management.rs` and its existing host adapter. No new dependency.
+
+Usage:
+
+```rust
+use feather_charts::api::{Chart, LocalizationOptionsPatch};
+use feather_charts::model::series_options::FieldPatch;
+use std::rc::Rc;
+let mut chart = Chart::default();
+chart.apply_localization_options(LocalizationOptionsPatch {
+    price_formatter: FieldPatch::Set(Rc::new(|price| format!("{:.3}", price.value()))),
+    ..Default::default()
+});
+chart.apply_localization_options(LocalizationOptionsPatch {
+    price_formatter: FieldPatch::Clear,
+    ..Default::default()
+});
+```
+
+Applications can keep existing constructors. Custom tick callbacks now actually
+run and must return one label per input. Yield-specific display defaults now live
+in chart localization; the series formatter correctly returns its own configured
+format independently. A detached localization readback retains callback ownership;
+drop it to release those handles. Prepared frames/exports retain resolved labels,
+so old previews remain unchanged until the application explicitly captures again.
+
+Remaining dependencies: A4 physical acceptance; milestones B–I add the other public
+parity features. Locale labels outside existing behavior remain H's responsibility;
+no claim of Intl completion is implied. Rendering, touch, drawing-order and earlier
+timing exceptions retain their independent acceptance records.
+
+## Automated acceptance results
+
+807 tests across 81 suites and two doctests pass. Formatting, all-target check and
+strict all-target Clippy pass. The final runtime tests additionally assert that
+Clear refreshes actual prepared axis text and a changed callback preserves the
+owner's active pan and pending data event. All 38 source comparisons pass; hashes
+confirm all 37 existing source-check scripts remain unchanged.
+
+Both actual renderers pass 576 screen replays and 576 retained exports. The unchanged
+event/legacy, custom-domain, screenshot and attribution protocols pass, with all
+2982 accepted output images matching their prior hashes. This includes the existing
+96 exact legacy baseline comparisons. Current Rust sources and fixture hashes still
+match the final formatting capture protocol; production/demo sources are unchanged
+since capture. A later assertion-only test refinement passed focused tests/Clippy.
+Representative software/GPU calendar, maturity, percentage and moved-session images
+were visually inspected. Evidence: [formatting-evidence.json](formatting-evidence.json).
+
+Four explicitly tiny-skia software demos are open for available-mouse acceptance.
+Software and GPU physical checks are pending; A4 and milestone A remain unchecked.
+The roadmap proceeds to series price-scale reassignment after those checks pass.
+Local core checkpoints: `2343cc9`, `8cb4848`; no push was requested or performed.
