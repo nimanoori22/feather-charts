@@ -30,7 +30,7 @@ all source flag combinations, custom/overlay content and immutable snapshots pas
   owned conversion/data errors and unchanged existing constructors.
 - [x] B2: Verify conversion, ordering/weights/labels/cache resets, canonical data,
   custom series, original-item events, primitives/navigation and screenshot export.
-- [ ] Checkpoint B-public: review real external consumer and save tested local commit.
+- [x] Checkpoint B-public: review real external consumer and save tested local commit.
 - [x] B3: Deliver a genuine custom-domain demo using no library-private internals.
 - [ ] B4: Pass new source cases, old source/compatibility gates and both backend
   custom-domain mouse/export checks; save evidence and a local milestone commit.
@@ -85,3 +85,15 @@ to B under that instruction. A6 retains its missing backend-specific physical
 record; no separate GPU result is inferred from the general acceptance statement.
 See [the screenshot report](../docs/porting/screenshot-export.md) and
 [evidence](../docs/porting/screenshot-export-evidence.json). Nothing has been pushed.
+
+
+## Custom-horizontal checkpoint
+
+Public API/data-safety checkpoint: `b60bdf6`. Full regression validation passed
+781 tests across 77 suites and two doctests; final demo review passed its focused
+control/idle-feed check, all-target check and strict Clippy. All 36 source comparisons,
+240 final custom-domain exports and 96 unchanged baseline comparisons pass.
+The source and renderer evidence is retained under `target/custom-horizontal`.
+Software/GPU mouse/export acceptance is in progress. B4 remains open until responses
+and normal process exits are recorded. See the [contract](../docs/porting/custom-horizontal.md)
+and [evidence](../docs/porting/custom-horizontal-evidence.json). Nothing was pushed.

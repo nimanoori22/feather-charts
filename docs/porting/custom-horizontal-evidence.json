@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-18",
+  "core_checkpoint": "b60bdf6",
+  "tests": 781,
+  "suites": 77,
+  "doctests": 2,
+  "full_validation": [
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doctests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    }
+  ],
+  "final_demo_followup": {
+    "tests": 1,
+    "idle_feed_batches": 100,
+    "logs": [
+      "final-host-tests.log",
+      "final-host-clippy.log",
+      "final-host-check.log",
+      "final-host-build.log"
+    ],
+    "scope": "Final host review removed redundant preparation and unused event interests, drained cancellation events after batches, and retained file-system diagnostics. Core unchanged since broad validation."
+  },
+  "source_comparisons": 36,
+  "source_result_log": "target/custom-horizontal/oracles/results.json",
+  "exports": 240,
+  "capture_log": "target/custom-horizontal/final-captures/results.json",
+  "capture_protocol_sha256": "890a5274aaea868cc3e894e4feee00742249950cd5fa18131ffc1b5fcb7554ea",
+  "custom_demo_binary_sha256": "881993d5758868c84d7da718430af940d7eee48e048318c70634b01f1a69dd59",
+  "prior_capture_runs_retained": [
+    "captures",
+    "reviewed-captures"
+  ],
+  "review_pixel_comparisons": 240,
+  "old_feature_captures": 288,
+  "exact_baseline_comparisons": 96,
+  "compatibility_log": "target/custom-horizontal/compatibility/results.json",
+  "review": {
+    "missing_api_compile_rejection": "red-api.log",
+    "data_loss_regression_failure": "red-atomic.log",
+    "regression_pass": "green-atomic.log",
+    "constructor_validation_mutation_rejected": "mutation-invalid-options.log",
+    "visual_samples": [
+      "tiny-skia/initial-800x500-1-toptrue",
+      "wgpu/labels-800x500-1-toptrue",
+      "wgpu/panes-300x300-1.25-toptrue"
+    ]
+  },
+  "physical": {
+    "tiny-skia": {
+      "status": "pending",
+      "process_file": "target/custom-horizontal/mouse/tiny-skia/process.json"
+    },
+    "wgpu": {
+      "status": "not started"
+    }
+  },
+  "independent_exceptions": [
+    "Earlier timing exception",
+    "Dedicated series-order physical acceptance",
+    "Touchpad/touchscreen/high-DPI physical checks"
+  ],
+  "next_milestone": "C attribution logo; not started",
+  "pushed": false
+}

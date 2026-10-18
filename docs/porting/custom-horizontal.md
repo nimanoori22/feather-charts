@@ -1,6 +1,7 @@
 # Application-defined horizontal behavior
 
-Status: public factory and external consumer implemented; full validation in progress. Screenshot accepted by the
+Status: public factory and external consumer implemented; automated gates passed,
+physical mouse/export acceptance in progress. Screenshot accepted by the
 user on 2026-10-18 with an explicit instruction to proceed. That instruction changes
 the prior sequencing gate; it does not fabricate a separate GPU mouse result.
 
@@ -101,7 +102,8 @@ retained under `target/custom-horizontal`. An inverted constructor validation
 condition was rejected by the focused error test, then restored before verification.
 Review covers ownership, Result paths, synchronous hot paths, unchanged callers and
 public enum migration. `ChartError::CustomBehavior` is additive but requires a new
-arm in exhaustive downstream matches. No key-policy runtime switching is promised.
+arm in exhaustive downstream matches. It also permits non-Send error causes;
+threaded hosts must map errors to an appropriate transferable payload. No key-policy runtime switching is promised.
 
 ## Files
 
@@ -121,3 +123,26 @@ drawing-order and unavailable physical-device exceptions remain independent. Cus
 keys must stay stable and totally ordered. Changing their meaning requires a new
 chart; changing weights requires clearing all shared series before configuration and reloading afterward. Panes, primitives and exporters reuse
 existing engine components; no parallel lifecycle or rendering abstraction was added.
+
+
+## Automated results
+
+Core checkpoint `b60bdf6`: 781 tests in 77 suites, two doctests, all-target check,
+strict Clippy, formatting and source comparisons pass. The final demo's control and
+100-batch idle-feed test, check, build and strict Clippy were rerun after host review.
+It avoids unused lossless event subscriptions, drains cancellation events between
+batches, and prepares after host geometry edits only. File save errors keep their
+actual OS message in the host status.
+
+All 36 local-source comparisons pass. The final software and wgpu matrix produces
+240 exports (five scenes × three sizes × four DPR values × two layer policies ×
+two backends), with strict backend selection, exact output lengths, changed-scene
+assertions and snapshot mutation/drop checks. All 240 images also match the earlier
+captures through the host-only review fixes. Representative software/GPU images were
+visually inspected. The unchanged old matrix passes 288 event captures and 96 exact
+baseline comparisons, including calendar, strike, maturity and typed custom series.
+
+Evidence: [custom-horizontal-evidence.json](custom-horizontal-evidence.json). Artifact
+paths, hashes, failed red/mutation runs and earlier captures remain available under
+`target/custom-horizontal`. Software/GPU physical acceptance is not inferred from
+headless exports; it is recorded separately after the user checks and normal exits.

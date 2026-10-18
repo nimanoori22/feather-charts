@@ -776,3 +776,37 @@ a crosshair in the capture. Preview is a frozen image; Hide preview restores cha
 space. Iced's readback API can panic on device-loss/map/allocation failure; invalid
 user dimensions return typed errors before rendering. See the
 [screenshot contract and verification](docs/porting/screenshot-export.md).
+
+## Application-defined horizontal domains
+
+Use `Chart::with_custom_behavior` with your own `HorzScaleBehavior` and
+`ChartBehavior` implementation. Your public item can differ from its internal key;
+queries, custom-series data and events retain the original item. Bars occupy logical
+indices, so gaps between keys do not create proportional gaps on screen.
+
+The factory creates two equivalent, independently mutable behaviors for data and
+scale ownership, then is dropped. Neither the behavior nor its options needs
+`Clone`, `Send` or `Sync`. Keep conversion, ordering and cache keys equivalent.
+`ChartError::CustomBehavior(Box<dyn Error>)` preserves application-owned errors for
+`Error::source` and downcasting. Exhaustive `ChartError` matches must handle this
+new variant. Because its cause may be non-`Send`, convert errors to a suitable
+owned payload before sending them across threads. Existing chart constructors
+and their error variants are unchanged.
+
+`horizontal_behavior_options()` reads your current options.
+`configure_horizontal_behavior(make_options)` updates both owners and invalidates
+formatted labels. Live formatting changes must preserve key interpretation and
+stored weighting rules. Clear all shared series before changing those policies, then reload them;
+alternatively, construct a new chart. The engine remains synchronous.
+
+```sh
+ICED_BACKEND=tiny-skia cargo run --example custom_horizontal -- --live-feed
+ICED_BACKEND=wgpu cargo run --example custom_horizontal -- --live-feed
+```
+
+This external-consumer example defines `SessionPoint { session, phase }`, a separate
+internal `SessionKey`, and custom interval data. Its scrolling toolbar exercises
+updates, history, append/pop/empty/reset, labels, invalid items, pane transfers and
+export. The box moves and resizes; Escape cancels edits. Capture saves raw RGBA plus
+size metadata to `target/custom-horizontal/preview.{rgba,json}` and displays an
+owned image. See the [contract and evidence](docs/porting/custom-horizontal.md).
