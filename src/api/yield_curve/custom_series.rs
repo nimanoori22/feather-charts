@@ -8,7 +8,7 @@ impl YieldCurveChart {
     pub fn add_custom_series<V>(
         &mut self,
         view: V,
-        mut options: CustomSeriesOptions,
+        options: CustomSeriesOptions,
         pane: usize,
         position: PriceScalePosition,
     ) -> Result<CustomSeriesHandle<V>, ChartError>
@@ -20,7 +20,6 @@ impl YieldCurveChart {
         V::Renderer: Clone + 'static,
         <V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData: Clone + 'static,
     {
-        self.custom_price_format(&mut options);
         self.core.add_custom_series(view, options, pane, position)
     }
     pub fn pop_custom_data<V>(
@@ -79,26 +78,11 @@ impl YieldCurveChart {
     pub fn replace_custom_series_options<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        mut options: CustomSeriesOptions,
+        options: CustomSeriesOptions,
     ) -> Result<(), ChartError>
     where
         V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>,
     {
-        self.custom_price_format(&mut options);
         self.core.replace_custom_series_options(handle, options)
-    }
-    fn custom_price_format(&self, options: &mut CustomSeriesOptions) {
-        let (min_move, base) = match &options.common.price_format {
-            PriceFormat::BuiltIn(f) => (f.min_move, f.base),
-            PriceFormat::Custom(f) => (f.min_move, f.base),
-        };
-        // Source chart-wide localization overrides custom price formatting too;
-        // inherited addCustomSeries keeps ordinary visibility defaults.
-        options.common.price_format = PriceFormat::Custom(PriceFormatCustom {
-            formatter: self.price_formatter.clone(),
-            tickmarks_formatter: None,
-            min_move,
-            base,
-        });
     }
 }

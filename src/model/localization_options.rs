@@ -7,12 +7,25 @@ use std::rc::Rc;
 pub type TimeFormatterFn<T> = Rc<dyn Fn(&T) -> String>;
 
 /// Locale-wide price and percentage formatting hooks.
+#[derive(Clone)]
 pub struct LocalizationOptionsBase {
     pub locale: String,
     pub price_formatter: Option<PriceFormatterFn>,
     pub tickmarks_price_formatter: Option<TickmarksPriceFormatterFn>,
     pub percentage_formatter: Option<PercentageFormatterFn>,
     pub tickmarks_percentage_formatter: Option<TickmarksPercentageFormatterFn>,
+}
+
+impl Default for LocalizationOptionsBase {
+    fn default() -> Self {
+        Self {
+            locale: "en-US".into(),
+            price_formatter: None,
+            tickmarks_price_formatter: None,
+            percentage_formatter: None,
+            tickmarks_percentage_formatter: None,
+        }
+    }
 }
 
 /// Locale-wide formatting hooks, including the horizontal-scale formatter.

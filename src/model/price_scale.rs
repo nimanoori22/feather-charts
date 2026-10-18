@@ -1,5 +1,6 @@
 //! Synchronous price-to-coordinate conversion and source autoscaling.
 use crate::helpers::delegate::Delegate;
+use crate::model::{bar::BarPrice, localization_options::LocalizationOptionsBase};
 use crate::{
     formatters::{percentage_formatter::PercentageFormatter, price_formatter::PriceFormatter},
     model::{
@@ -189,6 +190,7 @@ pub struct PriceMark {
 }
 pub struct PriceScale {
     id: String,
+    localization: LocalizationOptionsBase,
     options: PriceScaleOptions,
     height: f64,
     range: Cell<Option<PriceRangeImpl>>,
@@ -223,6 +225,7 @@ impl PriceScale {
             PriceTickMarkBuilder::new(100.0, layout_font_size, options.tick_mark_density);
         Self {
             id: id.into(),
+            localization: LocalizationOptionsBase::default(),
             options,
             height: 0.,
             range: Cell::new(None),
@@ -244,6 +247,10 @@ impl PriceScale {
             source_margin_below: Cell::new(0.),
             mode_changed: Delegate::new(),
         }
+    }
+    pub(crate) fn set_localization(&mut self, localization: LocalizationOptionsBase) {
+        self.localization = localization;
+        self.invalidate_marks();
     }
     pub fn id(&self) -> &str {
         &self.id
@@ -820,9 +827,7 @@ impl PriceScale {
     }
     pub fn format_price(&self, price: f64, base: f64) -> String {
         match self.options.mode {
-            PriceScaleMode::Percentage => {
-                PercentageFormatter::default().format(to_percent(price, base))
-            }
+            PriceScaleMode::Percentage => self.format_price_percentage(price, base),
             PriceScaleMode::IndexedTo100 => {
                 Self::indexed_formatter().format(to_indexed_to_100(price, base))
             }
@@ -831,17 +836,43 @@ impl PriceScale {
     }
     pub fn format_logical(&self, logical: f64) -> String {
         match self.options.mode {
-            PriceScaleMode::Percentage => PercentageFormatter::default().format(logical),
+            PriceScaleMode::Percentage => self.format_percentage(logical),
             PriceScaleMode::IndexedTo100 => Self::indexed_formatter().format(logical),
             PriceScaleMode::Logarithmic => self.format_absolute(logical),
             PriceScaleMode::Normal => self.format_absolute(logical),
         }
     }
     pub fn format_logical_tickmarks(&self, logicals: &[f64]) -> Vec<String> {
-        logicals
-            .iter()
-            .map(|&logical| self.format_logical(logical))
-            .collect()
+        use crate::model::price_formatter_fn::checked_tickmarks;
+        match self.options.mode {
+            PriceScaleMode::Percentage => {
+                if let Some(format) = &self.localization.tickmarks_percentage_formatter {
+                    checked_tickmarks(logicals.len(), format(logicals))
+                } else {
+                    logicals
+                        .iter()
+                        .map(|&value| self.format_percentage(value))
+                        .collect()
+                }
+            }
+            PriceScaleMode::IndexedTo100 => Self::indexed_formatter().format_tickmarks(logicals),
+            PriceScaleMode::Normal | PriceScaleMode::Logarithmic => {
+                if let Some(format) = &self.localization.tickmarks_price_formatter {
+                    let values: Vec<_> = logicals.iter().copied().map(BarPrice::new).collect();
+                    checked_tickmarks(logicals.len(), format(&values))
+                } else if self.localization.price_formatter.is_some() {
+                    logicals
+                        .iter()
+                        .map(|&value| self.format_absolute(value))
+                        .collect()
+                } else {
+                    self.selected_formatter_source.as_ref().map_or_else(
+                        || PriceFormatter::default().format_tickmarks(logicals),
+                        |source| source.borrow().format_tickmarks(logicals),
+                    )
+                }
+            }
+        }
     }
     pub fn has_visible_edge_marks(&self) -> bool {
         self.options.ensure_edge_tick_marks_visible && self.is_auto_scale()
@@ -898,6 +929,15 @@ impl PriceScale {
         }
         if self.has_visible_edge_marks() {
             self.apply_edge_marks(&mut marks, first, range, low, high);
+        }
+        // Source tick construction applies the final batch after adding edge marks.
+        let logicals: Vec<_> = marks.iter().map(|mark| mark.logical).collect();
+        let labels = crate::model::price_formatter_fn::checked_tickmarks(
+            marks.len(),
+            self.format_logical_tickmarks(&logicals),
+        );
+        for (mark, label) in marks.iter_mut().zip(labels) {
+            mark.label = label;
         }
         marks
     }
@@ -964,7 +1004,19 @@ impl PriceScale {
     pub fn format_price_absolute(&self, price: f64) -> String {
         self.format_absolute(price)
     }
+    pub fn format_price_percentage(&self, price: f64, base: f64) -> String {
+        self.format_percentage(to_percent(price, base))
+    }
+    fn format_percentage(&self, value: f64) -> String {
+        self.localization.percentage_formatter.as_ref().map_or_else(
+            || PercentageFormatter::default().format(value),
+            |format| format(value),
+        )
+    }
     fn format_absolute(&self, price: f64) -> String {
+        if let Some(format) = &self.localization.price_formatter {
+            return format(BarPrice::new(price));
+        }
         self.selected_formatter_source
             .as_ref()
             .map(|source| source.borrow().format_price(price))

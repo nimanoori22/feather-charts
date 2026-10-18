@@ -11,6 +11,13 @@ pub trait PriceScaleDataSource {
     /// Formats through the owning source without exposing a borrowed formatter.
     /// This permits Pane-owned adapters to borrow a Series through `RefCell`.
     fn format_price(&self, price: f64) -> String;
+    /// Returns one tick label per value. Existing scalar-only sources keep their fallback.
+    fn format_tickmarks(&self, prices: &[f64]) -> Vec<String> {
+        prices
+            .iter()
+            .map(|&price| self.format_price(price))
+            .collect()
+    }
     fn base(&self) -> f64;
     fn autoscale_info(
         &self,

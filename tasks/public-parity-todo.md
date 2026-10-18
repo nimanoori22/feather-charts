@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: planning complete; implementation not started.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A2 complete.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -16,16 +16,19 @@ Preserve previous roadmap acceptance and independent exceptions.
 
 ### Baseline
 
-- [ ] P0: Freeze the implementation baseline and close the scope map. (depends: None).
+- [x] P0: Freeze the implementation baseline and close the scope map. (depends: None).
 
 ### A — Formatting correctness
 
-- [ ] A0: Freeze formatting precedence, batch and lifecycle contracts. (depends: P0).
-- [ ] A1: Carry custom batch formatting through series and scale bridges. (depends: A0).
-- [ ] A2: Apply chart-wide formatting to price scales. (depends: A1).
+- [x] A0: Freeze formatting precedence, batch and lifecycle contracts. (depends: P0).
+- [x] A1: Carry custom batch formatting through series and scale bridges. (depends: A0).
+- [x] A2: Apply chart-wide formatting to price scales. (depends: A1).
 - [ ] A3: Expose atomic runtime localization updates. (depends: A2).
 - [ ] A4: Deliver formatting controls and accept milestone A. (depends: A3).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+Formatting core evidence: [formatting-parity.md](../docs/porting/formatting-parity.md).
+A3 runtime updates and A4 renderer/mouse acceptance remain open.
 
 ### B — Series price-scale assignment
 

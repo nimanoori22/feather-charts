@@ -171,9 +171,7 @@ impl<I, O, D, M> SeriesProjection<O> for CustomSeries<I, O, D, M> {
                 .unwrap_or_else(|| self.options.style.color.clone()),
             text: scale.format_price(price, first.value),
             absolute: scale.format_price_absolute(price),
-            percentage: PercentageFormatter::default().format(
-                crate::model::price_scale_conversions::to_percent(price, first.value),
-            ),
+            percentage: scale.format_price_percentage(price, first.value),
         })
     }
     fn pane_data_generation(&self) -> u64 {

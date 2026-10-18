@@ -35,6 +35,7 @@ use crate::{
         iprice_data_source::{FirstValue, PriceScaleDataSource},
         plot_data::{PlotRowLike, PlotRowValueIndex},
         plot_list::{MismatchDirection, PlotList},
+        price_formatter_fn::{PriceFormatterFn, TickmarksPriceFormatterFn},
         price_range_impl::PriceRangeImpl,
         price_scale_visible_range::PriceScaleVisibleRange,
         range_impl::RangeImpl,
@@ -61,7 +62,10 @@ enum SeriesValueFormatter {
     Price(PriceFormatter),
     Percentage(PercentageFormatter),
     Volume(VolumeFormatter),
-    Custom(Rc<dyn Fn(BarPrice) -> String>),
+    Custom {
+        formatter: PriceFormatterFn,
+        tickmarks: Option<TickmarksPriceFormatterFn>,
+    },
 }
 
 impl PriceValueFormatter for SeriesValueFormatter {
@@ -70,14 +74,29 @@ impl PriceValueFormatter for SeriesValueFormatter {
             Self::Price(formatter) => formatter.format(value),
             Self::Percentage(formatter) => formatter.format(value),
             Self::Volume(formatter) => formatter.format(value),
-            Self::Custom(formatter) => formatter(BarPrice::new(value)),
+            Self::Custom { formatter, .. } => formatter(BarPrice::new(value)),
+        }
+    }
+    fn format_tickmarks(&self, prices: &[f64]) -> Vec<String> {
+        if let Self::Custom {
+            tickmarks: Some(format),
+            ..
+        } = self
+        {
+            let values: Vec<_> = prices.iter().copied().map(BarPrice::new).collect();
+            crate::model::price_formatter_fn::checked_tickmarks(prices.len(), format(&values))
+        } else {
+            prices.iter().map(|&p| self.format(p)).collect()
         }
     }
 }
 
 fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
     match format {
-        PriceFormat::Custom(format) => SeriesValueFormatter::Custom(format.formatter.clone()),
+        PriceFormat::Custom(format) => SeriesValueFormatter::Custom {
+            formatter: format.formatter.clone(),
+            tickmarks: format.tickmarks_formatter.clone(),
+        },
         PriceFormat::BuiltIn(PriceFormatBuiltIn {
             kind: PriceFormatBuiltInType::Price,
             min_move,
@@ -497,7 +516,6 @@ where
         if !coordinate.is_finite() {
             return None;
         }
-        use crate::model::price_scale_conversions::to_percent;
         Some(crate::model::price_line::LastValueData {
             price,
             index: PlotRowLike::index(row),
@@ -505,7 +523,7 @@ where
             color,
             text: scale.format_price(price, first.value),
             absolute: scale.format_price_absolute(price),
-            percentage: PercentageFormatter::default().format(to_percent(price, first.value)),
+            percentage: scale.format_price_percentage(price, first.value),
         })
     }
     pub fn bars(&self) -> &PlotList<SeriesPlotRow<I, O, (), M>> {
@@ -762,6 +780,9 @@ where
     }
     fn format_price(&self, price: f64) -> String {
         self.series.format_price(price)
+    }
+    fn format_tickmarks(&self, prices: &[f64]) -> Vec<String> {
+        self.series.formatter().format_tickmarks(prices)
     }
     fn base(&self) -> f64 {
         self.series.base()
@@ -1075,6 +1096,9 @@ where
     }
     fn format_price(&self, price: f64) -> String {
         self.series.borrow().format_price(price)
+    }
+    fn format_tickmarks(&self, prices: &[f64]) -> Vec<String> {
+        self.series.borrow().formatter().format_tickmarks(prices)
     }
     fn base(&self) -> f64 {
         self.series.borrow().base()

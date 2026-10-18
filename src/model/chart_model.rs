@@ -943,6 +943,7 @@ where
     pub fn add_pane(&mut self) -> usize {
         let index = self.panes.len();
         let mut pane = Pane::new(index, self.options.pane.clone(), &self.options.layout);
+        pane.set_localization(self.time_scale.localization().base.clone());
         let effects = pane.set_width(self.time_scale.width());
         self.panes.push(pane);
         self.consume_pane_effects(effects);

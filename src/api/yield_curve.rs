@@ -9,7 +9,7 @@ use crate::model::{
     pane::PriceScalePosition,
     series_options::{
         AreaSeriesOptions, AreaSeriesOptionsPatch, LineSeriesOptions, LineSeriesOptionsPatch,
-        PriceFormat, PriceFormatCustom, SeriesOptionsMap, SeriesType,
+        SeriesOptionsMap, SeriesType,
     },
     time_scale_options::HorzScaleOptions,
     yield_curve_horz_scale_behavior::{ScaffoldState, YieldCurveHorzScaleBehavior},
@@ -22,7 +22,6 @@ pub struct YieldCurveChart {
     scaffold: Option<ScaffoldState>,
     dirty: bool,
     rebuilds: u64,
-    price_formatter: crate::model::price_formatter_fn::PriceFormatterFn,
 }
 impl Deref for YieldCurveChart {
     type Target = Chart<YieldCurveHorzScaleBehavior>;
@@ -82,28 +81,24 @@ impl YieldCurveChart {
     pub fn with_chart_options(
         options: YieldCurveOptions,
         chart_options: ChartModelOptions,
-        localization: LocalizationOptions<Maturity>,
+        mut localization: LocalizationOptions<Maturity>,
     ) -> Result<Self, ChartError> {
         options.scaffold(0.).map_err(ChartError::YieldCurve)?;
         let mut data = YieldCurveHorzScaleBehavior::default();
         data.set_options(options);
         let mut scale = YieldCurveHorzScaleBehavior::default();
         scale.set_options(options);
-        let price_formatter = localization
-            .base
-            .price_formatter
-            .clone()
-            .unwrap_or_else(|| {
-                Rc::new(|v| {
-                    let value = v.value();
-                    let text = if value.is_finite() {
-                        crate::formatters::fixed::fixed(value, 3)
-                    } else {
-                        format!("{value:.3}")
-                    };
-                    format!("{text}%")
-                })
-            });
+        if localization.base.price_formatter.is_none() {
+            localization.base.price_formatter = Some(Rc::new(|v| {
+                let value = v.value();
+                let text = if value.is_finite() {
+                    crate::formatters::fixed::fixed(value, 3)
+                } else {
+                    format!("{value:.3}")
+                };
+                format!("{text}%")
+            }));
+        }
         let mut core = Chart::with_behavior(
             chart_options,
             data,
@@ -115,7 +110,7 @@ impl YieldCurveChart {
             localization,
         );
         let mut support_options = LineSeriesOptions::default();
-        yield_defaults(&mut support_options.common, price_formatter.clone());
+        yield_defaults(&mut support_options.common);
         let support = core.add_series(
             SeriesOptionsMap::Line(support_options),
             0,
@@ -129,7 +124,6 @@ impl YieldCurveChart {
             scaffold: None,
             dirty: true,
             rebuilds: 0,
-            price_formatter,
         };
         chart.settle()?;
         Ok(chart)
@@ -141,7 +135,7 @@ impl YieldCurveChart {
         position: PriceScalePosition,
     ) -> Result<SeriesId, ChartError> {
         let mut options = LineSeriesOptions::default();
-        yield_defaults(&mut options.common, self.price_formatter.clone());
+        yield_defaults(&mut options.common);
         options.apply_patch(patch);
         self.core
             .add_series(SeriesOptionsMap::Line(options), pane, position)
@@ -153,7 +147,7 @@ impl YieldCurveChart {
         position: PriceScalePosition,
     ) -> Result<SeriesId, ChartError> {
         let mut options = AreaSeriesOptions::default();
-        yield_defaults(&mut options.common, self.price_formatter.clone());
+        yield_defaults(&mut options.common);
         options.apply_patch(patch);
         self.core
             .add_series(SeriesOptionsMap::Area(options), pane, position)
@@ -458,18 +452,9 @@ impl YieldCurveChart {
         self.core.replace_series_options(id, options)
     }
 }
-fn yield_defaults(
-    options: &mut crate::model::series_options::SeriesOptionsCommon,
-    formatter: crate::model::price_formatter_fn::PriceFormatterFn,
-) {
+fn yield_defaults(options: &mut crate::model::series_options::SeriesOptionsCommon) {
     options.last_value_visible = false;
     options.price_line_visible = false;
-    options.price_format = PriceFormat::Custom(PriceFormatCustom {
-        formatter,
-        tickmarks_formatter: None,
-        min_move: 0.01,
-        base: None,
-    });
 }
 
 #[cfg(test)]

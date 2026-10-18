@@ -1,4 +1,5 @@
 //! Synchronous Pane ownership and visible-range price-scale recalculation.
+use crate::model::localization_options::LocalizationOptionsBase;
 
 use crate::model::{
     autoscale_info_impl::AutoscaleInfoImpl,
@@ -88,6 +89,9 @@ where
     fn format_price(&self, price: f64) -> String {
         self.series.borrow().format_price(price)
     }
+    fn format_tickmarks(&self, prices: &[f64]) -> Vec<String> {
+        self.series.borrow().formatter().format_tickmarks(prices)
+    }
     fn base(&self) -> f64 {
         self.series.borrow().base()
     }
@@ -131,6 +135,7 @@ impl ZOrdered for OrderedSource {
 /// outside this ownership boundary.
 pub struct Pane<I = (), O = (), M = ()> {
     index: usize,
+    localization: LocalizationOptionsBase,
     options: PaneOptions,
     width: f64,
     height: f64,
@@ -158,6 +163,7 @@ where
     pub fn new(index: usize, options: PaneOptions, layout: &LayoutOptions) -> Self {
         let mut pane = Self {
             index,
+            localization: LocalizationOptionsBase::default(),
             left_price_scale: PriceScale::new(
                 LEFT_PRICE_SCALE_ID,
                 options.left_price_scale.clone(),
@@ -193,6 +199,16 @@ where
             }
         }
         pane
+    }
+
+    pub(crate) fn set_localization(&mut self, localization: LocalizationOptionsBase) {
+        self.left_price_scale.set_localization(localization.clone());
+        self.right_price_scale
+            .set_localization(localization.clone());
+        for scale in self.overlay_price_scales.values_mut() {
+            scale.set_localization(localization.clone());
+        }
+        self.localization = localization;
     }
 
     pub const fn index(&self) -> usize {
@@ -920,6 +936,7 @@ where
                 let options = self.options.overlay_price_scale.clone();
                 let height = self.height;
                 let font_size = self.layout_font_size;
+                let localization = self.localization.clone();
                 self.overlay_price_scales
                     .entry(id.clone())
                     .or_insert_with(|| {
@@ -931,6 +948,7 @@ where
                         ) {
                             scale.set_auto_scale(true);
                         }
+                        scale.set_localization(localization);
                         scale.set_height(height);
                         scale
                     })
