@@ -1,10 +1,14 @@
 //! Owned price-axis gestures shared by single- and multi-pane Canvas callers.
+pub use super::time_axis_input::AxisGestureOptions;
 use crate::{
     model::axis_snapshots::PriceAxisSide,
-    ui::chart_layout::{ChartLayout, LayoutRect},
+    ui::{
+        axis_pointer::{Action, AxisPointer},
+        chart_layout::{ChartLayout, LayoutRect},
+    },
 };
 use iced::{Point, advanced::mouse, widget::canvas::Event};
-
+use std::time::Instant;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PriceAxisAction {
     Start { y: f64 },
@@ -19,32 +23,40 @@ pub struct PriceAxisInteraction {
     pub side: PriceAxisSide,
     pub action: PriceAxisAction,
 }
-struct Drag {
+struct Target {
     pane: usize,
     side: PriceAxisSide,
-    origin_y: f64,
-    height: f64,
-    last_y: f32,
-    available: crate::renderers::price_axis_renderer::AxisBounds,
+    layout: ChartLayout,
     count: usize,
 }
 #[derive(Default)]
 pub struct PriceAxisInput {
-    drag: Option<Drag>,
-    last_click: Option<(usize, PriceAxisSide, mouse::Click)>,
+    pub options: AxisGestureOptions,
+    owner: Option<Target>,
+    pointer: AxisPointer,
+    scaling: bool,
+    last_target: Option<(usize, PriceAxisSide)>,
 }
 impl PriceAxisInput {
     pub fn target(&self) -> Option<(usize, PriceAxisSide)> {
-        self.drag.as_ref().map(|drag| (drag.pane, drag.side))
+        self.owner.as_ref().map(|o| (o.pane, o.side))
     }
     pub fn is_dragging(&self) -> bool {
-        self.drag.is_some()
+        self.pointer.active()
+    }
+    pub fn is_scaling(&self) -> bool {
+        self.scaling
+    }
+    pub fn suppresses_mouse(&self, now: Instant) -> bool {
+        self.pointer.suppresses_mouse(now)
     }
     pub fn cancel(&mut self) -> Option<PriceAxisInteraction> {
-        self.last_click = None;
-        self.drag.take().map(|d| PriceAxisInteraction {
-            pane: d.pane,
-            side: d.side,
+        self.pointer.cancel();
+        self.scaling = false;
+        self.last_target = None;
+        self.owner.take().map(|o| PriceAxisInteraction {
+            pane: o.pane,
+            side: o.side,
             action: PriceAxisAction::End,
         })
     }
@@ -56,13 +68,13 @@ impl PriceAxisInput {
         if !cursor.x.is_finite() || !cursor.y.is_finite() {
             return None;
         }
-        layouts.iter().enumerate().find_map(|(pane, layout)| {
+        layouts.iter().enumerate().find_map(|(pane, l)| {
             [PriceAxisSide::Left, PriceAxisSide::Right]
                 .into_iter()
                 .enumerate()
                 .find_map(|(index, side)| {
-                    let r = axis(layout, side);
-                    (enabled.get(pane).is_some_and(|flags| flags[index])
+                    let r = axis(l, side);
+                    (enabled.get(pane).is_some_and(|f| f[index])
                         && f64::from(cursor.x) >= r.origin.x
                         && f64::from(cursor.x) < r.origin.x + r.size.width
                         && f64::from(cursor.y) >= r.origin.y
@@ -78,108 +90,103 @@ impl PriceAxisInput {
         layouts: &[ChartLayout],
         enabled: &[[bool; 2]],
     ) -> Option<PriceAxisInteraction> {
-        let cursor = cursor.filter(|p| p.x.is_finite() && p.y.is_finite());
-        let leaving = matches!(
-            event,
-            Event::Mouse(mouse::Event::CursorLeft) | Event::Window(iced::window::Event::Unfocused)
-        );
-        if let Some(drag) = &self.drag {
-            let valid = layouts.get(drag.pane).is_some_and(|layout| {
-                let r = axis(layout, drag.side);
-                layout.available == drag.available
-                    && layouts.len() == drag.count
-                    && r.origin.y == drag.origin_y
-                    && r.size.height == drag.height
+        if let Some(o) = &self.owner {
+            let old = axis(&o.layout, o.side);
+            let valid = layouts.get(o.pane).is_some_and(|l| {
+                let r = axis(l, o.side);
+                l.available == o.layout.available
+                    && layouts.len() == o.count
+                    && r.origin.y == old.origin.y
+                    && r.size.height == old.size.height
                     && r.size.width > 0.
-                    && enabled
-                        .get(drag.pane)
-                        .is_some_and(|flags| flags[side_index(drag.side)])
+                    && enabled.get(o.pane).is_some_and(|f| f[side_index(o.side)])
             });
-            if leaving || !valid {
+            if !valid || self.scaling && !self.options.drag {
                 return self.cancel();
             }
-        } else if leaving {
-            self.last_click = None;
-            return None;
         }
-        if let Some(drag) = &mut self.drag {
-            let action = match event {
-                Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) => {
-                    PriceAxisAction::End
-                }
-                Event::Mouse(mouse::Event::CursorMoved { .. }) => {
-                    let p = cursor?;
-                    if drag.last_y == p.y {
-                        return None;
-                    }
-                    drag.last_y = p.y;
-                    if self
-                        .last_click
-                        .is_some_and(|(_, _, c)| c.position().distance(p) >= 6.)
-                    {
-                        self.last_click = None;
-                    }
-                    PriceAxisAction::Move {
-                        y: f64::from(p.y) - drag.origin_y,
-                    }
-                }
-                _ => return None,
+        let hit = cursor.and_then(|p| Self::hit_test(p, layouts, enabled));
+        if !self.pointer.active()
+            && let Event::Mouse(mouse::Event::WheelScrolled { delta }) = event
+        {
+            let (pane, side) = hit?;
+            let y = match delta {
+                mouse::ScrollDelta::Lines { y, .. } => f64::from(*y) * 32.,
+                mouse::ScrollDelta::Pixels { y, .. } => f64::from(*y),
             };
-            let result = PriceAxisInteraction {
-                pane: drag.pane,
-                side: drag.side,
-                action,
-            };
-            if action == PriceAxisAction::End {
-                self.drag = None;
+            if !y.is_finite() || y == 0. {
+                return None;
             }
-            return Some(result);
+            self.pointer.clear_pairs();
+            return Some(PriceAxisInteraction {
+                pane,
+                side,
+                action: PriceAxisAction::Wheel {
+                    delta: (y / 100.).clamp(-1., 1.),
+                },
+            });
         }
-        let p = cursor?;
-        let (pane, side) = Self::hit_test(p, layouts, enabled)?;
-        let layout = &layouts[pane];
-        let r = axis(layout, side);
-        let action = match event {
-            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                let previous = self
-                    .last_click
-                    .filter(|(old_pane, old_side, _)| *old_pane == pane && *old_side == side)
-                    .map(|(_, _, c)| c);
-                let click = mouse::Click::new(p, mouse::Button::Left, previous);
-                self.last_click = Some((pane, side, click));
-                if click.kind() == mouse::click::Kind::Double {
-                    PriceAxisAction::Reset
-                } else {
-                    self.drag = Some(Drag {
-                        pane,
-                        side,
-                        origin_y: r.origin.y,
-                        height: r.size.height,
-                        last_y: p.y,
-                        available: layout.available,
-                        count: layouts.len(),
-                    });
-                    PriceAxisAction::Start {
-                        y: f64::from(p.y) - r.origin.y,
-                    }
-                }
-            }
-            Event::Mouse(mouse::Event::WheelScrolled { delta }) => {
-                let y = match delta {
-                    mouse::ScrollDelta::Lines { y, .. } => f64::from(*y) * 32.,
-                    mouse::ScrollDelta::Pixels { y, .. } => f64::from(*y),
-                };
-                if !y.is_finite() || y == 0. {
+        if matches!(
+            event,
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+                | Event::Touch(iced::touch::Event::FingerPressed { .. })
+        ) && !self.pointer.active()
+            && hit != self.last_target
+        {
+            self.pointer.clear_pairs();
+        }
+        let eligible = hit.is_some() && (self.options.drag || self.options.reset);
+        let action =
+            self.pointer
+                .update(event, cursor, eligible, self.options, false, Instant::now())?;
+        let action = match action {
+            Action::Down(p) => {
+                let (pane, side) = hit?;
+                self.last_target = Some((pane, side));
+                let layout = layouts[pane];
+                self.owner = Some(Target {
+                    pane,
+                    side,
+                    layout,
+                    count: layouts.len(),
+                });
+                self.scaling = self.options.drag;
+                if !self.options.drag {
                     return None;
                 }
-                self.last_click = None;
-                PriceAxisAction::Wheel {
-                    delta: (y / 100.).clamp(-1., 1.),
+                PriceAxisAction::Start {
+                    y: f64::from(p.y) - axis(&layout, side).origin.y,
                 }
             }
-            _ => return None,
+            Action::Move(p) => {
+                if !self.options.drag {
+                    return None;
+                }
+                let o = self.owner.as_ref()?;
+                PriceAxisAction::Move {
+                    y: f64::from(p.y) - axis(&o.layout, o.side).origin.y,
+                }
+            }
+            Action::Up { reset } => {
+                if reset {
+                    PriceAxisAction::Reset
+                } else {
+                    PriceAxisAction::End
+                }
+            }
+            Action::Cancel => PriceAxisAction::End,
         };
-        Some(PriceAxisInteraction { pane, side, action })
+        let o = self.owner.as_ref()?;
+        let result = PriceAxisInteraction {
+            pane: o.pane,
+            side: o.side,
+            action,
+        };
+        if matches!(action, PriceAxisAction::End | PriceAxisAction::Reset) {
+            self.owner = None;
+            self.scaling = false;
+        }
+        Some(result)
     }
 }
 fn side_index(side: PriceAxisSide) -> usize {
@@ -375,9 +382,16 @@ mod tests {
         input
             .update(&release, Some(point), &[layout], &[[true, true]])
             .unwrap();
-        assert_eq!(
+        assert!(matches!(
             input
                 .update(&press, Some(point), &[layout], &[[true, true]])
+                .unwrap()
+                .action,
+            PriceAxisAction::Start { .. }
+        ));
+        assert_eq!(
+            input
+                .update(&release, Some(point), &[layout], &[[true, true]])
                 .unwrap()
                 .action,
             PriceAxisAction::Reset

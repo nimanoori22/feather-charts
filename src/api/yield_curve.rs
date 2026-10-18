@@ -49,6 +49,9 @@ impl YieldCurveChart {
     ) -> Result<(), ChartError> {
         self.core.set_series_price_scale(id, position)
     }
+    pub fn set_axis_interaction_options(&mut self, options: super::AxisInteractionOptions) {
+        self.core.set_axis_interaction_options(options);
+    }
     pub fn set_mouse_navigation_options(&mut self, options: MouseNavigationOptions) {
         self.core.set_mouse_navigation_options(options);
     }

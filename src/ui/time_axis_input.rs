@@ -82,7 +82,7 @@ impl TimeAxisInput {
                 })
             }
             Action::Move(p) => drag.then(|| TimeAxisAction::Move {
-                x: f64::from(p.x) - self.owner.unwrap().0.time_axis.origin.x,
+                x: f64::from(p.x) - layout.unwrap().time_axis.origin.x,
             }),
             Action::Up { reset } => {
                 self.owner = None;

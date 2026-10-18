@@ -223,7 +223,7 @@ impl<B: super::ChartBehavior> Chart<B> {
             self.model.end_scale_time();
         }
     }
-    fn cancel_price_axis(&mut self) {
+    pub(super) fn cancel_price_axis(&mut self) {
         if let Some((pane, side)) = self.active_price_axis.take() {
             let _ = self.model.end_scale_price(pane, side);
         }
@@ -396,6 +396,10 @@ impl<B: super::ChartBehavior> Chart<B> {
             | ChartMessage::PriceAxis(_)
             | ChartMessage::TimeAxis(_)
                 if self.primitive_edit.is_some() => {}
+            ChartMessage::TimeAxis(
+                crate::ui::time_axis_input::TimeAxisAction::Start { .. }
+                | crate::ui::time_axis_input::TimeAxisAction::Move { .. },
+            ) if !self.axis_options.time_drag => {}
             ChartMessage::TimeAxis(action) => {
                 use crate::ui::time_axis_input::TimeAxisAction;
                 match action {
@@ -407,22 +411,33 @@ impl<B: super::ChartBehavior> Chart<B> {
                         self.touch_pending_pan = None;
                         self.touch_tracking = false;
                         self.model.set_crosshair_position(0, None)?;
-                        if !self.model.time_scale().is_empty() {
+                        if self.axis_options.time_drag && !self.model.time_scale().is_empty() {
                             self.model.start_scale_time(x);
                             self.active_time_axis = true;
                         }
                     }
-                    TimeAxisAction::Move { x } if self.active_time_axis => {
+                    TimeAxisAction::Move { x }
+                        if self.active_time_axis && self.axis_options.time_drag =>
+                    {
                         self.model.scale_time_to(x)
                     }
                     TimeAxisAction::Move { .. } => {}
                     TimeAxisAction::End => self.cancel_time_axis(),
-                    TimeAxisAction::Reset => {
+                    TimeAxisAction::Reset if self.axis_options.time_reset => {
                         self.cancel_viewport_interaction();
                         self.model.reset_time_scale();
                     }
+                    TimeAxisAction::Reset => {}
                 }
             }
+            ChartMessage::PriceAxis(input)
+                if matches!(
+                    input.action,
+                    PriceAxisAction::Start { .. } | PriceAxisAction::Move { .. }
+                ) && !self.axis_options.price_drag => {}
+            ChartMessage::PriceAxis(input)
+                if matches!(input.action, PriceAxisAction::Reset)
+                    && !self.axis_options.price_reset => {}
             ChartMessage::PriceAxis(input) => {
                 self.cancel_time_axis();
                 self.stop_time_scale_animation();

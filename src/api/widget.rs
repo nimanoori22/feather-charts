@@ -44,6 +44,7 @@ impl<B: super::ChartBehavior> Chart<B> {
             primitive_edit: self.primitive_edit_id(),
             touch_options: self.touch_options,
             mouse_options: self.mouse_options,
+            axis_options: self.axis_options,
             touch_epoch: self.touch_epoch,
             applied_crosshair: self.model.crosshair().position().and_then(|p| {
                 p.y.map(|y| (p.pane, iced::Point::new(p.x as f32, y as f32)))
@@ -77,6 +78,7 @@ pub struct ChartProgram<'a, Message> {
     primitive_edit: Option<super::PrimitiveEditId>,
     touch_options: super::TouchNavigationOptions,
     mouse_options: super::MouseNavigationOptions,
+    axis_options: super::AxisInteractionOptions,
     touch_epoch: u64,
     applied_crosshair: Option<(usize, iced::Point)>,
     on_message: fn(ChartMessage) -> Message,
@@ -265,7 +267,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             return Some(self.publish(ChartMessage::Touch(output.input)));
         }
         if matches!(event, canvas::Event::Mouse(event) if !matches!(event, iced::mouse::Event::WheelScrolled { .. }))
-            && (state.touch_input.suppresses_mouse(now) || state.time_input.suppresses_mouse(now))
+            && (state.touch_input.suppresses_mouse(now)
+                || state.time_input.suppresses_mouse(now)
+                || state.axis_input.suppresses_mouse(now))
         {
             return None;
         }
@@ -372,7 +376,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 );
             }
         }
-        if state.axis_input.is_dragging()
+        if state.axis_input.is_scaling()
             && state.axis_input.target() != self.active_price_axis
             && let Some(end) = state.axis_input.cancel()
         {
@@ -404,7 +408,11 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 )),
                 _ => local,
             };
-            state.time_input.options.touch_drag = self.touch_options.horizontal_drag;
+            state.time_input.options = crate::ui::time_axis_input::AxisGestureOptions {
+                drag: self.axis_options.time_drag,
+                reset: self.axis_options.time_reset,
+                touch_drag: self.touch_options.horizontal_drag,
+            };
             if let Some(action) =
                 state
                     .time_input
@@ -413,7 +421,20 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.click = None;
                 state.click_sequence.cancel();
                 state.touch_input.cancel_tap_pair();
-                return Some(self.publish(ChartMessage::TimeAxis(action)).and_capture());
+                let publish = self.publish(ChartMessage::TimeAxis(action));
+                return Some(
+                    if matches!(event, canvas::Event::Touch(_))
+                        && matches!(
+                            action,
+                            crate::ui::time_axis_input::TimeAxisAction::Start { .. }
+                                | crate::ui::time_axis_input::TimeAxisAction::End
+                        )
+                    {
+                        publish
+                    } else {
+                        publish.and_capture()
+                    },
+                );
             }
             if state.time_input.is_dragging()
                 && matches!(event, canvas::Event::Mouse(_) | canvas::Event::Touch(_))
@@ -534,6 +555,23 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             && !state.time_input.is_dragging()
             && (!over_divider || state.axis_input.is_dragging())
         {
+            state.axis_input.options = crate::ui::price_axis_input::AxisGestureOptions {
+                drag: self.axis_options.price_drag,
+                reset: self.axis_options.price_reset,
+                touch_drag: self.touch_options.vertical_drag,
+            };
+            let local = match event {
+                canvas::Event::Touch(
+                    iced::touch::Event::FingerPressed { position, .. }
+                    | iced::touch::Event::FingerMoved { position, .. }
+                    | iced::touch::Event::FingerLifted { position, .. }
+                    | iced::touch::Event::FingerLost { position, .. },
+                ) => Some(iced::Point::new(
+                    position.x - bounds.x,
+                    position.y - bounds.y,
+                )),
+                _ => local,
+            };
             if let Some(action) =
                 state
                     .axis_input
@@ -542,10 +580,25 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.touch_input.cancel(now);
                 state.click = None;
                 state.click_sequence.cancel();
-                return Some(self.publish(ChartMessage::PriceAxis(action)).and_capture());
+                let publish = self.publish(ChartMessage::PriceAxis(action));
+                return Some(
+                    if matches!(event, canvas::Event::Touch(_))
+                        && matches!(
+                            action.action,
+                            crate::ui::price_axis_input::PriceAxisAction::Start { .. }
+                                | crate::ui::price_axis_input::PriceAxisAction::End
+                        )
+                    {
+                        publish
+                    } else {
+                        publish.and_capture()
+                    },
+                );
             }
-            if state.axis_input.is_dragging() && matches!(event, canvas::Event::Mouse(_)) {
-                return None;
+            if state.axis_input.is_dragging()
+                && matches!(event, canvas::Event::Mouse(_) | canvas::Event::Touch(_))
+            {
+                return Some(canvas::Action::capture());
             }
         }
         if !state.axis_input.is_dragging() && !state.time_input.is_dragging() {
@@ -662,6 +715,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         }
         if state.time_input.is_dragging()
             || (self.enabled
+                && self.axis_options.time_drag
                 && cursor.position().is_some_and(|p| {
                     crate::ui::time_axis_input::TimeAxisInput::hit_test(
                         iced::Point::new(p.x - bounds.x, p.y - bounds.y),
@@ -672,14 +726,15 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             return iced::mouse::Interaction::ResizingHorizontally;
         }
         if state.axis_input.is_dragging()
-            || cursor.position().is_some_and(|p| {
-                PriceAxisInput::hit_test(
-                    iced::Point::new(p.x - bounds.x, p.y - bounds.y),
-                    self.axis_layouts(),
-                    &self.axis_scaling,
-                )
-                .is_some()
-            })
+            || self.axis_options.price_drag
+                && cursor.position().is_some_and(|p| {
+                    PriceAxisInput::hit_test(
+                        iced::Point::new(p.x - bounds.x, p.y - bounds.y),
+                        self.axis_layouts(),
+                        &self.axis_scaling,
+                    )
+                    .is_some()
+                })
         {
             iced::mouse::Interaction::ResizingVertically
         } else {

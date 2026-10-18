@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C next.
+Date: 2026-10-18. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C core validation in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -48,9 +48,9 @@ and its pinned evidence record.
 
 ### C — Horizontal-axis input and settings
 
-- [ ] C0: Freeze horizontal-axis input and independent-control behavior. (depends: B3).
-- [ ] C1: Implement horizontal-axis drag and reset. (depends: C0).
-- [ ] C2: Expose and enforce independent axis settings. (depends: C1).
+- [x] C0: Freeze horizontal-axis input and independent-control behavior. (depends: B3).
+- [x] C1: Implement horizontal-axis drag and reset. (depends: C0).
+- [x] C2: Expose and enforce independent axis settings. (depends: C1).
 - [ ] C3: Demonstrate axis controls and accept milestone C. (depends: C2).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

@@ -1,6 +1,6 @@
 # Horizontal-axis input and independent settings (milestone C)
 
-Baseline: `2c42782`. Status: C0 investigation and red regressions.
+Baseline: `2c42782`. Status: C0–C2 implemented; C3 demo and final acceptance in progress.
 
 ## Source and consumers
 
@@ -103,3 +103,16 @@ engine errors: restore_default used global defaults and discarded rightOffsetPix
 apply_options did not retain configured bar_spacing. Both now follow current source.
 Release pairing was moved unchanged into helpers for reuse by plot/touch/axis inputs.
 The shared axis pointer recognizer will also serve price-axis settings in C2.
+
+## C2 checkpoint
+
+The 16-flag Canvas truth table first compiled and failed when drag was disabled but
+still moved. It now matches all 16 frozen actual DOM gesture cases. Ten focused
+public tests and the library/pane/event suites pass; strict all-target Clippy/check
+pass. Atomic mixed-invalid patches preserve settings and captures. Disabling an axis
+drag ends its owner; unrelated axis and plot gestures survive. Native price-axis
+wheel remains independent. Both axes reuse the owned pointer helper and release-time
+reset pairing. This intentionally corrects the former native price reset on second
+press to source reset on second successful release. Touch direction/options, lost
+finger cancellation, double taps without plot events and synthetic mouse suppression
+are tested. Existing ClickSequence was reused without changing plot timing policy.

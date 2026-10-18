@@ -261,3 +261,336 @@ fn reset_retains_pixel_offset_policy_and_runtime_defaults() {
         Some(60.)
     );
 }
+
+#[test]
+fn source_axis_flag_matrix() {
+    for mask in 0..16 {
+        let mut c = chart();
+        let mut s = ChartState::default();
+        let opts = AxisInteractionOptions {
+            time_drag: mask & 1 != 0,
+            time_reset: mask & 2 != 0,
+            price_drag: mask & 4 != 0,
+            price_reset: mask & 8 != 0,
+        };
+        c.apply_chart_options(ChartOptionsPatch {
+            axis_interaction: Some(opts),
+            ..Default::default()
+        })
+        .unwrap();
+        assert_eq!(c.runtime_options().axis_interaction, opts);
+        let a = axis(&c, 0.6);
+        let b = axis(&c, 0.4);
+        press(&mut c, &mut s, a);
+        movement(&mut c, &mut s, b);
+        release(&mut c, &mut s, Some(b));
+        let scaled = c.model().time_scale().bar_spacing() != 9.;
+        assert_eq!(scaled, opts.time_drag, "mask {mask}");
+        // The range contains exactly width/18 bars; this does not change defaults.
+        let width = c.model().time_scale().width();
+        c.set_logical_range(feather_charts::model::time_data::LogicalRange {
+            from: 200.0.into(),
+            to: (200. + width / 18. - 1.).into(),
+        });
+        c.set_right_offset(8.);
+        prepare(&mut c);
+        let p = axis(&c, 0.6);
+        for _ in 0..2 {
+            press(&mut c, &mut s, p);
+            release(&mut c, &mut s, Some(p));
+        }
+        prepare(&mut c);
+        let spacing = c.model().time_scale().bar_spacing();
+        let offset = c.model().time_scale().right_offset();
+        assert!((spacing - if opts.time_reset { 9. } else { 18. }).abs() < 1e-8);
+        assert_eq!(offset, if opts.time_reset { 3. } else { 8. });
+        let r = c.frame().layout.right_axis;
+        let p = Point::new(
+            (r.origin.x + r.size.width * 0.5) as f32,
+            (r.size.height * 0.5) as f32,
+        );
+        press(&mut c, &mut s, p);
+        let end = Point::new(p.x, p.y + r.size.height as f32 * 0.1);
+        movement(&mut c, &mut s, end);
+        release(&mut c, &mut s, Some(end));
+        let manual = !c
+            .price_scale_options(0, &PriceScalePosition::Right)
+            .unwrap()
+            .auto_scale;
+        assert_eq!(manual, opts.price_drag, "mask {mask}");
+        c.set_visible_price_range(
+            0,
+            &PriceScalePosition::Right,
+            feather_charts::model::price_range_impl::PriceRange {
+                min_value: 100.,
+                max_value: 110.,
+            },
+        )
+        .unwrap();
+        prepare(&mut c);
+        let r = c.frame().layout.right_axis;
+        let p = Point::new(
+            (r.origin.x + r.size.width * 0.6) as f32,
+            (r.size.height * 0.5) as f32,
+        );
+        for _ in 0..2 {
+            press(&mut c, &mut s, p);
+            release(&mut c, &mut s, Some(p));
+        }
+        let auto = c
+            .price_scale_options(0, &PriceScalePosition::Right)
+            .unwrap()
+            .auto_scale;
+        assert_eq!(auto, opts.price_reset, "mask {mask}");
+        println!(
+            "AXIS_REFERENCE {{\"mask\":{mask},\"scaled\":{scaled},\"spacing\":{},\"offset\":{offset},\"manual\":{manual},\"autoAfterReset\":{auto}}}",
+            (spacing * 1e6).round() / 1e6
+        );
+    }
+}
+
+#[test]
+fn option_patches_are_atomic_and_cancel_only_the_disabled_axis_capture() {
+    for owner in 0..3 {
+        let mut c = chart();
+        let mut s = ChartState::default();
+        let p = match owner {
+            0 => axis(&c, 0.6),
+            1 => Point::new(790., 100.),
+            _ => Point::new(200., 100.),
+        };
+        press(&mut c, &mut s, p);
+        movement(&mut c, &mut s, Point::new(p.x - 20., p.y + 20.));
+        let before = c.axis_interaction_options();
+        assert!(
+            c.apply_chart_options(ChartOptionsPatch {
+                axis_interaction: Some(AxisInteractionOptions {
+                    time_drag: false,
+                    ..before
+                }),
+                model: ChartModelOptionsPatch {
+                    time_scale: Some(HorzScaleOptionsPatch {
+                        bar_spacing: Some(f64::NAN),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .is_err()
+        );
+        assert_eq!(c.axis_interaction_options(), before);
+        c.apply_chart_options(Default::default()).unwrap();
+        let unrelated = if owner == 0 {
+            AxisInteractionOptions {
+                price_drag: false,
+                ..before
+            }
+        } else {
+            AxisInteractionOptions {
+                time_drag: false,
+                ..before
+            }
+        };
+        c.set_axis_interaction_options(unrelated);
+        let spacing = c.model().time_scale().bar_spacing();
+        movement(&mut c, &mut s, Point::new(p.x - 60., p.y + 60.));
+        if owner == 0 {
+            assert_ne!(spacing, c.model().time_scale().bar_spacing());
+        }
+        if owner == 1 {
+            assert!(c.active_price_axis().is_some());
+        }
+        if owner == 2 {
+            assert!(c.is_panning());
+        }
+        if owner < 2 {
+            c.set_axis_interaction_options(AxisInteractionOptions {
+                time_drag: false,
+                price_drag: false,
+                ..before
+            });
+            let spacing = c.model().time_scale().bar_spacing();
+            movement(&mut c, &mut s, Point::new(p.x - 100., p.y + 100.));
+            assert_eq!(spacing, c.model().time_scale().bar_spacing());
+            assert!(!s.is_axis_dragging());
+            assert!(c.active_price_axis().is_none());
+        }
+        release(&mut c, &mut s, None);
+    }
+}
+
+fn finger(c: &mut Chart, s: &mut ChartState, kind: u8, p: Point) {
+    let id = iced::touch::Finger(1);
+    let e = match kind {
+        0 => iced::touch::Event::FingerPressed { id, position: p },
+        1 => iced::touch::Event::FingerMoved { id, position: p },
+        2 => iced::touch::Event::FingerLifted { id, position: p },
+        _ => iced::touch::Event::FingerLost { id, position: p },
+    };
+    input(c, s, Event::Touch(e), None);
+}
+#[test]
+fn touch_axis_double_tap_resets_without_plot_events_or_synthetic_mouse_actions() {
+    for price in [false, true] {
+        let mut c = chart();
+        let mut s = ChartState::default();
+        c.set_event_interests(EventInterests {
+            double_click: true,
+            ..Default::default()
+        });
+        c.set_logical_range(feather_charts::model::time_data::LogicalRange {
+            from: 200.0.into(),
+            to: 240.0.into(),
+        });
+        c.set_visible_price_range(
+            0,
+            &PriceScalePosition::Right,
+            feather_charts::model::price_range_impl::PriceRange {
+                min_value: 100.,
+                max_value: 110.,
+            },
+        )
+        .unwrap();
+        prepare(&mut c);
+        let p = if price {
+            Point::new(790., 100.)
+        } else {
+            axis(&c, 0.6)
+        };
+        for _ in 0..2 {
+            finger(&mut c, &mut s, 0, p);
+            finger(&mut c, &mut s, 2, p);
+        }
+        if price {
+            assert!(
+                c.price_scale_options(0, &PriceScalePosition::Right)
+                    .unwrap()
+                    .auto_scale
+            );
+        } else {
+            assert_eq!(c.model().time_scale().bar_spacing(), 9.);
+        }
+        assert!(!s.is_axis_dragging());
+        let spacing = c.model().time_scale().bar_spacing();
+        let offset = c.model().time_scale().right_offset();
+        press(&mut c, &mut s, p);
+        movement(&mut c, &mut s, Point::new(p.x - 60., p.y + 30.));
+        release(&mut c, &mut s, Some(p));
+        assert_eq!(
+            (spacing, offset),
+            (
+                c.model().time_scale().bar_spacing(),
+                c.model().time_scale().right_offset()
+            )
+        );
+        assert!(!s.is_axis_dragging());
+        assert!(
+            c.take_events()
+                .iter()
+                .all(|e| !matches!(e, ChartEvent::DoubleClick(_) | ChartEvent::Click(_)))
+        );
+    }
+}
+#[test]
+fn touch_axis_drag_obeys_direction_and_touch_options_and_loss_cancels() {
+    for price in [false, true] {
+        for allowed in [false, true] {
+            for correct_direction in [false, true] {
+                let mut c = chart();
+                let mut s = ChartState::default();
+                c.set_touch_navigation_options(TouchNavigationOptions {
+                    horizontal_drag: allowed,
+                    vertical_drag: allowed,
+                    ..Default::default()
+                });
+                let p = if price {
+                    Point::new(790., 100.)
+                } else {
+                    axis(&c, 0.6)
+                };
+                let q = if price == correct_direction {
+                    Point::new(p.x, p.y + 40.)
+                } else {
+                    Point::new(p.x - 80., p.y)
+                };
+                let spacing = c.model().time_scale().bar_spacing();
+                let range = c
+                    .visible_price_range(0, &PriceScalePosition::Right)
+                    .unwrap();
+                finger(&mut c, &mut s, 0, p);
+                finger(&mut c, &mut s, 1, q);
+                let changed = if price {
+                    c.visible_price_range(0, &PriceScalePosition::Right)
+                        .unwrap()
+                        != range
+                } else {
+                    c.model().time_scale().bar_spacing() != spacing
+                };
+                assert_eq!(
+                    changed,
+                    allowed && correct_direction,
+                    "price {price} allowed {allowed} direction {correct_direction}"
+                );
+                finger(&mut c, &mut s, 3, q);
+                assert!(!s.is_axis_dragging());
+                let before = c.model().time_scale().bar_spacing();
+                finger(&mut c, &mut s, 1, p);
+                assert_eq!(before, c.model().time_scale().bar_spacing());
+            }
+        }
+    }
+}
+
+#[test]
+fn disabling_axis_flags_preserves_wheel_navigation_and_blocks_raw_actions() {
+    let mut c = chart();
+    let mut s = ChartState::default();
+    c.set_axis_interaction_options(AxisInteractionOptions {
+        time_drag: false,
+        time_reset: false,
+        price_drag: false,
+        price_reset: false,
+    });
+    let before = c.model().time_scale().bar_spacing();
+    input(
+        &mut c,
+        &mut s,
+        Event::Mouse(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+        }),
+        Some(Point::new(200., 100.)),
+    );
+    assert_ne!(before, c.model().time_scale().bar_spacing());
+    let range = c
+        .visible_price_range(0, &PriceScalePosition::Right)
+        .unwrap();
+    input(
+        &mut c,
+        &mut s,
+        Event::Mouse(mouse::Event::WheelScrolled {
+            delta: mouse::ScrollDelta::Lines { x: 0., y: 1. },
+        }),
+        Some(Point::new(790., 100.)),
+    );
+    assert_ne!(
+        range,
+        c.visible_price_range(0, &PriceScalePosition::Right)
+            .unwrap()
+    );
+    let before = c.model().time_scale().bar_spacing();
+    for action in [
+        feather_charts::ui::time_axis_input::TimeAxisAction::Start { x: 200. },
+        feather_charts::ui::time_axis_input::TimeAxisAction::Move { x: 100. },
+        feather_charts::ui::time_axis_input::TimeAxisAction::Reset,
+    ] {
+        c.update(ChartMessage::TimeAxis(action)).unwrap();
+    }
+    assert_eq!(before, c.model().time_scale().bar_spacing());
+    assert!(
+        c.update(ChartMessage::TimeAxis(
+            feather_charts::ui::time_axis_input::TimeAxisAction::Move { x: f64::NAN }
+        ))
+        .is_err()
+    );
+}
