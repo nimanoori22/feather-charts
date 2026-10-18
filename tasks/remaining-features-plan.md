@@ -1,6 +1,6 @@
 # Screenshot export, custom horizontal factories and attribution
 
-Date: 2026-10-18. Status: implementing screenshot/export; later milestones pending.
+Date: 2026-10-18. Status: screenshot accepted by user; implementing custom horizontal factories.
 Baseline: `23476f1`. Checklist: [remaining-features-todo.md](remaining-features-todo.md).
 Use the existing feature-specific plan convention; preserve earlier plans and
 their independent acceptance records.

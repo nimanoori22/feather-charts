@@ -99,5 +99,50 @@
     "timing acceptance",
     "dedicated drawing-order mouse acceptance",
     "touchpad/touchscreen/high-DPI physical checks"
-  ]
+  ],
+  "user_acceptance": {
+    "statement": "screenshot is okay, let's go for the next step",
+    "date": "2026-10-18",
+    "proceed_to_next_milestone": true,
+    "backend_specific_scope": "No separate GPU physical result was supplied; do not infer one."
+  },
+  "mouse_processes": {
+    "tiny-skia": [
+      {
+        "mode": "calendar",
+        "backend": "tiny-skia",
+        "pid": 370260,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--screenshot-export",
+          "--live-feed"
+        ],
+        "exit": 0
+      },
+      {
+        "mode": "price",
+        "backend": "tiny-skia",
+        "pid": 370261,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--screenshot-export",
+          "--live-feed",
+          "--options"
+        ],
+        "exit": 0
+      },
+      {
+        "mode": "yield",
+        "backend": "tiny-skia",
+        "pid": 370262,
+        "command": [
+          "target/debug/examples/pane_management",
+          "--screenshot-export",
+          "--live-feed",
+          "--yield-curve"
+        ],
+        "exit": 0
+      }
+    ]
+  }
 }

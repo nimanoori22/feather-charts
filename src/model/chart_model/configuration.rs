@@ -93,26 +93,7 @@ where
         if !colors.into_iter().all(valid_color) {
             return Err(ChartModelError::InvalidChartOptions("color"));
         }
-        let t = &next.time_scale;
-        if ![
-            t.bar_spacing,
-            t.min_bar_spacing,
-            t.max_bar_spacing,
-            t.right_offset,
-            t.minimum_height,
-        ]
-        .into_iter()
-        .all(f64::is_finite)
-            || t.right_offset_pixels.is_some_and(|v| !v.is_finite())
-            || t.bar_spacing <= 0.
-            || t.min_bar_spacing <= 0.
-            || t.max_bar_spacing < 0.
-            || t.max_bar_spacing > 0. && t.max_bar_spacing < t.min_bar_spacing
-            || t.minimum_height < 0.
-            || t.minimum_height > f64::from(f32::MAX)
-            || t.conflation_threshold_factor
-                .is_some_and(|v| !v.is_finite() || v <= 0.)
-        {
+        if !valid_horizontal_options(&next.time_scale) {
             return Err(ChartModelError::InvalidChartOptions("horizontal scale"));
         }
         let mut changed = before != next;

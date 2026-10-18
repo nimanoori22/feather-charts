@@ -245,6 +245,20 @@ pub enum DataLayerError<E> {
     PlotRow(PlotRowCreationError),
 }
 
+impl<E: std::fmt::Debug> std::fmt::Display for DataLayerError<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+impl<E: std::error::Error + 'static> std::error::Error for DataLayerError<E> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Behavior(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+
 /// DataLayer owns normalized time points and per-series rows. A point owns its
 /// member rows, so reindexing has one exclusive owner and needs no shared
 /// mutable references or object identity.
@@ -301,9 +315,7 @@ where
             .iter()
             .map(|item| item.time().clone())
             .collect::<Vec<_>>();
-        self.remove_series_memberships(series);
-        self.cleanup_empty_points();
-        let mut last = None;
+        let mut prepared = Vec::with_capacity(data.len());
         if !data.is_empty() {
             self.behavior
                 .preprocess_data(&mut data)
@@ -316,7 +328,6 @@ where
                 let internal_time = converter
                     .convert(item.time())
                     .map_err(DataLayerError::Behavior)?;
-                let point_index = self.ensure_point(internal_time.clone(), original_time.clone());
                 let row = create_builtin_plot_row(
                     series_type,
                     internal_time.clone(),
@@ -325,9 +336,19 @@ where
                     original_time,
                 )
                 .map_err(DataLayerError::PlotRow)?;
-                self.points[point_index].rows.insert(series, row);
-                last = Some(internal_time);
+                prepared.push(row);
             }
+        }
+        // User behavior can fail. Complete fallible conversion before removing
+        // memberships, as custom-series replacements already do.
+        self.remove_series_memberships(series);
+        self.cleanup_empty_points();
+        let mut last = None;
+        for row in prepared {
+            let internal_time = row.time().clone();
+            let point_index = self.ensure_point(internal_time.clone(), row.original_time().clone());
+            self.points[point_index].rows.insert(series, row);
+            last = Some(internal_time);
         }
         self.series_types.insert(series, series_type);
         if let Some(last) = last {

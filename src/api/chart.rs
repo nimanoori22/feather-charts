@@ -33,6 +33,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum ChartError {
+    /// Owned application-defined cause; no Send/Sync requirement.
+    CustomBehavior(Box<dyn std::error::Error>),
     Screenshot(super::ScreenshotError),
     OptionsChart(crate::model::horz_scale_behavior_price::OptionsChartError),
     OptionsData(DataLayerError<crate::model::horz_scale_behavior_price::OptionsChartError>),
@@ -49,13 +51,19 @@ pub enum ChartError {
     UnknownSeries(SeriesId),
     UnsupportedSeries,
     HistoricalUpdateWithConflation(SeriesId),
-    InvalidData { index: usize },
+    InvalidData {
+        index: usize,
+    },
     InvalidDataQuery,
     InvalidPriceRange,
-    UnorderedData { index: usize },
+    UnorderedData {
+        index: usize,
+    },
     IdExhausted,
     InvalidInteraction,
-    InvalidMarker { index: usize },
+    InvalidMarker {
+        index: usize,
+    },
     UnknownMarkerCollection(super::MarkerCollectionId),
 }
 impl std::fmt::Display for ChartError {
@@ -63,7 +71,14 @@ impl std::fmt::Display for ChartError {
         write!(f, "{self:?}")
     }
 }
-impl std::error::Error for ChartError {}
+impl std::error::Error for ChartError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::CustomBehavior(error) => Some(error.as_ref()),
+            _ => None,
+        }
+    }
+}
 impl From<ChartModelError> for ChartError {
     fn from(e: ChartModelError) -> Self {
         Self::Model(e)

@@ -1,5 +1,5 @@
 //! The supported public chart families share one synchronous owner.
-use super::ChartError;
+use super::{Chart, ChartError};
 use crate::model::{
     data_consumer::TimedData,
     data_layer::DataLayerError,
@@ -58,5 +58,52 @@ impl ChartBehavior for crate::model::yield_curve_horz_scale_behavior::YieldCurve
             self.options().scaffold(row.time().months())?;
         }
         Ok(crate::model::yield_curve_horz_scale_behavior::MaturityConverter)
+    }
+}
+
+impl<B: ChartBehavior> Chart<B> {
+    /// Creates a chart with an application-defined horizontal domain.
+    ///
+    /// On valid construction, calls the factory twice, then drops it. Each behavior must independently
+    /// own equivalent options/conversion/key policies and mutable caches. Neither
+    /// B nor its options needs Clone. Keys must be stable and totally ordered;
+    /// cache keys must identify the same internal point. Domains use logical
+    /// indices, not continuous numeric distance. Existing constructors are unchanged.
+    pub fn with_custom_behavior(
+        mut make_behavior: impl FnMut() -> B,
+        chart_options: crate::model::chart_model::ChartModelOptions,
+        scale_options: crate::model::time_scale_options::HorzScaleOptions,
+        localization: crate::model::localization_options::LocalizationOptions<B::Item>,
+    ) -> Result<Self, ChartError> {
+        if !crate::model::chart_configuration::valid_horizontal_options(&scale_options) {
+            return Err(
+                crate::model::chart_model::ChartModelError::InvalidChartOptions("horizontal scale")
+                    .into(),
+            );
+        }
+        let mut data = make_behavior();
+        data.update_scale_options(&scale_options);
+        data.update_formatter(&localization);
+        let chart = Self::with_behavior(
+            chart_options,
+            data,
+            make_behavior(),
+            scale_options,
+            localization,
+        );
+        chart.model.preview_runtime_options(&Default::default())?;
+        Ok(chart)
+    }
+    pub fn horizontal_behavior_options(&self) -> &B::Options {
+        self.layer.behavior().options()
+    }
+    /// Builds equivalent application options twice without requiring Clone.
+    /// Formatting/cache changes apply immediately. To change key interpretation
+    /// or stored weighting rules, clear all shared series before configuration
+    /// and reload them afterward, or create a new chart. The option factory is not retained. This does not cancel gestures.
+    pub fn configure_horizontal_behavior(&mut self, make_options: impl FnMut() -> B::Options) {
+        self.model
+            .configure_horizontal_behavior(&mut self.layer, make_options);
+        self.revision = self.revision.wrapping_add(1);
     }
 }

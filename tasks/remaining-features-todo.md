@@ -1,6 +1,6 @@
 # Remaining public features checklist
 
-Status: screenshot/export implementation in verification, 2026-10-18. Later milestones have not started.
+Status: user accepted screenshot/export and authorized the custom-horizontal milestone, 2026-10-18.
 Plan: [remaining-features-plan.md](remaining-features-plan.md). Baseline `23476f1`.
 Do not overwrite earlier plans or close their independent exceptions.
 
@@ -24,14 +24,14 @@ all source flag combinations, custom/overlay content and immutable snapshots pas
 
 ## B — Application-defined horizontal behavior
 
-- [ ] B0: Audit createChartEx and real consumers; freeze factory, initialization,
+- [x] B0: Audit createChartEx and real consumers; freeze factory, initialization,
   original-item/key/cache, configuration, errors and ownership contracts.
-- [ ] B1: External non-Clone behavior constructs through public API, with useful
+- [x] B1: External non-Clone behavior constructs through public API, with useful
   owned conversion/data errors and unchanged existing constructors.
-- [ ] B2: Verify conversion, ordering/weights/labels/cache resets, canonical data,
+- [x] B2: Verify conversion, ordering/weights/labels/cache resets, canonical data,
   custom series, original-item events, primitives/navigation and screenshot export.
 - [ ] Checkpoint B-public: review real external consumer and save tested local commit.
-- [ ] B3: Deliver a genuine custom-domain demo using no library-private internals.
+- [x] B3: Deliver a genuine custom-domain demo using no library-private internals.
 - [ ] B4: Pass new source cases, old source/compatibility gates and both backend
   custom-domain mouse/export checks; save evidence and a local milestone commit.
 
@@ -80,7 +80,8 @@ bounds at fractional DPR, and stays absent from source-compatible screenshot out
 
 Core capture/export checkpoint: `801ed3b`. Automated screenshot verification passes:
 772 tests/75 suites, 2 doctests, strict Clippy/check/format, all 35 source comparisons,
-1158 exports and the unchanged 96-image baseline gate. A6 remains open for actual
-mouse/preview/file checks on both backends; B/C must follow that acceptance gate.
+1158 exports and the unchanged 96-image baseline gate. The user accepted screenshot/export and explicitly requested the next step. Proceed
+to B under that instruction. A6 retains its missing backend-specific physical
+record; no separate GPU result is inferred from the general acceptance statement.
 See [the screenshot report](../docs/porting/screenshot-export.md) and
 [evidence](../docs/porting/screenshot-export-evidence.json). Nothing has been pushed.

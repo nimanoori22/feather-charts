@@ -1,0 +1,42 @@
+{
+  "initialTimes": [
+    {
+      "session": 1,
+      "phase": "Open"
+    },
+    {
+      "session": 1,
+      "phase": "Close"
+    },
+    {
+      "session": 3,
+      "phase": "Auction"
+    }
+  ],
+  "equallySpaced": true,
+  "latestValue": 18,
+  "historyValue": 12,
+  "removedTimes": [
+    {
+      "session": 8,
+      "phase": "Open"
+    },
+    {
+      "session": 3,
+      "phase": "Auction"
+    }
+  ],
+  "range": {
+    "from": {
+      "session": 1,
+      "phase": "Open"
+    },
+    "to": {
+      "session": 1,
+      "phase": "Close"
+    }
+  },
+  "formatted": "Run 1 Close",
+  "rejected": true,
+  "initialized": true
+}
