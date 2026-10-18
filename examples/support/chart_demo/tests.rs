@@ -621,13 +621,17 @@ fn native_price_axis_drag_reset_and_cancellation_preserve_time_and_panes() {
                     |frame| frame.layout.panes.clone(),
                 );
                 let enabled = demo.chart.axis_scaling();
-                let actions = [&press, &release, &press].map(|event| {
+                let actions = [&press, &release, &press, &release].map(|event| {
                     input
                         .update(event, Some(point), &layouts, &enabled)
                         .unwrap()
                 });
                 assert!(matches!(
                     actions[2].action,
+                    feather_charts::ui::price_axis_input::PriceAxisAction::Start { .. }
+                ));
+                assert!(matches!(
+                    actions[3].action,
                     feather_charts::ui::price_axis_input::PriceAxisAction::Reset
                 ));
                 for action in actions {

@@ -54,6 +54,7 @@ impl TimeAxisInput {
         now: Instant,
     ) -> Option<TimeAxisAction> {
         let AxisGestureOptions { drag, reset, .. } = self.options;
+        let can_scale = enabled && drag;
         let layout = layouts
             .iter()
             .find(|l| l.time_axis.size.height > 0. && l.time_axis.size.width > 0.);
@@ -63,12 +64,11 @@ impl TimeAxisInput {
                     || l.time_axis.origin.y != old.time_axis.origin.y
                     || l.time_axis.size.height != old.time_axis.size.height
             }) || layouts.len() != count
-        }) || (!enabled || (!drag && !reset)) && self.is_dragging()
+        }) || ((!can_scale && self.scaling) || (!can_scale && !reset)) && self.is_dragging()
         {
             return self.cancel();
         }
-        let eligible =
-            enabled && (drag || reset) && point.is_some_and(|p| Self::hit_test(p, layouts));
+        let eligible = (can_scale || reset) && point.is_some_and(|p| Self::hit_test(p, layouts));
         let action = self
             .pointer
             .update(event, point, eligible, self.options, true, now)?;
@@ -76,12 +76,12 @@ impl TimeAxisInput {
             Action::Down(p) => {
                 let l = *layout?;
                 self.owner = Some((l, layouts.len()));
-                self.scaling = drag;
-                drag.then_some(TimeAxisAction::Start {
+                self.scaling = can_scale;
+                self.scaling.then_some(TimeAxisAction::Start {
                     x: f64::from(p.x) - l.time_axis.origin.x,
                 })
             }
-            Action::Move(p) => drag.then(|| TimeAxisAction::Move {
+            Action::Move(p) => self.scaling.then(|| TimeAxisAction::Move {
                 x: f64::from(p.x) - layout.unwrap().time_axis.origin.x,
             }),
             Action::Up { reset } => {

@@ -101,7 +101,10 @@ impl PriceAxisInput {
                     && r.size.width > 0.
                     && enabled.get(o.pane).is_some_and(|f| f[side_index(o.side)])
             });
-            if !valid || self.scaling && !self.options.drag {
+            if !valid
+                || self.scaling && !self.options.drag
+                || (!self.options.drag && !self.options.reset)
+            {
                 return self.cancel();
             }
         }

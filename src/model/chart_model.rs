@@ -1262,6 +1262,10 @@ where
         self.consume_time_effects(effects);
         self.flush_effects();
     }
+    pub(crate) fn set_time_interactions_enabled(&mut self, enabled: bool) {
+        self.time_scale.set_interactions_enabled(enabled);
+        self.light_update();
+    }
     pub(crate) fn start_scale_time(&mut self, x: f64) {
         if x.is_finite() && !self.time_scale.is_empty() {
             self.time_scale.start_scale(x.into());

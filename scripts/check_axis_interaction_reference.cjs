@@ -57,7 +57,16 @@ async function main() {
     const scale=s.priceScale();scale.setAutoScale(true);await settle();drag(price,false);await settle();const manual=!scale.options().autoScale;
     scale.setVisibleRange({from:100,to:110});scale.setAutoScale(false);await settle();twice(price);await settle();
     rows.push({mask,scaled,spacing,offset,manual,autoAfterReset:scale.options().autoScale});c.remove();
-   }return rows;
+   }
+   const c=L.createChart(document.getElementById('chart'),{width:800,height:500,layout:{attributionLogo:false},handleScroll:false,handleScale:false});
+   const s=c.addSeries(L.LineSeries);s.setData(Array.from({length:100},(_,i)=>({time:i+1,value:i+1})));c.timeScale().fitContent();await settle();
+   if(!s._series.model().timeScale().marks().some(t=>t.needAlignCoordinate))throw new Error('Static source edge labels did not align');c.remove();
+   const empty=L.createChart(document.getElementById('chart'),{width:800,height:500,layout:{attributionLogo:false},timeScale:{barSpacing:9,rightOffset:3}});
+   const es=empty.addSeries(L.LineSeries);es.setData(Array.from({length:250},(_,i)=>({time:i+1,value:i+1})));empty.timeScale().setVisibleLogicalRange({from:200,to:240});await settle();es.setData([]);await settle();
+   const canvas=empty._chartWidget._timeAxisWidget._topCanvasBinding.canvasElement,r=canvas.getBoundingClientRect();
+   for(let i=0;i<2;i++){canvas.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0,clientX:r.x+r.width*0.6,clientY:r.y+r.height*0.5}));document.documentElement.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,button:0,clientX:r.x+r.width*0.6,clientY:r.y+r.height*0.5}));}
+   await settle();if(empty._chartWidget.model().timeScale().barSpacing()!==9||empty._chartWidget.model().timeScale().rightOffset()!==3)throw new Error('Empty source axis did not reset configured defaults');empty.remove();
+   return rows;
   });
  } finally {await browser.close();}
  assert.deepEqual(errors,[]);assert.equal(rows.length,16);
@@ -71,6 +80,6 @@ async function main() {
   const actual=native.stdout.split('\n').filter(l=>l.startsWith('AXIS_REFERENCE ')).map(l=>JSON.parse(l.slice(15)));
   assert.deepEqual(actual,rows,'native/source axis gestures differ');
  }
- console.log('16 actual DOM axis gesture/flag states verified.');
+ console.log('16 actual DOM axis gesture/flag states plus static edge-label alignment and empty-axis reset verified.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

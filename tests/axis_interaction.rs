@@ -594,3 +594,94 @@ fn disabling_axis_flags_preserves_wheel_navigation_and_blocks_raw_actions() {
         .is_err()
     );
 }
+
+#[test]
+fn reset_only_axis_capture_does_not_advertise_a_resize_cursor() {
+    for price in [false, true] {
+        let mut c = chart();
+        let mut s = ChartState::default();
+        c.set_axis_interaction_options(AxisInteractionOptions {
+            time_drag: false,
+            price_drag: false,
+            ..Default::default()
+        });
+        let p = if price {
+            Point::new(790., 100.)
+        } else {
+            axis(&c, 0.6)
+        };
+        press(&mut c, &mut s, p);
+        assert_eq!(
+            c.program(std::convert::identity).mouse_interaction(
+                &s,
+                Rectangle::with_size(Size::new(800., 500.)),
+                mouse::Cursor::Available(p)
+            ),
+            mouse::Interaction::default()
+        );
+        release(&mut c, &mut s, Some(p));
+    }
+}
+
+#[test]
+fn visible_empty_axis_can_reset_defaults_without_starting_a_scale() {
+    let mut c = chart();
+    let mut s = ChartState::default();
+    c.set_logical_range(feather_charts::model::time_data::LogicalRange {
+        from: 200.0.into(),
+        to: 240.0.into(),
+    });
+    prepare(&mut c);
+    let id = c.series_ids().next().unwrap();
+    c.set_data(id, vec![]).unwrap();
+    prepare(&mut c);
+    assert!(c.model().time_scale().is_empty());
+    let p = axis(&c, 0.6);
+    for _ in 0..2 {
+        press(&mut c, &mut s, p);
+        release(&mut c, &mut s, Some(p));
+    }
+    prepare(&mut c);
+    assert_eq!(c.model().time_scale().bar_spacing(), 9.);
+    assert_eq!(c.model().time_scale().right_offset(), 3.);
+}
+
+#[test]
+fn dpr_change_cancels_reset_only_pointer_ownership() {
+    for price in [false, true] {
+        for disable in [false, true] {
+            let mut c = chart();
+            let mut s = ChartState::default();
+            c.set_axis_interaction_options(AxisInteractionOptions {
+                time_drag: false,
+                price_drag: false,
+                ..Default::default()
+            });
+            let p = if price {
+                Point::new(790., 100.)
+            } else {
+                axis(&c, 0.6)
+            };
+            press(&mut c, &mut s, p);
+            assert!(s.is_axis_dragging());
+            if disable {
+                c.set_axis_interaction_options(AxisInteractionOptions {
+                    time_drag: false,
+                    time_reset: false,
+                    price_drag: false,
+                    price_reset: false,
+                });
+            } else {
+                c.prepare(Size::new(800., 500.), 1.5, Instant::now())
+                    .unwrap();
+            }
+            input(
+                &mut c,
+                &mut s,
+                Event::Window(iced::window::Event::RedrawRequested(Instant::now())),
+                Some(p),
+            );
+            assert!(!s.is_axis_dragging(), "price {price}, disabled {disable}");
+        }
+    }
+}

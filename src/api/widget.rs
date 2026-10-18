@@ -23,6 +23,7 @@ impl<B: super::ChartBehavior> Chart<B> {
         ChartProgram {
             attribution: self.frame.attribution.as_ref(),
             snapshot: self.frame(),
+            ratio: self.ratio,
             multi: self.multi_frame(),
             stretches: self
                 .model
@@ -62,6 +63,7 @@ impl<B: super::ChartBehavior> Chart<B> {
 pub struct ChartProgram<'a, Message> {
     attribution: Option<&'a crate::renderers::attribution_logo_renderer::AttributionLogo>,
     snapshot: &'a IcedChartFrame,
+    ratio: f32,
     multi: Option<&'a IcedMultiPaneChartFrame>,
     stretches: Vec<f64>,
     axis_scaling: Vec<[bool; 2]>,
@@ -97,6 +99,7 @@ pub struct ChartState {
     time_input: crate::ui::time_axis_input::TimeAxisInput,
     last_redraw: Option<Instant>,
     available: Option<AxisBounds>,
+    ratio: Option<f32>,
     revision: Option<u64>,
     membership: Vec<crate::model::data_layer::SeriesId>,
     click: Option<(usize, iced::Point, Instant)>,
@@ -135,10 +138,15 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             .revision
             .replace(self.revision)
             .is_some_and(|old| old != self.revision);
+        let ratio_changed = state
+            .ratio
+            .replace(self.ratio)
+            .is_some_and(|old| old != self.ratio);
         let bounds_changed = state
             .available
             .replace(self.snapshot.layout.available)
-            .is_some_and(|old| old != self.snapshot.layout.available);
+            .is_some_and(|old| old != self.snapshot.layout.available)
+            || ratio_changed;
         let membership_changed = state.revision.is_some() && state.membership != self.membership;
         if membership_changed {
             state.membership.clone_from(&self.membership);
@@ -383,7 +391,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             return Some(self.publish(ChartMessage::PriceAxis(end)));
         }
         if (state.unfocused
-            || !self.enabled
+            || (!self.enabled && state.time_input.is_scaling())
             || (state.time_input.is_scaling() && !self.active_time_axis))
             && let Some(end) = state.time_input.cancel()
         {
@@ -713,7 +721,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         if state.input.is_dragging() || state.multi_input.is_dragging() {
             return iced::mouse::Interaction::Grabbing;
         }
-        if state.time_input.is_dragging()
+        if state.time_input.is_scaling()
             || (self.enabled
                 && self.axis_options.time_drag
                 && cursor.position().is_some_and(|p| {
@@ -725,7 +733,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
         {
             return iced::mouse::Interaction::ResizingHorizontally;
         }
-        if state.axis_input.is_dragging()
+        if state.axis_input.is_scaling()
             || self.axis_options.price_drag
                 && cursor.position().is_some_and(|p| {
                     PriceAxisInput::hit_test(

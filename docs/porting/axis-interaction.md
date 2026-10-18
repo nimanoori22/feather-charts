@@ -116,3 +116,101 @@ reset pairing. This intentionally corrects the former native price reset on seco
 press to source reset on second successful release. Touch direction/options, lost
 finger cancellation, double taps without plot events and synthetic mouse suppression
 are tested. Existing ClickSequence was reused without changing plot timing policy.
+
+## Final consumer, capture protocol and migration
+
+The `--axis-interaction` pane-management demo exposes all four flags, touch X/Y,
+All off/All on and configured Defaults 9 / +3, with current spacing/offset readback.
+It works in calendar, strike, maturity and sessions, retaining typed custom series,
+pane controls, live feed, editable box and screenshot preview/export. Reset preserves
+this demo mode. Axis flags alone leave wheel/pinch unchanged; All off explicitly
+disables plot wheel/pressed movement and touch navigation as well.
+
+The final capture protocol uses four domains × nine scenes × three sizes
+(800×500, 300×300, 300×90) × four DPRs (1, 1.25, 1.5, 2) × two asserted renderers:
+**864 screens and retained exports**. Scenes are baseline, all-off, stretched,
+compressed, reset, drag-off/reset-on, drag-on/reset-off, pane move and touch reset.
+Gestures are actual Canvas events returned to the public Chart owner, not direct
+engine scale calls. Retained exports are rerendered after settings/default/size
+changes and owner drop. The initial eight-scene output is retained as superseded;
+final evidence uses the separate verified-captures directory. No old baseline or
+threshold changes. Six unchanged compatibility protocols additionally cover events,
+custom domains, screenshot/export, attribution, formatting and scale assignment.
+
+C3 review also found the existing TimeScale.interactions_enabled cache policy had
+no public input-settings connection. A source browser assertion and compiling native
+red regression proved all-disabled edge labels failed to align. Public setters and
+atomic patches now reuse that engine flag, including cache invalidation on reenabling
+an axis, wheel or touch setting. The old demo reset regression now asserts Start on
+second press and Reset on second release; its geometry/time/cancellation assertions
+remain intact. Earlier failed logs and superseded captures are preserved.
+
+Public migration: exhaustive ChartMessage matches add TimeAxis; the shared legacy
+example adapter forwards it. Explicit ChartOptionsPatch/RuntimeChartOptions literals
+gain axis_interaction; default-update patch literals remain compatible. Existing
+PriceAxisInput.update callers retain their signature, with default-enabled gesture
+options. Reset pairing intentionally moves from second press to successful second
+release. Release/cancel clears owners; a reset-only press does not advertise resizing.
+
+Rust files: src/ui/{axis_pointer,time_axis_input,price_axis_input,mod}.rs;
+src/helpers/{click_sequence,mod}.rs (click helper moved from api);
+src/api/{chart,configuration,interaction,widget,touch,touch_input,yield_curve,mod}.rs;
+src/model/{chart_model,time_scale}.rs. Tests: tests/axis_interaction.rs and the
+configuration unit regression; migrated examples/support/chart_demo.rs and its
+existing tests. Demo: examples/pane_management.rs plus
+pane_management/{axis_interaction,axis_interaction_captures}.rs. Source fixtures,
+the source checker, capture runner, inventory, README and checklist accompany them.
+
+Ownership remains synchronous and unchanged: host → Chart → model; Iced Canvas →
+ChartState → axis pointer histories; borrowing ChartProgram → immutable prepared
+frame; owned action → host update → Chart. No new dependency, threads, shared model
+mutation or retained callbacks.
+
+## Physical mouse procedure
+
+Use the final normal live-feed example separately on tiny-skia and wgpu in all four
+modes. At regular size:
+
+1. Drag bottom labels left/right, including past the plot boundary, then release
+   outside the chart. Spacing must change smoothly and stop on release. Double-click
+   restores configured spacing 9 and offset +3 (subject to ordinary scale limits).
+2. Toggle Time drag off, leaving Time reset on: dragging must stop, reset must work.
+   Reverse the flags: dragging must work and reset must stop. Repeat for Price
+   drag/reset on a populated axis. Price reset restores autoscaling. Use All on.
+3. Use All off: plot/axis dragging and zoom/pinch are disabled; hover still works.
+   All on restores inputs. Individual axis toggles do not disable plot wheel zoom
+   or the native price-axis wheel extension. Touch X/Y toggles do not disable mouse.
+4. With live feed, test wheel zoom, diagonal plot drag, both populated price axes,
+   horizontal-axis drag/reset and box move/resize/Escape at regular, narrow and the
+   earlier problem size. Try pane move/swap and series transfer; then Reset. Shrink
+   to short height, enlarge and check recovery. Check preview/export and close all
+   four windows. Record the renderer and any concrete failing gesture/size.
+
+Synthetic touch/DPR coverage does not close physical touchpad, touchscreen or
+high-DPI acceptance. Older formatting GPU, timing and drawing-order exceptions
+retain their own evidence. Broader helpers (D), pane sizing (E), metadata (F/G),
+locale (H), and color policy (I) remain future milestones. The inventory also keeps
+construction-only default-visible-scale configuration marked partial.
+
+## Capture harness investigation
+
+The first nine-scene capture failed the narrow 300×300, DPR 1.25 touch-reset
+assertion while the full profiling suites were running. Its output is preserved in
+`target/axis-interaction/accepted-captures`. An isolated real-Canvas reproduction
+emitted Start/End/Start/Reset with roughly 10ms per event and unchanged axis geometry.
+No engine defect was established from that capture failure. The fixture performed
+an extra prepare after Chart::update (which already prepares); that duplicate work
+was removed to match the normal demo. Final captures run after the full profiling
+suite, preserving the source 500ms pairing rule and every scene/assertion. The
+narrow fractional-DPR sequence also has a dedicated consumer test.
+
+## Final lifecycle regressions
+
+Two additional compiling red cases reproduced empty-axis reset staying at the old
+spacing and a reset-only press surviving a DPR change. The visible empty horizontal
+axis now recognizes reset without starting scaling, matching the actual source DOM
+probe. Canvas samples DPR alongside bounds so reset-only captures and tap pairs are
+cancelled when it changes; disabling their remaining capability also clears them.
+All 13 focused public axis tests pass, including both controllers' reset-only
+cancellation. Strict focused Clippy passes. These are lifecycle corrections inside
+C; they do not constitute physical high-DPI or touchscreen acceptance.

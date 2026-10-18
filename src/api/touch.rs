@@ -79,6 +79,7 @@ impl<B: super::ChartBehavior> super::Chart<B> {
         if self.touch_options != options {
             self.cancel_interaction();
             self.touch_options = options;
+            self.sync_horizontal_interactions();
         }
     }
     pub fn set_kinetic_scroll_options(&mut self, options: KineticScrollOptions) {

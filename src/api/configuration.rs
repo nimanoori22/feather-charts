@@ -73,6 +73,7 @@ impl<B: ChartBehavior> Chart<B> {
         self.mouse_options = mouse;
         self.touch_options = touch;
         self.kinetic_options = kinetic;
+        self.sync_horizontal_interactions();
         if model_changed {
             self.background = match &next.layout.background {
                 crate::model::layout_options::Background::Solid { color } => color.clone(),
@@ -88,6 +89,21 @@ impl<B: ChartBehavior> Chart<B> {
         }
         Ok(())
     }
+    pub(super) fn sync_horizontal_interactions(&mut self) {
+        let a = self.axis_options;
+        let m = self.mouse_options;
+        let t = self.touch_options;
+        self.model.set_time_interactions_enabled(
+            a.time_drag
+                || a.time_reset
+                || m.wheel_zoom
+                || m.wheel_scroll
+                || m.pressed_mouse_move
+                || t.horizontal_drag
+                || t.vertical_drag
+                || t.pinch,
+        );
+    }
     pub fn axis_interaction_options(&self) -> AxisInteractionOptions {
         self.axis_options
     }
@@ -102,6 +118,7 @@ impl<B: ChartBehavior> Chart<B> {
             self.cancel_price_axis();
         }
         self.axis_options = options;
+        self.sync_horizontal_interactions();
     }
     pub fn mouse_navigation_options(&self) -> MouseNavigationOptions {
         self.mouse_options
@@ -110,6 +127,7 @@ impl<B: ChartBehavior> Chart<B> {
         if options != self.mouse_options {
             self.cancel_viewport_interaction();
             self.mouse_options = options;
+            self.sync_horizontal_interactions();
             self.revision = self.revision.wrapping_add(1);
         }
     }
@@ -132,5 +150,113 @@ impl<B: ChartBehavior> Chart<B> {
         }
         self.model.set_localization_options(&mut self.layer, next);
         self.revision = self.revision.wrapping_add(1);
+    }
+}
+
+#[cfg(test)]
+mod axis_tests {
+    use super::*;
+    use crate::model::{
+        data_consumer::*, horz_scale_behavior_time::types::UtcTimestamp, pane::PriceScalePosition,
+        series_options::SeriesOptionsMap,
+    };
+    #[test]
+    fn disabling_all_navigation_aligns_edge_ticks_and_reenabling_axes_invalidates_them() {
+        let mut c = Chart::default();
+        let id = c
+            .add_series(
+                SeriesOptionsMap::Line(Default::default()),
+                0,
+                PriceScalePosition::Right,
+            )
+            .unwrap();
+        c.set_data(
+            id,
+            (1..=100)
+                .map(|i| {
+                    BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+                        time: UtcTimestamp::new(i as f64).into(),
+                        value: i as f64,
+                        color: None,
+                        custom_values: None,
+                    }))
+                })
+                .collect(),
+        )
+        .unwrap();
+        c.fit_content();
+        c.prepare(iced::Size::new(800., 500.), 1., std::time::Instant::now())
+            .unwrap();
+        let before = c.model.prepare_axis_snapshots(0).unwrap().time;
+        assert!(!before.ticks.is_empty());
+        assert!(before.ticks.iter().all(|t| !t.mark.need_align_coordinate));
+        c.apply_chart_options(ChartOptionsPatch {
+            axis_interaction: Some(AxisInteractionOptions {
+                time_drag: false,
+                time_reset: false,
+                price_drag: false,
+                price_reset: false,
+            }),
+            mouse_navigation: Some(MouseNavigationOptions {
+                wheel_zoom: false,
+                wheel_scroll: false,
+                pressed_mouse_move: false,
+            }),
+            touch_navigation: Some(TouchNavigationOptions {
+                horizontal_drag: false,
+                vertical_drag: false,
+                pinch: false,
+                ..Default::default()
+            }),
+            ..Default::default()
+        })
+        .unwrap();
+        let static_axis = c.model.prepare_axis_snapshots(0).unwrap().time;
+        assert!(
+            static_axis
+                .ticks
+                .iter()
+                .any(|t| t.mark.need_align_coordinate)
+        );
+        c.set_axis_interaction_options(AxisInteractionOptions {
+            time_reset: true,
+            ..c.axis_interaction_options()
+        });
+        assert!(
+            c.model
+                .prepare_axis_snapshots(0)
+                .unwrap()
+                .time
+                .ticks
+                .iter()
+                .all(|t| !t.mark.need_align_coordinate)
+        );
+        c.set_axis_interaction_options(AxisInteractionOptions {
+            time_reset: false,
+            ..c.axis_interaction_options()
+        });
+        assert!(
+            c.model
+                .prepare_axis_snapshots(0)
+                .unwrap()
+                .time
+                .ticks
+                .iter()
+                .any(|t| t.mark.need_align_coordinate)
+        );
+        c.set_mouse_navigation_options(MouseNavigationOptions {
+            wheel_zoom: true,
+            wheel_scroll: false,
+            pressed_mouse_move: false,
+        });
+        assert!(
+            c.model
+                .prepare_axis_snapshots(0)
+                .unwrap()
+                .time
+                .ticks
+                .iter()
+                .all(|t| !t.mark.need_align_coordinate)
+        );
     }
 }
