@@ -25,7 +25,7 @@ fn send(chart: &Chart, state: &mut ChartState, event: touch::Event) -> Option<To
         )
         .and_then(|action| action.into_inner().0)
         .and_then(|message| {
-            if let ChartMessage::Touch(input) = message {
+            if let ChartMessage::Touch(input) = message.into_pointer_parts().0 {
                 Some(input.action)
             } else {
                 None

@@ -339,7 +339,11 @@ fn canvas_emits_clicks_but_never_after_a_drag() {
                 mouse::Cursor::Available(point),
             )
             .and_then(|a| a.into_inner().0);
-        let clicked = matches!(message, Some(ChartMessage::Click { .. }));
+        let clicked = message.as_ref().is_some_and(|message| {
+            let (action, source) = message.clone().into_pointer_parts();
+            assert!(source.is_some(), "native mouse action has source metadata");
+            matches!(action, ChartMessage::Click { .. })
+        });
         if let Some(message) = message {
             chart.update(message).unwrap();
         }

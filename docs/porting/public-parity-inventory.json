@@ -6,12 +6,12 @@
     "members": 374,
     "methods": 99,
     "statuses": {
-      "native": 80,
-      "gap": 2,
+      "native": 81,
       "mapped": 79,
       "partial": 5,
       "platform": 4,
-      "represented": 204
+      "represented": 204,
+      "gap": 1
     }
   },
   "reexports": [
@@ -560,7 +560,7 @@
     {"id":"MouseEventParams.hoveredInfo","file":"src/api/ichart-api.ts","line":100,"kind":"property","signature":"hoveredInfo?: HoveredInfo<HorzScaleItem>;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
     {"id":"MouseEventParams.hoveredSeries","file":"src/api/ichart-api.ts","line":106,"kind":"property","signature":"hoveredSeries?: ISeriesApi<SeriesType, HorzScaleItem>;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
     {"id":"MouseEventParams.hoveredObjectId","file":"src/api/ichart-api.ts","line":112,"kind":"property","signature":"hoveredObjectId?: unknown;","status":"native","note":"PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated"},
-    {"id":"MouseEventParams.sourceEvent","file":"src/api/ichart-api.ts","line":116,"kind":"property","signature":"sourceEvent?: TouchMouseEventData;","status":"gap","note":"F10: PointerEvent omits native input modifiers/source metadata"},
+    {"id":"MouseEventParams.sourceEvent","file":"src/api/ichart-api.ts","line":116,"kind":"property","signature":"sourceEvent?: TouchMouseEventData;","status":"native","note":"PointerEvent.source_event owns optional native device/kind/button, chart/window logical positions and observed modifiers; DOM-only coordinates omitted"},
     {"id":"IChartApiBase.remove","file":"src/api/ichart-api.ts","line":131,"kind":"method","signature":"remove(): void;","status":"native","note":"Drop releases chart ownership"},
     {"id":"IChartApiBase.resize","file":"src/api/ichart-api.ts","line":143,"kind":"method","signature":"resize(width: number, height: number, forceRepaint?: boolean): void;","status":"native","note":"Chart.prepare / ChartMessage::Bounds; host owns sizing"},
     {"id":"IChartApiBase.addCustomSeries","file":"src/api/ichart-api.ts","line":157,"kind":"method","signature":"addCustomSeries<TData extends CustomData<HorzScaleItem>, TOptions extends CustomSeriesOptions, TPartialOptions extends SeriesPartialOptions<TOptions> = SeriesPartialOptions<TOptions> >( customPaneView: ICustomSeriesPaneView<HorzScaleItem, TData, TOptions>, customOptions?: SeriesPartialOptions<TOptions>, paneIndex?: number ): ISeriesApi<'Custom', HorzScaleItem, TData | WhitespaceData<HorzScaleItem>, TOptions, TPartialOptions>;","status":"mapped","note":"Chart.add_custom_series"},

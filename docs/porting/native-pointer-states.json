@@ -1,0 +1,31 @@
+{
+  "clickKinds": [
+    "click",
+    "double"
+  ],
+  "modifiers": [
+    [
+      true,
+      false,
+      true,
+      false
+    ],
+    [
+      false,
+      true,
+      false,
+      true
+    ]
+  ],
+  "localEqualsPoint": true,
+  "hoverSource": true,
+  "touchClick": "click",
+  "touchModifiers": [
+    false,
+    false,
+    true,
+    false
+  ],
+  "touchLocalEqualsPoint": true,
+  "syntheticSources": []
+}

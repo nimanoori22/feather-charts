@@ -23,6 +23,8 @@ pub use chart::{Chart, ChartError};
 mod attribution_input;
 
 mod interaction;
+mod pointer_input;
+pub use pointer_input::{PointerAction, PointerDevice, PointerInput, PointerInputKind};
 mod primitive_edit_input;
 mod primitive_editing;
 pub use primitive_editing::{

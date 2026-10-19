@@ -15,6 +15,10 @@ use std::time::Instant;
 mod tests;
 #[derive(Clone, Debug)]
 pub enum ChartMessage {
+    PointerInput {
+        action: super::PointerAction,
+        input: super::PointerInput,
+    },
     AttributionActivated,
     Touch(super::TouchInteraction),
     PrimitiveEdit(super::PrimitiveEditEvent),
@@ -24,11 +28,19 @@ pub enum ChartMessage {
     TimeAxis(crate::ui::time_axis_input::TimeAxisAction),
     Bounds(iced::Size),
     Tick(Instant),
-    Click { pane: usize, position: iced::Point },
-    DoubleClick { pane: usize, position: iced::Point },
+    Click {
+        pane: usize,
+        position: iced::Point,
+    },
+    DoubleClick {
+        pane: usize,
+        position: iced::Point,
+    },
 }
 #[derive(Clone, Debug)]
 pub struct PointerEvent<T = Time, M = ()> {
+    /// Native event-time snapshot, or None for ordinary programmatic/replay input.
+    pub source_event: Option<super::PointerInput>,
     pub custom_series_data: Vec<super::CustomSeriesEventData>,
     pub custom_hit: Option<super::CustomHitData>,
     pub primitive: Option<super::PrimitiveHit>,
@@ -356,6 +368,10 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         &mut self,
         message: ChartMessage,
     ) -> Result<Vec<ChartEvent<B::Item, M>>, ChartError> {
+        let (message, source_event) = message.into_pointer_parts();
+        if source_event.is_some_and(|input| !input.is_finite()) {
+            return Err(ChartError::InvalidInteraction);
+        }
         self.validate_message(&message)?;
         if let ChartMessage::Tick(now) = &message {
             self.expire_up_down_markers(*now);
@@ -375,6 +391,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         let mut double_click = false;
         let mut now = Instant::now();
         match message {
+            ChartMessage::PointerInput { .. } => unreachable!("pointer envelope was normalized"),
             ChartMessage::AttributionActivated => {
                 if self.model.attribution_options().0 && self.frame.attribution.is_some() {
                     self.push_event(ChartEvent::AttributionActivated {
@@ -543,7 +560,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         }
         self.prepare(self.size, self.ratio, now)?;
         if let Some((pane, position)) = clicked {
-            let pointer = self.pointer_event_at(
+            let mut pointer = self.pointer_event_at(
                 Some(pane),
                 Some(position),
                 Some(
@@ -553,6 +570,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
                 ),
                 Some(f64::from(position.y)),
             );
+            pointer.source_event = source_event;
             if double_click {
                 if self.event_interests.double_click {
                     self.push_event(ChartEvent::DoubleClick(pointer));
@@ -561,7 +579,8 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
                 self.push_event(ChartEvent::Click(pointer));
             }
         }
-        let pointer = self.pointer_event();
+        let mut pointer = self.pointer_event();
+        pointer.source_event = source_event;
         if self.last_primitive != pointer.primitive
             || self.last_hit != pointer.hit
             || previous
@@ -652,6 +671,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
             _ => None,
         });
         PointerEvent {
+            source_event: None,
             custom_series_data,
             custom_hit,
             primitive,
@@ -718,6 +738,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         };
         let panes = self.model.panes().len();
         let valid = match message {
+            ChartMessage::PointerInput { .. } => false,
             ChartMessage::Touch(input) => {
                 input.pane < panes
                     && match input.action {

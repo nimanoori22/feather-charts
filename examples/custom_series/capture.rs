@@ -294,7 +294,12 @@ fn touch(app: &mut App, scenario: &str) {
             )
             .and_then(|a| a.into_inner().0)
         {
-            if let ChartMessage::Touch(input) = &mut message {
+            if let ChartMessage::Touch(input)
+            | ChartMessage::PointerInput {
+                action: feather_charts::api::PointerAction::Touch(input),
+                ..
+            } = &mut message
+            {
                 input.now = now + Duration::from_millis(ms);
             }
             app.chart.update(message).unwrap();

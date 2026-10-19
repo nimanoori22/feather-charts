@@ -87,6 +87,7 @@ pub struct ChartProgram<'a, Message> {
 }
 #[derive(Default)]
 pub struct ChartState {
+    pointer_input: super::pointer_input::InputState,
     attribution_input: super::attribution_input::Input,
     geometry: canvas::Cache,
     touch_input: super::touch_input::TouchInput,
@@ -109,6 +110,16 @@ impl<Message> ChartProgram<'_, Message> {
     fn publish(&self, message: ChartMessage) -> canvas::Action<Message> {
         canvas::Action::publish((self.on_message)(message))
     }
+    fn publish_pointer(
+        &self,
+        message: ChartMessage,
+        input: Option<super::PointerInput>,
+    ) -> canvas::Action<Message> {
+        self.publish(match input {
+            Some(input) => message.with_pointer_input(input),
+            None => message,
+        })
+    }
     fn axis_layouts(&self) -> &[crate::ui::chart_layout::ChartLayout] {
         self.multi
             .map_or(std::slice::from_ref(&self.snapshot.layout), |multi| {
@@ -130,6 +141,9 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             canvas::Event::Window(iced::window::Event::Focused) => state.unfocused = false,
             _ => {}
         }
+        let source_event = state
+            .pointer_input
+            .observe(event, bounds, cursor, state.unfocused);
         state.touch_input.double_tap_enabled = self.double_click;
         if !self.double_click {
             state.click_sequence.cancel();
@@ -237,13 +251,14 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.input = ChartInput::default();
                 state.multi_input = MultiPaneInput::default();
                 return Some(
-                    self.publish(ChartMessage::Interaction(
-                        crate::ui::chart_input::ChartInteraction {
+                    self.publish_pointer(
+                        ChartMessage::Interaction(crate::ui::chart_input::ChartInteraction {
                             position: None,
                             navigation: None,
                             capture: false,
-                        },
-                    ))
+                        }),
+                        source_event,
+                    )
                     .and_capture(),
                 );
             }
@@ -271,6 +286,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             if output.input.pane >= self.axis_layouts().len() {
                 output.input.pane = 0;
             }
+            state.pointer_input.touch_source(output.input.action, None);
             return Some(self.publish(ChartMessage::Touch(output.input)));
         }
         if matches!(event, canvas::Event::Mouse(event) if !matches!(event, iced::mouse::Event::WheelScrolled { .. }))
@@ -296,7 +312,10 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 now,
             )
         {
-            let action = self.publish(ChartMessage::Touch(output.input));
+            let source = state
+                .pointer_input
+                .touch_source(output.input.action, source_event);
+            let action = self.publish_pointer(ChartMessage::Touch(output.input), source);
             return Some(if output.capture {
                 action.and_capture()
             } else {
@@ -372,29 +391,30 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             state.click = None;
             state.click_sequence.cancel();
             if let Some(end) = state.time_input.cancel() {
-                return Some(self.publish(ChartMessage::TimeAxis(end)));
+                return Some(self.publish_pointer(ChartMessage::TimeAxis(end), source_event));
             }
             if let Some(end) = state.axis_input.cancel() {
-                return Some(self.publish(ChartMessage::PriceAxis(end)));
+                return Some(self.publish_pointer(ChartMessage::PriceAxis(end), source_event));
             }
             if was_dragging || bounds_changed {
-                return Some(
-                    self.publish(ChartMessage::PaneInteraction(MultiPaneInteraction::Cancel)),
-                );
+                return Some(self.publish_pointer(
+                    ChartMessage::PaneInteraction(MultiPaneInteraction::Cancel),
+                    source_event,
+                ));
             }
         }
         if state.axis_input.is_scaling()
             && state.axis_input.target() != self.active_price_axis
             && let Some(end) = state.axis_input.cancel()
         {
-            return Some(self.publish(ChartMessage::PriceAxis(end)));
+            return Some(self.publish_pointer(ChartMessage::PriceAxis(end), source_event));
         }
         if (state.unfocused
             || (!self.enabled && state.time_input.is_scaling())
             || (state.time_input.is_scaling() && !self.active_time_axis))
             && let Some(end) = state.time_input.cancel()
         {
-            return Some(self.publish(ChartMessage::TimeAxis(end)));
+            return Some(self.publish_pointer(ChartMessage::TimeAxis(end), source_event));
         }
         if !state.unfocused
             && self.primitive_edit.is_none()
@@ -428,7 +448,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.click = None;
                 state.click_sequence.cancel();
                 state.touch_input.cancel_tap_pair();
-                let publish = self.publish(ChartMessage::TimeAxis(action));
+                let publish = self.publish_pointer(ChartMessage::TimeAxis(action), source_event);
                 return Some(
                     if matches!(event, canvas::Event::Touch(_))
                         && matches!(
@@ -587,7 +607,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 state.touch_input.cancel(now);
                 state.click = None;
                 state.click_sequence.cancel();
-                let publish = self.publish(ChartMessage::PriceAxis(action));
+                let publish = self.publish_pointer(ChartMessage::PriceAxis(action), source_event);
                 return Some(
                     if matches!(event, canvas::Event::Touch(_))
                         && matches!(
@@ -624,10 +644,11 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 ) {
                     state.touch_input.cancel(now);
                     if let Some(clicked) = clicked {
-                        return Some(self.publish(clicked).and_capture());
+                        return Some(self.publish_pointer(clicked, source_event).and_capture());
                     }
                     let capture = action.capture();
-                    let publish = self.publish(ChartMessage::PaneInteraction(action));
+                    let publish =
+                        self.publish_pointer(ChartMessage::PaneInteraction(action), source_event);
                     return Some(if capture {
                         publish.and_capture()
                     } else {
@@ -645,9 +666,10 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
                 ) {
                     state.touch_input.cancel(now);
                     if let Some(clicked) = clicked {
-                        return Some(self.publish(clicked).and_capture());
+                        return Some(self.publish_pointer(clicked, source_event).and_capture());
                     }
-                    let publish = self.publish(ChartMessage::Interaction(action));
+                    let publish =
+                        self.publish_pointer(ChartMessage::Interaction(action), source_event);
                     return Some(if action.capture {
                         publish.and_capture()
                     } else {
@@ -657,7 +679,7 @@ impl<Message> canvas::Program<Message> for ChartProgram<'_, Message> {
             }
         }
         if let Some(clicked) = clicked {
-            return Some(self.publish(clicked).and_capture());
+            return Some(self.publish_pointer(clicked, source_event).and_capture());
         }
         if let canvas::Event::Window(iced::window::Event::RedrawRequested(now)) = event {
             if self

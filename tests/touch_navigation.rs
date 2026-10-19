@@ -269,7 +269,12 @@ fn long_press_tracks_and_exit_modes_use_the_existing_redraw_deadline() {
             .into_inner()
             .0
             .unwrap();
-        let ChartMessage::Touch(input) = &message else {
+        let (legacy, source) = message.clone().into_pointer_parts();
+        assert_eq!(
+            source.unwrap().device,
+            feather_charts::api::PointerDevice::Touch(id)
+        );
+        let ChartMessage::Touch(input) = &legacy else {
             panic!("native touch message");
         };
         let now = input.now;
@@ -661,7 +666,12 @@ fn native_resize_precedes_a_due_long_press_deadline() {
         .into_inner()
         .0
         .unwrap();
-    let ChartMessage::Touch(input) = &message else {
+    let (legacy, source) = message.clone().into_pointer_parts();
+    assert_eq!(
+        source.unwrap().device,
+        feather_charts::api::PointerDevice::Touch(id)
+    );
+    let ChartMessage::Touch(input) = &legacy else {
         panic!("touch press");
     };
     let now = input.now;

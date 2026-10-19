@@ -137,7 +137,7 @@ for(const file of files.sort()){
    if(!finding&&owner==='HandleScaleOptions')finding=['mouseWheel','pinch'].includes(member)?'native|MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch':'native|AxisInteractionOptions; independent drag/reset for both axes';
    if(!finding&&['AxisPressedMouseMoveOptions','AxisDoubleClickOptions'].includes(owner))finding='native|AxisInteractionOptions.'+(member==='time'?'time':'price')+(owner==='AxisPressedMouseMoveOptions'?'_drag':'_reset');
    if(!finding&&owner==='TrackingModeOptions')finding='native|TouchNavigationOptions.tracking_exit';
-   if(!finding&&owner==='MouseEventParams')finding=member==='sourceEvent'?'gap|F10: PointerEvent omits native input modifiers/source metadata':'native|PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated';
+   if(!finding&&owner==='MouseEventParams')finding=member==='sourceEvent'?'native|PointerEvent.source_event owns optional native device/kind/button, chart/window logical positions and observed modifiers; DOM-only coordinates omitted':'native|PointerEvent typed data/hit/custom/primitive payload; legacy aliases not duplicated';
    if(!finding&&owner==='HoveredInfo')finding='native|ChartHit / PrimitiveHit / MarkerHit / CustomHitData and PointerEvent.pane';
    const [status,...note]=String(finding||'review|Unclassified contract').split('|');
    rows.push({id:key,file:rel,line:sf.getLineAndCharacterOfPosition(m.getStart(sf)).line+1,kind:ts.isMethodSignature(m)?'method':'property',signature:m.getText(sf).replace(/\s+/g,' '),status,note:note.join('|')});

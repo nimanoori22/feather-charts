@@ -25,7 +25,12 @@ fn deliver(chart: &mut Chart, state: &mut ChartState, event: Event, now: Instant
         )
         .and_then(|a| a.into_inner().0)
     {
-        if let ChartMessage::Touch(input) = &mut message {
+        if let ChartMessage::Touch(input)
+        | ChartMessage::PointerInput {
+            action: feather_charts::api::PointerAction::Touch(input),
+            ..
+        } = &mut message
+        {
             input.now = now;
         }
         chart.update(message).unwrap();

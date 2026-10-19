@@ -623,7 +623,8 @@ impl Demo {
 }
 impl From<ChartMessage> for Message {
     fn from(message: ChartMessage) -> Self {
-        match message {
+        match message.into_pointer_parts().0 {
+            ChartMessage::PointerInput { .. } => unreachable!("pointer envelope was normalized"),
             ChartMessage::AttributionActivated => Self::AttributionActivated,
             ChartMessage::Touch(input) => Self::Touch(input),
             ChartMessage::PrimitiveEdit(input) => Self::PrimitiveEdit(input),
