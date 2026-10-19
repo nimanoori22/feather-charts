@@ -40,7 +40,12 @@ pub fn run(dir: &std::path::Path, wgpu: bool) {
         &mut exporter,
     );
 }
-fn screen<C: Host>(chart: &C, size: Size, ratio: f32, renderer: &mut iced::Renderer) -> Vec<u8> {
+pub(super) fn screen<C: Host>(
+    chart: &C,
+    size: Size,
+    ratio: f32,
+    renderer: &mut iced::Renderer,
+) -> Vec<u8> {
     renderer.reset(iced::Rectangle::with_size(size));
     for geometry in chart
         .core()

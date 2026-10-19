@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G next.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G implementation complete; acceptance in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -104,8 +104,8 @@ evidence. Independent exceptions remain unchanged.
 
 ### G — Native pointer metadata
 
-- [ ] G0: Freeze native pointer metadata semantics. (depends: F4).
-- [ ] G1: Populate owned pointer metadata at the widget boundary. (depends: G0).
+- [x] G0: Freeze native pointer metadata semantics. (depends: F4).
+- [x] G1: Populate owned pointer metadata at the widget boundary. (depends: G0).
 - [ ] G2: Demonstrate modifier actions and accept milestone G. (depends: G1).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

@@ -373,3 +373,16 @@ policy; Rc preserves identity without mandatory deep copies or Debug/PartialEq/
 Send/Sync constraints. Source assertions cover all six built-in families. See
 [application-metadata.md](application-metadata.md) for exact ownership, snapshots,
 consumer migration and acceptance; separate device/timing records remain open.
+
+### Milestone G follow-up — F10
+
+`PointerEvent.source_event` now owns optional native device/contact, event-kind,
+changed-button, chart/window logical positions and observed modifier data. The
+Canvas samples before dispatch; delayed notifications keep the snapshot. Unknown
+modifiers stay None across focus transitions, and ordinary programmatic/redraw
+input stays unsourced. Explicit host-supplied metadata is supported. DOM page,
+screen, target/view references and preventDefault are deliberately replaced by
+the native coordinate/capture contract. Mouse identifies Iced's event family,
+not physical hardware. See [native-pointer.md](native-pointer.md) for source,
+consumer, migration and acceptance evidence; separate device/timing checks remain
+independent.

@@ -27,6 +27,10 @@ mod interval;
 mod metadata;
 #[path = "pane_management/metadata_captures.rs"]
 mod metadata_captures;
+#[path = "pane_management/pointer.rs"]
+mod pointer;
+#[path = "pane_management/pointer_captures.rs"]
+mod pointer_captures;
 #[path = "support/editable_box.rs"]
 mod region;
 #[path = "pane_management/scale_assignment.rs"]
@@ -62,6 +66,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    pointer: Option<pointer::Panel<C::Item, C::Metadata>>,
     metadata: Option<metadata::Panel<C::Item, C::Metadata>>,
     sizing: Option<sizing::Panel>,
     helpers: Option<helpers::Panel<C>>,
@@ -92,6 +97,8 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    PointerClear,
+    PointerProgrammatic,
     Metadata(metadata::Action),
     Sizing(sizing::Action),
     Helper(helpers::Action),
@@ -181,6 +188,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            pointer: None,
             metadata: None,
             sizing: None,
             helpers: None,
@@ -253,6 +261,18 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::PointerClear => {
+                if let Some(panel) = &mut self.pointer {
+                    panel.pinned = None;
+                }
+            }
+            Message::PointerProgrammatic => {
+                let events = self.chart.update(ChartMessage::Click {
+                    pane: 0,
+                    position: iced::Point::new(80., 40.),
+                })?;
+                self.consume_events(events);
+            }
             Message::Metadata(action) => self.metadata_action(action)?,
             Message::Sizing(action) => self.sizing_action(action)?,
             Message::Helper(action) => self.helper_action(action)?,
@@ -305,6 +325,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let pointer_mode = self.pointer.is_some();
                 let metadata_mode = self.metadata.is_some();
                 let sizing_mode = self.sizing.is_some();
                 let helper_mode = self.helpers.is_some();
@@ -322,6 +343,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if pointer_mode {
+                    self.enable_pointer();
+                }
                 if metadata_mode {
                     self.metadata = Some(Default::default());
                 }
@@ -371,6 +395,7 @@ impl<C: Host> App<C> {
     }
     fn consume_events(&mut self, events: Vec<ChartEvent<C::Item, C::Metadata>>) {
         for event in events {
+            self.observe_pointer(&event);
             self.observe_metadata(&event);
             self.sync_helper_crosshair(&event);
             if let Some(m) = &mut self.events {
@@ -543,6 +568,9 @@ impl<C: Host> App<C> {
         if self.metadata.is_some() {
             content = content.push(self.metadata_controls());
         }
+        if self.pointer.is_some() {
+            content = content.push(self.pointer_controls());
+        }
         if self.sizing.is_some() {
             content = content.push(self.sizing_controls());
         }
@@ -608,6 +636,7 @@ impl<C: Host> App<C> {
     }
 }
 struct RunOptions {
+    pointer: bool,
     live: bool,
     ordered: bool,
     data: bool,
@@ -634,6 +663,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
             );
             if options.metadata {
                 app.metadata = Some(Default::default());
+            }
+            if options.pointer {
+                app.enable_pointer();
             }
             if options.sizing {
                 app.sizing = Some(Default::default());
@@ -667,6 +699,13 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
 }
 fn main() -> iced::Result {
     let args: Vec<_> = std::env::args().collect();
+    if let Some(i) = args.iter().position(|a| a == "--pointer-input-captures") {
+        pointer_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--captures") {
         captures::run(
             std::path::Path::new(&args[i + 1]),
@@ -738,6 +777,7 @@ fn main() -> iced::Result {
         return Ok(());
     }
     let options = RunOptions {
+        pointer: args.iter().any(|a| a == "--pointer-input"),
         live: args.iter().any(|a| a == "--live-feed"),
         ordered: args.iter().any(|a| a == "--series-order"),
         data: args.iter().any(|a| a == "--series-data"),

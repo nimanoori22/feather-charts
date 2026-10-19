@@ -1039,3 +1039,36 @@ original owned records; Release retained drops that observation. Hover reports
 the captured record ID/revision. Resume feed for interaction checks. Reset clears
 the example's retained data. Existing custom intervals, pane/scale controls, box
 edits and export stay available.
+
+### Native pointer metadata
+
+`PointerEvent<T, M>::source_event` is an optional owned `PointerInput` snapshot.
+It reports mouse/touch identity, event kind, changed mouse button, chart-local
+and window-content-relative positions, and the latest keyboard modifiers observed
+by the Canvas. Positions use logical pixels; `PointerEvent.point` remains local
+to the pane's plot. DOM page/screen coordinates and event/window references are
+not exposed. Modifiers are unknown (`None`) until observed and after focus changes.
+Mouse identifies Iced's event family, which also carries touchpad wheel/cursor
+input; it does not identify physical mouse hardware. Touch IDs identify contacts.
+
+The widget samples input before dispatch. Queued messages and retained pointer
+payloads keep their original metadata. Touch tracking initiated by a redraw uses
+its originating press snapshot. Existing synthetic-mouse suppression remains in
+place. Ordinary programmatic messages and animation/viewport replays have no
+native source; a host can explicitly attach a snapshot with
+`ChartMessage::with_pointer_input`. `into_pointer_parts` unwraps the flat envelope
+for adapters with exhaustive message matching. Such adapters must handle the new
+`ChartMessage::PointerInput` variant; no per-movement Box allocation is needed.
+
+```sh
+cargo run --example pane_management -- --pointer-input --application-metadata --series-data --series-order --scale-assignment --screenshot-export --live-feed
+# Add --options, --yield-curve or --custom-domain.
+```
+
+Ctrl-click pins an owned inspection snapshot; Shift-click clears it (including
+when a rapid second release is recognized as a double-click). The panel displays
+source coordinates/modifiers and counts clicks/double-clicks. Clear pin and
+Programmatic click are available in the horizontal toolbar; the latter reports
+no source and leaves the pin intact. Pause feed for stable inspection. Move focus
+away and back to verify modifiers do not remain stuck. Both readout rows scroll
+horizontally at narrow sizes. Reset clears the pin while preserving pointer mode.
