@@ -30,6 +30,7 @@ impl ChartBehavior for HorzScaleBehaviorPrice {
 }
 impl<M: Clone + 'static> Chart<HorzScaleBehaviorPrice, M> {
     /// Uses ordinary chart/axis defaults; omitted horizontal precision is zero.
+    /// Price-domain chart retaining M in built-in rows and pointer events.
     pub fn new_options_with_metadata(options: OptionsChartOptions) -> Result<Self, ChartError> {
         Self::with_options_chart_options_and_metadata(
             options,

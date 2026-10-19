@@ -128,6 +128,7 @@ impl<M: Clone + 'static> YieldCurveChart<M> {
     ) -> Result<(), ChartError> {
         self.core.apply_price_scale_options(pane, scale, patch)
     }
+    /// Yield-curve chart retaining M while preserving the private scaffold lifecycle.
     pub fn new_with_metadata(options: YieldCurveOptions) -> Result<Self, ChartError> {
         let mut chart_options = ChartModelOptions::default();
         chart_options.pane.left_price_scale.visible = true;

@@ -12,8 +12,9 @@ customValues reference. Queries/pop/pointer conversion construct new outer rows
 but retain that payload reference; replacing a point without customValues clears
 it, including whitespace→value replacement. Reindexing preserves surviving
 payloads. Public fulfilled queries exclude whitespace. Data-change notifications
-report scope; pointer events contain data at the captured index. Geometry is not
-an application metadata owner.
+report scope; pointer events contain data at the captured index. Built-in geometry is not
+an application metadata owner; a custom renderer may retain the original typed
+data it deliberately captures in its frozen renderer.
 
 Graph discovery and consumer traces cover series queries/pop, ChartApi pointer
 conversion, toolkit custom series and accessibility readers. Relevant source
@@ -106,3 +107,22 @@ Engine data algorithms and ordinary renderer geometry need no redesign.
 
 Prior formatting-GPU, timing, dedicated drawing-order, physical-device, Intl and
 Display-P3 exceptions remain independent.
+
+## Adapter and data checkpoints
+
+The typed adapter migration (`020bdda`) passes all-target compilation with the
+existing unit consumers unchanged. Only API/extension signatures changed; model
+data algorithms and renderer preparation already accept M. The first typed public
+record round-trip passes without Debug/PartialEq/Send/Sync bounds. Typed custom
+views use `V::Metadata` in their existing canonical model/cache and data builders,
+with no Clone bound added to the view or its options. Widget messages and prepared
+geometry remain metadata-independent.
+
+Focused contracts cover all six series, same-price metadata replacement/clearing,
+failed replacement/history, shared reindexing, whitespace, newest-first pop,
+retained pointer data, 1MB Rc payload clone/drop accounting, all chart families,
+custom views and primitive reads. A missing pane in the first yield test fixture
+was corrected by explicitly creating it; no engine behavior was changed for that
+fixture error. A custom renderer that retains original data keeps that payload
+alive in its snapshot; built-in geometry snapshots do not. Source observations
+match all six families using the real current local 5.2.1 source.

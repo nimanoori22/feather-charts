@@ -113,11 +113,7 @@ where
         read: impl FnOnce(&V::Options) -> R,
     ) -> Result<R, ChartError>
     where
-        V: CustomSeriesPaneView<
-                Frame,
-                Item = B::Item,
-                InternalTime = B::InternalItem,
-            >,
+        V: CustomSeriesPaneView<Frame, Item = B::Item, InternalTime = B::InternalItem>,
     {
         let view = self.attached_view(chart)?;
         let view = view.borrow();
@@ -175,11 +171,7 @@ where
         chart: &Chart<B, V::Metadata>,
     ) -> Result<Rc<RefCell<OwnedView<V>>>, ChartError>
     where
-        V: CustomSeriesPaneView<
-                Frame,
-                Item = B::Item,
-                InternalTime = B::InternalItem,
-            >,
+        V: CustomSeriesPaneView<Frame, Item = B::Item, InternalTime = B::InternalItem>,
     {
         if chart.kinds.get(&self.id) != Some(&SeriesType::Custom)
             || chart.model.pane_for_series(self.id).is_none()

@@ -155,6 +155,8 @@ impl Chart {
     }
 }
 impl<M: Clone + 'static> Chart<HorzScaleBehaviorTime, M> {
+    /// Calendar chart with typed metadata. Use Rc<T> to share payloads without deep copies.
+    /// Existing unit-metadata callers can keep using Chart::new or Default.
     pub fn new_with_metadata(options: ChartModelOptions) -> Self {
         Self::with_behavior(
             options,
