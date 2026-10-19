@@ -1,0 +1,2345 @@
+[
+  {
+    "locale": "en-US",
+    "resolved": {
+      "locale": "en-US",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "fr-FR",
+    "resolved": {
+      "locale": "fr-FR",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "2-digit",
+      "day": "2-digit"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "janv.",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "sept.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "déc.",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "déc.",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 janv. janvier",
+      "2024-02-02 févr. février",
+      "2024-03-02 mars mars",
+      "2024-04-02 avr. avril",
+      "2024-05-02 mai mai",
+      "2024-06-02 juin juin",
+      "2024-07-02 juil. juillet",
+      "2024-08-02 août août",
+      "2024-09-02 sept. septembre",
+      "2024-10-02 oct. octobre",
+      "2024-11-02 nov. novembre",
+      "2024-12-02 déc. décembre"
+    ]
+  },
+  {
+    "locale": "de-DE",
+    "resolved": {
+      "locale": "de-DE",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan Januar",
+      "2024-02-02 Feb Februar",
+      "2024-03-02 Mär März",
+      "2024-04-02 Apr April",
+      "2024-05-02 Mai Mai",
+      "2024-06-02 Jun Juni",
+      "2024-07-02 Jul Juli",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Okt Oktober",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dez Dezember"
+    ]
+  },
+  {
+    "locale": "ar-EG",
+    "resolved": {
+      "locale": "ar-EG",
+      "calendar": "gregory",
+      "numberingSystem": "arab",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "٢٠٢٤",
+          "يناير",
+          "٢",
+          "١٢:٣٠",
+          "١٢:٣٠:٤٥"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "٢٠٢٤",
+          "سبتمبر",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "٢٠٢٣",
+          "ديسمبر",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "١٩٧٠",
+          "يناير",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "١٩٦٩",
+          "ديسمبر",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "١٩٧٠",
+          "يناير",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "١٩٧٠",
+          "يناير",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠١"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 يناير يناير",
+      "2024-02-02 فبراير فبراير",
+      "2024-03-02 مارس مارس",
+      "2024-04-02 أبريل أبريل",
+      "2024-05-02 مايو مايو",
+      "2024-06-02 يونيو يونيو",
+      "2024-07-02 يوليو يوليو",
+      "2024-08-02 أغسطس أغسطس",
+      "2024-09-02 سبتمبر سبتمبر",
+      "2024-10-02 أكتوبر أكتوبر",
+      "2024-11-02 نوفمبر نوفمبر",
+      "2024-12-02 ديسمبر ديسمبر"
+    ]
+  },
+  {
+    "locale": "en",
+    "resolved": {
+      "locale": "en",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "fr",
+    "resolved": {
+      "locale": "fr",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "2-digit",
+      "day": "2-digit"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "janv.",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "sept.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "déc.",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "déc.",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "janv.",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 janv. janvier",
+      "2024-02-02 févr. février",
+      "2024-03-02 mars mars",
+      "2024-04-02 avr. avril",
+      "2024-05-02 mai mai",
+      "2024-06-02 juin juin",
+      "2024-07-02 juil. juillet",
+      "2024-08-02 août août",
+      "2024-09-02 sept. septembre",
+      "2024-10-02 oct. octobre",
+      "2024-11-02 nov. novembre",
+      "2024-12-02 déc. décembre"
+    ]
+  },
+  {
+    "locale": "de",
+    "resolved": {
+      "locale": "de",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan Januar",
+      "2024-02-02 Feb Februar",
+      "2024-03-02 Mär März",
+      "2024-04-02 Apr April",
+      "2024-05-02 Mai Mai",
+      "2024-06-02 Jun Juni",
+      "2024-07-02 Jul Juli",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Okt Oktober",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dez Dezember"
+    ]
+  },
+  {
+    "locale": "ar",
+    "resolved": {
+      "locale": "ar",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "يناير",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "سبتمبر",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "ديسمبر",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "ديسمبر",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 يناير يناير",
+      "2024-02-02 فبراير فبراير",
+      "2024-03-02 مارس مارس",
+      "2024-04-02 أبريل أبريل",
+      "2024-05-02 مايو مايو",
+      "2024-06-02 يونيو يونيو",
+      "2024-07-02 يوليو يوليو",
+      "2024-08-02 أغسطس أغسطس",
+      "2024-09-02 سبتمبر سبتمبر",
+      "2024-10-02 أكتوبر أكتوبر",
+      "2024-11-02 نوفمبر نوفمبر",
+      "2024-12-02 ديسمبر ديسمبر"
+    ]
+  },
+  {
+    "locale": "default",
+    "resolved": {
+      "locale": "en-US",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "EN-us",
+    "resolved": {
+      "locale": "en-US",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "de-DE-u-nu-arab",
+    "resolved": {
+      "locale": "de-DE-u-nu-arab",
+      "calendar": "gregory",
+      "numberingSystem": "arab",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "٢٠٢٤",
+          "Jan",
+          "٢",
+          "١٢:٣٠",
+          "١٢:٣٠:٤٥"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "٢٠٢٤",
+          "Sep",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "٢٠٢٣",
+          "Dez",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "١٩٦٩",
+          "Dez",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠١"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan Januar",
+      "2024-02-02 Feb Februar",
+      "2024-03-02 Mär März",
+      "2024-04-02 Apr April",
+      "2024-05-02 Mai Mai",
+      "2024-06-02 Jun Juni",
+      "2024-07-02 Jul Juli",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Okt Oktober",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dez Dezember"
+    ]
+  },
+  {
+    "locale": "ar-EG-u-nu-latn",
+    "resolved": {
+      "locale": "ar-EG-u-nu-latn",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "يناير",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "سبتمبر",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "ديسمبر",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "ديسمبر",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "يناير",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 يناير يناير",
+      "2024-02-02 فبراير فبراير",
+      "2024-03-02 مارس مارس",
+      "2024-04-02 أبريل أبريل",
+      "2024-05-02 مايو مايو",
+      "2024-06-02 يونيو يونيو",
+      "2024-07-02 يوليو يوليو",
+      "2024-08-02 أغسطس أغسطس",
+      "2024-09-02 سبتمبر سبتمبر",
+      "2024-10-02 أكتوبر أكتوبر",
+      "2024-11-02 نوفمبر نوفمبر",
+      "2024-12-02 ديسمبر ديسمبر"
+    ]
+  },
+  {
+    "locale": "ar-EG-u-nu-arabext",
+    "resolved": {
+      "locale": "ar-EG-u-nu-arabext",
+      "calendar": "gregory",
+      "numberingSystem": "arabext",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "۲۰۲۴",
+          "يناير",
+          "۲",
+          "۱۲:۳۰",
+          "۱۲:۳۰:۴۵"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "۲۰۲۴",
+          "سبتمبر",
+          "۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "۲۰۲۳",
+          "ديسمبر",
+          "۳۱",
+          "۲۳:۵۹",
+          "۲۳:۵۹:۵۹"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "۱۹۷۰",
+          "يناير",
+          "۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "۱۹۶۹",
+          "ديسمبر",
+          "۳۱",
+          "۲۳:۵۹",
+          "۲۳:۵۹:۵۹"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "۱۹۷۰",
+          "يناير",
+          "۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "۱۹۷۰",
+          "يناير",
+          "۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۱"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 يناير يناير",
+      "2024-02-02 فبراير فبراير",
+      "2024-03-02 مارس مارس",
+      "2024-04-02 أبريل أبريل",
+      "2024-05-02 مايو مايو",
+      "2024-06-02 يونيو يونيو",
+      "2024-07-02 يوليو يوليو",
+      "2024-08-02 أغسطس أغسطس",
+      "2024-09-02 سبتمبر سبتمبر",
+      "2024-10-02 أكتوبر أكتوبر",
+      "2024-11-02 نوفمبر نوفمبر",
+      "2024-12-02 ديسمبر ديسمبر"
+    ]
+  },
+  {
+    "locale": "en-US-u-hc-h23",
+    "resolved": {
+      "locale": "en-US-u-hc-h23",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "de-DE-u-ca-gregory-nu-latn",
+    "resolved": {
+      "locale": "de-DE-u-ca-gregory-nu-latn",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dez",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan Januar",
+      "2024-02-02 Feb Februar",
+      "2024-03-02 Mär März",
+      "2024-04-02 Apr April",
+      "2024-05-02 Mai Mai",
+      "2024-06-02 Jun Juni",
+      "2024-07-02 Jul Juli",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Okt Oktober",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dez Dezember"
+    ]
+  },
+  {
+    "locale": "de-DE-u-ca-islamic",
+    "resolved": {
+      "locale": "de-DE-u-ca-islamic",
+      "calendar": "islamic",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "era": "narrow",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "1445 AH",
+          "Jum. II",
+          "21",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "1446 AH",
+          "Saf.",
+          "28",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "1445 AH",
+          "Jum. II",
+          "19",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1389 AH",
+          "Shaw.",
+          "23",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1389 AH",
+          "Shaw.",
+          "22",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1389 AH",
+          "Shaw.",
+          "23",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1389 AH",
+          "Shaw.",
+          "23",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jum. II Dschumada II",
+      "2024-02-02 Raj. Radschab",
+      "2024-03-02 Sha. Shaʻban",
+      "2024-04-02 Ram. Ramadan",
+      "2024-05-02 Shaw. Shawwal",
+      "2024-06-02 Dhuʻl-Q. Dhu l-qaʿda",
+      "2024-07-02 Dhuʻl-H. Dhu l-Hi02scha",
+      "2024-08-02 Muh. Muharram",
+      "2024-09-02 Saf. Safar",
+      "2024-10-02 Rab. I Rabiʻ I",
+      "2024-11-02 Rab. II Rabiʻ II",
+      "2024-12-02 Jum. I Dschumada I"
+    ]
+  },
+  {
+    "locale": "fa-IR",
+    "resolved": {
+      "locale": "fa-IR",
+      "calendar": "persian",
+      "numberingSystem": "arabext",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "۱۴۰۲",
+          "دی",
+          "۱۲",
+          "۱۲:۳۰",
+          "۱۲:۳۰:۴۵"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "۱۴۰۳",
+          "شهریور",
+          "۱۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "۱۴۰۲",
+          "دی",
+          "۱۰",
+          "۲۳:۵۹",
+          "۲۳:۵۹:۵۹"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "۱۳۴۸",
+          "دی",
+          "۱۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "۱۳۴۸",
+          "دی",
+          "۱۰",
+          "۲۳:۵۹",
+          "۲۳:۵۹:۵۹"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "۱۳۴۸",
+          "دی",
+          "۱۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۰"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "۱۳۴۸",
+          "دی",
+          "۱۱",
+          "۰۰:۰۰",
+          "۰۰:۰۰:۰۱"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 دی دی",
+      "2024-02-02 بهمن بهمن",
+      "2024-03-02 اسفند اسفند",
+      "2024-04-02 فروردین فروردین",
+      "2024-05-02 اردیبهشت اردیبهشت",
+      "2024-06-02 خرداد خرداد",
+      "2024-07-02 تیر تیر",
+      "2024-08-02 مرداد مرداد",
+      "2024-09-02 شهریور شهریور",
+      "2024-10-02 مهر مهر",
+      "2024-11-02 آبان آبان",
+      "2024-12-02 آذر آذر"
+    ]
+  },
+  {
+    "locale": "es-ES",
+    "resolved": {
+      "locale": "es-ES",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "ene",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "sept",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "dic",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "ene",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "dic",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "ene",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "ene",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 ene enero",
+      "2024-02-02 feb febrero",
+      "2024-03-02 mar marzo",
+      "2024-04-02 abr abril",
+      "2024-05-02 may mayo",
+      "2024-06-02 jun junio",
+      "2024-07-02 jul julio",
+      "2024-08-02 ago agosto",
+      "2024-09-02 sept septiembre",
+      "2024-10-02 oct octubre",
+      "2024-11-02 nov noviembre",
+      "2024-12-02 dic diciembre"
+    ]
+  },
+  {
+    "locale": "ja-JP",
+    "resolved": {
+      "locale": "ja-JP",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024年",
+          "1月",
+          "2日",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024年",
+          "9月",
+          "1日",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023年",
+          "12月",
+          "31日",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970年",
+          "1月",
+          "1日",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969年",
+          "12月",
+          "31日",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970年",
+          "1月",
+          "1日",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970年",
+          "1月",
+          "1日",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 1月 1月",
+      "2024-02-02 2月 2月",
+      "2024-03-02 3月 3月",
+      "2024-04-02 4月 4月",
+      "2024-05-02 5月 5月",
+      "2024-06-02 6月 6月",
+      "2024-07-02 7月 7月",
+      "2024-08-02 8月 8月",
+      "2024-09-02 9月 9月",
+      "2024-10-02 10月 10月",
+      "2024-11-02 11月 11月",
+      "2024-12-02 12月 12月"
+    ]
+  },
+  {
+    "locale": "zz-ZZ",
+    "resolved": {
+      "locale": "en-US",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "not_a_locale",
+    "resolved": {
+      "error": "RangeError"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          },
+          {
+            "error": "RangeError"
+          }
+        ]
+      }
+    ],
+    "months": [
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      },
+      {
+        "error": "RangeError"
+      }
+    ]
+  },
+  {
+    "locale": "en-US-u-nu-foobar",
+    "resolved": {
+      "locale": "en-US",
+      "calendar": "gregory",
+      "numberingSystem": "latn",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "2024",
+          "Jan",
+          "2",
+          "12:30",
+          "12:30:45"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "2024",
+          "Sep",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "2023",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "1969",
+          "Dec",
+          "31",
+          "23:59",
+          "23:59:59"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:00"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "1970",
+          "Jan",
+          "1",
+          "00:00",
+          "00:00:01"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan January",
+      "2024-02-02 Feb February",
+      "2024-03-02 Mar March",
+      "2024-04-02 Apr April",
+      "2024-05-02 May May",
+      "2024-06-02 Jun June",
+      "2024-07-02 Jul July",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Oct October",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dec December"
+    ]
+  },
+  {
+    "locale": "de-DE-u-nu-arab-ca-gregory",
+    "resolved": {
+      "locale": "de-DE-u-ca-gregory-nu-arab",
+      "calendar": "gregory",
+      "numberingSystem": "arab",
+      "timeZone": "UTC",
+      "year": "numeric",
+      "month": "numeric",
+      "day": "numeric"
+    },
+    "ticks": [
+      {
+        "timestamp": 1704198645,
+        "values": [
+          "٢٠٢٤",
+          "Jan",
+          "٢",
+          "١٢:٣٠",
+          "١٢:٣٠:٤٥"
+        ]
+      },
+      {
+        "timestamp": 1725148800,
+        "values": [
+          "٢٠٢٤",
+          "Sep",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1704067199,
+        "values": [
+          "٢٠٢٣",
+          "Dez",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": 0,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": -0.5,
+        "values": [
+          "١٩٦٩",
+          "Dez",
+          "٣١",
+          "٢٣:٥٩",
+          "٢٣:٥٩:٥٩"
+        ]
+      },
+      {
+        "timestamp": -0.0001,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠٠"
+        ]
+      },
+      {
+        "timestamp": 1.9999999995,
+        "values": [
+          "١٩٧٠",
+          "Jan",
+          "١",
+          "٠٠:٠٠",
+          "٠٠:٠٠:٠١"
+        ]
+      }
+    ],
+    "months": [
+      "2024-01-02 Jan Januar",
+      "2024-02-02 Feb Februar",
+      "2024-03-02 Mär März",
+      "2024-04-02 Apr April",
+      "2024-05-02 Mai Mai",
+      "2024-06-02 Jun Juni",
+      "2024-07-02 Jul Juli",
+      "2024-08-02 Aug August",
+      "2024-09-02 Sep September",
+      "2024-10-02 Okt Oktober",
+      "2024-11-02 Nov November",
+      "2024-12-02 Dez Dezember"
+    ]
+  }
+]

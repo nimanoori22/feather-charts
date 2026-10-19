@@ -236,3 +236,80 @@ fn runtime_percentage_batch_clear_and_new_overlay_inherit_policy() {
         vec!["10.00%", "20.00%"]
     );
 }
+
+#[test]
+fn locale_patch_rebuilds_ticks_but_preserves_data_keys_ranges_and_ascii_item_tokens() {
+    use feather_charts::renderers::time_axis_renderer::TimeAxisCommand;
+    let (mut c, id) = chart();
+    let size = iced::Size::new(800., 500.);
+    let old = c.prepare_snapshot(size, 1.25, Instant::now()).unwrap();
+    let labels = |snapshot: &feather_charts::ui::multi_pane_frame::MultiPaneChartFrameSnapshot| {
+        snapshot
+            .panes
+            .iter()
+            .flat_map(|p| p.time.commands.iter())
+            .filter_map(|cmd| {
+                if let TimeAxisCommand::Text { label, .. } = cmd {
+                    Some(label.clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>()
+    };
+    let old_labels = labels(&old);
+    assert!(!old_labels.is_empty());
+    let range = c.visible_logical_range();
+    let data = c.series_data(id).unwrap();
+    let internal = c
+        .model()
+        .time_scale()
+        .behavior()
+        .to_internal(&UtcTimestamp::new(1.).into())
+        .unwrap();
+    let key = c.model().time_scale().behavior().key(&internal);
+    c.apply_localization_options(LocalizationOptionsPatch {
+        locale: Some("ar-EG".into()),
+        date_format: Some("yyyy-MM-dd MMMM".into()),
+        ..Default::default()
+    });
+    let localized = c.prepare_snapshot(size, 1.25, Instant::now()).unwrap();
+    assert!(
+        labels(&localized)
+            .iter()
+            .any(|label| label.chars().any(|c| ('٠'..='٩').contains(&c)))
+    );
+    assert_eq!(labels(&old), old_labels);
+    assert_eq!(c.visible_logical_range(), range);
+    assert_eq!(c.series_data(id).unwrap(), data);
+    let behavior = c.model().time_scale().behavior();
+    assert_eq!(behavior.key(&internal), key);
+    assert!(
+        behavior
+            .format_item(&internal)
+            .starts_with("1970-01-01 يناير")
+    );
+    c.apply_localization_options(LocalizationOptionsPatch {
+        time_formatter: FieldPatch::Set(Rc::new(|_| "Override 123".into())),
+        ..Default::default()
+    });
+    assert_eq!(
+        c.model().time_scale().behavior().format_item(&internal),
+        "Override 123"
+    );
+    c.apply_localization_options(LocalizationOptionsPatch {
+        locale: Some("bad_locale".into()),
+        time_formatter: FieldPatch::Clear,
+        ..Default::default()
+    });
+    assert_eq!(c.localization_options().base.locale, "bad_locale");
+    let fallback = c.prepare_snapshot(size, 1.25, Instant::now()).unwrap();
+    assert_eq!(labels(&fallback), old_labels);
+    assert!(
+        c.model()
+            .time_scale()
+            .behavior()
+            .format_item(&internal)
+            .starts_with("1970-01-01 January")
+    );
+}

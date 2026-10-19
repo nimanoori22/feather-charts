@@ -1,0 +1,11 @@
+{
+  "files": {
+    "src/formatters/format-date.ts": "9625727b658f272727d88b210a47f1e2111816bc56ef6db3df1a74a5a943ebda",
+    "src/formatters/formatter-base.ts": "33c56dab7293424ef8986057dad3e2124ab4c6ea1033df9d2a5bfa4498895fc6",
+    "src/formatters/price-formatter.ts": "f67b3034369d9d2760f15574161f38c4fc5885a2439f82ccdde813aaa409686b",
+    "src/helpers/assertions.ts": "b4585dc7b5a130a41f7406d7ab6e554711041c35f0880bc90fa92a756d015f35",
+    "src/helpers/strict-type-checks.ts": "c1b79b8ca418df9d8d4e48fea5a19181bf49c660ad635d4885cedf14868012b4",
+    "src/model/horz-scale-behavior-time/default-tick-mark-formatter.ts": "ab7b78aac611e715e7693e64b1bb76127d79eb838bed5392e13e5204bdbd6bed",
+    "src/model/horz-scale-behavior-time/types.ts": "b3249c942a0fd4aecbf2facec403f4f59c7dc48f74fe00128ab5f6ee24a676a8"
+  }
+}

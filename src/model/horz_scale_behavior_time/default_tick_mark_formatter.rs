@@ -3,7 +3,7 @@
 use chrono::{Datelike, Timelike};
 
 use crate::{
-    formatters::format_date::format_date,
+    formatters::{format_date::format_date, time_locale::resolve},
     model::horz_scale_behavior_time::{
         time_utils::{TimeConversionError, business_day_to_time_point},
         types::{TickMarkType, TimePoint},
@@ -34,7 +34,7 @@ pub fn default_tick_mark_formatter(
 ) -> Result<String, TimeConversionError> {
     let date = date_time(point)?;
     let value = date.inner();
-    Ok(match tick_mark_type {
+    let label = match tick_mark_type {
         TickMarkType::Year => value.year().to_string(),
         TickMarkType::Month => format_date(&date, "MMM", locale),
         TickMarkType::DayOfMonth => value.day().to_string(),
@@ -47,7 +47,8 @@ pub fn default_tick_mark_formatter(
                 value.second()
             )
         }
-    })
+    };
+    Ok(resolve(locale).digits(label))
 }
 
 #[cfg(test)]
