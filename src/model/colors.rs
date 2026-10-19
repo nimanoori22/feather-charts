@@ -58,7 +58,8 @@ impl Error for ColorParseError {}
 ///
 /// Browser-based Lightweight Charts delegates sRGB CSS parsing to the browser.
 /// Here, `csscolorparser` supplies that behavior natively; caller-provided
-/// parsers retain support for non-sRGB formats such as `display-p3`.
+/// parsers handle functional color formats the source browser leaves outside
+/// rgb()/rgba(), including color(), lab()/lch() and their OK variants.
 #[derive(Clone)]
 pub struct ColorParser {
     rgba_cache: Rc<RefCell<HashMap<String, Rgba>>>,
@@ -160,7 +161,7 @@ impl ColorParser {
     /// Floating sRGB components for native rendering; ordinary CSS retains its
     /// existing precision, while custom parsers use their explicit u8 contract.
     pub fn rendering_rgba(&mut self, color: &str) -> Result<[f32; 4], ColorParseError> {
-        if !is_display_p3(color)
+        if !requires_custom_parser(color)
             && let Ok(c) = csscolorparser::parse(color)
         {
             return Ok([c.r, c.g, c.b, c.a]);
@@ -179,9 +180,8 @@ impl ColorParser {
             return Ok(*rgba);
         }
 
-        // The TypeScript implementation intentionally sends display-p3 through
-        // custom parsers after browser serialization leaves it non-sRGB.
-        let parsed = if is_display_p3(color) {
+        // Browser serialization preserves these functions instead of rgb()/rgba().
+        let parsed = if requires_custom_parser(color) {
             None
         } else {
             csscolorparser::parse(color).ok().map(|color| {
@@ -232,11 +232,13 @@ fn rgba_to_grayscale(color: Rgba) -> f32 {
     0.199 * color.red as f32 + 0.687 * color.green as f32 + 0.114 * color.blue as f32
 }
 
-fn is_display_p3(color: &str) -> bool {
-    let color = color.trim_start().to_ascii_lowercase();
-    color
-        .strip_prefix("color(")
-        .is_some_and(|arguments| arguments.trim_start().starts_with("display-p3"))
+fn requires_custom_parser(color: &str) -> bool {
+    let Some((function, _)) = color.trim_start().split_once('(') else {
+        return false;
+    };
+    ["color", "lab", "lch", "oklab", "oklch"]
+        .iter()
+        .any(|name| function.eq_ignore_ascii_case(name))
 }
 
 #[cfg(test)]

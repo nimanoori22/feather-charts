@@ -42,7 +42,8 @@ async function main(){
    const result={gray:p.colorStringToGrayscale(dark),contrast:p.generateContrastColors(dark),alpha:p.applyAlpha(dark,0.4),transparent:p.applyAlpha('transparent',0.3),gradient:p.gradientColorAtPercent(dark,light,0.5),light:p.generateContrastColors(light),css:p.generateContrastColors('#fff')};
    p.colorStringToGrayscale(dark);
    let failures=0;for(let i=0;i<2;i++){try{p.colorStringToGrayscale(unknown);}catch{failures++;}}
-   return {...result,failures,calls};
+   const forms=['color(display-p3 1 0 0)','color(srgb 0.2 0.3 0.4)','color(srgb-linear 0.2 0.3 0.4)','lab(50% 0 0)','lch(50% 0 0)','oklab(50% 0 0)','oklch(50% 0 0)','hsl(120 50% 50%)','hwb(120 10% 20%)','#abcdef'].map(token=>{let count=0;const parser=new ConfiguredColorsSource.ColorParser([()=>{count++;return[10,20,30,0.5];}]);return{token,gray:parser.colorStringToGrayscale(token),calls:count};});
+   return {...result,failures,calls,forms};
   });
   const fixture='docs/porting/configured-colors-states.json';
   if(process.argv.includes('--freeze'))fs.writeFileSync(fixture,JSON.stringify(result,null,2)+'\n');else assert.deepEqual(result,JSON.parse(fs.readFileSync(fixture)),'source color behavior changed');
@@ -53,6 +54,9 @@ async function main(){
    assert.equal(native.status,0,'native configured color tests failed');
    const line=native.stdout.split('\n').find(l=>l.startsWith('CONFIGURED_COLORS_REFERENCE '));assert(line);
    const row=JSON.parse(line.slice('CONFIGURED_COLORS_REFERENCE '.length));
+   const formsLine=native.stdout.split('\n').find(l=>l.startsWith('CONFIGURED_COLORS_FORMS '));assert(formsLine);
+   const forms=JSON.parse(formsLine.slice('CONFIGURED_COLORS_FORMS '.length));assert.equal(forms.length,result.forms.length);
+   forms.forEach((row,i)=>{const ref=result.forms[i];assert.equal(row.token,ref.token);assert.equal(row.calls,ref.calls,row.token);assert(Math.abs(row.gray-ref.gray)<1e-3,row.token);});delete result.forms;
    assert(Math.abs(row.gray-result.gray)<1e-4);delete row.gray;delete result.gray;
    assert.deepEqual(row,result);
   }

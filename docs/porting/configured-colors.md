@@ -8,7 +8,10 @@ Baseline: `3eb01c7`. Reference: local Lightweight Charts 5.2.1,
 The complete `src/model/colors.ts` and its unit tests were inspected. The model
 constructs one ColorParser from layout.colorParsers. Successful original-string
 lookups are cached; native/browser sRGB parsing precedes ordered custom fallback;
-first Some wins. Failed colors are not cached. applyAlpha multiplies existing
+first Some wins. Failed colors are not cached. A further source probe reproduced
+the same fallback for color(srgb/srgb-linear), lab/lch and oklab/oklch; these must
+reach configured callbacks even when the native CSS library can convert them.
+HSL, HWB and hex remain native-first. applyAlpha multiplies existing
 alpha, with a transparent shortcut; contrast ignores alpha and uses grayscale
 0.199R + 0.687G + 0.114B, choosing black only above 160. Gradients normalize
 channels and alpha. Cache/ordering fixtures must pin actual callback invocations.
@@ -101,3 +104,31 @@ and validated. Inactive alias strings are not parsed as independent paint.
 Row validation uses fixed stack arrays, adding no per-row palette allocation.
 The native rendering adapter preserves CSS float precision; no parser runs in
 immutable Canvas drawing or owned screenshot replay.
+
+
+Migration: callers using color(), lab()/lch() or oklab()/oklch() should supply
+layout.color_parsers returning their chosen sRGB Rgba. The source browser leaves
+these functional forms unconverted, so bypassing callbacks with a native library
+conversion was incorrect. Such callbacks do not configure an output gamut.
+The previous independent csscolorparser acceptance of some of these forms is no
+longer used as an implicit conversion behind configured callbacks.
+
+
+Hosts converting raw snapshots can pass Chart::color_parser() to the public
+from_snapshot_with_colors/from_commands_with_colors UI adapters. Their original
+conversion methods retain default CSS behavior. Raw snapshots preserve authored
+commands; converted native frames own resolved ink and retain no parser handle.
+An external-consumer integration test covers this conversion boundary.
+
+
+Checked native APIs validate inputs eagerly. Callback results, per-color fallback
+ordering and successful caching follow the source; exact browser frame scheduling
+of side effects is not a callback guarantee. Parser callbacks should be deterministic.
+Library handles have no owner back-reference. Application closures can still create
+an Rc cycle by strongly capturing their chart container; use Weak or separate state.
+Different-key resolver re-entry is tested; recursively resolving the same missing
+key remains the application's responsibility, as in the source.
+The exact Iced `core/src/color.rs` documents its native Color as sRGB. The new
+adapters pass resolved f32 components to existing Color/Canvas APIs and add no
+window/device/thread setup. Source graph coverage was checked; stale source-color
+metadata was supplemented with direct complete reads before implementation.

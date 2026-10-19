@@ -331,7 +331,8 @@ impl PlotSnapshot {
     ) -> Result<Self, FrameError> {
         Self::from_commands_with_colors(layout, grid, line, &Default::default())
     }
-    pub(crate) fn from_commands_with_colors(
+    /// Resolves configured colors during conversion; returned geometry owns its ink.
+    pub fn from_commands_with_colors(
         layout: &FrameLayout,
         grid: Vec<GridDrawCommand>,
         line: LineDrawCommands,

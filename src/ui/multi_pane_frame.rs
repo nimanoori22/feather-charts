@@ -540,7 +540,8 @@ impl IcedMultiPaneChartFrame {
     ) -> Result<Self, ChartFrameError> {
         Self::from_snapshot_with_colors(snapshot, fonts, separator_color, &Default::default())
     }
-    pub(crate) fn from_snapshot_with_colors(
+    /// Uses the supplied chart policy while preparing owned, immutable native geometry.
+    pub fn from_snapshot_with_colors(
         snapshot: MultiPaneChartFrameSnapshot,
         fonts: &AxisFontResolver,
         separator_color: &str,

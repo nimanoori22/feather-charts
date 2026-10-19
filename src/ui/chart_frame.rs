@@ -485,7 +485,8 @@ impl IcedChartFrame {
     ) -> Result<Self, ChartFrameError> {
         Self::from_snapshot_with_colors(snapshot, fonts, &Default::default())
     }
-    pub(crate) fn from_snapshot_with_colors(
+    /// Uses the supplied chart policy while preparing owned, immutable native geometry.
+    pub fn from_snapshot_with_colors(
         mut snapshot: ChartFrameSnapshot,
         fonts: &AxisFontResolver,
         colors: &crate::model::colors::ColorParser,

@@ -53,7 +53,8 @@ impl IcedTimeAxis {
     ) -> Result<Self, TimeAxisUiError> {
         Self::from_commands_with_colors(commands, fonts, &Default::default())
     }
-    pub(crate) fn from_commands_with_colors(
+    /// Resolves configured colors during conversion; returned geometry owns its ink.
+    pub fn from_commands_with_colors(
         commands: &PreparedTimeAxis,
         fonts: &AxisFontResolver,
         colors: &crate::model::colors::ColorParser,

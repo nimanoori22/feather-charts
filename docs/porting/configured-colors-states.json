@@ -27,5 +27,57 @@
     "first:color(display-p3 0 1 0)",
     "second:color(display-p3 0 1 0)",
     "third:color(display-p3 0 1 0)"
+  ],
+  "forms": [
+    {
+      "token": "color(display-p3 1 0 0)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "color(srgb 0.2 0.3 0.4)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "color(srgb-linear 0.2 0.3 0.4)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "lab(50% 0 0)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "lch(50% 0 0)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "oklab(50% 0 0)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "oklch(50% 0 0)",
+      "gray": 19.150000000000002,
+      "calls": 1
+    },
+    {
+      "token": "hsl(120 50% 50%)",
+      "gray": 151.249,
+      "calls": 0
+    },
+    {
+      "token": "hwb(120 10% 20%)",
+      "gray": 148.28600000000003,
+      "calls": 0
+    },
+    {
+      "token": "#abcdef",
+      "gray": 202.11,
+      "calls": 0
+    }
   ]
 }

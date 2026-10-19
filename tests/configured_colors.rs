@@ -547,3 +547,70 @@ fn p3_targets_are_explicit_errors_at_checked_legacy_and_atomic_runtime_boundarie
 
 #[path = "configured_colors/custom.rs"]
 mod custom;
+
+#[test]
+fn browser_non_rgb_fallback_forms() {
+    let tokens = [
+        "color(display-p3 1 0 0)",
+        "color(srgb 0.2 0.3 0.4)",
+        "color(srgb-linear 0.2 0.3 0.4)",
+        "lab(50% 0 0)",
+        "lch(50% 0 0)",
+        "oklab(50% 0 0)",
+        "oklch(50% 0 0)",
+        "hsl(120 50% 50%)",
+        "hwb(120 10% 20%)",
+        "#abcdef",
+    ];
+    let rows = tokens
+        .into_iter()
+        .enumerate()
+        .map(|(index, token)| {
+            let calls = Rc::new(Cell::new(0));
+            let mut p = ColorParser::new(
+                vec![Box::new({
+                    let calls = calls.clone();
+                    move |_| {
+                        calls.set(calls.get() + 1);
+                        Some(Rgba::new(10, 20, 30, 0.5))
+                    }
+                })],
+                None,
+            );
+            let gray = p.color_string_to_grayscale(token).unwrap();
+            assert_eq!(calls.get(), usize::from(index < 7), "{token}");
+            format!(
+                "{{\"token\":{},\"gray\":{gray},\"calls\":{}}}",
+                quote(token),
+                calls.get()
+            )
+        })
+        .collect::<Vec<_>>();
+    println!("CONFIGURED_COLORS_FORMS [{}]", rows.join(","));
+}
+
+#[test]
+fn external_snapshot_conversion_accepts_the_same_chart_policy() {
+    let (mut chart, _) = configured_chart();
+    let id = chart
+        .add_series(
+            options(0, DARK),
+            0,
+            feather_charts::model::pane::PriceScalePosition::Right,
+        )
+        .unwrap();
+    chart
+        .set_data(id, (0..3).map(|i| row(0, i, DARK)).collect())
+        .unwrap();
+    chart.fit_content();
+    let snapshot = chart
+        .prepare_snapshot(iced::Size::new(400., 300.), 1.25, std::time::Instant::now())
+        .unwrap();
+    feather_charts::ui::multi_pane_frame::IcedMultiPaneChartFrame::from_snapshot_with_colors(
+        snapshot,
+        &Default::default(),
+        DARK,
+        &chart.color_parser(),
+    )
+    .unwrap();
+}
