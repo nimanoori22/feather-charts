@@ -132,3 +132,78 @@ The exact Iced `core/src/color.rs` documents its native Color as sRGB. The new
 adapters pass resolved f32 components to existing Color/Canvas APIs and add no
 window/device/thread setup. Source graph coverage was checked; stale source-color
 metadata was supplemented with direct complete reads before implementation.
+
+
+## Rust files changed
+
+- `examples/pane_management.rs`
+- `examples/pane_management/color_captures.rs`
+- `examples/pane_management/color_policy.rs`
+- `examples/pane_management/host.rs`
+- `src/api/behavior.rs`
+- `src/api/chart.rs`
+- `src/api/custom_series.rs`
+- `src/api/markers.rs`
+- `src/api/options_chart.rs`
+- `src/api/price_scale.rs`
+- `src/api/primitives.rs`
+- `src/api/text_watermark.rs`
+- `src/api/up_down_markers.rs`
+- `src/api/yield_curve.rs`
+- `src/model/chart_configuration.rs`
+- `src/model/chart_model.rs`
+- `src/model/chart_model/configuration.rs`
+- `src/model/chart_model/price_lines.rs`
+- `src/model/colors.rs`
+- `src/model/data_layer.rs`
+- `src/model/get_series_plot_row_creator.rs`
+- `src/model/icustom_series.rs`
+- `src/model/pane.rs`
+- `src/model/price_line.rs`
+- `src/model/series.rs`
+- `src/renderers/attribution_logo_renderer.rs`
+- `src/ui/chart_frame.rs`
+- `src/ui/line_chart.rs`
+- `src/ui/line_chart/series_paint.rs`
+- `src/ui/multi_pane_frame.rs`
+- `src/ui/price_axis.rs`
+- `src/ui/series_annotations.rs`
+- `src/ui/time_axis.rs`
+- `src/views/pane/series_last_price_animation_pane_view.rs`
+- `tests/configured_colors.rs`
+- `tests/configured_colors/custom.rs`
+
+
+## Automated delivery record
+
+Policy checkpoint `d895c5f`, routing/target checkpoint `3653229`, modern-format/
+public-adapter checkpoint `53e4a1a`, consumer checkpoint `e0eb47b`.
+All common gates pass: 884 tests in 90 suites, two compile-fail doctests,
+all-target build/check, Clippy with warnings denied, formatting and the reviewed
+surface inventory. All 46 source comparisons pass; the previous 45 scripts are
+unchanged. A ten-format source/native probe covers seven functional fallback
+forms plus native HSL/HWB/hex. Ordering/cache/error/alpha/contrast regressions pass.
+The original full-chart F05 probe is retained in its own output directory.
+
+Both actual renderers pass 672 screen replays and 672 retained exports across
+four domains, three sizes and four DPRs. Rejected invalid/P3 updates preserve
+baseline pixels; screen replay/retained export invoke no parser callbacks.
+All 1,248 accepted formatting and attribution images remain unchanged; attribution
+also passes its 2,688 export-exclusion and 2,688 retained-export assertions.
+The fixed color scenes are initial/palette/row/extensions/invalid/p3/recovered.
+The software fractional-DPR extension capture was visually inspected.
+Normal software/GPU physical acceptance and pinned artifacts are recorded in
+`configured-colors-evidence.json`. Larger combined compatibility captures remain
+Z0. Independent Intl, timing, drawing-order, device and gamut exceptions remain.
+
+## Physical acceptance and milestone status
+
+Milestone I is accepted. The user passed the normal tiny-skia and wgpu demos in
+calendar, strike, maturity and session modes, including idle parser counters,
+interaction checks, short-height recovery and retained-color previews/exports.
+All eight sessions exited normally using the validated binary; source, fixture
+and binary hashes still match the capture protocol. The interrupted GPU launch
+is retained separately and is not counted as acceptance. See
+[configured-colors-evidence.json](configured-colors-evidence.json) for the pinned
+results. Combined validation Z0 is next. Existing independent exceptions,
+including actual Display-P3 output and untested devices, remain open.

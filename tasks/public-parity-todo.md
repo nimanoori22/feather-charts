@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I in progress.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I accepted; combined completion Z0 next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -142,8 +142,17 @@ combined remaining captures are Z0 and independent exceptions are unchanged.
 - [x] I1: Route configured parsers through core validation and preparation. (depends: I0).
 - [x] I2: Complete configured extension colors. (depends: I1).
 - [x] I3: Make unsupported target color-space requests explicit. (depends: I2).
-- [ ] I4: Demonstrate color policy and accept milestone I. (depends: I3).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] I4: Demonstrate color policy and accept milestone I. (depends: I3).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+Policy/routing/adapter/consumer checkpoints: `d895c5f`, `3653229`, `53e4a1a`,
+`e0eb47b`. All common gates pass: 884 tests in 90 suites, two compile-fail
+doctests and 46 source comparisons. Both renderers pass 672 screen replays and
+672 retained exports; 1,248 accepted compatibility images remain unchanged.
+The user passed software/GPU mouse acceptance in all four modes, including idle
+parser counters and previews/exports; all eight normal sessions exited successfully.
+See [configured-colors.md](../docs/porting/configured-colors.md) and its pinned
+evidence. Combined completion remains Z0; independent exceptions are unchanged.
 
 ### Z — Combined completion
 
