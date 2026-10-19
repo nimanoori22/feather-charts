@@ -11,7 +11,7 @@ const api={
   subscribeDblClick:'native|EventInterests.double_click / ChartEvent::DoubleClick',unsubscribeDblClick:'native|EventInterests.double_click',
   subscribeCrosshairMove:'native|ChartEvent::CrosshairMoved',unsubscribeCrosshairMove:'native|Host owns routing of pointer events',
   priceScale:'native|Chart methods use pane + PriceScalePosition',timeScale:'native|Chart checked range/navigation/conversion helpers; read-only engine inspection retained',
-  applyOptions:'partial|F04/F05: Chart.apply_chart_options covers axis input and presentation; default visible-scale selection and color policy incomplete',options:'partial|F04/F05: runtime/localization/axis-input readbacks; default visible-scale selection and color policy incomplete',
+  applyOptions:'partial|Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred',options:'partial|Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred',
   takeScreenshot:'mapped|Chart.take_screenshot / prepare_screenshot + ScreenshotExporter',addPane:'native|Chart.add_pane then set_preserve_empty_pane',
   panes:'mapped|Chart.model().panes()',removePane:'mapped|Chart.remove_pane',swapPanes:'mapped|Chart.swap_panes',
   autoSizeActive:'platform|Iced host controls layout; no ResizeObserver',chartElement:'platform|Iced Canvas replaces DOM element',

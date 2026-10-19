@@ -1,0 +1,785 @@
+{
+  "status": "Z0 complete within the public-parity-plan scope; independent exceptions remain open",
+  "validated_implementation_checkpoint": "bcf44e8",
+  "plan_baseline": "55ba7d7",
+  "source_version": "5.2.1",
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "runtime_changes": false,
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "node",
+        "scripts/audit_public_surface.cjs",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 884,
+    "suites": 90,
+    "doctests": 2
+  },
+  "source_comparisons": {
+    "passed": 46,
+    "scripts_unchanged_from_I": true,
+    "results": {
+      "path": "target/public-parity-final/references/results.json",
+      "sha256": "a593ab5e41f96510608d97375f5bcde9d6c25fadbad841f5baa84115708eb6a0"
+    }
+  },
+  "original_observations": [
+    {
+      "name": "global_price",
+      "source": "GLOBAL",
+      "native": "GLOBAL",
+      "equal": true
+    },
+    {
+      "name": "global_ticks",
+      "source": [
+        "GLOBAL_TICKS"
+      ],
+      "native": [
+        "GLOBAL_TICKS"
+      ],
+      "equal": true
+    },
+    {
+      "name": "global_percentage",
+      "source": "PERCENT",
+      "native": "PERCENT",
+      "equal": true
+    },
+    {
+      "name": "custom_ticks",
+      "source": [
+        "BATCH"
+      ],
+      "native": [
+        "BATCH"
+      ],
+      "equal": true
+    },
+    {
+      "name": "custom_batch_calls",
+      "source": 1,
+      "native": 1,
+      "equal": true
+    },
+    {
+      "name": "scale_after_option",
+      "source": "left",
+      "native": "left",
+      "equal": true
+    },
+    {
+      "name": "arabic_day",
+      "source": "\u0662",
+      "native": "\u0662",
+      "equal": true
+    },
+    {
+      "name": "arabic_time",
+      "source": "\u0661\u0662:\u0660\u0660",
+      "native": "\u0661\u0662:\u0660\u0660",
+      "equal": true
+    },
+    {
+      "name": "german_month",
+      "source": "Jan",
+      "native": "Jan",
+      "equal": true
+    },
+    {
+      "name": "configured_color_parser",
+      "source": true,
+      "native": true,
+      "equal": true
+    },
+    {
+      "name": "time_axis_drag",
+      "source": true,
+      "native": true,
+      "equal": true
+    },
+    {
+      "name": "time_axis_double_reset",
+      "source": true,
+      "native": true,
+      "equal": true
+    }
+  ],
+  "combined_captures": {
+    "families": [
+      {
+        "name": "events",
+        "command": [
+          "python",
+          "scripts/capture_public_events.py",
+          "target/public-parity-final/captures/events"
+        ],
+        "images": 912,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/attribution/final-compatibility",
+        "baseline_results_sha256": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298",
+        "script_sha256": "a39ebb1636f22a754c51e830fa966ccb6c71b92a3d071eed259d2d390495ad85",
+        "protocol": {
+          "path": "target/public-parity-final/captures/events/protocol.json",
+          "sha256": "d582caa242ee28816e741ce6d404454aa983a03afee68acdc85e2bec1675f45b"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/events/results.json",
+          "sha256": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298"
+        },
+        "assertions": {
+          "unchanged": 96
+        }
+      },
+      {
+        "name": "custom",
+        "command": [
+          "python",
+          "scripts/capture_custom_horizontal.py",
+          "target/public-parity-final/captures/custom"
+        ],
+        "images": 240,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/custom-horizontal/final-captures",
+        "baseline_results_sha256": "e994e50b1e16d30e38d4706998cdd92a99c5f85c5cd23b1e6399039ca0289c0a",
+        "script_sha256": "800f2cda619f47089cbdd8fc65203d573ad1b057435dfe7c5db22a88883e03a3",
+        "protocol": {
+          "path": "target/public-parity-final/captures/custom/protocol.json",
+          "sha256": "4c1427ed534ef4357a04928cc92e14ad4b865234c1a279d4132e9e180a87480b"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/custom/results.json",
+          "sha256": "961019f03cf3580428695a55a5cb53414e08f23797644e3b917fc96118b145e7"
+        },
+        "assertions": {}
+      },
+      {
+        "name": "screenshot",
+        "command": [
+          "python",
+          "scripts/capture_screenshot_export.py",
+          "target/public-parity-final/captures/screenshot"
+        ],
+        "images": 1158,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/attribution/final-screenshot-export",
+        "baseline_results_sha256": "0c0e8af1e5bb1894b5324463459f2ce689d775c9c9b6effd081c52f5212a4e24",
+        "script_sha256": "5d27d24dca5f3d8ddba06e336eec276207ea92ed7fdb7523f0dba8fd9d041dea",
+        "protocol": {
+          "path": "target/public-parity-final/captures/screenshot/protocol.json",
+          "sha256": "732d7236d739c067964010e2126cea26f6a499f6f6cacbe3aa308707dc9c0761"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/screenshot/results.json",
+          "sha256": "51d6ca6d770509643376849bee82d65c3d0eb4b04561c82f32d2dbf4953b36ba"
+        },
+        "assertions": {}
+      },
+      {
+        "name": "attribution",
+        "command": [
+          "python",
+          "scripts/capture_attribution.py",
+          "target/public-parity-final/captures/attribution"
+        ],
+        "images": 672,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/attribution/final-captures",
+        "baseline_results_sha256": "5022a537e97c7fbd996351f5be948e25e5b18876ab3b23739d01890fd74ee66a",
+        "script_sha256": "88851804d17b23dec41e456707a6534da92bc2f4667644840f4b7d5a1964c472",
+        "protocol": {
+          "path": "target/public-parity-final/captures/attribution/protocol.json",
+          "sha256": "e9ab3d27828c2cc93bb247e89ce83125c5e6f258dfcc46f707289cf6dbefce88"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/attribution/results.json",
+          "sha256": "68924022307bc1fe02b78fe91ca52c24d4a865bca0379fb9c79c60353087c6cc"
+        },
+        "assertions": {
+          "retained_export_comparisons": 2688,
+          "export_exclusion_comparisons": 2688
+        }
+      },
+      {
+        "name": "formatting",
+        "command": [
+          "python",
+          "scripts/capture_formatting.py",
+          "target/public-parity-final/captures/formatting"
+        ],
+        "images": 576,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/public-parity/formatting/final-captures",
+        "baseline_results_sha256": "c5216c37cd65863ea035830a634621d93bc3dd5075798fa0d25e3d81a184d10f",
+        "script_sha256": "6f9fac2d05cc36086026ff3d63cf7828786ba61836365d0c52ecf77927951fa2",
+        "protocol": {
+          "path": "target/public-parity-final/captures/formatting/protocol.json",
+          "sha256": "1c95e877021a0a540c0821e70a2d604704f8d2a50cef539985ad02567503cc64"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/formatting/results.json",
+          "sha256": "e4b1c5823a080fd5cb5a045649c9b161e1614d1dde10ae5eab3e01140c2b690f"
+        },
+        "assertions": {
+          "retained_exports": 576
+        }
+      },
+      {
+        "name": "assignment",
+        "command": [
+          "python",
+          "scripts/capture_scale_assignment.py",
+          "target/public-parity-final/captures/assignment"
+        ],
+        "images": 768,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/scale-assignment/final-captures",
+        "baseline_results_sha256": "30226bc4da7949c827893f26f3437e755f604a915c1fb343462e30e0ad0ed5ce",
+        "script_sha256": "70002c768a6d1ff17414595987a777ab177080f24afce57fa8d17d96c7fa3aa6",
+        "protocol": {
+          "path": "target/public-parity-final/captures/assignment/protocol.json",
+          "sha256": "512e238ca1d72a233eb20fd8370fe8d33be344a0580fb08bf014ae2a223583b6"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/assignment/results.json",
+          "sha256": "416ae01519f36337e02ba5ef46569cdee7de22ff933b5a225c22b85321547961"
+        },
+        "assertions": {
+          "retained_exports": 768
+        }
+      },
+      {
+        "name": "axis",
+        "command": [
+          "python",
+          "scripts/capture_axis_interaction.py",
+          "target/public-parity-final/captures/axis"
+        ],
+        "images": 864,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/axis-interaction/completion-captures",
+        "baseline_results_sha256": "14fe5c98866c850d2e83b4f12a28e0ffb97103254a6101da43ed0495f339ea88",
+        "script_sha256": "2ed0acb3580cdff936740fb8a888d64832ec67837ee587cb6d36f4eba9b185fc",
+        "protocol": {
+          "path": "target/public-parity-final/captures/axis/protocol.json",
+          "sha256": "870a6a8df48d5856f3222a137d5b286c52589ff74e54187499e96330e9e80bb7"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/axis/results.json",
+          "sha256": "e706f448763355d74b60dc8aaf6cc843b0748c64fb88917189bf013bcaff5478"
+        },
+        "assertions": {
+          "retained_exports": 864
+        }
+      },
+      {
+        "name": "helpers",
+        "command": [
+          "python",
+          "scripts/capture_public_helpers.py",
+          "target/public-parity-final/captures/helpers"
+        ],
+        "images": 576,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/public-helpers/accepted/captures",
+        "baseline_results_sha256": "b15f63d157d3b8f4295a6ea921fc5591249f57365a783900803ca1345f624252",
+        "script_sha256": "c8df67e13ef44973d873cda29620101d32da899f4087c0fb09728c9563783251",
+        "protocol": {
+          "path": "target/public-parity-final/captures/helpers/protocol.json",
+          "sha256": "7a78a43983d48d5c748944e84aee325f2b53bc21cba88274b0e21258d30e684a"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/helpers/results.json",
+          "sha256": "6b0ee62d4409688ffc551e2ebaa6f8ce0f33d77cc782d8dba9109fcba0bf0f2c"
+        },
+        "assertions": {
+          "retained_exports": 504
+        }
+      },
+      {
+        "name": "sizing",
+        "command": [
+          "python",
+          "scripts/capture_pane_sizing.py",
+          "target/public-parity-final/captures/sizing"
+        ],
+        "images": 672,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/pane-sizing/accepted/captures",
+        "baseline_results_sha256": "9b82daafc8cd4bc70fa0331b728340d34f2afe3d72f86ad74f4450e96ced3eeb",
+        "script_sha256": "6cbc18a06fc581a174a270f2752179bb630a0fd5bb44c26459618cb189a420be",
+        "protocol": {
+          "path": "target/public-parity-final/captures/sizing/protocol.json",
+          "sha256": "06773e64341b94098969de1ecc6525fd21fae235a86dbf74082cc543371a317c"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/sizing/results.json",
+          "sha256": "5d257ac9868bac6c240d90bec44eed9008d0b05b8a37a6acfc3c5047d6a5dc09"
+        },
+        "assertions": {
+          "retained_exports": 672
+        }
+      },
+      {
+        "name": "metadata",
+        "command": [
+          "python",
+          "scripts/capture_application_metadata.py",
+          "target/public-parity-final/captures/metadata"
+        ],
+        "images": 864,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/application-metadata/corrected/captures",
+        "baseline_results_sha256": "5a0f51f7844ba01be0c5e40032d2d89c52c72c1b99ec2818399955fccc258b69",
+        "script_sha256": "383e9b29d35cafc62f61e8fede7c19a4f903f39ee7969ad5c949711bb1eaf109",
+        "protocol": {
+          "path": "target/public-parity-final/captures/metadata/protocol.json",
+          "sha256": "01c161efcd4574872c7cf98d1289120df16279dce5b9e38d0608ab302abf9e49"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/metadata/results.json",
+          "sha256": "bdb24c0366c482487cd4dc1dd899bbc0b628dc48ba5e762d4cf206805de7730b"
+        },
+        "assertions": {
+          "retained_exports": 864,
+          "metadata_only_pixel_comparisons": 384
+        }
+      },
+      {
+        "name": "pointer",
+        "command": [
+          "python",
+          "scripts/capture_native_pointer.py",
+          "target/public-parity-final/captures/pointer"
+        ],
+        "images": 576,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/native-pointer/corrected-captures",
+        "baseline_results_sha256": "a1e67a5dd7288ffb6f4b1d82964b6537fea6171dee1d4f651d38f35efdda10e5",
+        "script_sha256": "0b63fe85a348d5c6904aff9b4475f81a2ab9e26397f1c001d2987cd18a53f6c0",
+        "protocol": {
+          "path": "target/public-parity-final/captures/pointer/protocol.json",
+          "sha256": "3f43ae308262950d6d53dedf327aa87d16f9e470e342c35efeb844d7e206c779"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/pointer/results.json",
+          "sha256": "42095df42b86e7430016f773e43e853837f06e7c9a888ee24a40f1260331c9b8"
+        },
+        "assertions": {
+          "retained_exports": 576,
+          "modifier_only_pixel_comparisons": 192
+        }
+      },
+      {
+        "name": "locale",
+        "command": [
+          "python",
+          "scripts/capture_time_locale.py",
+          "target/public-parity-final/captures/locale"
+        ],
+        "images": 960,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/time-locale/captures",
+        "baseline_results_sha256": "dc377476700818aa40e835d64c9b8165bcb63e3508a088f8478a6d21b99a8b6c",
+        "script_sha256": "9be795a645c454da4d9c62f751fe55334a251905f8f7edf0cbbd58d01f70208a",
+        "protocol": {
+          "path": "target/public-parity-final/captures/locale/protocol.json",
+          "sha256": "7012fcd8481cd9a20749ec09ae30f8e80bde9b59ac6298784d976fa8d2cdb947"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/locale/results.json",
+          "sha256": "cda7d4ff31074bcd48a3cc6077df42175feb91799b6d8a7a5dbbff7f079304e4"
+        },
+        "assertions": {
+          "retained_exports": 960
+        }
+      },
+      {
+        "name": "colors",
+        "command": [
+          "python",
+          "scripts/capture_configured_colors.py",
+          "target/public-parity-final/captures/colors"
+        ],
+        "images": 672,
+        "backends": [
+          "tiny-skia",
+          "wgpu"
+        ],
+        "baseline": "target/configured-colors/captures",
+        "baseline_results_sha256": "447fffcf2b385791eb1023e0e3eef20f91b28fff185a3fba23e4fa296c4f5575",
+        "script_sha256": "1de1b079e535b83af06e15b6438997c462dbf6fc7709c5c8ca19db68ad1dd438",
+        "protocol": {
+          "path": "target/public-parity-final/captures/colors/protocol.json",
+          "sha256": "ca27909461715882cb2213200fbd577c061860d1061290a0abd9eac37ed64fdb"
+        },
+        "results": {
+          "path": "target/public-parity-final/captures/colors/results.json",
+          "sha256": "8ede0099fe415284a55a93b248501f4c6cf5db1660450189c8d12e1292ef3b58"
+        },
+        "assertions": {
+          "retained_exports": 672
+        }
+      }
+    ],
+    "accepted_images_unchanged": 9510,
+    "nested_screenshot_compatibility": {
+      "images": 912,
+      "original_baseline_checks": 96,
+      "counted_in_primary_total": false
+    }
+  },
+  "physical": {
+    "provenance": {
+      "path": "docs/porting/configured-colors-evidence.json",
+      "sha256": "90a363d1380d99bf371c260806986020f4e40ca7fc42aa9ff478bbf950e2883d"
+    },
+    "new_run": false,
+    "binary_sha256": "ddcd2ee26134ae254a0249bf1e559825535debcc2515239336fd26d6ad899d91",
+    "normal_exits": 8,
+    "backends": [
+      "tiny-skia",
+      "wgpu"
+    ],
+    "domains": [
+      "calendar",
+      "strike",
+      "maturity",
+      "sessions"
+    ],
+    "scope": "Final I normal demos: regular, narrow, earlier problem size; short-height recovery; live feed; pane/scale moves; axes; box edit/cancel/release outside; retained-color preview/export and idle parser counters. Exact physical pixel sizes were not supplied.",
+    "user_result": "All checks passed in all four modes; idle counters and previews/exports passed; windows closed"
+  },
+  "formatting_gpu_acceptance": {
+    "provenance": {
+      "path": "target/public-parity-final/mouse/wgpu/sessions.json",
+      "sha256": "16bd9a945131cd3e73892038b5c2889497e19dc0132ef6b15a8451cf5fe2206c"
+    },
+    "new_run": true,
+    "normal_exits": 4,
+    "binary_sha256": "ddcd2ee26134ae254a0249bf1e559825535debcc2515239336fd26d6ad899d91",
+    "user_result": "All formatting checks passed in all four modes; previews/exports passed; windows closed",
+    "resolves": "Separate formatting GPU physical record; completes A4 alongside earlier user acceptance"
+  },
+  "inventory": {
+    "counts": {
+      "declarations": 55,
+      "members": 374,
+      "methods": 99,
+      "statuses": {
+        "native": 81,
+        "mapped": 80,
+        "partial": 5,
+        "platform": 4,
+        "represented": 204
+      }
+    },
+    "partial_rows": [
+      {
+        "id": "IChartApiBase.applyOptions",
+        "file": "src/api/ichart-api.ts",
+        "line": 302,
+        "kind": "method",
+        "signature": "applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;",
+        "status": "partial",
+        "note": "Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred"
+      },
+      {
+        "id": "IChartApiBase.options",
+        "file": "src/api/ichart-api.ts",
+        "line": 309,
+        "kind": "method",
+        "signature": "options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;",
+        "status": "partial",
+        "note": "Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred"
+      },
+      {
+        "id": "ChartOptionsBase.defaultVisiblePriceScaleId",
+        "file": "src/model/chart-model.ts",
+        "line": 319,
+        "kind": "property",
+        "signature": "defaultVisiblePriceScaleId: 'left' | 'right';",
+        "status": "partial",
+        "note": "F04: PaneOptions.default_visible_price_scale construction only"
+      },
+      {
+        "id": "LayoutOptions.colorSpace",
+        "file": "src/model/layout-options.ts",
+        "line": 144,
+        "kind": "property",
+        "signature": "colorSpace: ColorSpace;",
+        "status": "partial",
+        "note": "sRGB output; checked constructors, legacy preparation and runtime options reject DisplayP3 explicitly; actual wide-gamut rendering deferred"
+      },
+      {
+        "id": "LocalizationOptionsBase.locale",
+        "file": "src/model/localization-options.ts",
+        "line": 26,
+        "kind": "property",
+        "signature": "locale: string;",
+        "status": "partial",
+        "note": "F09: H verified Gregorian profiles and latn/arab/arabext ticks; time_locale_support reports best-effort/English fallback; full Intl remains partial"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "target/public-parity-final/validation.json",
+      "sha256": "3688a4c8ddd6e7ce0eaeddb14c7b97049ba83853b0a8af608dca4cf6341ff896"
+    },
+    {
+      "path": "target/public-parity-final/references/results.json",
+      "sha256": "a593ab5e41f96510608d97375f5bcde9d6c25fadbad841f5baa84115708eb6a0"
+    },
+    {
+      "path": "target/public-parity-final/observations/comparisons.json",
+      "sha256": "a27e3ae73916040db59345d4a1d6f6f621f3686f32b78270cea7162337c37fca"
+    },
+    {
+      "path": "target/public-parity-final/observations/source-results.json",
+      "sha256": "f12a5224557025d49278b88a6dbbd724f38d684dc07d1c7d549ce45021967a77"
+    },
+    {
+      "path": "target/public-parity-final/observations/native.log",
+      "sha256": "9ca671dfd35657db4ab544562e833b8c1417842b2415448e6095324e54c538aa"
+    },
+    {
+      "path": "target/public-parity-final/capture-manifest.json",
+      "sha256": "f56739f261b38f1e725cb459d315afda310d0fa40fa02f34650a825987097d28"
+    },
+    {
+      "path": "target/public-parity-final/captures/results.json",
+      "sha256": "3fcecf63f338b43387777c6ad815872d4f9266486b8605b6fcfffc2e0e66af6b"
+    },
+    {
+      "path": "target/public-parity-final/captures/screenshot/compatibility/results.json",
+      "sha256": "a746fa780293f3f6dff2a1df5569358c3d0d52c90d8f349cc1deff024029b298"
+    },
+    {
+      "path": "target/public-parity-final/run_validation.py",
+      "sha256": "3518ded6178db17cea4c5b164d7b178500d2584fd0317c60438d90d816e57379"
+    },
+    {
+      "path": "target/public-parity-final/run_references.py",
+      "sha256": "b9172aa7c7b2e44e1af4f0efe4434290bca6e4f6897dca925f09d08389b90c3f"
+    },
+    {
+      "path": "target/public-parity-final/run_captures.py",
+      "sha256": "314c394677ae0c0e37921575b0c26bb3d0b6a01f275c151e99d6ddd0b31ef63b"
+    },
+    {
+      "path": "target/public-parity-final/probe_public_parity.cjs",
+      "sha256": "11d4d8acfcc44bab58d34f7a79f88237e219b1d1f71dcad14e8782bb893666a9"
+    },
+    {
+      "path": "target/public-parity-final/write_evidence.py",
+      "sha256": "1b3d5e3e2e29d1551e120892d62d44fe9c7982e4579e3effb52a2d781ee6639d"
+    },
+    {
+      "path": "target/public-parity-final/mouse/wgpu/sessions.json",
+      "sha256": "16bd9a945131cd3e73892038b5c2889497e19dc0132ef6b15a8451cf5fe2206c"
+    },
+    {
+      "path": "target/public-parity-final/launch_formatting.py",
+      "sha256": "a84ae8485896b311953b2d7700e684177334ab08abc81797a0c66e68df2788e5"
+    },
+    {
+      "path": "docs/porting/public-parity-inventory.json",
+      "sha256": "31f343e637caea160b7bbd2f4ca6caa57b2aa0d1268f022c91e7003fd2b23a09"
+    },
+    {
+      "path": "scripts/audit_public_surface.cjs",
+      "sha256": "9341cb4f544c2e63d67b916091ccd75e9a98f735a03b2e79a0cc20b4ff2ece31"
+    },
+    {
+      "path": "docs/porting/formatting-evidence.json",
+      "sha256": "ffa6d1f89049b0365f2f1a6dd7baf2dafd8345bee256cb31453d7cfa0f5dc3dc"
+    },
+    {
+      "path": "docs/porting/scale-assignment-evidence.json",
+      "sha256": "d12fc2bc47c960b972545c89e55c80ae3cca9b720870d51f8d66a8d182b27e8e"
+    },
+    {
+      "path": "docs/porting/axis-interaction-evidence.json",
+      "sha256": "8bc726f1cc2ab48c8ddbf7fa54b5aa30f90d41fbe0fa444daca5097b7605416f"
+    },
+    {
+      "path": "docs/porting/public-helpers-evidence.json",
+      "sha256": "56cb1e692b46420a4d19328644a37063b63dd3347731afbc22b721ed9a84be4e"
+    },
+    {
+      "path": "docs/porting/pane-sizing-evidence.json",
+      "sha256": "285ab79d61615863f6af97b27a38bff4c4c2c95537fddee61c5425b2cd5d783d"
+    },
+    {
+      "path": "docs/porting/application-metadata-evidence.json",
+      "sha256": "4d31ca722608b3a0890f80252f899f19a57b9ed7ca315bf587035a517d42ae2d"
+    },
+    {
+      "path": "docs/porting/native-pointer-evidence.json",
+      "sha256": "0549fd83664cfef974e89f6085eb6a8911792b19632381eb9b18148940c278d1"
+    },
+    {
+      "path": "docs/porting/time-locale-evidence.json",
+      "sha256": "519078d98a86a20418c821d1e03fd3dbe66e90e8c66d3224ff92e4d0e0f4a0c6"
+    },
+    {
+      "path": "docs/porting/configured-colors-evidence.json",
+      "sha256": "90a363d1380d99bf371c260806986020f4e40ca7fc42aa9ff478bbf950e2883d"
+    }
+  ],
+  "logs": [
+    {
+      "path": "target/public-parity-final/validation-build.log",
+      "sha256": "d7dae192715495fa89ccbe279af3efb9792c1dae1768228e369035e68a1df673"
+    },
+    {
+      "path": "target/public-parity-final/validation-check.log",
+      "sha256": "2bc683fb4e4f4f21ee9ee39e2b8ecce2efe20d3b1be57bda5316aa519ab3d30a"
+    },
+    {
+      "path": "target/public-parity-final/validation-clippy.log",
+      "sha256": "f2066ca264b9a8598ecd436c70919e1efe1acea4098ad2a13b5d82d67bc049ec"
+    },
+    {
+      "path": "target/public-parity-final/validation-doc.log",
+      "sha256": "c9452c5d434af4146937dcbd757d5d807a062d978606935dd1a762107452555a"
+    },
+    {
+      "path": "target/public-parity-final/validation-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target/public-parity-final/validation-inventory.log",
+      "sha256": "5c78bf9818bb27123e730dba40abd9e979be55b917af09c5cc300e6857672a44"
+    },
+    {
+      "path": "target/public-parity-final/validation-tests.log",
+      "sha256": "bf9efc0bb1cfd4d4721b65f4f6ebcfdf2a6f66ae48af700b97e4f68e3139dfe8"
+    }
+  ],
+  "preserved_sandbox_failure": {
+    "path": "target/public-parity-final/references-sandbox-denied",
+    "results": {
+      "path": "target/public-parity-final/references-sandbox-denied/results.json",
+      "sha256": "fcb0d043e79974dcd4765be706699de912e5d93f83ca602d323e9ee2d3887bc2"
+    },
+    "reason": "Chromium startup denied by OS sandbox: setsockopt Operation not permitted. Full suite rerun with browser access and all 46 passed."
+  },
+  "independent_exceptions": [
+    "Intl outside the H support contract",
+    "Earlier timing acceptance",
+    "Dedicated series drawing-order mouse acceptance",
+    "Touchpad",
+    "Touchscreen",
+    "Physical high-DPI",
+    "Display-P3 target"
+  ],
+  "additional_construction_only_boundary": "defaultVisiblePriceScaleId through PaneOptions.default_visible_price_scale; runtime replacement outside C scope",
+  "local_delivery": "No push; completion checkpoint is recorded by the commit containing this evidence."
+}

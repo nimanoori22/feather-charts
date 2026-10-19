@@ -39,8 +39,10 @@ Vertical plot movement explicitly enters manual price mode. Panes share time
 navigation and keep independent price ranges.
 
 This API covers built-in and typed custom series, native touch/kinetic navigation,
-and the default `Time` behavior. Arbitrary pane reordering and full TradingView
-API parity remain future work.
+calendar, strike-price, maturity and application-defined horizontal behavior.
+Pane movement, series transfers and explicit pane removal are available. Exact
+TradingView API parity remains incomplete; the completion report below lists
+the remaining limits.
 Options already represented by the engine do not imply every visual feature is
 rendered. Read-only `model()` inspection remains available for advanced hosts.
 
@@ -424,9 +426,8 @@ See the [mouse checks](tasks/live-append-mouse-acceptance.md) for physical cover
 The latest [bounded timing/load check](docs/porting/histogram-timing-load.md)
 shows that controlled CPU contention increases elapsed time while counted
 Histogram work stays fixed; it establishes no new engine defect. Further timing
-investigation is deferred. Development now prioritizes
-[conflation rendering](tasks/conflation-next.md), with the historical timing
-exception and acceptance thresholds retained unchanged.
+investigation is deferred. Conflation rendering is implemented; the historical
+timing exception and acceptance thresholds remain unchanged.
 
 ```sh
 cargo run --example public_chart -- --line --append-captures-only --capture-dir target/append-captures
@@ -973,7 +974,9 @@ See the [source contract and verification](docs/porting/attribution.md) and the
 The [local 5.2.1 parity audit](docs/porting/public-parity-audit.md) records the
 remaining API, option-routing and edge-case differences after the feature roadmap.
 It includes a 374-member inventory and reproducible source/native diagnostics.
-The audit identifies gaps; its successful diagnostic command is not a parity pass.
+The original audit identifies gaps; its successful diagnostic command is not a
+parity pass. The [combined completion record](docs/porting/public-parity-completion.md)
+tracks milestones A–I, final validation and the remaining explicit limitations.
 
 ### Public queries and crosshair synchronization
 

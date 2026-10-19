@@ -267,3 +267,16 @@ authorizes milestone B. It is a general acceptance statement; no separate GPU mo
 result or itemized device result is inferred. A4 retains that missing physical
 record. Automated evidence is unchanged. Later combined acceptance can supply the
 missing backend record, as with the previous screenshot milestone.
+
+## Z0 backend acceptance follow-up
+
+The user passed the four normal wgpu formatting demos during Z0 on the final
+implementation binary, including callback controls/precedence, clearing, scale
+modes, live-feed interactions at regular/narrow/earlier problem sizes, recovery
+and retained preview/export labels. All four sessions exited with code zero;
+their binary hash matches final automated validation. This supplies the missing
+separate GPU record and completes A4 alongside the earlier user acceptance. The
+original general software acceptance is preserved as such; no new itemized
+software run is inferred. See [formatting-evidence.json](formatting-evidence.json)
+and [combined completion](public-parity-completion.md). Earlier pending-status
+paragraphs above describe the historical checkpoint, not the Z0 result.

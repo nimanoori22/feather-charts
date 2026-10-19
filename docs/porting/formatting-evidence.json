@@ -1,5 +1,5 @@
 {
-  "status": "User accepted formatting and explicitly requested the next feature; separate GPU physical record remains pending",
+  "status": "User accepted formatting; separate four-mode GPU physical record completed during Z0",
   "core_checkpoints": [
     "2343cc9",
     "8cb4848"
@@ -219,7 +219,7 @@
   },
   "physical_acceptance": {
     "software": "User response: it is okay; proceed to next feature. General acceptance, no itemized checklist.",
-    "wgpu": "No separate physical result; not inferred from software/general acceptance"
+    "wgpu": "User passed all four modes with previews/exports during Z0; all four normal exits verified using the final validated binary"
   },
   "independent_exceptions": [
     "earlier timing acceptance",
@@ -254,5 +254,12 @@
   ],
   "compatibility_results_sha256": "731c6fe54b2328226237e3c4c21b6b9b50278e82539e16de2ea6ffa27832eee5",
   "accepted_images_unchanged": 2982,
-  "physical_sessions": "target/public-parity/formatting/mouse/tiny-skia/sessions.json"
+  "physical_sessions": "target/public-parity/formatting/mouse/tiny-skia/sessions.json",
+  "z0_gpu_physical_sessions": {
+    "path": "target/public-parity-final/mouse/wgpu/sessions.json",
+    "sha256": "16bd9a945131cd3e73892038b5c2889497e19dc0132ef6b15a8451cf5fe2206c",
+    "binary_sha256": "ddcd2ee26134ae254a0249bf1e559825535debcc2515239336fd26d6ad899d91",
+    "user_result": "All formatting checks passed in all four modes; previews/exports passed; windows closed",
+    "normal_exits": 4
+  }
 }

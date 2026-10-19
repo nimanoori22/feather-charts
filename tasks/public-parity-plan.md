@@ -1,6 +1,6 @@
 # Public API and desktop parity implementation plan
 
-Date: 2026-10-18. Status: milestones A–I accepted. Combined completion Z0 remains next.
+Date: 2026-10-18. Status: milestones A–I and combined completion Z0 complete within scope; independent exceptions remain open. See [completion evidence](../docs/porting/public-parity-completion.md).
 Baseline: `55ba7d7`. Task list: [public-parity-todo.md](public-parity-todo.md).
 Evidence: [audit](../docs/porting/public-parity-audit.md),
 [inventory](../docs/porting/public-parity-inventory.json),

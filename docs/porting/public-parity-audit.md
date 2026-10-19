@@ -6,6 +6,14 @@ The source worktree contains existing changes; exact consumed file hashes are
 retained in [the evidence](public-parity-evidence.json). This is a comparison with
 that local 5.2.1 tree, not a claim about a newer upstream release.
 
+Completion follow-up: milestones A–I and Z0 now have a
+[combined completion record](public-parity-completion.md). All 12 original
+source/native observations match; 46 source suites and all 13 combined capture
+families pass. Five inventory rows remain partial for the documented construction,
+locale and output-target limits. Earlier pending-status paragraphs below describe
+the audited revision and intermediate follow-ups; the completion record carries
+the current acceptance state and independent exceptions.
+
 The major feature roadmap is implemented, but exact public behavior is incomplete.
 This audit identifies **ten actionable finding groups**, six supported by executable
 source/native comparisons and four by interface/ownership inspection. No engine,

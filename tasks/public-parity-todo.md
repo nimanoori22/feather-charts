@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I accepted; combined completion Z0 next.
+Date: 2026-10-19. Status: milestones A–I and combined completion Z0 accepted within scope; independent exceptions remain open.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -24,14 +24,16 @@ Preserve previous roadmap acceptance and independent exceptions.
 - [x] A1: Carry custom batch formatting through series and scale bridges. (depends: A0).
 - [x] A2: Apply chart-wide formatting to price scales. (depends: A1).
 - [x] A3: Expose atomic runtime localization updates. (depends: A2).
-- [ ] A4: Deliver formatting controls and accept milestone A. (depends: A3).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] A4: Deliver formatting controls and accept milestone A. (depends: A3).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 
 Formatting core evidence: [formatting-parity.md](../docs/porting/formatting-parity.md).
 A4 automated gates pass: 807 tests, 38 source checks, 576 screen replays and retained
 exports; 2982 accepted compatibility images unchanged. The user accepted formatting and explicitly requested the next feature. Proceed to B
-under that instruction. A4 retains its missing separate GPU physical record; no
-GPU result is inferred. See formatting-evidence.json.
+under that instruction. Z0 now supplies an explicit four-mode GPU formatting
+pass and four verified normal exits on the final binary, completing A4. The earlier
+general software acceptance is retained without inventing an itemized run. See
+formatting-evidence.json and the combined completion report.
 
 ### B — Series price-scale assignment
 
@@ -156,15 +158,24 @@ evidence. Combined completion remains Z0; independent exceptions are unchanged.
 
 ### Z — Combined completion
 
-- [ ] Z0: Run final combined validation and publish the local completion record. (depends: I4).
+- [x] Z0: Run final combined validation and publish the local completion record. (depends: I4).
+
+Z0: 884 tests in 90 suites, two compile-fail doctests, 46 unchanged source
+comparisons and all 12 original diagnostic observations match. All 13 combined
+capture families pass with 9,510 images unchanged; the nested screenshot run also
+preserves its original 96 baseline checks. Eight final-binary I mouse sessions are
+reused with explicit provenance; four new GPU formatting sessions pass and exit
+normally. See [the completion report](../docs/porting/public-parity-completion.md)
+and pinned evidence. The local completion checkpoint is the commit containing
+this record; no push is authorized.
 
 ## Final result
 
-- [ ] Original targeted differences within scope now have passing parity assertions.
-- [ ] All final required tests, source comparisons and unchanged relevant image protocols pass.
-- [ ] Runtime/public API behavior is demonstrated in calendar, strike, maturity and sessions, including typed custom series.
-- [ ] Public migration, source/consumer/ownership/design reports and updated inventory are evidence-backed.
-- [ ] Local commits/worktree status recorded; push only if requested.
+- [x] Original targeted differences within scope now have passing parity assertions.
+- [x] All final required tests, source comparisons and unchanged relevant image protocols pass.
+- [x] Runtime/public API behavior is demonstrated in calendar, strike, maturity and sessions, including typed custom series.
+- [x] Public migration, source/consumer/ownership/design reports and updated inventory are evidence-backed.
+- [x] Local commits/worktree status recorded; push only if requested.
 
 ## Independent and deferred scope — keep open
 
