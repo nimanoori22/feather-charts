@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G implementation complete; acceptance in progress.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -106,8 +106,18 @@ evidence. Independent exceptions remain unchanged.
 
 - [x] G0: Freeze native pointer metadata semantics. (depends: F4).
 - [x] G1: Populate owned pointer metadata at the widget boundary. (depends: G0).
-- [ ] G2: Demonstrate modifier actions and accept milestone G. (depends: G1).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] G2: Demonstrate modifier actions and accept milestone G. (depends: G1).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+Contract/API/consumer checkpoints: `9110d08`, `f356c76`, `7a139df`.
+866 tests in 88 suites, two compile-fail doctests and 44 source comparisons pass.
+Both renderer matrices pass 576 screen replays, 576 retained exports and 192
+modifier-only pixel comparisons. Affected unchanged event/axis protocols match
+1,776 accepted images. The user passed all four modes on software/GPU, including
+focus and previews/exports; eight normal sessions exited successfully using the
+validated binary. See [native-pointer.md](../docs/porting/native-pointer.md) and
+its pinned evidence. Combined remaining captures are Z0; independent exceptions
+remain unchanged.
 
 ### H — Locale behavior
 

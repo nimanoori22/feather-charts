@@ -1,5 +1,5 @@
 {
-  "status": "Automated gates pass; software/GPU mouse acceptance pending",
+  "status": "Milestone G accepted: automated gates and software/GPU mouse checks pass; independent exceptions unchanged",
   "baseline": "89602eb",
   "contract_checkpoint": "9110d08",
   "api_checkpoint": "f356c76",
@@ -425,8 +425,182 @@
     "target/native-pointer/pilot-captures/tiny-skia.log": "cd924e2db5a4d5fc2628e4d9bbed574a8a02c17af9236f6a33975d989c53d8ce"
   },
   "physical_acceptance": {
-    "tiny-skia": "pending",
-    "wgpu": "pending"
+    "tiny-skia": {
+      "status": "passed",
+      "report": "All checks passed in all four modes; focus and previews/exports passed; windows closed",
+      "scope": "Ctrl/Shift-click including rapid double-click classification, programmatic None and retained pin, focus/modifier freshness, coordinates, logo/edit priority, pane/scale transfers, live-feed navigation and axes/box edits/Escape/release outside at three sizes, short-height recovery and exports excluding logo",
+      "manifest": "target/native-pointer/mouse/tiny-skia/sessions.json",
+      "manifest_sha256": "454031a5d5a0ea239a75284331a845cfcba6801b6e2b072eaeb0434c9838effb",
+      "sessions": [
+        {
+          "domain": "calendar",
+          "backend": "tiny-skia",
+          "pid": 223760,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "strike",
+          "backend": "tiny-skia",
+          "pid": 223824,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "maturity",
+          "backend": "tiny-skia",
+          "pid": 223882,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "sessions",
+          "backend": "tiny-skia",
+          "pid": 223969,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        }
+      ]
+    },
+    "wgpu": {
+      "status": "passed",
+      "report": "All checks passed in all four modes; focus and previews/exports passed; windows closed",
+      "scope": "Ctrl/Shift-click including rapid double-click classification, programmatic None and retained pin, focus/modifier freshness, coordinates, logo/edit priority, pane/scale transfers, live-feed navigation and axes/box edits/Escape/release outside at three sizes, short-height recovery and exports excluding logo",
+      "manifest": "target/native-pointer/mouse/wgpu/sessions.json",
+      "manifest_sha256": "ef833f594d443cae66ff1204394e524df379c46f50fe0561bc10422ee0f36e50",
+      "sessions": [
+        {
+          "domain": "calendar",
+          "backend": "wgpu",
+          "pid": 224259,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "strike",
+          "backend": "wgpu",
+          "pid": 224371,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "maturity",
+          "backend": "wgpu",
+          "pid": 224488,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "sessions",
+          "backend": "wgpu",
+          "pid": 224532,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--pointer-input",
+            "--application-metadata",
+            "--attribution",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "b1507087c7ceb5e4ab06e837645a6344274ee9204adcc0aca5ee8d4e24c8d53b",
+          "status": "passed by explicit user acceptance",
+          "exit": 0
+        }
+      ]
+    }
   },
   "native_adaptations": [
     "Copy snapshot; no native event/window references or per-pointer Box",
@@ -445,5 +619,6 @@
     "physical high-DPI",
     "Intl outside existing support contract",
     "Display-P3 target"
-  ]
+  ],
+  "consumer_checkpoint": "7a139df"
 }

@@ -1,6 +1,6 @@
 # Native pointer metadata (milestone G)
 
-Baseline: `89602eb`. Implementation complete; final acceptance in progress.
+Baseline: `89602eb`. Milestone G implemented and accepted.
 
 ## Source and real consumers
 
@@ -149,7 +149,22 @@ failure and corrected passes. The first common-build attempt ended with SIGTERM
 without compiler output establishing a cause; a persistent-terminal retry exposed
 the remaining consumer migrations, which were fixed before the final complete run.
 
-Software/GPU physical mouse acceptance is pending. No combined Z0 capture run,
+Software/GPU physical mouse acceptance passed in all four domains. No combined Z0 capture run,
 physical touchpad/touchscreen/high-DPI, earlier timing, separate formatting-GPU or
 dedicated drawing-order acceptance is inferred from these results. Locale and
 configured color parsing remain H and I.
+
+## Physical acceptance and completion
+
+The user explicitly reports all checks passed on tiny-skia and wgpu in calendar,
+strike, maturity and sessions, including focus and previews/exports, with all
+windows closed. All eight normal sessions exited successfully and match the
+capture binary hash. Accepted scope covers Ctrl/Shift actions (including rapid
+second releases), programmatic None with retained pin, native coordinates and
+modifier freshness, logo/edit priority, pane/scale transfers, live-feed zoom/pan,
+time/price-axis drag/reset, box edits/Escape and release outside at regular,
+narrow and the earlier problem size, short-height recovery and logo-free exports.
+Session manifests and reports are pinned in the evidence. Consumer checkpoint:
+`7a139df`. G0–G2 and F10 are complete; H (locale behavior) is next. This does not
+close the separately listed timing, formatting-GPU, drawing-order, touchpad,
+touchscreen, physical high-DPI, unsupported Intl or Display-P3 exceptions.
