@@ -150,7 +150,7 @@ fn runtime_mouse_options_cancel_active_pan_and_reach_canvas_input() {
 
 #[test]
 fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
-    for operation in 0..6 {
+    for operation in 0..7 {
         for gesture in 0..3 {
             let (mut c, id) = setup();
             let mut state = ChartState::default();
@@ -186,6 +186,7 @@ fn structural_operations_cancel_real_canvas_plot_axis_and_divider_captures() {
                 assert!(c.active_price_axis().is_some());
             }
             match operation {
+                6 => c.set_pane_height(0, 120.),
                 0 => c.move_pane(0, 1),
                 1 => c.swap_panes(0, 1),
                 2 => c.move_series_to_pane(id, 1),

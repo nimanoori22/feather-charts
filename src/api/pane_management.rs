@@ -55,7 +55,7 @@ impl<B: ChartBehavior> Chart<B> {
         {
             return Ok(());
         }
-        self.cancel_viewport_interaction();
+        self.cancel_interaction();
         for (index, factor) in factors.into_iter().enumerate() {
             self.model.set_pane_stretch_factor(index, factor)?;
         }
