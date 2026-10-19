@@ -23,6 +23,10 @@ mod helpers;
 mod host;
 #[path = "numeric_custom_series/view.rs"]
 mod interval;
+#[path = "pane_management/metadata.rs"]
+mod metadata;
+#[path = "pane_management/metadata_captures.rs"]
+mod metadata_captures;
 #[path = "support/editable_box.rs"]
 mod region;
 #[path = "pane_management/scale_assignment.rs"]
@@ -33,6 +37,7 @@ mod screenshot_captures;
 mod session_behavior;
 #[path = "pane_management/sizing.rs"]
 mod sizing;
+use metadata::DemoMetadata;
 #[path = "pane_management/sizing_captures.rs"]
 mod sizing_captures;
 use feather_charts::{
@@ -40,6 +45,8 @@ use feather_charts::{
     model::{
         data_consumer::{BuiltInSeriesDataItem, LineData, LineDataItem, TimedData},
         data_layer::SeriesId,
+        horz_scale_behavior_price::HorzScaleBehaviorPrice,
+        horz_scale_behavior_time::horz_scale_behavior_time::HorzScaleBehaviorTime,
         icustom_series::CustomSeriesDataItem,
         pane::PriceScalePosition,
         series_options::*,
@@ -55,6 +62,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    metadata: Option<metadata::Panel<C::Item, C::Metadata>>,
     sizing: Option<sizing::Panel>,
     helpers: Option<helpers::Panel<C>>,
     axis_mode: bool,
@@ -73,7 +81,7 @@ struct App<C: Host> {
     data_next: usize,
     data_status: String,
     selected_custom: bool,
-    custom: CustomSeriesHandle<interval::View<C::Item, C::Internal>>,
+    custom: CustomSeriesHandle<interval::View<C::Item, C::Internal, C::Metadata>>,
     markers: UpDownMarkersId,
     region: region::Scene,
     size: Size,
@@ -84,6 +92,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Metadata(metadata::Action),
     Sizing(sizing::Action),
     Helper(helpers::Action),
     Peer(ChartMessage),
@@ -117,12 +126,12 @@ enum Message {
     Append,
     Inspect,
 }
-fn line_row<C: Host>(i: usize, shift: f64) -> BuiltInSeriesDataItem<C::Item> {
+fn line_row<C: Host>(i: usize, shift: f64) -> BuiltInSeriesDataItem<C::Item, C::Metadata> {
     BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
         time: C::key(i),
         value: 4.5 + (i as f64 * 0.3).sin() * 0.4 + shift,
         color: None,
-        custom_values: None,
+        custom_values: C::Metadata::for_bar(i, (shift.abs() * 1000.).round() as usize),
     }))
 }
 impl<C: Host> App<C> {
@@ -172,6 +181,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            metadata: None,
             sizing: None,
             helpers: None,
             axis_mode: false,
@@ -243,6 +253,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Metadata(action) => self.metadata_action(action)?,
             Message::Sizing(action) => self.sizing_action(action)?,
             Message::Helper(action) => self.helper_action(action)?,
             Message::Axis(action) => self.axis_action(action)?,
@@ -294,6 +305,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let metadata_mode = self.metadata.is_some();
                 let sizing_mode = self.sizing.is_some();
                 let helper_mode = self.helpers.is_some();
                 let axis_mode = self.axis_mode;
@@ -310,6 +322,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if metadata_mode {
+                    self.metadata = Some(Default::default());
+                }
                 if sizing_mode {
                     self.sizing = Some(Default::default());
                 }
@@ -344,14 +359,19 @@ impl<C: Host> App<C> {
                     };
                     *item.time_mut() = last.time().clone();
                 }
+                if let BuiltInSeriesDataItem::Line(LineDataItem::Data(value)) = &mut item {
+                    let id = metadata::record_index::<C>(&value.time, self.data_next, 23);
+                    value.custom_values = C::Metadata::for_bar(id, self.step);
+                }
                 self.chart.update_data(self.markers, item, at)?;
             }
             _ => {}
         }
         Ok(())
     }
-    fn consume_events(&mut self, events: Vec<ChartEvent<C::Item>>) {
+    fn consume_events(&mut self, events: Vec<ChartEvent<C::Item, C::Metadata>>) {
         for event in events {
+            self.observe_metadata(&event);
             self.sync_helper_crosshair(&event);
             if let Some(m) = &mut self.events {
                 m.observe(&event);
@@ -520,6 +540,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.metadata.is_some() {
+            content = content.push(self.metadata_controls());
+        }
         if self.sizing.is_some() {
             content = content.push(self.sizing_controls());
         }
@@ -595,6 +618,7 @@ struct RunOptions {
     formatting: bool,
     assignment: bool,
     axis_mode: bool,
+    metadata: bool,
     sizing: bool,
     helpers: bool,
 }
@@ -608,6 +632,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.metadata {
+                app.metadata = Some(Default::default());
+            }
             if options.sizing {
                 app.sizing = Some(Default::default());
             }
@@ -679,6 +706,16 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args
+        .iter()
+        .position(|a| a == "--application-metadata-captures")
+    {
+        metadata_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--pane-sizing-captures") {
         sizing_captures::run(
             std::path::Path::new(&args[i + 1]),
@@ -710,21 +747,29 @@ fn main() -> iced::Result {
         attribution: args.iter().any(|a| a == "--attribution"),
         formatting: args.iter().any(|a| a == "--formatting"),
         assignment: args.iter().any(|a| a == "--scale-assignment"),
+        metadata: args.iter().any(|a| a == "--application-metadata"),
         sizing: args.iter().any(|a| a == "--pane-sizing"),
         helpers: args.iter().any(|a| a == "--public-helpers"),
         axis_mode: args.iter().any(|a| a == "--axis-interaction"),
     };
+    if options.metadata {
+        run_modes::<Rc<metadata::Record>>(options, &args)
+    } else {
+        run_modes::<()>(options, &args)
+    }
+}
+fn run_modes<M: metadata::DemoMetadata>(options: RunOptions, args: &[String]) -> iced::Result {
     if args.iter().any(|a| a == "--custom-domain") {
-        run::<Chart<session_behavior::Sessions>>(
+        run::<Chart<session_behavior::Sessions, M>>(
             options,
             "Feather Charts — session/phase attribution",
         )
     } else if args.iter().any(|a| a == "--yield-curve") {
-        run::<YieldCurveChart>(options, "Feather Charts — maturity pane management")
+        run::<YieldCurveChart<M>>(options, "Feather Charts — maturity pane management")
     } else if args.iter().any(|a| a == "--options") {
-        run::<OptionsChart>(options, "Feather Charts — strike pane management")
+        run::<Chart<HorzScaleBehaviorPrice, M>>(options, "Feather Charts — strike pane management")
     } else {
-        run::<Chart>(options, "Feather Charts — calendar pane management")
+        run::<Chart<HorzScaleBehaviorTime, M>>(options, "Feather Charts — calendar pane management")
     }
 }
 

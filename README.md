@@ -1002,3 +1002,40 @@ height. Readouts show actual settled heights. Saved layouts retain stretch facto
 by pane slot, so restore needs the same pane count; after removal, Reset and save
 again. Pane moves keep their allocation; restoring assigns the saved proportions
 to the current slots. Divider resizing and export remain available.
+
+### Application metadata
+
+`Chart<B, M = ()>` retains `custom_values: Option<M>` through built-in data
+updates, queries, pop and `PointerEvent<T, M>::series_data`. M needs only Clone
+and a static lifetime. Use `Rc<AppRecord>` for large records or shared identity;
+the record itself needs neither Clone, Debug, equality nor Send/Sync. Owned
+readbacks/events remain readable after a series or chart is removed. A plain M
+uses its own Clone policy; the engine does not compare or serialize metadata.
+
+Existing unit constructors and aliases keep working. Choose metadata explicitly:
+
+```rust
+let mut chart = Chart::<_, std::rc::Rc<AppRecord>>::new_with_metadata(Default::default());
+// Strikes: Chart::<HorzScaleBehaviorPrice, M>::new_options_with_metadata(options)?
+// Maturities: YieldCurveChart::<M>::new_with_metadata(options)?
+// Custom domains: Chart::<B, M>::with_custom_behavior_and_metadata(factory, chart, scale, locale)?
+```
+
+Custom views still own their typed V::Data; their whitespace V::Metadata matches
+the chart's M. A primitive that reads metadata implements DrawingPrimitive<B, M>
+and receives PrimitiveContext<B, M>. Built-in snapshots own geometry, not live
+metadata; custom renderers may retain the original data they explicitly capture.
+Use Weak for application payloads that refer back to their owning chart.
+
+```sh
+cargo run --example pane_management -- --application-metadata --series-data --series-order --scale-assignment --screenshot-export --live-feed
+# Add --options, --yield-curve or --custom-domain.
+```
+
+Pause the feed to inspect records. The Blue records toolbar replaces latest/history
+metadata without changing price, clears a record, reports popped records and
+retains data across Clear blue data. Inspect retained and Restore data use the
+original owned records; Release retained drops that observation. Hover reports
+the captured record ID/revision. Resume feed for interaction checks. Reset clears
+the example's retained data. Existing custom intervals, pane/scale controls, box
+edits and export stay available.

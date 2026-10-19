@@ -3,7 +3,9 @@ use feather_charts::model::{
     icustom_series::CustomSeriesWhitespaceData, plot_list::MismatchDirection,
     time_data::LogicalRange,
 };
-fn custom_row<C: Host>(i: usize) -> CustomSeriesDataItem<interval::Datum<C::Item>, C::Item> {
+fn custom_row<C: Host>(
+    i: usize,
+) -> CustomSeriesDataItem<interval::Datum<C::Item>, C::Item, C::Metadata> {
     CustomSeriesDataItem::Data(interval::Datum {
         time: C::key(i),
         value: 4.5,

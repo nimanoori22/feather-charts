@@ -107,8 +107,8 @@ fn pixels(b: Bounds, t: PrimitiveCoordinateTransform) -> Option<[f64; 4]> {
         t.price_to_coordinate(b.high)?,
     ])
 }
-impl<B: ChartBehavior> DrawingPrimitive<B> for Source {
-    fn prepare(&self, c: &PrimitiveContext<'_, B>) -> PreparedPrimitive {
+impl<B: ChartBehavior, M: Clone + 'static> DrawingPrimitive<B, M> for Source {
+    fn prepare(&self, c: &PrimitiveContext<'_, B, M>) -> PreparedPrimitive {
         let Some([x1, y1, x2, y2]) = c
             .coordinate_transform()
             .and_then(|t| pixels(*self.0.borrow(), t))
@@ -185,9 +185,9 @@ macro_rules! region_methods {
         }
     };
 }
-impl<B: ChartBehavior> RegionHost for Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> RegionHost for Chart<B, M> {
     region_methods!();
 }
-impl RegionHost for YieldCurveChart {
+impl<M: Clone + 'static> RegionHost for YieldCurveChart<M> {
     region_methods!();
 }

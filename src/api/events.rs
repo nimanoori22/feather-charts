@@ -3,6 +3,7 @@ use super::{Chart, ChartBehavior, ChartEvent};
 use crate::model::{data_layer::SeriesId, time_data::ValueRange};
 
 pub type HorizontalRange<T> = ValueRange<T>;
+pub(super) type EventQueue<T, M> = std::rc::Rc<std::cell::RefCell<Vec<ChartEvent<T, M>>>>;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum DataChangeScope {

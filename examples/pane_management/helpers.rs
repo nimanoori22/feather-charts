@@ -67,7 +67,7 @@ impl<C: Host> App<C> {
         }
         Ok(())
     }
-    pub fn sync_helper_crosshair(&mut self, event: &ChartEvent<C::Item>) {
+    pub fn sync_helper_crosshair(&mut self, event: &ChartEvent<C::Item, C::Metadata>) {
         let Some(panel) = &mut self.helpers else {
             return;
         };

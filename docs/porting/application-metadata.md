@@ -126,3 +126,66 @@ was corrected by explicitly creating it; no engine behavior was changed for that
 fixture error. A custom renderer that retains original data keeps that payload
 alive in its snapshot; built-in geometry snapshots do not. Source observations
 match all six families using the real current local 5.2.1 source.
+
+## Public consumer and renderer protocol
+
+The existing pane-management application now has an explicit metadata mode; its
+unit mode remains unchanged. Its Host carries an associated Metadata parameter,
+with short aliases for built-in rows, custom inputs and events. The event queue
+has a named owned type alias; no queue implementation or delivery semantics
+changed. These names keep the generic boundary readable without lint suppressions.
+The shared example box primitive is generic over M. The interval view adds a
+defaulted whitespace metadata parameter, while its fulfilled Datum and renderer
+remain unchanged. No existing interval constructors needed migration.
+
+Metadata mode uses Rc<Record> for the blue line and a toolbar for latest/history
+replacement, clearing, invalid input, pop, retain/read/release and restore. Hover
+shows the captured ID/revision; price is unchanged by metadata-only operations.
+Retained data belongs to the application panel and survives clearing the engine.
+The four-domain consumer test covers all controls, ownership changes, recovery
+and Reset. Pause feed for stable record inspection; resume for navigation checks.
+
+Review reproduced a demo-only identity error: sparse blue data ended at bar 22,
+but the feed built a bar-23 template before replacing its time. The regression
+failed with record ID 23 instead of 22. Feed construction now derives the record
+ID from the actual horizontal value, sharing the panel's existing domain lookup.
+The regression passes in all four domains; no engine mutation algorithm changed.
+Both failing and corrected logs are retained with the final evidence.
+
+The new capture protocol freezes nine scenes (initial/latest/history/cleared/
+retained/restored/moved/removed/recovered), four domains, three sizes and DPR
+1/1.25/1.5/2 on both asserted backends: 864 screen replays and 864 retained exports.
+384 metadata-only screen comparisons must equal their initial pixels. Weak
+payload probes must expire after the live owners are reset/dropped, while retained
+exports remain unchanged. Existing capture scripts/assertions remain unchanged.
+
+Rust files changed: `src/api/{behavior,chart,configuration,conflation,coordinates,
+custom_series,events,image_watermark,interaction,markers,options_chart,
+pane_management,price_scale,primitive_editing,primitives,screenshot,series_data,
+series_queries,text_watermark,time_scale,touch,up_down_markers,widget,yield_curve}.rs`,
+`src/api/custom_series/conflation.rs`, `src/api/yield_curve/custom_series.rs`,
+`examples/pane_management.rs`, `examples/pane_management/{host,data,events,helpers,
+metadata,metadata_captures}.rs`, `examples/numeric_custom_series/view.rs`,
+`examples/support/editable_box.rs`, `tests/metadata_design.rs`,
+`tests/application_metadata.rs` and `tests/application_metadata/view.rs`. Source
+and renderer scripts, inventory, README and checklist accompany those changes.
+
+No model data algorithm port remains for metadata. Pointer source metadata, locale
+behavior and configured color parsing remain milestones G–I; final combined
+validation is Z. Physical acceptance and final gate results are recorded below
+when complete, without closing unrelated exceptions.
+
+## Validation checkpoint
+
+The corrected consumer passes 860 tests in 87 suites, two compile-fail doctests,
+all-target build/check, strict all-target Clippy, formatting and inventory checks.
+All 43 current source comparisons pass. Both asserted renderers pass 864 screen
+replays, 864 retained exports and 384 metadata-only pixel comparisons. Representative
+cleared-data and moved-pane captures were inspected visually. Results are retained
+under `target/application-metadata/corrected`.
+
+The first compatibility attempt ended with SIGTERM after a successful software
+event capture, without an assertion failure. Its partial output is preserved;
+the cause of the signal was not established. A separate unchanged-protocol retry
+is required before acceptance. Final compatibility and physical acceptance remain
+pending at this checkpoint.

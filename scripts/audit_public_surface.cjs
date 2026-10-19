@@ -38,7 +38,7 @@ const api={
   applyOptions:'native|Typed option replacement routes checked price-scale reassignment; full replacement semantics',options:'native|Chart.with_series_options / typed custom with_options and with_view_options; scoped non-Clone callbacks',
   priceScale:'native|Chart.series_price_scale returns a fresh checked typed selector for built-in/custom series',setData:'mapped|Chart.set_data / set_custom_data',
   update:'mapped|Chart.update_data / update_custom_data',pop:'mapped|Chart.pop_data / pop_custom_data',
-  dataByIndex:'mapped|Chart.data_by_index / custom handle',data:'partial|F08: Chart.series_data constrains built-in metadata to ()',
+  dataByIndex:'mapped|Chart.data_by_index / custom handle',data:'mapped|Chart<B, M>.series_data retains typed metadata; owned canonical rows',
   subscribeDataChanged:'native|EventInterests.data_changed / ChartEvent::DataChanged',unsubscribeDataChanged:'native|EventInterests.data_changed; host filters series',
   createPriceLine:'mapped|Chart.add_price_line',removePriceLine:'mapped|Chart.remove_price_line',priceLines:'native|Chart.price_lines returns owned creation-order IDs; options queried by ID',
   seriesType:'mapped|Chart.series_type; checked built-in/custom ownership',
@@ -97,7 +97,7 @@ const special={
  'LocalizationOptions.dateFormat':'native|Construction plus Chart.apply_localization_options / localization_options; omitted string retains current value',
  'TimeScaleOptions.tickMarkFormatter':'native|TimeBehaviorOptions via with_custom_behavior / configure_horizontal_behavior',
  'YieldCurveOptions.formatTime':'native|YieldCurveChart.set_maturity_formatter',
- 'WhitespaceData.customValues':'partial|F08: engine generic metadata; reusable Chart built-in inputs fix it to ()',
+ 'WhitespaceData.customValues':'native|Chart<B, M> typed optional metadata; Rc payloads retain identity through updates/queries/events',
  'PriceLineOptions.id':'mapped|PriceLineOptions.external_id',
  'PriceFormatBuiltIn.type':'native|PriceFormatBuiltIn.kind enum',
  'PriceFormatCustom.type':'native|PriceFormat::Custom enum variant'

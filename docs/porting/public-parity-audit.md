@@ -361,3 +361,15 @@ instead of accepting source zero-division/negative-factor states. This is an
 explicit native safety adaptation. See [pane-sizing.md](pane-sizing.md) for the
 contract, consumer, regression and acceptance evidence; physical acceptance is
 tracked there rather than inferred from API presence.
+
+
+### Milestone F follow-up — F08
+
+The reusable owner now exposes the existing engine metadata parameter as
+`Chart<B, M = ()>`, including canonical data/query/pop, pointer events, primitive
+contexts, numeric/yield/custom-domain factories and typed custom adapters. Existing
+unit constructors remain inference-compatible. Payloads use their own Clone
+policy; Rc preserves identity without mandatory deep copies or Debug/PartialEq/
+Send/Sync constraints. Source assertions cover all six built-in families. See
+[application-metadata.md](application-metadata.md) for exact ownership, snapshots,
+consumer migration and acceptance; separate device/timing records remain open.

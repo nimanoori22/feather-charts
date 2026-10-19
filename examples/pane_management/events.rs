@@ -28,7 +28,7 @@ impl Default for Monitor {
     }
 }
 impl Monitor {
-    pub fn observe<T: std::fmt::Debug>(&mut self, event: &ChartEvent<T>) {
+    pub fn observe<T: std::fmt::Debug, M: std::fmt::Debug>(&mut self, event: &ChartEvent<T, M>) {
         let index = match event {
             ChartEvent::DataChanged { .. } => 0,
             ChartEvent::DoubleClick(_) => 1,

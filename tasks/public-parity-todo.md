@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F next.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F implementation in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -86,10 +86,10 @@ and its pinned evidence record.
 
 ### F — Application metadata
 
-- [ ] F0: Choose and freeze the application metadata API. (depends: E2).
-- [ ] F1: Prepare metadata-capable adapter boundaries without changing default behavior. (depends: F0).
-- [ ] F2: Retain application metadata in built-in data operations. (depends: F1).
-- [ ] F3: Complete metadata event and chart-family adapters. (depends: F2).
+- [x] F0: Choose and freeze the application metadata API. (depends: E2).
+- [x] F1: Prepare metadata-capable adapter boundaries without changing default behavior. (depends: F0).
+- [x] F2: Retain application metadata in built-in data operations. (depends: F1).
+- [x] F3: Complete metadata event and chart-family adapters. (depends: F2).
 - [ ] F4: Demonstrate application metadata and accept milestone F. (depends: F3).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

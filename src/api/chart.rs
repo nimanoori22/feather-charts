@@ -95,7 +95,7 @@ pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 /// Data operations are synchronous; prepare a frame after a batch of operations.
 pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()> {
     pub(super) event_interests: super::EventInterests,
-    pub(super) pending_events: std::rc::Rc<std::cell::RefCell<Vec<super::ChartEvent<B::Item, M>>>>,
+    pub(super) pending_events: super::events::EventQueue<B::Item, M>,
     pub(super) range_observer: Option<
         crate::helpers::delegate::Subscription<
             crate::model::time_scale::VisibleRangeChange<B::Item>,

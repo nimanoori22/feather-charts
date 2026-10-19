@@ -120,11 +120,11 @@ impl<T> CustomSeriesPaneRenderer<Frame> for Renderer<T> {
         })
     }
 }
-pub struct View<T, I = T> {
+pub struct View<T, I = T, M = ()> {
     renderer: Renderer<T>,
-    internal: std::marker::PhantomData<I>,
+    internal: std::marker::PhantomData<(I, M)>,
 }
-impl<T, I> Default for View<T, I> {
+impl<T, I, M> Default for View<T, I, M> {
     fn default() -> Self {
         Self {
             renderer: Default::default(),
@@ -132,11 +132,11 @@ impl<T, I> Default for View<T, I> {
         }
     }
 }
-impl<T: Clone, I: Clone> CustomSeriesPaneView<Frame> for View<T, I> {
+impl<T: Clone, I: Clone, M> CustomSeriesPaneView<Frame> for View<T, I, M> {
     type Item = T;
     type InternalTime = I;
     type Data = Datum<T>;
-    type Metadata = ();
+    type Metadata = M;
     type Options = Options;
     type Renderer = Renderer<T>;
     fn renderer(&self) -> &Self::Renderer {
@@ -149,7 +149,7 @@ impl<T: Clone, I: Clone> CustomSeriesPaneView<Frame> for View<T, I> {
     fn price_value_builder(&self, d: &Datum<T>) -> CustomSeriesPricePlotValues {
         [d.low, d.high, d.value].map(Into::into).to_vec()
     }
-    fn is_whitespace(&self, d: &CustomSeriesDataItem<Datum<T>, T>) -> bool {
+    fn is_whitespace(&self, d: &CustomSeriesDataItem<Datum<T>, T, M>) -> bool {
         matches!(d, CustomSeriesDataItem::Whitespace(_))
     }
     fn default_options(&self) -> Options {

@@ -7,7 +7,21 @@ use feather_charts::model::{
     },
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
+type BuiltInRow<C> = BuiltInSeriesDataItem<<C as Host>::Item, <C as Host>::Metadata>;
+type CustomRow<C> = CustomSeriesDataItem<
+    interval::Datum<<C as Host>::Item>,
+    <C as Host>::Item,
+    <C as Host>::Metadata,
+>;
+type HostEvent<C> = ChartEvent<<C as Host>::Item, <C as Host>::Metadata>;
 pub trait Host: region::RegionHost + Sized + 'static {
+    type Metadata: metadata::DemoMetadata;
+    fn record_update(
+        &mut self,
+        id: SeriesId,
+        row: BuiltInRow<Self>,
+        historical: bool,
+    ) -> Result<(), ChartError>;
     fn pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError>;
     fn pane_stretch(&mut self, pane: usize, factor: f64) -> Result<(), ChartError>;
     fn helper_action(
@@ -27,7 +41,7 @@ pub trait Host: region::RegionHost + Sized + 'static {
         now: Instant,
     ) -> Result<ChartScreenshot, ChartError>;
     fn interests(&mut self, interests: EventInterests);
-    fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>>;
+    fn take_events(&mut self) -> Vec<HostEvent<Self>>;
     fn axis_visible(&mut self, visible: bool);
     fn offset(&mut self, offset: f64);
     fn assign_scale(
@@ -38,7 +52,7 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn assign_options(
         &mut self,
         id: SeriesId,
-        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
         use_custom: bool,
         target: &str,
         pulse: bool,
@@ -47,7 +61,7 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn format_series(
         &mut self,
         id: SeriesId,
-        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
         enabled: bool,
         pulse: bool,
     ) -> Result<(), ChartError>;
@@ -76,39 +90,32 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn new() -> Self;
     fn key(i: usize) -> Self::Item;
     fn side() -> PriceScalePosition;
-    fn core(&self) -> &Chart<Self::Behavior>;
+    fn core(&self) -> &Chart<Self::Behavior, Self::Metadata>;
     fn line(&mut self, pane: usize, pulse: bool) -> SeriesId;
     fn area(&mut self, pane: usize) -> SeriesId;
-    fn pop_data(
-        &mut self,
-        id: SeriesId,
-        count: usize,
-    ) -> Result<Vec<BuiltInSeriesDataItem<Self::Item>>, ChartError>;
+    fn pop_data(&mut self, id: SeriesId, count: usize)
+    -> Result<Vec<BuiltInRow<Self>>, ChartError>;
     fn pop_custom_data(
         &mut self,
-        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
         count: usize,
     ) -> Result<Vec<interval::Datum<Self::Item>>, ChartError>;
-    fn raw_data(
-        &mut self,
-        id: SeriesId,
-        rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
-    ) -> Result<(), ChartError>;
+    fn raw_data(&mut self, id: SeriesId, rows: Vec<BuiltInRow<Self>>) -> Result<(), ChartError>;
     fn set_series_order(&mut self, id: SeriesId, order: usize) -> Result<(), ChartError>;
     fn set_hovered_series_on_top(&mut self, enabled: bool);
     fn custom(
         &mut self,
         pane: usize,
-    ) -> CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>;
+    ) -> CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>;
     fn update_custom(
         &mut self,
-        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
-        row: CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>,
+        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
+        row: CustomRow<Self>,
     ) -> Result<(), ChartError>;
     fn custom_data(
         &mut self,
-        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
-        rows: Vec<CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>>,
+        h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
+        rows: Vec<CustomRow<Self>>,
     ) -> Result<(), ChartError>;
     fn add_pane(&mut self) -> usize;
     fn move_pane(&mut self, from: usize, to: usize) -> Result<(), ChartError>;
@@ -116,24 +123,21 @@ pub trait Host: region::RegionHost + Sized + 'static {
     fn move_series_to_pane(&mut self, id: SeriesId, to: usize) -> Result<(), ChartError>;
     fn remove_pane(&mut self, pane: usize) -> Result<(), ChartError>;
     fn markers(&mut self, id: SeriesId) -> UpDownMarkersId;
-    fn data(
-        &mut self,
-        id: UpDownMarkersId,
-        rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
-    ) -> Result<(), ChartError>;
+    fn data(&mut self, id: UpDownMarkersId, rows: Vec<BuiltInRow<Self>>) -> Result<(), ChartError>;
     fn update_data(
         &mut self,
         id: UpDownMarkersId,
-        row: BuiltInSeriesDataItem<Self::Item>,
+        row: BuiltInRow<Self>,
         at: Instant,
     ) -> Result<(), ChartError>;
     fn prepare(&mut self, size: Size, ratio: f32, at: Instant) -> Result<(), ChartError>;
-    fn update(&mut self, message: ChartMessage) -> Result<Vec<ChartEvent<Self::Item>>, ChartError>;
+    fn update(&mut self, message: ChartMessage) -> Result<Vec<HostEvent<Self>>, ChartError>;
     fn fit(&mut self);
     fn decorate(&mut self, pane: usize);
 }
 macro_rules! common {
     () => {
+        fn record_update(&mut self, id: SeriesId, row: BuiltInRow<Self>, historical: bool) -> Result<(), ChartError> { self.update_data(id, row, historical) }
         fn pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError> {
             self.set_pane_height(pane, height)
         }
@@ -231,7 +235,7 @@ macro_rules! common {
         fn interests(&mut self, interests: EventInterests) {
             self.set_event_interests(interests);
         }
-        fn take_events(&mut self) -> Vec<ChartEvent<Self::Item>> {
+        fn take_events(&mut self) -> Vec<HostEvent<Self>> {
             self.take_events()
         }
         fn axis_visible(&mut self, visible: bool) {
@@ -255,7 +259,7 @@ macro_rules! common {
         fn assign_options(
             &mut self,
             id: SeriesId,
-            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
             use_custom: bool,
             target: &str,
             pulse: bool,
@@ -276,7 +280,7 @@ macro_rules! common {
         fn format_series(
             &mut self,
             id: SeriesId,
-            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
             enabled: bool,
             pulse: bool,
         ) -> Result<(), ChartError> {
@@ -320,12 +324,12 @@ macro_rules! common {
             &mut self,
             id: SeriesId,
             count: usize,
-        ) -> Result<Vec<BuiltInSeriesDataItem<Self::Item>>, ChartError> {
+        ) -> Result<Vec<BuiltInRow<Self>>, ChartError> {
             self.pop_data(id, count)
         }
         fn pop_custom_data(
             &mut self,
-            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
+            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
             count: usize,
         ) -> Result<Vec<interval::Datum<Self::Item>>, ChartError> {
             self.pop_custom_data(h, count)
@@ -333,7 +337,7 @@ macro_rules! common {
         fn raw_data(
             &mut self,
             id: SeriesId,
-            rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
+            rows: Vec<BuiltInRow<Self>>,
         ) -> Result<(), ChartError> {
             self.set_data(id, rows)
         }
@@ -346,7 +350,7 @@ macro_rules! common {
         fn custom(
             &mut self,
             pane: usize,
-        ) -> CustomSeriesHandle<interval::View<Self::Item, Self::Internal>> {
+        ) -> CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>> {
             self.add_custom_series(
                 interval::View::default(),
                 Default::default(),
@@ -357,15 +361,15 @@ macro_rules! common {
         }
         fn update_custom(
             &mut self,
-            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
-            row: CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>,
+            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
+            row: CustomRow<Self>,
         ) -> Result<(), ChartError> {
             self.update_custom_data(h, row, false)
         }
         fn custom_data(
             &mut self,
-            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal>>,
-            rows: Vec<CustomSeriesDataItem<interval::Datum<Self::Item>, Self::Item>>,
+            h: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
+            rows: Vec<CustomRow<Self>>,
         ) -> Result<(), ChartError> {
             self.set_custom_data(h, rows)
         }
@@ -390,14 +394,14 @@ macro_rules! common {
         fn data(
             &mut self,
             id: UpDownMarkersId,
-            rows: Vec<BuiltInSeriesDataItem<Self::Item>>,
+            rows: Vec<BuiltInRow<Self>>,
         ) -> Result<(), ChartError> {
             self.set_up_down_data(id, rows)
         }
         fn update_data(
             &mut self,
             id: UpDownMarkersId,
-            row: BuiltInSeriesDataItem<Self::Item>,
+            row: BuiltInRow<Self>,
             at: Instant,
         ) -> Result<(), ChartError> {
             self.update_up_down_data(id, row, false, at)
@@ -405,7 +409,7 @@ macro_rules! common {
         fn prepare(&mut self, s: Size, r: f32, at: Instant) -> Result<(), ChartError> {
             self.prepare(s, r, at)
         }
-        fn update(&mut self, m: ChartMessage) -> Result<Vec<ChartEvent<Self::Item>>, ChartError> {
+        fn update(&mut self, m: ChartMessage) -> Result<Vec<HostEvent<Self>>, ChartError> {
             self.update(m)
         }
         fn fit(&mut self) {
@@ -452,7 +456,8 @@ fn options(pulse: bool) -> LineSeriesOptions {
     };
     o
 }
-impl Host for Chart {
+impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorTime, M> {
+    type Metadata = M;
     type Item = Time;
     type Internal = TimePoint;
     type Behavior = HorzScaleBehaviorTime;
@@ -460,7 +465,7 @@ impl Host for Chart {
         PriceScalePosition::Right
     }
     fn new() -> Self {
-        Default::default()
+        Self::new_with_metadata(Default::default())
     }
     fn key(i: usize) -> Time {
         UtcTimestamp::new(1_700_000_000. + i as f64 * 60.).into()
@@ -482,7 +487,8 @@ impl Host for Chart {
     }
     common!();
 }
-impl Host for Chart<session_behavior::Sessions> {
+impl<M: metadata::DemoMetadata> Host for Chart<session_behavior::Sessions, M> {
+    type Metadata = M;
     type Item = session_behavior::SessionPoint;
     type Internal = session_behavior::SessionKey;
     type Behavior = session_behavior::Sessions;
@@ -490,7 +496,7 @@ impl Host for Chart<session_behavior::Sessions> {
         PriceScalePosition::Right
     }
     fn new() -> Self {
-        Chart::with_custom_behavior(
+        Self::with_custom_behavior_and_metadata(
             || session_behavior::Sessions::new(Default::default()),
             Default::default(),
             Default::default(),
@@ -518,7 +524,8 @@ impl Host for Chart<session_behavior::Sessions> {
     }
     common!();
 }
-impl Host for OptionsChart {
+impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorPrice, M> {
+    type Metadata = M;
     type Item = HorizontalPrice;
     type Internal = HorizontalPrice;
     type Behavior = HorzScaleBehaviorPrice;
@@ -526,7 +533,7 @@ impl Host for OptionsChart {
         PriceScalePosition::Right
     }
     fn new() -> Self {
-        Self::new_options(Default::default()).unwrap()
+        Self::new_options_with_metadata(Default::default()).unwrap()
     }
     fn key(i: usize) -> HorizontalPrice {
         HorizontalPrice::new(90. + i as f64 * 2.5).unwrap()
@@ -548,7 +555,8 @@ impl Host for OptionsChart {
     }
     common!();
 }
-impl Host for YieldCurveChart {
+impl<M: metadata::DemoMetadata> Host for YieldCurveChart<M> {
+    type Metadata = M;
     type Item = Maturity;
     type Internal = Maturity;
     type Behavior = YieldCurveHorzScaleBehavior;
@@ -556,12 +564,12 @@ impl Host for YieldCurveChart {
         PriceScalePosition::Left
     }
     fn new() -> Self {
-        YieldCurveChart::new(Default::default()).unwrap()
+        Self::new_with_metadata(Default::default()).unwrap()
     }
     fn key(i: usize) -> Maturity {
         Maturity::from_months(i as f64 * 6. + 1.).unwrap()
     }
-    fn core(&self) -> &Chart<Self::Behavior> {
+    fn core(&self) -> &Chart<Self::Behavior, Self::Metadata> {
         self
     }
     fn line(&mut self, p: usize, pulse: bool) -> SeriesId {
