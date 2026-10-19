@@ -133,3 +133,8 @@ No push is authorized.
 The original sandbox-denied Chromium run is retained separately. Its browser
 startup errors were resolved by rerunning with browser access; all 46 unchanged
 source scripts then passed. Final diff, JavaScript syntax and inventory checks pass.
+
+The [measured scorecard](public-parity-score.md) separates audited surface
+coverage from recorded source-conformance pass rates and unmeasured whole-library
+behavioral parity. Its calculator pins this completion evidence without treating
+the completed roadmap as a 100% port score.

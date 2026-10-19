@@ -977,6 +977,8 @@ It includes a 374-member inventory and reproducible source/native diagnostics.
 The original audit identifies gaps; its successful diagnostic command is not a
 parity pass. The [combined completion record](docs/porting/public-parity-completion.md)
 tracks milestones A–I, final validation and the remaining explicit limitations.
+The [measured scorecard](docs/porting/public-parity-score.md) provides reproducible
+API-surface coverage and source-conformance results with their exact scope.
 
 ### Public queries and crosshair synchronization
 

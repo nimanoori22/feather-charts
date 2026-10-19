@@ -1,0 +1,206 @@
+{
+  "schema": 1,
+  "source_version": "5.2.1",
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "scope": "Declared members of the listed core API/options/data/payload interfaces; inheritance recorded, not expanded. Representation is not proven behavioral parity. Extension traits and exports reviewed separately in public-parity-audit.md.",
+  "rubric": {
+    "unit": "One declared inventory member; inherited declarations counted once.",
+    "covered": [
+      "mapped",
+      "native",
+      "represented"
+    ],
+    "partial_credit": 0,
+    "native_exclusions": "platform rows only; listed explicitly below",
+    "meaning": "API/field presence and reviewed Rust adaptation; not per-member behavioral proof.",
+    "behavior": "Recorded source-comparison suite pass rate; selected cases, not exhaustive member coverage.",
+    "regression": "Image comparisons use accepted native captures, not browser/native visual equivalence.",
+    "aggregation": "No weighted overall score; overlapping suites, observations and images stay separate."
+  },
+  "surface": {
+    "total": 374,
+    "classifications": {
+      "mapped": 80,
+      "native": 81,
+      "partial": 5,
+      "platform": 4,
+      "represented": 204
+    },
+    "native_scope": {
+      "numerator": 365,
+      "denominator": 370,
+      "percent": 98.65
+    },
+    "including_platform_differences": {
+      "numerator": 365,
+      "denominator": 374,
+      "percent": 97.59
+    }
+  },
+  "methods": {
+    "total": 99,
+    "classifications": {
+      "mapped": 61,
+      "native": 33,
+      "partial": 2,
+      "platform": 3
+    },
+    "native_scope": {
+      "numerator": 94,
+      "denominator": 96,
+      "percent": 97.92
+    },
+    "including_platform_differences": {
+      "numerator": 94,
+      "denominator": 99,
+      "percent": 94.95
+    }
+  },
+  "properties": {
+    "total": 275,
+    "classifications": {
+      "mapped": 19,
+      "native": 48,
+      "partial": 3,
+      "platform": 1,
+      "represented": 204
+    },
+    "native_scope": {
+      "numerator": 271,
+      "denominator": 274,
+      "percent": 98.91
+    },
+    "including_platform_differences": {
+      "numerator": 271,
+      "denominator": 275,
+      "percent": 98.55
+    }
+  },
+  "source_conformance_suites": {
+    "numerator": 46,
+    "denominator": 46,
+    "percent": 100.0
+  },
+  "original_source_observations": {
+    "numerator": 12,
+    "denominator": 12,
+    "percent": 100.0
+  },
+  "native_image_regressions": {
+    "numerator": 9510,
+    "denominator": 9510,
+    "percent": 100.0
+  },
+  "native_tests": {
+    "passed": 884,
+    "suites": 90,
+    "doctests": 2
+  },
+  "platform_exclusions": [
+    {
+      "id": "IChartApiBase.autoSizeActive",
+      "file": "src/api/ichart-api.ts",
+      "line": 355,
+      "kind": "method",
+      "signature": "autoSizeActive(): boolean;",
+      "status": "platform",
+      "note": "Iced host controls layout; no ResizeObserver"
+    },
+    {
+      "id": "IChartApiBase.chartElement",
+      "file": "src/api/ichart-api.ts",
+      "line": 363,
+      "kind": "method",
+      "signature": "chartElement(): HTMLDivElement;",
+      "status": "platform",
+      "note": "Iced Canvas replaces DOM element"
+    },
+    {
+      "id": "IPaneApi.getHTMLElement",
+      "file": "src/api/ipane-api.ts",
+      "line": 54,
+      "kind": "method",
+      "signature": "getHTMLElement(): HTMLElement | null;",
+      "status": "platform",
+      "note": "No DOM; use prepared pane layout"
+    },
+    {
+      "id": "ChartOptionsBase.autoSize",
+      "file": "src/model/chart-model.ts",
+      "line": 293,
+      "kind": "property",
+      "signature": "autoSize: boolean;",
+      "status": "platform",
+      "note": "Iced host layout replaces ResizeObserver"
+    }
+  ],
+  "partial_members": [
+    {
+      "id": "IChartApiBase.applyOptions",
+      "file": "src/api/ichart-api.ts",
+      "line": 302,
+      "kind": "method",
+      "signature": "applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;",
+      "status": "partial",
+      "note": "Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred"
+    },
+    {
+      "id": "IChartApiBase.options",
+      "file": "src/api/ichart-api.ts",
+      "line": 309,
+      "kind": "method",
+      "signature": "options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;",
+      "status": "partial",
+      "note": "Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred"
+    },
+    {
+      "id": "ChartOptionsBase.defaultVisiblePriceScaleId",
+      "file": "src/model/chart-model.ts",
+      "line": 319,
+      "kind": "property",
+      "signature": "defaultVisiblePriceScaleId: 'left' | 'right';",
+      "status": "partial",
+      "note": "F04: PaneOptions.default_visible_price_scale construction only"
+    },
+    {
+      "id": "LayoutOptions.colorSpace",
+      "file": "src/model/layout-options.ts",
+      "line": 144,
+      "kind": "property",
+      "signature": "colorSpace: ColorSpace;",
+      "status": "partial",
+      "note": "sRGB output; checked constructors, legacy preparation and runtime options reject DisplayP3 explicitly; actual wide-gamut rendering deferred"
+    },
+    {
+      "id": "LocalizationOptionsBase.locale",
+      "file": "src/model/localization-options.ts",
+      "line": 26,
+      "kind": "property",
+      "signature": "locale: string;",
+      "status": "partial",
+      "note": "F09: H verified Gregorian profiles and latn/arab/arabext ticks; time_locale_support reports best-effort/English fallback; full Intl remains partial"
+    }
+  ],
+  "whole_port_behavioral_parity_percent": null,
+  "member_behavioral_coverage_percent": null,
+  "unmeasured": [
+    "No per-member map from all 374 inventory rows to source assertions.",
+    "Inventory excludes some exported aliases, plugin contracts and behavior combinations.",
+    "Passing native regression images do not measure browser/native pixel parity.",
+    "Timing and dedicated device acceptance remain separate open gates."
+  ],
+  "independent_exceptions": [
+    "Intl outside the H support contract",
+    "Earlier timing acceptance",
+    "Dedicated series drawing-order mouse acceptance",
+    "Touchpad",
+    "Touchscreen",
+    "Physical high-DPI",
+    "Display-P3 target"
+  ],
+  "inputs": {
+    "docs/porting/public-parity-inventory.json": "31f343e637caea160b7bbd2f4ca6caa57b2aa0d1268f022c91e7003fd2b23a09",
+    "docs/porting/public-parity-completion-evidence.json": "c230373160bc4ac69c9d71d8e62cb99d42ffd5a5e7e2be546d76ee7aa0c46c24",
+    "scripts/measure_public_parity.py": "c163ea1350d6915eef685687c203cb421d96aa66c275b8192998bfdf8d17a475"
+  }
+}
