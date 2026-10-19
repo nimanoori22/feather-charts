@@ -1,0 +1,768 @@
+{
+  "status": "Milestone H accepted",
+  "baseline": "3494b04",
+  "formatter_checkpoint": "b083cec",
+  "consumer_checkpoint": "4daa116",
+  "source_version": "5.2.1",
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "source_runtime": {
+    "browser": "Chrome/154.0.8037.97",
+    "node": "v26.12.0",
+    "icu": "78.3",
+    "cldr": "48.0",
+    "timezone": "UTC",
+    "hostLocale": "en-US"
+  },
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "node",
+        "scripts/audit_public_surface.cjs",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 872,
+    "suites": 89,
+    "doctests": 2
+  },
+  "source_comparisons": [
+    {
+      "script": "scripts/check_application_metadata_reference.cjs",
+      "sha256": "680f88a082a783b9f84427792c2c6414fb41942d3c408ce7b197278bf610d79b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_area_reference.cjs",
+      "sha256": "e4144036e3be44986f23e4835e5bb89392003ae31ad800ac13a9ac279f6daa80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_attribution_reference.cjs",
+      "sha256": "d77178b60480fc907962c52b755c5d795354501abe987a2765ff600fe9ef3275",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_axis_interaction_reference.cjs",
+      "sha256": "b866ac8da8367ad1baee489cbbdb7ac19a5d6666152372ecaad1c8f1646c8fb9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_bar_reference.cjs",
+      "sha256": "08861e9a2e3d8235710d19a9e16a3aa9593bd1f5e59acb579ebd60433b34132d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_baseline_reference.cjs",
+      "sha256": "85843ac9a648935b750d70bf64a22867e1c67bf2cead2fce4e45b9779b00c8be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_candlestick_reference.cjs",
+      "sha256": "897467468c6f88ecfa99c4e3826f9c04b2e9c912c78cc72cd35f409ed5f24973",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_chart_layout_reference.cjs",
+      "sha256": "823e3ac96f0a3ff696c434c5ee7087bcad6d019ec402f1b740a87a2e6023b108",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_conflation_reference.cjs",
+      "sha256": "0cd8c21c928bed6e5f4b76c6ba3dd8680764015981a90ba07d09cf4a0f0ebeff",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_horizontal_reference.cjs",
+      "sha256": "b4e8d739a2b4996478b704c92ba3f505d80498a15248b3e8d0dd8e15c6a410e1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_series_reference.cjs",
+      "sha256": "9f20fcea8fde6e589ede801a274c6cebc25b07e1b33a9d5a99d47fadf97b00b3",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_formatting_reference.cjs",
+      "sha256": "fcf3b32a66a26e9d08f696cea4afc359a16db320320935e5c617e927d968ca0f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_histogram_reference.cjs",
+      "sha256": "ae27286280d276f5f784ec063cec7e7ef8f75e246a6d3dd9e6f80dad3cdf1ca5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_hover_selection_reference.cjs",
+      "sha256": "1930dcc757e1ff14e10d7a11896d3e132107953b3b373f7ef72a66291da0558a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_image_watermark_reference.cjs",
+      "sha256": "4f4030f5d4fc7a1475799965372f7b7f9478b6fba6d62f973578f414ff999403",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_incremental_append_reference.cjs",
+      "sha256": "283d4c0328f4b4ab75557bc519f61c0c546d6f7cd4e877272251d878b8a283a2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_interaction_reference.cjs",
+      "sha256": "4c8fbb58eeffac0af6072acfa13bb42218eb51aca21b4e36083215abebf4ea75",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_kinetic_reference.cjs",
+      "sha256": "52c073e667b4d537cd241956f097eda4ad8d2b858fcf85c8b4fa7152f08bdd76",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_last_price_animation_reference.cjs",
+      "sha256": "7538dd5774106f9b36cab5b352636b5db8607e8194624fc4ab05eca012b25356",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_lazy_autoscale_reference.cjs",
+      "sha256": "cd50fe63879d1825407a7a995f9d9fa6a55fe029dfd0e458467b5d90816c1f80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_line_reference.cjs",
+      "sha256": "6cd0c7767a7cef55d7e19b91aaf7ca012cd5bda32c10c9d0810aa7cb27a48729",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_interaction_reference.cjs",
+      "sha256": "640b57bf60215777957539a97b9941a514cb0636c63fd96c0cf06d57a4b44cf1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_layout_reference.cjs",
+      "sha256": "3e9b702b450eda9d78bf7f70901f1cf66f0775dfa13aa1674c9db1ab717fbcfe",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_native_pointer_reference.cjs",
+      "sha256": "52e5540f463d3c1f312c68048ef2c714d8b2b633320f9bd4ca58978664a1fde2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_numeric_custom_series_reference.cjs",
+      "sha256": "8ef9ed1c34f1ffc85e97491ce43ac56036e0c5158fbc15ab717478c52cd6606f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_options_chart_reference.cjs",
+      "sha256": "a7605804f3f41c07d020b8a63340a15552e4bbae5f81b4897bbee3c4f131797a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_management_reference.cjs",
+      "sha256": "c4a79cd3a31c096f2c88d6f5961de565667930de5fcdd1c310b2f6ab9e727722",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_sizing_reference.cjs",
+      "sha256": "572a040f85026460dd1ae294053ed5053d8a621ff7491b2df7a274716f191f65",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_axis_reference.cjs",
+      "sha256": "edf3d724b527697f404533dfe1fbcf3b6e60ecb17d3f27d47bb2b6615a7b3f8c",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_lines_reference.cjs",
+      "sha256": "586357e035f77527087a4bb6bf8b6e16d6e87e97a34a2457b0306d3b699994cd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_scale_configuration_reference.cjs",
+      "sha256": "71af03522e8e0031aa7836c27b7d1783f8101ea2aedeaaf0cc018d7ffd64c2a9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_primitive_reference.cjs",
+      "sha256": "0a1638b6f557c0f0072b8533e3a443d1bf0df1d52f2d57fb7892a8c81f2c6691",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_events_reference.cjs",
+      "sha256": "2094c4ef89493786fd0d1b5a85ba1370efa4d57874f973bf0669ff51e7ae567b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_helpers_reference.cjs",
+      "sha256": "8cc34724035c9466f78df7051173db9f663a177eb0d74c07b3c30ec07836d0cc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_scale_assignment_reference.cjs",
+      "sha256": "6852d35b5781e5d2640939fac523c3c804f681cf957e6774cbc3d0ef78dbbdd5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_screenshot_reference.cjs",
+      "sha256": "03ddd594d120f98a257d340ee8d5e40c83a5b746293e125e2b82edffd8771ef1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_data_reference.cjs",
+      "sha256": "fe53408b9921be879eed847d93906df063b27eaa2a9be0bc663bbba05f9a7a6d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_markers_reference.cjs",
+      "sha256": "812c99052657cdb671d1b8cfa2e28d30e47230dfa0fb702c3eb98ca7c74d21be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_order_reference.cjs",
+      "sha256": "363ed48a528efe71a6847ba9a2a1ad904999bb4a9639f144e48a5834c58b3edc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_text_watermark_reference.cjs",
+      "sha256": "63b116f9b67835e75ccbd435bb52ffeb542bff79485b99286fae8c3beae26eae",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_axis_reference.cjs",
+      "sha256": "139cc120a78ae54e1a1a156968433968c858e53825a781b7fa9ce65c14ec580a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_locale_reference.cjs",
+      "sha256": "95deb1fa2e15ece36c06bbb69c732e48c1cc5e84460079c7e22487d1f71f798e",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_touch_reference.cjs",
+      "sha256": "21c28e479913d41304c2b35a4ec5435142068d4fb41302085cbef6120e79c987",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_up_down_markers_reference.cjs",
+      "sha256": "16779689548d66ce99bf0803511320a0c7a59b9d6b64bbecaf65208bcc1440fd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_yield_curve_reference.cjs",
+      "sha256": "2259259b6ff1bd238cbc22d4c517d08831c13c5f5b5ac55d82710c402bd8066e",
+      "exit": 0
+    }
+  ],
+  "locale_source_native": {
+    "cases": 16,
+    "ticks": 560,
+    "month_date_labels": 192
+  },
+  "renderers": [
+    {
+      "backend": "tiny-skia",
+      "exit": 0,
+      "screens": 480,
+      "retained_exports": 480
+    },
+    {
+      "backend": "wgpu",
+      "exit": 0,
+      "screens": 480,
+      "retained_exports": 480
+    }
+  ],
+  "compatibility": [
+    {
+      "script": "capture_formatting.py",
+      "exit": 0,
+      "accepted_images_unchanged": 576
+    }
+  ],
+  "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+  "sources": {
+    "src/api/attribution_input.rs": "39a387f92b45060e61480f1511726df7718ef1ba630e5d9ec9ab711ec295d585",
+    "src/api/behavior.rs": "b1e2e5bb5fcf52d508af212f9c751bab3ec9c51a75998c7cf76f22a45be5efe1",
+    "src/api/chart.rs": "69618852c56364db40e162cbcd1582831554cf32be6b415cf1de36a885080574",
+    "src/api/configuration.rs": "cdef6a561b035f82c3263795fd04b9170ad1c72717fd6a92a401e347cb05fc58",
+    "src/api/conflation.rs": "c9a481b2dffc4113f64a106dcab3838bee3b6e69832c7ccfcf5031d8624c2b69",
+    "src/api/coordinates.rs": "e64763a8253c228348eb3a18387fe6e59807872d37362512b555667705608451",
+    "src/api/custom_series/conflation.rs": "eed0800102bffca048b954a75711b68c41e33cdbdf8858cd13c499a2c0d2ee72",
+    "src/api/custom_series.rs": "aeebd8e6e884f3521a327552382ecde0ef91ed76d210992313db63f8bb2044f0",
+    "src/api/defaults.rs": "c3158e054c7fc54355a153dd6c3c20be9743ff94d404b33064bb915f769dcfac",
+    "src/api/events.rs": "1603b2a8b5ff7b680f73205687340e400cf00eaeffc2243e7bc01fd3c6c3e79a",
+    "src/api/exporter.rs": "dfcec9497308922b3f984ede4d7904d0a5e905024a9dcf4f52bb6637d95a764f",
+    "src/api/image_watermark.rs": "f64a26c7d6631b8df51498ff12ef53b1b8e9a8180e89424ce865bbf3263b515e",
+    "src/api/interaction/tests.rs": "6552ec7bd61b56101918df540fb6146d0905c2c570a03bfac052d5bc4cc2bc20",
+    "src/api/interaction.rs": "ac978b0450734084968f8f331e675b9109c6b173f6371f5113d7aa29c556c400",
+    "src/api/markers.rs": "99128e31d80e55403a14934a447f70708512927ccab7d791a650203cb3a22ea6",
+    "src/api/mod.rs": "d784c7000379c94bc5ada2c92a01a7a7b82aafe9312e0a20145af75d802f9be9",
+    "src/api/options_chart.rs": "f33b3f1a16143da014f3ea02d4b06b08fea2fa7e1bb08417d2101c408e1b13d7",
+    "src/api/pane_management.rs": "0882cec76a81170c9a6aad7d95be80721439b40de54e14e071b39d58477d9f02",
+    "src/api/pointer_input.rs": "5a76750e6abb635fea7851b924f30cf970c9b0261de348fd93afbd03f5b03b5d",
+    "src/api/price_scale.rs": "97afef16ad8b554eb63276cf149a488173a26cc23185486154d4b44e0497cceb",
+    "src/api/primitive_edit_input.rs": "b5eedaee47d638d4c279e2c318f0f22475d6320a49ab5de765717b5caf79293d",
+    "src/api/primitive_editing.rs": "a80ba2cc383697b3c806aca4311d85018ccbbf51e4f77083957c7d8387562f70",
+    "src/api/primitives.rs": "c27e27c482fd4b00798579752f3be5ffb0a1b36d76f9bea0e36769f77a796fbd",
+    "src/api/screenshot.rs": "997b2798e43189a5743f5f44c8303a4ff706c2e0f5a692540959d35420e13bdc",
+    "src/api/series_data.rs": "291fa5b263dc4536d86eb7a599c1993064d5fc6e2aedbce3758926ed408d1fae",
+    "src/api/series_queries.rs": "211450b79bdccf197a13e92af2fbe36b06de3d2800bf4d56e5a21af2982f7d55",
+    "src/api/text_watermark.rs": "c62572a934cde52edfcc07fac80d7265b541d512c45413163cdff9553db6ccf7",
+    "src/api/time_scale.rs": "82e9b5bf722d3b9c1dfa1a110661600e0501703eafa6dfbe3fadb9c19101c2f1",
+    "src/api/touch.rs": "ad8f20914bfdc2ada49d13c66793443e579db6f196eddc1ff64d17b6cda089be",
+    "src/api/touch_input.rs": "3c05805b8e531d923b3cab9e3cf786a5b098f91d47c0099abf725c7cce513cc8",
+    "src/api/up_down_markers/tests.rs": "8c86ce9a1d11aa5f26e57177fea3e0f0d6854a99f4029e74e013f808b2b3398d",
+    "src/api/up_down_markers.rs": "a445fcfa17252d1626c4fb2541eb8833ec7abd9163f0e831fdc9231be9c9c9a4",
+    "src/api/widget.rs": "f8cb2610c88f2a8f49e871e2fb814aa986387f616b28d36ef2add698ee9dbd87",
+    "src/api/yield_curve/custom_series.rs": "4ed9ba8161bd4c9f9a0aa9858c44237d06881382d6fa426b826fdaf998120e71",
+    "src/api/yield_curve/tests.rs": "f6e2061484e91c18e469747a3e05404a10180502f252f4deba5a46ab2891932a",
+    "src/api/yield_curve.rs": "c74ac15ca9f47eafd76b3fdb4d624a9b5cfa06b4e30399ad9363a950ba3b26a3",
+    "src/formatters/date_formatter.rs": "7e7eac5375d6772c39a05e1f2146833b6a6dd6ad68ece8c7c9f064c8a0ae180a",
+    "src/formatters/date_time_formatter.rs": "0714880bfd8b7e6a3acb6e58bb938ff98d4debb3f78b894e9b1d5c917b444a89",
+    "src/formatters/fixed.rs": "5790d2e18565ad23af86334602c122611d79fc3df20a9ff6da9f3e64eaf7ac75",
+    "src/formatters/format_date.rs": "3569da448accc502bfdd4362f7188a45697ce8359da9d273fcee78bc83f75e6b",
+    "src/formatters/iprice_formatter.rs": "5ab4134c4fa7ce0ddb8cfe675b2f466bd9f6fb8af8372363fc4873502fe7d2f2",
+    "src/formatters/mod.rs": "044a110f31a138dd22419ab95cb13c7b42c8b650c095830212bfc99ee3dd1bda",
+    "src/formatters/percentage_formatter.rs": "f42855b333f7870f9c3d11803667ed7d9d5508dfd443c8fb9bda4557511efd45",
+    "src/formatters/price_formatter.rs": "c4462d752c2370debb56fdae424cf0b3eae9b3a6866aeb0f7b540b3295211dd1",
+    "src/formatters/time_formatter.rs": "cd55c24949454c429db2d015c64f68dc366b8c717027d341dd9c405117eba928",
+    "src/formatters/time_locale.rs": "0404a75fd7d09675fceb90d28104460475c57ee83f03a4c28f7f3c003b5a9584",
+    "src/formatters/volume_formatter.rs": "7e3e322de91c8ee846e691707c4ca11da8bd6d1a4e0ba7cfd8a5bfe5c6feb7c7",
+    "src/helpers/algorithms.rs": "0b42df3e9f50cdddf326916096638d7ae27dc1e6b75a436a43541e48aa2bc487",
+    "src/helpers/assertions.rs": "face299e4e6d59e2cfad81ec171376bbb765e98faf51cbcffc0d2ac6d4d2a917",
+    "src/helpers/click_sequence.rs": "fc440ae540bebdbcde636b18b40059a92a43ebcd4e68225b76a8574d391a0b47",
+    "src/helpers/delegate.rs": "6cafe11a364133e817f4bb1bbbd7ac44106cb995aa60973faf5df2e488067b0d",
+    "src/helpers/logger.rs": "294de70304fdc12997043d498e43b0adc8a1359dda9b65bddb1e97b8adc63593",
+    "src/helpers/make_font.rs": "416921a48755960d4ca4334fd90dacc8eeaf0d1c229baeef49b2651dd5b922ff",
+    "src/helpers/mathex.rs": "0e4b55eedf5d52af946f5c34eca654679d59a39c446c33633d81ffe0eb72fea9",
+    "src/helpers/mod.rs": "505e0a87f3df783e088ef9b9ca9b4ab98369df335799ea30580d44aa7449abd6",
+    "src/helpers/strict_type_checks.rs": "b2131b0fea460a132de0c6258885e0d50a904fda5fa8df5168d5beeb92adeb89",
+    "src/lib.rs": "411eb201c7df6eaf0b83200a13d18143865eaba326ab7cfaaa3a7beef63ce5e4",
+    "src/main.rs": "c8e0583694bb1e0188dbe28fe0d65ac1130723c55f968b6262b906c147f72549",
+    "src/model/autoscale_info_impl.rs": "61dbdbafa2cdce6a6bce1f40389845a0217dd558c05db7afab5380a7c2b6e3ba",
+    "src/model/axis_snapshots.rs": "f0ef3a92735562ec9d1ff8e0707bc5c640b83edd06b193f1d4a865a192d452b3",
+    "src/model/bar.rs": "2e32ef35eefc1248a255d7a566b73efa5a42920eaa0e66b2a35a48d73005131c",
+    "src/model/chart_configuration.rs": "1524dd1ebac3b8ccdace2159a6ccb27ff35b65030938a67953aa7b8560c9516d",
+    "src/model/chart_data_coordinator.rs": "50ab0c3097a4b52fc0f034def549ca848d6ebfb2d707dc96918084ef1ab87045",
+    "src/model/chart_model/configuration.rs": "71da3c42bf4414a84e23ebe388c5052db3099506821e6c657a9bff4153a4af51",
+    "src/model/chart_model/markers.rs": "d3b8533de9b657fb1ef475be72b960fe477068a8a41f68787f76ab34084feb0a",
+    "src/model/chart_model/pane_management.rs": "050a1a6e21d0bf804e1db66e2c4dbda00c1747e3f4f246ccd1f6dfc66fc65875",
+    "src/model/chart_model/price_lines.rs": "3887cb0d81a23ec033e5565bb649fb2462fe5b4b1f1299c9717c8f832fb4d68c",
+    "src/model/chart_model/primitives.rs": "de83a8cd29e0be40e5f5fdf998ebc5a4e08f67c6c9fdda9d8fed43c83dcfd2ee",
+    "src/model/chart_model/scale_assignment.rs": "63ba904c55c9384e98af149307023e3098c27df4c8f592b006536572838636e3",
+    "src/model/chart_model/tests/axis_snapshots.rs": "8675a0640cf4cfc99c57eb678728dfd295962920c73439ea7c8130a850158f3c",
+    "src/model/chart_model/tests/candlesticks.rs": "00e458e73ea84f55b3e945f6c81d6454ce640baede8a7bcbac40e87cb6cae8a0",
+    "src/model/chart_model/tests/chart_layout.rs": "05629c36317da042fd44c7afc5ffa0acc17e13aa82720af3a20e4f77282f1087",
+    "src/model/chart_model/tests/complete_display.rs": "8592ad7bcef05e90cd5d175334cad94de801ce9b346a23cfc2c6f49d97285db4",
+    "src/model/chart_model/tests/histogram.rs": "fc349209fc82d3b4f27f5113e132b331403ea900e07bfd59105e3645d9ce06ef",
+    "src/model/chart_model/tests/lazy_autoscale.rs": "866f625aa977a00275af880b19180f7acefc2c9ffad888f19711fd6ef97d1980",
+    "src/model/chart_model/tests/multi_pane.rs": "031bde3bc3eb9a594d088437b19339e4ca40a08ec85df8e693e5c60ce1c443bc",
+    "src/model/chart_model/tests/navigation.rs": "ab259d912cfe5a7d099e5d77ec55129fd35b56802d4e24921ba610a1328267ad",
+    "src/model/chart_model/tests/price_axis.rs": "93249b0e3c1bf1066e021ffc576eacdf283b6902ecb0c84af6e6dfcde59f9c8b",
+    "src/model/chart_model/tests/price_interaction.rs": "81581c728c05c08a3a3f456a255ff0be2fa9972c2a2cca047ecb5b9d99e50385",
+    "src/model/chart_model/tests/time_axis.rs": "4a5023b9bbbcf76bf2626112c7ef0dea0bef30b710757839a33f6a0a9ee31516",
+    "src/model/chart_model/tests.rs": "7414d9f78bd2bb6783bbaf7fbaca2514b746cc02fa8798f0a8d0b186197519eb",
+    "src/model/chart_model.rs": "d1ce40c81750af18fee8915d392e0fb29d6e38ccbdba090bca544e64a2141ffa",
+    "src/model/colors.rs": "33da79347d621f25d034aa9b1cc06633ef9d13d14918310c5b34d26b9788a496",
+    "src/model/coordinate.rs": "d20ec1f597a0f7f09afb27620cd38399f7da745e52e936cdc6a9c9c936888366",
+    "src/model/crosshair.rs": "d9b8873a571a6f2a630fd31d9608c1390df59f4bedabb2a58fb172765b96ebf4",
+    "src/model/data_conflater.rs": "3c01df7e2de0c48e63bc5ada0df0a7a3bba74914bf2c25fabd7aeb59d7c20389",
+    "src/model/data_consumer.rs": "5489ba4a546f19a6a466b0a2dc714bf9df6259d8d4294bf2b6298cca86904ac3",
+    "src/model/data_layer.rs": "73afc2e43c33cedde1bdd4100c8bf90b92c8fe03ab23bbd8e28a628924f102a9",
+    "src/model/data_source.rs": "a667f2555dc68890df01e0e2ef449bd3ffe1645c0d263b85f1144bb479d991bb",
+    "src/model/formatted_labels_cache.rs": "e9f4fc79f489fd828711f20072d62b805c5ce7da5c039612e71907de81c5ed5d",
+    "src/model/get_series_plot_row_creator.rs": "7993305e179817b2947c46e940281d1f0d5f2a85414bae591058e45af905a513",
+    "src/model/grid.rs": "cc28456883f71a26405a5ef8707674f1809b886d20d7f122214795ba9eae2181",
+    "src/model/hit_test.rs": "645fc16b6a8be1c471eab894baef08a01ae87310fef8a208f17b1088480bcb0e",
+    "src/model/horz_scale_behavior_price.rs": "fd1cd77e022e35aff399c5de3cbebda0f06c872aa979b34dac1d6637db91b414",
+    "src/model/horz_scale_behavior_time/default_tick_mark_formatter.rs": "2a4447fb4763fcaab13e7af7284bc7f5528c00c99593ad18073b9dd77f6acca5",
+    "src/model/horz_scale_behavior_time/horz_scale_behavior_time.rs": "c22850a56410b2c46b4710f17364b5ef85733400c8ad6f57fb19009266eec448",
+    "src/model/horz_scale_behavior_time/mod.rs": "889a2a1c11593cec8048f62eb703ee7cf8ff7e986014d05b44aa53aab3d9a5c8",
+    "src/model/horz_scale_behavior_time/time_based_chart_options.rs": "ff1ffabfac350001b621718358ca817c9b8b2dcdfd9c59caaf1c49704d21a8f9",
+    "src/model/horz_scale_behavior_time/time_scale_point_weight_generator.rs": "bbbbf468be178f64d05e3a366609ae226bd982b3255d540da41db73ec45fcc79",
+    "src/model/horz_scale_behavior_time/time_utils.rs": "54696abbe4226c5ebb2fe13942b5e4b8c7efb2984d353e97304b4291941725aa",
+    "src/model/horz_scale_behavior_time/types.rs": "7c6cec86a4aba6cb92adfb71407bcf5896b859a3434d1ff64ba4a3b8656c0a0d",
+    "src/model/icustom_series.rs": "b7947f16d40ae8c10d676c7cf5e03c6e2286b0bc4288dd9f788fdfbc445ad6e8",
+    "src/model/idata_source.rs": "0b14877ec676eceec85a21eb29251035f90d9907d93d6b4f605805aa19b1507a",
+    "src/model/ihorz_scale_behavior.rs": "1485d251014c9f6be66808a4d0fc4a20123a14d8e3360348e0c4d29bec3a11c5",
+    "src/model/internal_hit_test.rs": "aaf4fa5aa5a3956f5fa86b0a9ec7c9325880f8a57fe9301180a9bbb0234dfdf2",
+    "src/model/invalidate_mask.rs": "7b9011de6316db6a5dbee8d94fd258ad0a762c058fe600287d5aa1e6825e309b",
+    "src/model/ipane_primitive.rs": "949ab04822d3da7c48fae0f014dbb9cd67fc7cf5e7700b9d20139bd85eabc6e1",
+    "src/model/iprice_data_source.rs": "b831c2c078a6b1638549fde0e39bd6f1fb290da5c3ed542557164bb51e9b9cc1",
+    "src/model/kinetic_animation.rs": "70bcce0ff609854b20d18a86778f31cfa85ed3b0b3c41392b292d5df57532b9e",
+    "src/model/last_price_animation/tests.rs": "58a17217d6b82635671627e0f94d72af2701863b41e8c5ab514c0b472b5d0c8f",
+    "src/model/last_price_animation.rs": "3cd65377825fd9ec09efb2ccad9486afe6a01e554fee767817db1706cf4f8c08",
+    "src/model/layout_options.rs": "5acd6701e9481c0f4ce51730a604f39a03949e772a6111784651e9f224ab6e66",
+    "src/model/localization_options.rs": "ee7a32cf8327cf7336cb1dae8318fe5bcb50861bd39a605ff033b5a1e61198d0",
+    "src/model/magnet.rs": "a598d11970cea0c0da38addb3464d5c841509acd3908d2f2ff5b7c82e6fbf1ff",
+    "src/model/mod.rs": "0fa92abdbf3f4a25685a479b46e20489c5f932d396954ee6f19a0784c763bc18",
+    "src/model/pane.rs": "89d7011117aec96a91fc0f7d5cf2deb205a7acc4049e979ed9e2ea61d06de4ca",
+    "src/model/plot_data.rs": "a5d8d49d5e393c47ccc85866775f291a52d15aef3edd4f74bf0abc88d88495c9",
+    "src/model/plot_list.rs": "03498bc71e794d284f1a2e0dc51ce89d8d043308756400952603c937752c1c12",
+    "src/model/price_formatter_fn.rs": "ef929afd7515be2b552063860cb6894ce59c68d287dcdbf0860424b1d5daddfc",
+    "src/model/price_line.rs": "caa8bc3ffe16b30d8eb1b2b9626cde52076ccbdd18ed07d5ae0e2bceff225d8d",
+    "src/model/price_range_impl.rs": "15f23d9d8f0c839424904165b33e5ca6513d46f9f6f67da5244131858bca221e",
+    "src/model/price_scale/lazy_tests.rs": "671a52b054ca46cdd3ec90105a515899230ac24ebd5b11fefeaa4c0a16559b04",
+    "src/model/price_scale.rs": "d738827733c587c176631854935350f12763b09c2f49b421a4ce4ec2ff83b57a",
+    "src/model/price_scale_conversions.rs": "28a350f4ce581ca87e4d84d83d3b5392ddcc1cfb1db849e721e19d9701d333bc",
+    "src/model/price_scale_visible_range.rs": "1096e9c11bd72f28148712f5d7e09aef298b7a8cca968918fbaada65621403c0",
+    "src/model/price_tick_mark_builder.rs": "2bfe2ef7ea6e1bc0967e056b8e1ad30a541efee5c244063d3b88a5c69558eb8e",
+    "src/model/price_tick_span_calculator.rs": "0b4671ca915134a0419e96c8e1837f8450f11a7c892f576a0c32177d0474b75d",
+    "src/model/range_impl.rs": "aa2f71627dbf89da3db2c029c6264add3dd3d2b6b3ed02dda2b552a3f06af08b",
+    "src/model/series/area_pane_view.rs": "8442b4c330d353d8f09070436c012f2598c70684cc727541c0f936d02e2f01f6",
+    "src/model/series/bars_pane_view.rs": "876c1fd8a8623674776a3baf4942ac20b4553316d64c16f43977643f6bf687a9",
+    "src/model/series/baseline_pane_view.rs": "15fb87e8765e0f2a053678c8afc623623b3d3df60a606299c84f8d1642848cc2",
+    "src/model/series/candlesticks_pane_view.rs": "dab045072eb2374e281370b56defa3cf5501a7cd79b56e10873dffb3ee20e90c",
+    "src/model/series/conflation.rs": "20bb25a817cff50ae057cfdc3152d8ede5248f0b67e3a8e4691b5fe235c31f15",
+    "src/model/series/first_value_cache_tests.rs": "288e48b77288deb2ae8c2414b4ba8eed2aacb8d0b31eaaaff7f2f05198678a82",
+    "src/model/series/histogram_pane_view.rs": "d9a47ac909f071f38fe7d0ca140a0e3c38ab3d8d4f00191524a94e0e60654bfa",
+    "src/model/series/line_pane_view.rs": "a47b181cdaaa211f0eb35c5b547655b81f5eb473725572cb0ed7f7a8fba72cbc",
+    "src/model/series/markers_pane_view.rs": "ffdb4821e714d2d11a66dacbd3eb9650d0427cffca9fedeaeda3c7600fe474e9",
+    "src/model/series/min_max_cache_tests.rs": "cfeaeaf2ba167bdf0154a3d3addabbe7e5f3d5f85aadc579ef48939b91a9b03f",
+    "src/model/series/projection.rs": "effeb4cd0a8fdc66f2264d5e8b1659a8c7c7e5f18b43275c7cc2592232e1e686",
+    "src/model/series.rs": "1bfb094ecb874a1ecf16ceb645ce3cd324815fa040dab3d4cb0f623b408a1868",
+    "src/model/series_data.rs": "4a48a449df8437314cb2e5cecefedf1d23ff278829eb8fbca8742158b04e7b8a",
+    "src/model/series_markers.rs": "8fcf471b5e658c08a1a2ed0bd90a4888019fd5e65667e801005d2c4bda6c30c9",
+    "src/model/series_options.rs": "747d107890d9f7b27a9629e5968694b9668b2e6a9fb419c0dfcdb19f9a301058",
+    "src/model/sort_sources.rs": "ca8728360c150cfe8d93f954a7755a4675f7a9a2f69596da0a203e4c28eeb253",
+    "src/model/text_width_cache.rs": "20ab456a0169270536194e1163a191b72426a7244ee66ba87b76cf34f5cd4e76",
+    "src/model/tick_marks.rs": "c9337e00afd7c12fdcc04dc19eb3a170c6c6816e359b5f75c12571a56971a1a8",
+    "src/model/time_data.rs": "9f20989b04ddc86a47d4f59f169862d9004eeb6cf968f93cd8890dca7c2c2609",
+    "src/model/time_scale.rs": "f2f7017890c5b273163ef2651db34180db8192b0d34684ca5e690aea7a063d2a",
+    "src/model/time_scale_host.rs": "c4014acaf83c0e76448cfefc0249eb64d955ed8865c0169e551e673534791098",
+    "src/model/time_scale_options.rs": "d72c1e1d4097f8639b2d8de2cec67010bbae5580a5367c489510d3ace29f8662",
+    "src/model/time_scale_visible_range.rs": "4201d6aca0dd4b3addee33d21c6f7eec40df1fa35cfe3adde6abff6cfe26f82d",
+    "src/model/yield_curve_horz_scale_behavior.rs": "eeedc10bbd70e29421e519062dd9e71ab0e8b0b0a998c34308d3029cffe979d9",
+    "src/renderers/area_renderer.rs": "eab6ae2d83122962a3870ddd10a83a5b56a8608d0041fded2276bc26447031da",
+    "src/renderers/attribution_logo_renderer.rs": "1dd550c828633d8d2c2368ba451879fa4627bc362889a0b4288a7384705cbeb4",
+    "src/renderers/attribution_paths.rs": "68a8cd68d109c1835bf6afb0a29a46c723596e6beb42b2d0c4b532ff788c72fa",
+    "src/renderers/bars_renderer.rs": "541071ae9163d020a04adccf62d20177d5562d563996d135d796d6284db011ca",
+    "src/renderers/baseline_renderer.rs": "d0afa9a98d508842d80ae75d9a85829d84dddabb6c194a8113952624d687df0a",
+    "src/renderers/candlesticks_renderer.rs": "dfd2a57ad40ab2f0c4fc3964bbc632b9a043861b7aae5b3758d2ae77db39d8df",
+    "src/renderers/crosshair_renderer.rs": "5d24f16896ce946469b82e0a2e2c476d9f3329c780672858299ceb51dad250ab",
+    "src/renderers/draw_line.rs": "78fa38e6516bebc402932940bfaa9154276e5932e5a0dadae2cb1e02e36d97f9",
+    "src/renderers/grid_renderer.rs": "0e3bbbb45ae2a8556562ecfe93072bf12ef32d25ecd773fe2570e092e64f4232",
+    "src/renderers/histogram_renderer.rs": "9b597d6a7061dbaedfd8e09f8f10b49b3b925d9d51cf1c88b3f07764d72b2c7b",
+    "src/renderers/horizontal_line_renderer.rs": "5309ee28acbc14a45a9c44d44a7ff2fa14b0211b8c7cad34074561ce1d4e9105",
+    "src/renderers/image_watermark_renderer.rs": "469505c809d163b083df35de6a53836e6d9216aef7fe86d56d7c1b33812fb5df",
+    "src/renderers/ipane_renderer.rs": "bbd50fc37edf66642bcf916f5884741874bc80b079759747cbe17addef720c36",
+    "src/renderers/iprice_axis_view_renderer.rs": "ee3b2085eb96ccf761ba871c12f14b44863a3763e2d2a0310fc7a58cbade6276",
+    "src/renderers/line_hit_test.rs": "254e0b30d49387c3ebd47e74d31592cf257e65a389a461f8c53a9baa6f5345e6",
+    "src/renderers/line_renderer.rs": "7aaff78108eea5139ea4f1034a01c2161c460387d509e837b349573297d57597",
+    "src/renderers/mod.rs": "b6e18849f7e881bf48e85e202212a0ee10c197652e4590643e875d4973f89aa2",
+    "src/renderers/price_axis_labels.rs": "b697c996b646caa2199592210cd86994304ac43d5aff5cb509f4378c8d31ae51",
+    "src/renderers/price_axis_renderer/labels.rs": "21d4a04fe7246244ad436eff60452175c4ce3502f72bec40b38e1922541693be",
+    "src/renderers/price_axis_renderer/tests.rs": "90be9478f0c27c666ecb20846382910b0a0273428863ff63b8f0cc9999648ae8",
+    "src/renderers/price_axis_renderer.rs": "dbe31717b4ad6522dbbbfd09621030cbbc73eed4ad2f45264227b3a37bcfac67",
+    "src/renderers/price_axis_renderer_options_provider.rs": "c1c5c1636e83afd635e7a6f57850fde0d9fa1244523396dcad90df40c145566c",
+    "src/renderers/range_hit_test.rs": "0a15119e0df8f6486baa968653d2e92d6e05bc4c77e61e406873c83528e17ec2",
+    "src/renderers/series_last_price_animation_renderer.rs": "7161e053fe3cdc8d016e5c2d42cce8b92d3dc8073dc9430e65e63858cfbc4d38",
+    "src/renderers/series_markers_renderer.rs": "28cacf6a5f84270e52c0096c4fbd9a8c5deb218b4d8d8359ea936ee8fea0e510",
+    "src/renderers/text_watermark_renderer/tests.rs": "bb4936ee6f050aed4fcab924632065fd1bf7588e148baa2b58eb34c7a2ea029d",
+    "src/renderers/text_watermark_renderer.rs": "b56e06ec7b317c2ed0ea968e9289a0f1628ed7f3b9561ff90763175cec9198df",
+    "src/renderers/time_axis_renderer/tests.rs": "67fa0b45669bd26c9f8781fa0b4a0f40d8134a8c5ec61293019d6edf3d9488d3",
+    "src/renderers/time_axis_renderer.rs": "ac519ae249dd882890263706073dece960268dc4372668c587caf53432cfd000",
+    "src/renderers/up_down_markers_renderer.rs": "5994dedf639ef4b4c1777dad3a488553d494f49bd3ac0dcf07821ce6692c00f1",
+    "src/renderers/walk_line.rs": "28c626f590c939c18544f59fd64adb9c1db377710a8fa20748728bc554151182",
+    "src/ui/axis_pointer.rs": "990d1473bec548c229efd22fb0a4685f5f84f5d3a3c6ebac44a59fff9b9ff985",
+    "src/ui/chart_frame.rs": "b6a3e6da03045bcbf9f156fc4706d4e45d32a653b6d40b35b8fabd4c014bd8dc",
+    "src/ui/chart_input.rs": "dbe857a64d055ec15467c670354d52b94563f0e830d8b2f8f5ac0ef40d0da7a8",
+    "src/ui/chart_layout.rs": "7b8a5d2d38c59eb9fba14ab807e7adfd4459ccd7a2432e6bd0654a33141f5b70",
+    "src/ui/custom_series.rs": "8e4f3f40f276c522a0956ff1ef58244b801868036b09f9425231bd1c378ebdc6",
+    "src/ui/dashed_path.rs": "3bf4941a22a7630a96b990cf023f346f3f14dbeec4ec3fdf426b3790400f56b7",
+    "src/ui/hit_testing.rs": "a1e6e8b5ccfe1f48adf4f703d07a0a663d4333af9e83992a610c2a7645deadb3",
+    "src/ui/line_chart/rectangle_clipping_tests.rs": "bad74af7931ede6dac66c532712c765ce5cf7645236fe2705584e8c173e5806e",
+    "src/ui/line_chart/series_drawing/tests.rs": "11b3a53ce7678cb2e9feb87a3b7ceb8210720e742513152c0d56512902da8c95",
+    "src/ui/line_chart/series_drawing.rs": "93ca45dead137de536103bc10dcc42179c973c488e12b0e86aafafa2071a5a2b",
+    "src/ui/line_chart/series_paint.rs": "3b750551457d0c8fc55c3bfee26b339661dff670041c51ef8323aa3a46b980e3",
+    "src/ui/line_chart.rs": "ce6daf98d32777e752201bc4945bbcb38f404ad99b85bb78669928a609bdf1ac",
+    "src/ui/mod.rs": "84589c2b17bd4e4bc70b980309421bf3291893e4955267a708830dea608e5ded",
+    "src/ui/multi_pane_frame.rs": "dfa0a000f70ae7be363651a5ebb63bef04d3fdf024df5c9bed5325bbe97ca151",
+    "src/ui/multi_pane_layout.rs": "7eace541838659601416241008b86bff1e93ec997ec19e144512f0408aabaf7a",
+    "src/ui/price_axis.rs": "00d44dd1471e9142f90ea6e3edd69b3fa4b7e59900a3633ab9b7fb488bd8ee6c",
+    "src/ui/price_axis_input.rs": "1434c2a88388a0d069bddfe05c4ca5a67aa7812aec0dcd6ecb51ce2031b1df3c",
+    "src/ui/primitive_hit_testing.rs": "5737e9d8b772b47495252f833cd30849e730b85c63aa581d7a1214f602963b9a",
+    "src/ui/screenshot_layers.rs": "b8bc01c6ff14519721e51563d8f42ea1f8313403f206b39e8690af8a20714a02",
+    "src/ui/series_annotations.rs": "7bb69cef35ea564ec5f16d3e9708ec828a53dfbf3c5064d7f95411ce0b721a57",
+    "src/ui/text_watermark.rs": "85ff82445ec1a638ecd84c0bcbfd1dc8939b78a7800a78d1f25359a6b8362dc4",
+    "src/ui/time_axis.rs": "cc929c2409aefdc0767846219d7511fdefa47a6828c05a3420f8509215bd4404",
+    "src/ui/time_axis_input.rs": "4a87f8ffa13ea0fb231dc8e723973182ee7c0dffcc116bcdcf95866945778ef7",
+    "src/views/mod.rs": "6f69427878c13d275a8be3a9d207850dd40d794a1c06fc84c59ab9c57a674b96",
+    "src/views/pane/grid_pane_view.rs": "69ed7ba9c37810ba4102be98f17f55e228ff2ff35fd5b11023497df70e47a545",
+    "src/views/pane/hovered_source_pane_views.rs": "904ea84be18028e57cdf38caedae0f53bfcf8ed19a0c525c062dd19c4096834c",
+    "src/views/pane/iaxis_view.rs": "8d349d958893f2a5242f94fab91c0e44966f6c652efe7546d7129901d3b81ec8",
+    "src/views/pane/ipane_view.rs": "8303c9592b34449f156307ee43e8cea899160dca29a9d782684d7168846c13a4",
+    "src/views/pane/mod.rs": "2c48d249a0a759cb66e51d5106bfa3af68df5e1a928c6897e2732565f2d98021",
+    "src/views/pane/series_last_price_animation_pane_view.rs": "2f247fea574d108c6e71fe769474a8fe38bd784a5c4bf150da4481d25e33a39d",
+    "src/views/price_axis/iprice_axis_view.rs": "02ff0f9928f9131eb0f85e415d535f68c674910b2b6748802d5893438c73193a",
+    "src/views/price_axis/mod.rs": "b68e97d550c4abbb6d739e591832d714fe3878a81fa1f1f83576b777625353cb",
+    "src/views/time_axis/itime_axis_view.rs": "3c989b92c3db66e8bcd298d47933cfe681da12bc40734ee58c4985c851f3b007",
+    "src/views/time_axis/mod.rs": "8898a224b9c9dde31df820d0017d6cd5e5b049b329aaabf6e4c9c94b63ce573c",
+    "src/views/time_scale_animation.rs": "6b2343a1087097d0cf9f6fdbc1aa9332e2978d5dac2821b22ef1de8c782507a1"
+  },
+  "fixtures": {
+    "examples/pane_management.rs": "067030db68a85b255eec33526e51f4c88058d1f8f01970c4f96b66cb21066395",
+    "examples/pane_management/attribution.rs": "ea4dbd13b8f6f22dfb1cc8b33647ddddd71ea53db1f6d00392c802ea6e514bab",
+    "examples/pane_management/attribution_captures.rs": "d4316b50cb42c7eba873f617e49dfc5c5cf4a9f663ab621aa3cb5d451b8a454a",
+    "examples/pane_management/axis_interaction.rs": "126a37fed9016c046930e184c2c55802ec250a3e7151781cbdf7aad3c0b8c061",
+    "examples/pane_management/axis_interaction_captures.rs": "8eeef5fe3d1465187576326fe1f2b7b4d4502dd3d43d5b4be1745d7167f30e59",
+    "examples/pane_management/captures.rs": "0be98f2462062cd698d5645fb44a7af87bd3ea82a9b05f37be4526c462dde3a8",
+    "examples/pane_management/configuration.rs": "316a76f460804ceb92d485ddd0339d891854f62d2be0e6cbc52ec3db1f3add32",
+    "examples/pane_management/data.rs": "8b49f6b7b5e0dcb26603d462d319d32b687988ba287fc1068bfe6a24dc1b1b30",
+    "examples/pane_management/events.rs": "af15164d2f8520e05be0da20c0de0bb82eb1b0e9be87e180d40c6365c8c8f4ac",
+    "examples/pane_management/export.rs": "69976138f6c2d9b0242a9438b2e8cc4400aa0a07491ab8ee10b859c5835a377d",
+    "examples/pane_management/formatting.rs": "b83a1e19ebed8365915ff20260d860968b8255bc6d4b50eca5238ea22559e0d5",
+    "examples/pane_management/formatting_captures.rs": "39638e474b9c804e68f3e8ca7ec540d3233fdd0d3e7a011ae0315d747fe02c84",
+    "examples/pane_management/helper_captures.rs": "5b25a1877781a35c6b76beed758c64f7971469c632e89962493a40ed552440c2",
+    "examples/pane_management/helpers.rs": "14f6fb3323ebb142f10b62777bb63aa8a3e323f8e7cb370744654e7af8c644f6",
+    "examples/pane_management/host.rs": "24218e10ef21218eba73120c22e79854d01bf73d08b91aadac803e5ae096ed5b",
+    "examples/pane_management/locale.rs": "9f11f0a1447fc2cd7d6e47cb1742374acd9311d3ee79f57f70665add59b20e22",
+    "examples/pane_management/locale_captures.rs": "1d81f22a745322b8b4a9fe3c10444498e0572fd18f82c2aa6b81b8892141366e",
+    "examples/pane_management/metadata.rs": "39ab6287dbaffc9ed6c06bc52f617ad94e2ffc50718b9b910b14c327825ef411",
+    "examples/pane_management/metadata_captures.rs": "a3a0627778270c78627facf618d02cf80baed05857b89864f9c05b37bebfe33f",
+    "examples/pane_management/pointer.rs": "ed5c8e5b582ec515d41e55e193aa46f1decafea7afdff3a6e1bd01c84f6b873b",
+    "examples/pane_management/pointer_captures.rs": "441774ac47b9ee02589f5576f67f24464cdeb7aebcff05062fcfeedd5966bc6b",
+    "examples/pane_management/scale_assignment.rs": "3695b0f4bd2bfe975b19e516a749c6a80e03f1977c3fc9c819352f3a55d4e8b1",
+    "examples/pane_management/scale_assignment_captures.rs": "be271f6e2fef9b8c96014f6bf6b239682d4966ed973e377be08140543c7a7d81",
+    "examples/pane_management/screenshot_captures.rs": "b0233bd5b26240853d024a2fa94ebfdcdaa33a3c1d2235f4c8494e88ee4a9a0f",
+    "examples/pane_management/sizing.rs": "36f9215fff636be99ac5ebe7a60042f7660d6e259d4f29106b5592018a83d137",
+    "examples/pane_management/sizing_captures.rs": "ac0c37e0f4cb796015a65202eb7fe06bb68ad367bd5b67b90805934b19c1f2fd",
+    "examples/custom_horizontal/behavior.rs": "a81246e7a6c13ae3524c126e411dbeef179caf6e8f77d1850a56efb690ea3d03",
+    "examples/numeric_custom_series/view.rs": "dcfec61ec0846dd5c56512d494a249bc44820a81643c8fb42b104a6299717ee4",
+    "examples/support/editable_box.rs": "8ec05567177539bbc35c6f8e08d1c523111c4a5a575dc560eba8d31561b9dfc3"
+  },
+  "physical": [
+    {
+      "domain": "calendar",
+      "backend": "tiny-skia",
+      "pid": 265988,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "strike",
+      "backend": "tiny-skia",
+      "pid": 266013,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--options"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "maturity",
+      "backend": "tiny-skia",
+      "pid": 266073,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--yield-curve"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "sessions",
+      "backend": "tiny-skia",
+      "pid": 266172,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--custom-domain"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "calendar",
+      "backend": "wgpu",
+      "pid": 266375,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "strike",
+      "backend": "wgpu",
+      "pid": 266447,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--options"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "maturity",
+      "backend": "wgpu",
+      "pid": 266490,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--yield-curve"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "sessions",
+      "backend": "wgpu",
+      "pid": 266528,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--locale",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--custom-domain"
+      ],
+      "binary_sha256": "f28f50540cce126796f49c7c3688fce6ef68dc7507870b1bd54bbe826b59027b",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    }
+  ],
+  "artifacts": {
+    "target/time-locale/final/validation.json": "3688a4c8ddd6e7ce0eaeddb14c7b97049ba83853b0a8af608dca4cf6341ff896",
+    "target/time-locale/final/references/results.json": "9da927a6142811d5a336cd5e3db3fd2243bd40244a80da9342a8869afb925c82",
+    "target/time-locale/captures/protocol.json": "beb093ba5cb02eeeb366cc1eabd459775053eb2e65882596eabfb78f4d2b0e72",
+    "target/time-locale/captures/results.json": "dc377476700818aa40e835d64c9b8165bcb63e3508a088f8478a6d21b99a8b6c",
+    "target/time-locale/final/compatibility/results.json": "f56aec89767bb6372ff4b4509ffca62cf4359f940a10213fca406a0ed6b9999f",
+    "target/time-locale/runtime.json": "7c102bb170552746806a048ab525bca00189fb9c8f3c61a1b43267d774b28673"
+  },
+  "preserved_failures": [
+    "target/time-locale/red-labels.log",
+    "target/time-locale/tests-expanded.log",
+    "target/time-locale/demo-tests.log",
+    "target/time-locale/check-first.log"
+  ],
+  "independent_exceptions": [
+    "Intl outside the H support contract",
+    "Earlier timing acceptance",
+    "Separate formatting GPU physical record",
+    "Dedicated series drawing-order mouse acceptance",
+    "Touchpad",
+    "Touchscreen",
+    "Physical high-DPI",
+    "Display-P3 target"
+  ]
+}

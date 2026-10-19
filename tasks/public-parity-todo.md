@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H in progress.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -123,8 +123,18 @@ remain unchanged.
 
 - [x] H0: Freeze the supported default locale contract. (depends: G2).
 - [x] H1: Implement supported localized default ticks and fallback. (depends: H0).
-- [ ] H2: Demonstrate localization and accept milestone H. (depends: H1).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] H2: Demonstrate localization and accept milestone H. (depends: H1).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+Formatter/consumer checkpoints: `b083cec`, `4daa116`. All common gates pass:
+872 tests in 89 suites, two compile-fail doctests and 45 source comparisons.
+The new matrix matches 560 ticks and 192 date/month labels across 16 locale cases.
+Both native renderers pass 960 screen replays and 960 retained exports; the
+unchanged formatting protocol matches all 576 accepted images. Four-mode software
+and GPU mouse acceptance, previews/exports and all eight normal exits pass.
+See [time-locale.md](../docs/porting/time-locale.md) and its pinned evidence.
+Full Intl outside the supported Gregorian profiles remains explicitly partial;
+combined remaining captures are Z0 and independent exceptions are unchanged.
 
 ### I — Configured color parsing
 

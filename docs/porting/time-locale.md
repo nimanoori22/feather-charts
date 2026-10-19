@@ -80,3 +80,51 @@ Retained exports must survive chart changes/drop. Reuse existing capture helpers
 Rerun unchanged affected formatting compatibility captures and all common gates.
 Physical mouse checks use normal software then GPU windows. Unavailable device,
 earlier timing, formatting GPU and drawing-order exceptions remain independent.
+
+## Implementation and automated results
+
+Formatter checkpoint: `b083cec`; consumer checkpoint: `4daa116`. No dependency
+or lockfile change. The implementation adds
+`src/formatters/time_locale.rs`, updates `src/formatters/format_date.rs`,
+`src/formatters/mod.rs` and
+`src/model/horz_scale_behavior_time/default_tick_mark_formatter.rs`.
+Existing localization patch, cache invalidation and callback ownership are reused.
+Tests are `tests/time_locale.rs`, `tests/localization_runtime.rs` and the locale
+controls test in `examples/pane_management/locale.rs`.
+
+The demo uses `examples/pane_management/{locale,locale_captures}.rs`, its existing
+host bridge and main entry. Launch with:
+
+```sh
+cargo run --example pane_management -- --locale --screenshot-export --live-feed
+```
+
+Add `--options`, `--yield-curve` or `--custom-domain`. Calendar demo data spans
+January–April so changing months is visible. Other domains retain their original
+keys and label behavior. The latest update reuses its actual last key after the
+demo's calendar data replacement. Locale changes themselves never replace data.
+`Item override` toggles the existing custom item callback; `Date tokens` changes
+only calendar item formatting. Unsupported/invalid input keeps its requested
+readback while showing the public support status. No browser locale, DOM Date,
+Intl object identity or global process locale is introduced.
+
+Common gates pass: 872 tests in 89 suites, two compile-fail doctests, offline
+all-target check/build, Clippy with warnings denied, formatting and public-surface
+inventory. The locale source/native comparison matches 560 ticks and 192 date/month
+labels. Both asserted native renderers pass 960 total screen replays and 960
+retained exports over four domains, three sizes and four DPRs. Arabic changes
+actual calendar pixels; invalid-locale fallback reproduces English pixels. Exports
+retain their original labels after locale changes, Reset and owner drop.
+The unchanged formatting protocol matches all 576 previously accepted images.
+Software fractional-DPR and GPU narrow Arabic captures were visually inspected,
+including connected month names and Arabic/extended Arabic digits.
+
+All 44 earlier source-comparison scripts are unchanged. All 45 source comparisons pass. The user passed normal software and GPU mouse
+acceptance in all four domains, including previews/exports and regular, narrow,
+earlier problem-size and short-height recovery checks. All eight sessions exited
+successfully with the validated binary. The final record is
+[time-locale-evidence.json](time-locale-evidence.json). Milestone H is accepted. Larger combined compatibility captures
+remain Z0; this milestone reruns the directly affected formatting protocol.
+Full Intl, earlier timing, unavailable devices and other independent acceptance
+exceptions remain open. Milestone I (configured color parsing) is the next
+feature dependency; H adds no provider infrastructure that I must adopt.
