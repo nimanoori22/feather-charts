@@ -1,5 +1,7 @@
 # Public parity audit — local Lightweight Charts 5.2.1
 
+Runtime-axis follow-up: [runtime-primary-axis.md](runtime-primary-axis.md) records the accepted runtime preference and its source, renderer and mouse checks. The construction-only limitation below describes the historical checkpoint; it is now resolved. Display-P3 and broader Intl expansion remain unimplemented.
+
 Audited 2026-10-18 against native checkpoint `c08baeb` (runtime implementation
 `e037a3b`) and local TypeScript HEAD `8a7c94ff8ddffde68955db61ef8b58098f239de0`.
 The source worktree contains existing changes; exact consumed file hashes are

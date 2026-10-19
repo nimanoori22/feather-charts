@@ -44,6 +44,9 @@ where
     ) -> Result<(RuntimeModelOptions, bool, bool), ChartModelError> {
         let before = self.runtime_options();
         let mut next = before.clone();
+        if let Some(side) = patch.default_visible_price_scale {
+            next.pane.default_visible_price_scale = side;
+        }
         if let Some(p) = patch.layout.clone() {
             p.apply(&mut next.layout);
         }
@@ -117,6 +120,7 @@ where
         let mut geometry_time = before.time_scale.clone();
         geometry_time.border_color = next.time_scale.border_color.clone();
         let mut geometry = before.layout.font_size != l.font_size
+            || before.pane.default_visible_price_scale != next.pane.default_visible_price_scale
             || before.layout.font_family != l.font_family
             || before.layout.panes.enable_resize != l.panes.enable_resize
             || geometry_time != next.time_scale;

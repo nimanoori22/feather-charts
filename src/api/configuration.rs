@@ -4,6 +4,7 @@ pub use crate::model::chart_configuration::{
     LayoutOptionsPatch, PaneLayoutOptionsPatch, RuntimeModelOptions,
 };
 pub use crate::model::localization_options::LocalizationOptionsPatch;
+pub use crate::model::pane::DefaultVisiblePriceScale;
 pub use crate::ui::chart_input::MouseNavigationOptions;
 
 /// Independent axis dragging and double-click/double-tap reset settings.

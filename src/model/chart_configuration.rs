@@ -47,6 +47,8 @@ pub struct GridOptionsPatch {
 }
 #[derive(Clone, Debug, Default)]
 pub struct ChartModelOptionsPatch {
+    /// Chart-wide preference for existing and future panes; series assignments stay explicit.
+    pub default_visible_price_scale: Option<crate::model::pane::DefaultVisiblePriceScale>,
     pub layout: Option<LayoutOptionsPatch>,
     pub grid: Option<GridOptionsPatch>,
     pub left_price_scale: Option<PriceScaleOptionsPatch>,

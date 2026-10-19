@@ -20,21 +20,21 @@
   "surface": {
     "total": 374,
     "classifications": {
-      "mapped": 80,
+      "mapped": 81,
       "native": 81,
-      "partial": 5,
+      "partial": 4,
       "platform": 4,
       "represented": 204
     },
     "native_scope": {
-      "numerator": 365,
+      "numerator": 366,
       "denominator": 370,
-      "percent": 98.65
+      "percent": 98.92
     },
     "including_platform_differences": {
-      "numerator": 365,
+      "numerator": 366,
       "denominator": 374,
-      "percent": 97.59
+      "percent": 97.86
     }
   },
   "methods": {
@@ -59,26 +59,26 @@
   "properties": {
     "total": 275,
     "classifications": {
-      "mapped": 19,
+      "mapped": 20,
       "native": 48,
-      "partial": 3,
+      "partial": 2,
       "platform": 1,
       "represented": 204
     },
     "native_scope": {
-      "numerator": 271,
+      "numerator": 272,
       "denominator": 274,
-      "percent": 98.91
+      "percent": 99.27
     },
     "including_platform_differences": {
-      "numerator": 271,
+      "numerator": 272,
       "denominator": 275,
-      "percent": 98.55
+      "percent": 98.91
     }
   },
   "source_conformance_suites": {
-    "numerator": 46,
-    "denominator": 46,
+    "numerator": 47,
+    "denominator": 47,
     "percent": 100.0
   },
   "original_source_observations": {
@@ -87,13 +87,13 @@
     "percent": 100.0
   },
   "native_image_regressions": {
-    "numerator": 9510,
-    "denominator": 9510,
+    "numerator": 2208,
+    "denominator": 2208,
     "percent": 100.0
   },
   "native_tests": {
-    "passed": 884,
-    "suites": 90,
+    "passed": 892,
+    "suites": 91,
     "doctests": 2
   },
   "platform_exclusions": [
@@ -142,7 +142,7 @@
       "kind": "method",
       "signature": "applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;",
       "status": "partial",
-      "note": "Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred"
+      "note": "Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; runtime default visible-scale selection is implemented; DisplayP3 output deferred"
     },
     {
       "id": "IChartApiBase.options",
@@ -151,16 +151,7 @@
       "kind": "method",
       "signature": "options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;",
       "status": "partial",
-      "note": "Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred"
-    },
-    {
-      "id": "ChartOptionsBase.defaultVisiblePriceScaleId",
-      "file": "src/model/chart-model.ts",
-      "line": 319,
-      "kind": "property",
-      "signature": "defaultVisiblePriceScaleId: 'left' | 'right';",
-      "status": "partial",
-      "note": "F04: PaneOptions.default_visible_price_scale construction only"
+      "note": "Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; runtime default visible-scale selection is implemented; DisplayP3 output deferred"
     },
     {
       "id": "LayoutOptions.colorSpace",
@@ -199,8 +190,8 @@
     "Display-P3 target"
   ],
   "inputs": {
-    "docs/porting/public-parity-inventory.json": "31f343e637caea160b7bbd2f4ca6caa57b2aa0d1268f022c91e7003fd2b23a09",
-    "docs/porting/public-parity-completion-evidence.json": "c230373160bc4ac69c9d71d8e62cb99d42ffd5a5e7e2be546d76ee7aa0c46c24",
-    "scripts/measure_public_parity.py": "c163ea1350d6915eef685687c203cb421d96aa66c275b8192998bfdf8d17a475"
+    "docs/porting/public-parity-inventory.json": "5b4517b7ada26d185ee8366da488e61fc2b9c350c17d3a763ca53a0eabf72f00",
+    "docs/porting/runtime-primary-axis-evidence.json": "5718ea84bcf1845072e5f99b1a00b5782281a2c4e44f0c392b9de50f3c634f59",
+    "scripts/measure_public_parity.py": "4d9417269eb53078daf8c92a15fbee0ec4568ef29fb550c3c1b03f74ae8b391f"
   }
 }

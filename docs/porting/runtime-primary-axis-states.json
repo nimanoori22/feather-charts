@@ -1,0 +1,62 @@
+[
+  {
+    "name": "initial",
+    "preference": "right",
+    "primary": "right",
+    "visible": "right"
+  },
+  {
+    "name": "left",
+    "preference": "left",
+    "primary": "left",
+    "visible": "left"
+  },
+  {
+    "name": "new-empty",
+    "preference": "left",
+    "primary": "left",
+    "visible": "left"
+  },
+  {
+    "name": "moved",
+    "preference": "left",
+    "primary": "left",
+    "visible": "left"
+  },
+  {
+    "name": "right",
+    "preference": "right",
+    "primary": "right",
+    "visible": "right"
+  },
+  {
+    "name": "right-empty",
+    "preference": "right",
+    "primary": "right",
+    "visible": "right"
+  },
+  {
+    "name": "right-hidden",
+    "preference": "right",
+    "primary": "left",
+    "visible": "left"
+  },
+  {
+    "name": "both-hidden",
+    "preference": "right",
+    "primary": "left",
+    "visible": "none"
+  },
+  {
+    "name": "only-right-hidden",
+    "preference": "right",
+    "primary": "right",
+    "visible": "none"
+  },
+  {
+    "name": "empty-fallback",
+    "preference": "right",
+    "primary": "right",
+    "visible": "right"
+  }
+]

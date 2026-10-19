@@ -39,6 +39,8 @@ mod metadata_captures;
 mod pointer;
 #[path = "pane_management/pointer_captures.rs"]
 mod pointer_captures;
+#[path = "pane_management/primary_axis_captures.rs"]
+mod primary_axis_captures;
 #[path = "support/editable_box.rs"]
 mod region;
 #[path = "pane_management/scale_assignment.rs"]
@@ -743,6 +745,13 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
 }
 fn main() -> iced::Result {
     let args: Vec<_> = std::env::args().collect();
+    if let Some(i) = args.iter().position(|a| a == "--primary-axis-captures") {
+        primary_axis_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--color-captures") {
         color_captures::run(
             std::path::Path::new(&args[i + 1]),

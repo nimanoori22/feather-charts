@@ -6,6 +6,9 @@ use feather_charts::model::{
 };
 #[derive(Clone, Copy, Debug)]
 pub enum Action {
+    CompareAxes,
+    PrimaryLeft,
+    PrimaryRight,
     Pane,
     Side,
     Manual,
@@ -48,6 +51,41 @@ impl<C: Host> App<C> {
         let opts = self.chart.core().price_scale_options(pane, &side)?;
         let mut patch = ChartOptionsPatch::default();
         match action {
+            Action::CompareAxes => {
+                let pane = self.chart.core().series_pane(self.line)?;
+                self.config_pane = pane;
+                self.chart.move_series_to_pane(self.custom.id(), pane)?;
+                self.chart
+                    .assign_scale(self.line, PriceScalePosition::Right)?;
+                self.chart
+                    .assign_scale(self.custom.id(), PriceScalePosition::Left)?;
+                patch.model.left_price_scale = Some(PriceScaleOptionsPatch {
+                    visible: Some(true),
+                    scale_margins: Some(PriceScaleMarginsPatch {
+                        top: Some(0.08),
+                        bottom: Some(0.55),
+                    }),
+                    ..Default::default()
+                });
+                patch.model.right_price_scale = Some(PriceScaleOptionsPatch {
+                    visible: Some(true),
+                    scale_margins: Some(PriceScaleMarginsPatch {
+                        top: Some(0.55),
+                        bottom: Some(0.08),
+                    }),
+                    ..Default::default()
+                });
+                self.chart.configure(patch)?;
+            }
+            Action::PrimaryLeft | Action::PrimaryRight => {
+                patch.model.default_visible_price_scale =
+                    Some(if matches!(action, Action::PrimaryLeft) {
+                        DefaultVisiblePriceScale::Left
+                    } else {
+                        DefaultVisiblePriceScale::Right
+                    });
+                self.chart.configure(patch)?;
+            }
             Action::Pane => self.config_pane = (pane + 1) % n,
             Action::Side => self.config_left = !self.config_left,
             Action::Manual => self.chart.set_range(
@@ -231,7 +269,13 @@ impl<C: Host> App<C> {
         let range = self.chart.core().visible_price_range(pane, &side);
         let opts = self.chart.core().price_scale_options(pane, &side);
         let label = format!(
-            "Pane {pane} {side:?} | {:?} | {:?}",
+            "Primary {:?} | Pane {pane} {side:?} | {:?} | {:?}",
+            self.chart
+                .core()
+                .runtime_options()
+                .model
+                .pane
+                .default_visible_price_scale,
             range,
             opts.map(|o| (o.mode, o.auto_scale))
         );
@@ -259,6 +303,9 @@ impl<C: Host> App<C> {
             )),
             iced::widget::scrollable(
                 row![
+                    button_for("Compare axes", Action::CompareAxes),
+                    button_for("Primary left", Action::PrimaryLeft),
+                    button_for("Primary right", Action::PrimaryRight),
                     button_for("Appearance", Action::Appearance),
                     button_for("Grid", Action::Grid),
                     button_for("Crosshair", Action::Crosshair),
@@ -332,5 +379,52 @@ mod tests {
     #[test]
     fn maturity_configuration() {
         controls::<YieldCurveChart>();
+    }
+    #[test]
+    fn primary_controls_in_all_domains() {
+        fn check<C: Host>() {
+            let mut app = App::<C>::with_configuration(true, false, false, true);
+            app.configuration_action(Action::CompareAxes).unwrap();
+            for side in [
+                DefaultVisiblePriceScale::Left,
+                DefaultVisiblePriceScale::Right,
+            ] {
+                app.configuration_action(if side == DefaultVisiblePriceScale::Left {
+                    Action::PrimaryLeft
+                } else {
+                    Action::PrimaryRight
+                })
+                .unwrap();
+                app.chart
+                    .prepare(Size::new(300., 90.), 1.5, Instant::now())
+                    .unwrap();
+                assert_eq!(
+                    app.chart
+                        .core()
+                        .runtime_options()
+                        .model
+                        .pane
+                        .default_visible_price_scale,
+                    side
+                );
+                assert_eq!(
+                    app.chart.core().series_price_scale(app.line).unwrap(),
+                    PriceScalePosition::Right
+                );
+                assert_eq!(
+                    app.chart
+                        .core()
+                        .series_price_scale(app.custom.id())
+                        .unwrap(),
+                    PriceScalePosition::Left
+                );
+            }
+            app.action(Message::Reset).unwrap();
+            assert!(app.config_mode);
+        }
+        check::<Chart>();
+        check::<OptionsChart>();
+        check::<YieldCurveChart>();
+        check::<Chart<session_behavior::Sessions>>();
     }
 }

@@ -49,7 +49,7 @@ async function main(){
   if(process.argv.includes('--freeze'))fs.writeFileSync(fixture,JSON.stringify(result,null,2)+'\n');else assert.deepEqual(result,JSON.parse(fs.readFileSync(fixture)),'source color behavior changed');
   fs.writeFileSync('target/configured-colors/source-results.json',JSON.stringify(result,null,2)+'\n');
   if(!process.argv.includes('--source-only')){
-   const native=spawnSync('cargo',['test','--offline','--test','configured_colors','--','--nocapture'],{encoding:'utf8',maxBuffer:32*1024*1024});
+   const native=spawnSync('cargo',['test','--offline','--test','configured_colors','--','--show-output'],{encoding:'utf8',maxBuffer:32*1024*1024});
    fs.writeFileSync('target/configured-colors/native.log',native.stdout+native.stderr);
    assert.equal(native.status,0,'native configured color tests failed');
    const line=native.stdout.split('\n').find(l=>l.startsWith('CONFIGURED_COLORS_REFERENCE '));assert(line);

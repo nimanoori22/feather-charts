@@ -1,0 +1,572 @@
+{
+  "status": "Runtime primary-axis selection implemented and accepted",
+  "baseline": "fb096eb",
+  "source_version": "5.2.1",
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "source_snapshot": {
+    "path": "target/primary-axis/captures/protocol.json",
+    "sha256": "6eb4e23bea419483d240bf0515bd5e821dfc97c50d53b976d22db8dac1127327"
+  },
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "node",
+        "scripts/audit_public_surface.cjs",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 892,
+    "suites": 91,
+    "doctests": 2
+  },
+  "source_comparisons": {
+    "passed": 47,
+    "results": {
+      "path": "target/primary-axis/final/references/results.json",
+      "sha256": "e4fa4d229bbf81851679b9c740fd707781c006d837eba8e77aa500865844e5c9"
+    },
+    "previous_scripts_unchanged": 45,
+    "presentation_only_harness_change": [
+      "scripts/check_configured_colors_reference.cjs"
+    ],
+    "new_primary_states": 10
+  },
+  "original_observations": [
+    {
+      "name": "global_price",
+      "source": "GLOBAL",
+      "native": "GLOBAL",
+      "equal": true
+    },
+    {
+      "name": "global_ticks",
+      "source": [
+        "GLOBAL_TICKS"
+      ],
+      "native": [
+        "GLOBAL_TICKS"
+      ],
+      "equal": true
+    },
+    {
+      "name": "global_percentage",
+      "source": "PERCENT",
+      "native": "PERCENT",
+      "equal": true
+    },
+    {
+      "name": "custom_ticks",
+      "source": [
+        "BATCH"
+      ],
+      "native": [
+        "BATCH"
+      ],
+      "equal": true
+    },
+    {
+      "name": "custom_batch_calls",
+      "source": 1,
+      "native": 1,
+      "equal": true
+    },
+    {
+      "name": "scale_after_option",
+      "source": "left",
+      "native": "left",
+      "equal": true
+    },
+    {
+      "name": "arabic_day",
+      "source": "\u0662",
+      "native": "\u0662",
+      "equal": true
+    },
+    {
+      "name": "arabic_time",
+      "source": "\u0661\u0662:\u0660\u0660",
+      "native": "\u0661\u0662:\u0660\u0660",
+      "equal": true
+    },
+    {
+      "name": "german_month",
+      "source": "Jan",
+      "native": "Jan",
+      "equal": true
+    },
+    {
+      "name": "configured_color_parser",
+      "source": true,
+      "native": true,
+      "equal": true
+    },
+    {
+      "name": "time_axis_drag",
+      "source": true,
+      "native": true,
+      "equal": true
+    },
+    {
+      "name": "time_axis_double_reset",
+      "source": true,
+      "native": true,
+      "equal": true
+    }
+  ],
+  "original_observations_provenance": {
+    "path": "docs/porting/public-parity-completion-evidence.json",
+    "sha256": "c230373160bc4ac69c9d71d8e62cb99d42ffd5a5e7e2be546d76ee7aa0c46c24"
+  },
+  "combined_captures": {
+    "families": [
+      {
+        "name": "assignment",
+        "images": 768,
+        "results": {
+          "path": "target/primary-axis/final/compatibility/assignment/results.json",
+          "sha256": "2a7bb41f9afeecd53f7c40646c03c69aedd6b1fe93e9201e89292eb16365fca4"
+        },
+        "protocol": {
+          "path": "target/primary-axis/final/compatibility/assignment/protocol.json",
+          "sha256": "665f3a6443bc210df15d14783c5177869d74f97f91428cab348695a4e0252dcf"
+        }
+      },
+      {
+        "name": "axis",
+        "images": 864,
+        "results": {
+          "path": "target/primary-axis/final/compatibility/axis/results.json",
+          "sha256": "f8dfe2a270a2b1b282b29148b04c07b35a0586a8c62a539fbf382e888ee0a630"
+        },
+        "protocol": {
+          "path": "target/primary-axis/final/compatibility/axis/protocol.json",
+          "sha256": "a18d3f001b7974a3f525b0877ce64e15df3630e28b84faf9dd812da8ed6ab5a6"
+        }
+      },
+      {
+        "name": "helpers",
+        "images": 576,
+        "results": {
+          "path": "target/primary-axis/final/compatibility/helpers/results.json",
+          "sha256": "5610d4fda0a6cc7c3ce9560a8f9270c67496090d181ea01adfd8cd88081c5a47"
+        },
+        "protocol": {
+          "path": "target/primary-axis/final/compatibility/helpers/protocol.json",
+          "sha256": "934708d90bd5ae99f3a4ac9fbaec093376c846ad9568773c2e1532ad3783e5de"
+        }
+      }
+    ],
+    "accepted_images_unchanged": 2208
+  },
+  "new_feature_captures": {
+    "screens": 576,
+    "retained_exports": 576,
+    "backends": [
+      "tiny-skia",
+      "wgpu"
+    ],
+    "modes": [
+      "calendar",
+      "strike",
+      "maturity",
+      "sessions"
+    ],
+    "sizes": [
+      [
+        800,
+        500
+      ],
+      [
+        300,
+        300
+      ],
+      [
+        300,
+        90
+      ]
+    ],
+    "ratios": [
+      1,
+      1.25,
+      1.5,
+      2
+    ],
+    "scenes": [
+      "right",
+      "left",
+      "hidden",
+      "moved",
+      "recovered",
+      "rejected"
+    ],
+    "left_right_different": true,
+    "rejected_patch_identical": true
+  },
+  "physical": [
+    {
+      "domain": "calendar",
+      "backend": "tiny-skia",
+      "pid": 419618,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "strike",
+      "backend": "tiny-skia",
+      "pid": 420047,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--options"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "maturity",
+      "backend": "tiny-skia",
+      "pid": 420094,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--yield-curve"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "sessions",
+      "backend": "tiny-skia",
+      "pid": 420172,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--custom-domain"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Accepted by user; normal exit verified",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed"
+    },
+    {
+      "domain": "calendar",
+      "backend": "wgpu",
+      "pid": 422349,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Physical acceptance passed",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "user_confirmation": "GPU was fine; user confirmed after accidentally closing Codex."
+    },
+    {
+      "domain": "strike",
+      "backend": "wgpu",
+      "pid": 422397,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--options"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Physical acceptance passed",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "user_confirmation": "GPU was fine; user confirmed after accidentally closing Codex."
+    },
+    {
+      "domain": "maturity",
+      "backend": "wgpu",
+      "pid": 422435,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--yield-curve"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Physical acceptance passed",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "user_confirmation": "GPU was fine; user confirmed after accidentally closing Codex."
+    },
+    {
+      "domain": "sessions",
+      "backend": "wgpu",
+      "pid": 422804,
+      "command": [
+        "target/debug/examples/pane_management",
+        "--price-scale-configuration",
+        "--attribution",
+        "--scale-assignment",
+        "--screenshot-export",
+        "--live-feed",
+        "--custom-domain"
+      ],
+      "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+      "status": "Physical acceptance passed",
+      "exit": 0,
+      "user_result": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "user_confirmation": "GPU was fine; user confirmed after accidentally closing Codex."
+    }
+  ],
+  "binary_sha256": "d2f57dcae194b1f18a6424e50d979cd392f06c524c174b5857ba11ad4ae5a0d8",
+  "artifacts": [
+    {
+      "path": "target/primary-axis/final/validation.json",
+      "sha256": "cba17355c2f5007b64bec5e1849bcef52a1f3f121dab778e24f58994cda38dd7"
+    },
+    {
+      "path": "target/primary-axis/final/references/results.json",
+      "sha256": "e4fa4d229bbf81851679b9c740fd707781c006d837eba8e77aa500865844e5c9"
+    },
+    {
+      "path": "target/primary-axis/final/references/initial-results.json",
+      "sha256": "90a88a740e7cb6bbe1a3bdfec00278b904dc772149465825d04cb22f31be7154"
+    },
+    {
+      "path": "target/primary-axis/captures/protocol.json",
+      "sha256": "6eb4e23bea419483d240bf0515bd5e821dfc97c50d53b976d22db8dac1127327"
+    },
+    {
+      "path": "target/primary-axis/captures/results.json",
+      "sha256": "12649050497f6bd6fe546304157901aa36110687c16853789690728d9d7b7274"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/results.json",
+      "sha256": "36e84b12b08189cb220e55288ce9c4d12c4aa049ce68a43a90ce2f45cddeabb8"
+    },
+    {
+      "path": "target/primary-axis/mouse/tiny-skia/sessions.json",
+      "sha256": "abccae52927f25d4065f024a5fa91797b7b945101ca1098b27051287745043ec"
+    },
+    {
+      "path": "target/primary-axis/mouse/wgpu/sessions.json",
+      "sha256": "3d1093ae4f263bf061133ef37024284760f1321f1d391a0e6f0907cb63ade6b9"
+    },
+    {
+      "path": "target/primary-axis/color-oracle-output-prefix.log",
+      "sha256": "2cc8c44675d118b8bc7d4e7aeaf72879d8cf9f33aa49baec4bce16c6086e70d8"
+    },
+    {
+      "path": "target/primary-axis/color-oracle-fixed.log",
+      "sha256": "511ee28ea5c6ebef21bae4638cf21322a76cfe664fc1bcf432fc08bb75c2078c"
+    },
+    {
+      "path": "tests/runtime_primary_axis.rs",
+      "sha256": "b7edea253e10ba0d207f10635f7a7eb16dc7e2a762f26880b9a39ca57812a492"
+    },
+    {
+      "path": "docs/porting/runtime-primary-axis-source.json",
+      "sha256": "44c597f116389a6709cee0e13d61c9bbf929d073c6eee16f6f9c986874f371b6"
+    },
+    {
+      "path": "docs/porting/runtime-primary-axis-states.json",
+      "sha256": "2a2caddaff122066e45bd5d8e8992a6827cc6256b8dbd34a38fe9fbd2a354bad"
+    },
+    {
+      "path": "docs/porting/public-parity-inventory.json",
+      "sha256": "5b4517b7ada26d185ee8366da488e61fc2b9c350c17d3a763ca53a0eabf72f00"
+    },
+    {
+      "path": "scripts/audit_public_surface.cjs",
+      "sha256": "fa3440b6d0f0811035f0821b3a70c86542fe3190d6cf963950b1e037cd8135b8"
+    },
+    {
+      "path": "docs/porting/public-parity-completion-evidence.json",
+      "sha256": "c230373160bc4ac69c9d71d8e62cb99d42ffd5a5e7e2be546d76ee7aa0c46c24"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/assignment/results.json",
+      "sha256": "2a7bb41f9afeecd53f7c40646c03c69aedd6b1fe93e9201e89292eb16365fca4"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/assignment/protocol.json",
+      "sha256": "665f3a6443bc210df15d14783c5177869d74f97f91428cab348695a4e0252dcf"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/axis/results.json",
+      "sha256": "f8dfe2a270a2b1b282b29148b04c07b35a0586a8c62a539fbf382e888ee0a630"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/axis/protocol.json",
+      "sha256": "a18d3f001b7974a3f525b0877ce64e15df3630e28b84faf9dd812da8ed6ab5a6"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/helpers/results.json",
+      "sha256": "5610d4fda0a6cc7c3ce9560a8f9270c67496090d181ea01adfd8cd88081c5a47"
+    },
+    {
+      "path": "target/primary-axis/final/compatibility/helpers/protocol.json",
+      "sha256": "934708d90bd5ae99f3a4ac9fbaec093376c846ad9568773c2e1532ad3783e5de"
+    }
+  ],
+  "logs": [
+    {
+      "path": "target/primary-axis/final/validation-build.log",
+      "sha256": "90bd0498d972a8ddcd7feaf227fa28de2f002d35381f1204cc9a2828155c69c8"
+    },
+    {
+      "path": "target/primary-axis/final/validation-check.log",
+      "sha256": "551c3a663e2bbb237d6fcaaed6e1f595a66213cc07c79c777829a8961f1c793a"
+    },
+    {
+      "path": "target/primary-axis/final/validation-clippy.log",
+      "sha256": "b38fbc4006f763f5e2e6276c234dc462f2bcde2279512377925e6e7fd5d89d20"
+    },
+    {
+      "path": "target/primary-axis/final/validation-doc.log",
+      "sha256": "10e8bc0c27611249c7ac6093fbb015cb58a86a23dd8ceaca3ace1827b9f892fc"
+    },
+    {
+      "path": "target/primary-axis/final/validation-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target/primary-axis/final/validation-inventory.log",
+      "sha256": "6217bbc1ca0baea061f2f61da249eb0304d8202cce6c6685e4b3e8573798098b"
+    },
+    {
+      "path": "target/primary-axis/final/validation-tests.log",
+      "sha256": "54e30e652fca6b4013c919a57bdb04efbbbdc9eb2535979c12221d24ee5779d3"
+    }
+  ],
+  "planned_not_implemented": [
+    "End-to-end Display-P3 drawing/export",
+    "Broader Intl locale/calendar expansion beyond the existing H profiles"
+  ],
+  "independent_exceptions": [
+    "Intl outside the H support contract",
+    "Earlier timing acceptance",
+    "Dedicated series drawing-order mouse acceptance",
+    "Touchpad",
+    "Touchscreen",
+    "Physical high-DPI",
+    "Display-P3 target"
+  ],
+  "investigations": {
+    "color_oracle": "All 11 native color tests passed; libtest progress prefixed the FORMS record on the same line. Captured --show-output fixes framing without changing tests/assertions/fixtures.",
+    "interrupted_capture": "First attempt stopped before updated example build completed; retained separately and excluded from acceptance.",
+    "preserved": [
+      "target/primary-axis/red.log",
+      "target/primary-axis/semantic-red.log",
+      "target/primary-axis/core-tests.log",
+      "target/primary-axis/core-final.log",
+      "target/primary-axis/color-oracle-prefix-failure.log",
+      "target/primary-axis/captures-interrupted-before-build"
+    ]
+  },
+  "ownership": "Existing chart-owned atomic patch, copied pane enum and immutable frames; no new shared state or async runtime.",
+  "native_adaptations": [
+    "Explicit typed series creation remains explicit; the preference does not relocate existing series",
+    "An actual primary-target change cancels viewport gestures through existing policy; equal/invalid patches preserve them"
+  ],
+  "local_delivery": "Local checkpoint only; no push."
+}

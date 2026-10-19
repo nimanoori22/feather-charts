@@ -7,8 +7,8 @@
     "methods": 99,
     "statuses": {
       "native": 81,
-      "mapped": 80,
-      "partial": 5,
+      "mapped": 81,
+      "partial": 4,
       "platform": 4,
       "represented": 204
     }
@@ -573,8 +573,8 @@
     {"id":"IChartApiBase.unsubscribeCrosshairMove","file":"src/api/ichart-api.ts","line":279,"kind":"method","signature":"unsubscribeCrosshairMove(handler: MouseEventHandler<HorzScaleItem>): void;","status":"native","note":"Host owns routing of pointer events"},
     {"id":"IChartApiBase.priceScale","file":"src/api/ichart-api.ts","line":288,"kind":"method","signature":"priceScale(priceScaleId: string, paneIndex?: number): IPriceScaleApi;","status":"native","note":"Chart methods use pane + PriceScalePosition"},
     {"id":"IChartApiBase.timeScale","file":"src/api/ichart-api.ts","line":295,"kind":"method","signature":"timeScale(): ITimeScaleApi<HorzScaleItem>;","status":"native","note":"Chart checked range/navigation/conversion helpers; read-only engine inspection retained"},
-    {"id":"IChartApiBase.applyOptions","file":"src/api/ichart-api.ts","line":302,"kind":"method","signature":"applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;","status":"partial","note":"Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred"},
-    {"id":"IChartApiBase.options","file":"src/api/ichart-api.ts","line":309,"kind":"method","signature":"options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;","status":"partial","note":"Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred"},
+    {"id":"IChartApiBase.applyOptions","file":"src/api/ichart-api.ts","line":302,"kind":"method","signature":"applyOptions(options: DeepPartial<ChartOptionsImpl<HorzScaleItem>>): void;","status":"partial","note":"Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; runtime default visible-scale selection is implemented; DisplayP3 output deferred"},
+    {"id":"IChartApiBase.options","file":"src/api/ichart-api.ts","line":309,"kind":"method","signature":"options(): Readonly<ChartOptionsImpl<HorzScaleItem>>;","status":"partial","note":"Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; runtime default visible-scale selection is implemented; DisplayP3 output deferred"},
     {"id":"IChartApiBase.takeScreenshot","file":"src/api/ichart-api.ts","line":318,"kind":"method","signature":"takeScreenshot(addTopLayer?: boolean, includeCrosshair?: boolean): HTMLCanvasElement;","status":"mapped","note":"Chart.take_screenshot / prepare_screenshot + ScreenshotExporter"},
     {"id":"IChartApiBase.addPane","file":"src/api/ichart-api.ts","line":325,"kind":"method","signature":"addPane(preserveEmptyPane?: boolean): IPaneApi<HorzScaleItem>;","status":"native","note":"Chart.add_pane then set_preserve_empty_pane"},
     {"id":"IChartApiBase.panes","file":"src/api/ichart-api.ts","line":332,"kind":"method","signature":"panes(): IPaneApi<HorzScaleItem>[];","status":"mapped","note":"Chart.model().panes()"},
@@ -680,7 +680,7 @@
     {"id":"ChartOptionsBase.layout","file":"src/model/chart-model.ts","line":298,"kind":"property","signature":"layout: LayoutOptions;","status":"mapped","note":"ChartModelOptions.layout"},
     {"id":"ChartOptionsBase.leftPriceScale","file":"src/model/chart-model.ts","line":303,"kind":"property","signature":"leftPriceScale: VisiblePriceScaleOptions;","status":"mapped","note":"PaneOptions.left_price_scale"},
     {"id":"ChartOptionsBase.rightPriceScale","file":"src/model/chart-model.ts","line":307,"kind":"property","signature":"rightPriceScale: VisiblePriceScaleOptions;","status":"mapped","note":"PaneOptions.right_price_scale"},
-    {"id":"ChartOptionsBase.defaultVisiblePriceScaleId","file":"src/model/chart-model.ts","line":319,"kind":"property","signature":"defaultVisiblePriceScaleId: 'left' | 'right';","status":"partial","note":"F04: PaneOptions.default_visible_price_scale construction only"},
+    {"id":"ChartOptionsBase.defaultVisiblePriceScaleId","file":"src/model/chart-model.ts","line":319,"kind":"property","signature":"defaultVisiblePriceScaleId: 'left' | 'right';","status":"mapped","note":"ChartModelOptionsPatch.default_visible_price_scale updates existing/future panes atomically; runtime_options().model.pane readback"},
     {"id":"ChartOptionsBase.overlayPriceScales","file":"src/model/chart-model.ts","line":323,"kind":"property","signature":"overlayPriceScales: OverlayPriceScaleOptions;","status":"mapped","note":"PaneOptions.overlay_price_scale"},
     {"id":"ChartOptionsBase.timeScale","file":"src/model/chart-model.ts","line":328,"kind":"property","signature":"timeScale: HorzScaleOptions;","status":"mapped","note":"HorzScaleOptions / Chart.apply_time_scale_options"},
     {"id":"ChartOptionsBase.crosshair","file":"src/model/chart-model.ts","line":334,"kind":"property","signature":"crosshair: CrosshairOptions;","status":"mapped","note":"Chart.set_crosshair_options / apply_chart_options"},

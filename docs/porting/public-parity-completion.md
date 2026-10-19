@@ -1,5 +1,7 @@
 # Public API and desktop parity — combined completion
 
+Runtime-axis follow-up: [runtime-primary-axis.md](runtime-primary-axis.md) records the accepted runtime preference and its source, renderer and mouse checks. The construction-only limitation below describes the historical checkpoint; it is now resolved. Display-P3 and broader Intl expansion remain unimplemented.
+
 Status: Z0 complete within the plan’s scope; independent exceptions remain open. Validated implementation checkpoint: `bcf44e8`.
 Plan: [public-parity-plan.md](../../tasks/public-parity-plan.md).
 The scope is the ten finding groups in the local Lightweight Charts 5.2.1 audit,

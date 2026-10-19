@@ -707,6 +707,22 @@ cargo run --example pane_management -- --price-scale-configuration --yield-curve
 Use `ICED_BACKEND=tiny-skia` or `ICED_BACKEND=wgpu` to choose the native renderer.
 See the [configuration contract and evidence](docs/porting/price-scale-configuration.md).
 
+The same toolbar offers **Compare axes**, **Primary left** and **Primary right**.
+Compare axes places blue/custom on right/left scales with distinct margins; the
+primary buttons change the grid reference without moving those series. Add
+`--custom-domain` for sessions and `--screenshot-export` for retained previews.
+Applications set `ChartModelOptionsPatch.default_visible_price_scale` to
+`Some(DefaultVisiblePriceScale::Left)` or `Right`, then call `apply_chart_options`.
+Read the configured preference from `runtime_options().model.pane`; new panes
+inherit it. Hidden/empty axes retain the existing fallback rules. See the
+[runtime primary-axis contract](docs/porting/runtime-primary-axis.md).
+
+The [native capability plan](tasks/native-capabilities-plan.md) also covers
+Display-P3 output and broader Intl/calendar expansion. Those two expansions are
+**not implemented**; current sRGB drawing and verified Gregorian profiles remain
+available.
+
+
 ## Runtime formatting
 
 `Chart::apply_localization_options(LocalizationOptionsPatch)` updates price,

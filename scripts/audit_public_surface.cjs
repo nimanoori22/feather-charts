@@ -11,7 +11,7 @@ const api={
   subscribeDblClick:'native|EventInterests.double_click / ChartEvent::DoubleClick',unsubscribeDblClick:'native|EventInterests.double_click',
   subscribeCrosshairMove:'native|ChartEvent::CrosshairMoved',unsubscribeCrosshairMove:'native|Host owns routing of pointer events',
   priceScale:'native|Chart methods use pane + PriceScalePosition',timeScale:'native|Chart checked range/navigation/conversion helpers; read-only engine inspection retained',
-  applyOptions:'partial|Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; default visible-scale selection remains construction only; DisplayP3 output deferred',options:'partial|Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; default visible-scale selection remains construction only; DisplayP3 output deferred',
+  applyOptions:'partial|Chart.apply_chart_options covers axis input, presentation and explicit sRGB target policy; runtime default visible-scale selection is implemented; DisplayP3 output deferred',options:'partial|Runtime/localization/axis-input/color-target readbacks; fixed parser policy is chart-owned; runtime default visible-scale selection is implemented; DisplayP3 output deferred',
   takeScreenshot:'mapped|Chart.take_screenshot / prepare_screenshot + ScreenshotExporter',addPane:'native|Chart.add_pane then set_preserve_empty_pane',
   panes:'mapped|Chart.model().panes()',removePane:'mapped|Chart.remove_pane',swapPanes:'mapped|Chart.swap_panes',
   autoSizeActive:'platform|Iced host controls layout; no ResizeObserver',chartElement:'platform|Iced Canvas replaces DOM element',
@@ -105,7 +105,7 @@ const special={
 const extra=new Set(['ChartOptionsBase','ChartOptionsImpl','HandleScrollOptions','HandleScaleOptions','AxisPressedMouseMoveOptions','AxisDoubleClickOptions','TrackingModeOptions','MouseEventParams','HoveredInfo']);
 const chartFields={width:'native|Chart.prepare and Iced layout',height:'native|Chart.prepare and Iced layout',autoSize:'platform|Iced host layout replaces ResizeObserver',
  layout:'mapped|ChartModelOptions.layout',leftPriceScale:'mapped|PaneOptions.left_price_scale',rightPriceScale:'mapped|PaneOptions.right_price_scale',overlayPriceScales:'mapped|PaneOptions.overlay_price_scale',
- defaultVisiblePriceScaleId:'partial|F04: PaneOptions.default_visible_price_scale construction only',timeScale:'mapped|HorzScaleOptions / Chart.apply_time_scale_options',
+ defaultVisiblePriceScaleId:'mapped|ChartModelOptionsPatch.default_visible_price_scale updates existing/future panes atomically; runtime_options().model.pane readback',timeScale:'mapped|HorzScaleOptions / Chart.apply_time_scale_options',
  crosshair:'mapped|Chart.set_crosshair_options / apply_chart_options',grid:'mapped|ChartModelOptions.grid',handleScroll:'native|MouseNavigationOptions / TouchNavigationOptions',
  handleScale:'mapped|AxisInteractionOptions plus MouseNavigationOptions.wheel_zoom / TouchNavigationOptions.pinch',kineticScroll:'mapped|KineticScrollOptions',trackingMode:'mapped|TouchNavigationOptions.tracking_exit',
  localization:'native|LocalizationOptions + Chart.apply_localization_options / localization_options; locale limitations tracked as F09',addDefaultPane:'mapped|ChartModelOptions.add_default_pane',hoveredSeriesOnTop:'mapped|Chart.set_hovered_series_on_top'};

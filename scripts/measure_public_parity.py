@@ -9,7 +9,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 INVENTORY = 'docs/porting/public-parity-inventory.json'
-EVIDENCE = 'docs/porting/public-parity-completion-evidence.json'
+EVIDENCE = 'docs/porting/runtime-primary-axis-evidence.json'
 OUTPUT = 'docs/porting/public-parity-score.json'
 COVERED = {'native', 'mapped', 'represented'}
 STATUSES = COVERED | {'partial', 'platform', 'gap', 'review'}
@@ -50,9 +50,12 @@ def measure():
     for row in references:
         if digest(row['script']) != row['sha256']:
             raise ValueError('Source-check script drift: ' + row['script'])
-    final_colors = read('docs/porting/configured-colors-evidence.json')
+    snapshot = evidence['source_snapshot']
+    if digest(snapshot['path']) != snapshot['sha256']:
+        raise ValueError('Validated snapshot drift: ' + snapshot['path'])
+    source_snapshot = read(snapshot['path'])
     for group in ['sources', 'fixtures']:
-        for path, expected in final_colors[group].items():
+        for path, expected in source_snapshot[group].items():
             if digest(path) != expected:
                 raise ValueError('Validated source drift: ' + path)
     rows = inventory['rows']
