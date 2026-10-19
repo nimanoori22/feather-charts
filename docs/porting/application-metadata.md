@@ -1,6 +1,6 @@
 # Application metadata (milestone F)
 
-Baseline: `f578d47`. Design frozen; implementation and acceptance in progress.
+Baseline: `f578d47`. Milestone F implemented and accepted.
 
 ## Source, consumers and behavioral contract
 
@@ -186,6 +186,26 @@ under `target/application-metadata/corrected`.
 
 The first compatibility attempt ended with SIGTERM after a successful software
 event capture, without an assertion failure. Its partial output is preserved;
-the cause of the signal was not established. A separate unchanged-protocol retry
-is required before acceptance. Final compatibility and physical acceptance remain
-pending at this checkpoint.
+the cause of the signal was not established. The separate unchanged-protocol retry
+passes all nine compatibility protocols: 6,438 images match their accepted
+baselines. The earlier 42 source scripts and all nine compatibility scripts are
+unchanged from the baseline. No assertions or thresholds were weakened.
+
+Final automated evidence is pinned in
+[application-metadata-evidence.json](application-metadata-evidence.json), including
+source/fixture/binary hashes, logs, the interrupted attempt and the successful
+retry. Consumer checkpoint: `af993e7`.
+
+The user reports all checks passed in calendar, strike, maturity and sessions on
+both tiny-skia and wgpu, including previews/exports, with all windows closed.
+The eight sessions exited successfully and match the validated binary hash.
+Checks cover metadata replacement/clearing, retain/clear/read/restore/pop/release,
+invalid input, hover IDs/revisions and live-feed identity; pane/scale transfers,
+zoom/pan, price-axis gestures, box edits/Escape, three window sizes, short-height
+recovery and export previews. Session manifests and the explicit reports are
+recorded in the evidence file.
+
+F0–F4 and F08 are complete. Milestone G (native pointer metadata) is next.
+This acceptance does not close the separate formatting GPU record, timing,
+dedicated drawing-order, touchpad, touchscreen or physical high-DPI exceptions,
+or extend the existing Intl/Display-P3 support contracts.

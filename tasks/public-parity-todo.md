@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F implementation in progress.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -90,8 +90,17 @@ and its pinned evidence record.
 - [x] F1: Prepare metadata-capable adapter boundaries without changing default behavior. (depends: F0).
 - [x] F2: Retain application metadata in built-in data operations. (depends: F1).
 - [x] F3: Complete metadata event and chart-family adapters. (depends: F2).
-- [ ] F4: Demonstrate application metadata and accept milestone F. (depends: F3).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] F4: Demonstrate application metadata and accept milestone F. (depends: F3).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+Source/contract, API and data checkpoints: `69350b1`, `020bdda`, `4a72e9b`;
+consumer checkpoint: `af993e7`. Final validation: 860 tests in 87 suites, two
+compile-fail doctests, 43 source comparisons, 864 metadata screen replays and
+864 retained exports, 384 metadata-only pixel comparisons and 6,438 unchanged
+compatibility images. The user passed software/GPU mouse acceptance in all four
+domains, with all eight normal sessions exiting successfully. See
+[application-metadata.md](../docs/porting/application-metadata.md) and its pinned
+evidence. Independent exceptions remain unchanged.
 
 ### G — Native pointer metadata
 

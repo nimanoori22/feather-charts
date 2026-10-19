@@ -1,0 +1,836 @@
+{
+  "status": "Milestone F accepted: automated gates and software/GPU mouse checks pass; independent exceptions unchanged",
+  "baseline": "f578d47",
+  "core_checkpoints": [
+    "69350b1",
+    "020bdda",
+    "4a72e9b",
+    "af993e7"
+  ],
+  "source_head": "8a7c94ff8ddffde68955db61ef8b58098f239de0",
+  "source_version": "5.2.1",
+  "source_states": [
+    {
+      "family": "Line",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    },
+    {
+      "family": "Histogram",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    },
+    {
+      "family": "Area",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    },
+    {
+      "family": "Baseline",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    },
+    {
+      "family": "Bar",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    },
+    {
+      "family": "Candlestick",
+      "initial": [
+        2,
+        4
+      ],
+      "same": true,
+      "shared": true,
+      "rejected": true,
+      "history": [
+        20,
+        4
+      ],
+      "latest": [
+        20,
+        40
+      ],
+      "cleared": [
+        20,
+        0
+      ],
+      "whitespace": [
+        20
+      ],
+      "restored": [
+        20,
+        0
+      ],
+      "popped": [
+        44,
+        20
+      ],
+      "retained": [
+        2,
+        4
+      ],
+      "empty": true
+    }
+  ],
+  "validation": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "build",
+        "--offline",
+        "--examples"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "tests",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "cargo",
+        "check",
+        "--offline",
+        "--all-targets"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "doc",
+      "command": [
+        "cargo",
+        "test",
+        "--offline",
+        "--doc"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "node",
+        "scripts/audit_public_surface.cjs",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "tests": {
+    "passed": 860,
+    "suites": 87,
+    "doctests": 2
+  },
+  "source_comparisons": [
+    {
+      "script": "scripts/check_application_metadata_reference.cjs",
+      "sha256": "680f88a082a783b9f84427792c2c6414fb41942d3c408ce7b197278bf610d79b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_area_reference.cjs",
+      "sha256": "e4144036e3be44986f23e4835e5bb89392003ae31ad800ac13a9ac279f6daa80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_attribution_reference.cjs",
+      "sha256": "d77178b60480fc907962c52b755c5d795354501abe987a2765ff600fe9ef3275",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_axis_interaction_reference.cjs",
+      "sha256": "b866ac8da8367ad1baee489cbbdb7ac19a5d6666152372ecaad1c8f1646c8fb9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_bar_reference.cjs",
+      "sha256": "08861e9a2e3d8235710d19a9e16a3aa9593bd1f5e59acb579ebd60433b34132d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_baseline_reference.cjs",
+      "sha256": "85843ac9a648935b750d70bf64a22867e1c67bf2cead2fce4e45b9779b00c8be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_candlestick_reference.cjs",
+      "sha256": "897467468c6f88ecfa99c4e3826f9c04b2e9c912c78cc72cd35f409ed5f24973",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_chart_layout_reference.cjs",
+      "sha256": "823e3ac96f0a3ff696c434c5ee7087bcad6d019ec402f1b740a87a2e6023b108",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_conflation_reference.cjs",
+      "sha256": "0cd8c21c928bed6e5f4b76c6ba3dd8680764015981a90ba07d09cf4a0f0ebeff",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_horizontal_reference.cjs",
+      "sha256": "b4e8d739a2b4996478b704c92ba3f505d80498a15248b3e8d0dd8e15c6a410e1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_custom_series_reference.cjs",
+      "sha256": "9f20fcea8fde6e589ede801a274c6cebc25b07e1b33a9d5a99d47fadf97b00b3",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_formatting_reference.cjs",
+      "sha256": "fcf3b32a66a26e9d08f696cea4afc359a16db320320935e5c617e927d968ca0f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_histogram_reference.cjs",
+      "sha256": "ae27286280d276f5f784ec063cec7e7ef8f75e246a6d3dd9e6f80dad3cdf1ca5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_hover_selection_reference.cjs",
+      "sha256": "1930dcc757e1ff14e10d7a11896d3e132107953b3b373f7ef72a66291da0558a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_image_watermark_reference.cjs",
+      "sha256": "4f4030f5d4fc7a1475799965372f7b7f9478b6fba6d62f973578f414ff999403",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_incremental_append_reference.cjs",
+      "sha256": "283d4c0328f4b4ab75557bc519f61c0c546d6f7cd4e877272251d878b8a283a2",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_interaction_reference.cjs",
+      "sha256": "4c8fbb58eeffac0af6072acfa13bb42218eb51aca21b4e36083215abebf4ea75",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_kinetic_reference.cjs",
+      "sha256": "52c073e667b4d537cd241956f097eda4ad8d2b858fcf85c8b4fa7152f08bdd76",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_last_price_animation_reference.cjs",
+      "sha256": "7538dd5774106f9b36cab5b352636b5db8607e8194624fc4ab05eca012b25356",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_lazy_autoscale_reference.cjs",
+      "sha256": "cd50fe63879d1825407a7a995f9d9fa6a55fe029dfd0e458467b5d90816c1f80",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_line_reference.cjs",
+      "sha256": "6cd0c7767a7cef55d7e19b91aaf7ca012cd5bda32c10c9d0810aa7cb27a48729",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_interaction_reference.cjs",
+      "sha256": "640b57bf60215777957539a97b9941a514cb0636c63fd96c0cf06d57a4b44cf1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_multi_pane_layout_reference.cjs",
+      "sha256": "3e9b702b450eda9d78bf7f70901f1cf66f0775dfa13aa1674c9db1ab717fbcfe",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_numeric_custom_series_reference.cjs",
+      "sha256": "8ef9ed1c34f1ffc85e97491ce43ac56036e0c5158fbc15ab717478c52cd6606f",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_options_chart_reference.cjs",
+      "sha256": "a7605804f3f41c07d020b8a63340a15552e4bbae5f81b4897bbee3c4f131797a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_management_reference.cjs",
+      "sha256": "c4a79cd3a31c096f2c88d6f5961de565667930de5fcdd1c310b2f6ab9e727722",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_pane_sizing_reference.cjs",
+      "sha256": "572a040f85026460dd1ae294053ed5053d8a621ff7491b2df7a274716f191f65",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_axis_reference.cjs",
+      "sha256": "edf3d724b527697f404533dfe1fbcf3b6e60ecb17d3f27d47bb2b6615a7b3f8c",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_lines_reference.cjs",
+      "sha256": "586357e035f77527087a4bb6bf8b6e16d6e87e97a34a2457b0306d3b699994cd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_price_scale_configuration_reference.cjs",
+      "sha256": "71af03522e8e0031aa7836c27b7d1783f8101ea2aedeaaf0cc018d7ffd64c2a9",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_primitive_reference.cjs",
+      "sha256": "0a1638b6f557c0f0072b8533e3a443d1bf0df1d52f2d57fb7892a8c81f2c6691",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_events_reference.cjs",
+      "sha256": "2094c4ef89493786fd0d1b5a85ba1370efa4d57874f973bf0669ff51e7ae567b",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_public_helpers_reference.cjs",
+      "sha256": "8cc34724035c9466f78df7051173db9f663a177eb0d74c07b3c30ec07836d0cc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_scale_assignment_reference.cjs",
+      "sha256": "6852d35b5781e5d2640939fac523c3c804f681cf957e6774cbc3d0ef78dbbdd5",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_screenshot_reference.cjs",
+      "sha256": "03ddd594d120f98a257d340ee8d5e40c83a5b746293e125e2b82edffd8771ef1",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_data_reference.cjs",
+      "sha256": "fe53408b9921be879eed847d93906df063b27eaa2a9be0bc663bbba05f9a7a6d",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_markers_reference.cjs",
+      "sha256": "812c99052657cdb671d1b8cfa2e28d30e47230dfa0fb702c3eb98ca7c74d21be",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_series_order_reference.cjs",
+      "sha256": "363ed48a528efe71a6847ba9a2a1ad904999bb4a9639f144e48a5834c58b3edc",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_text_watermark_reference.cjs",
+      "sha256": "63b116f9b67835e75ccbd435bb52ffeb542bff79485b99286fae8c3beae26eae",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_time_axis_reference.cjs",
+      "sha256": "139cc120a78ae54e1a1a156968433968c858e53825a781b7fa9ce65c14ec580a",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_touch_reference.cjs",
+      "sha256": "21c28e479913d41304c2b35a4ec5435142068d4fb41302085cbef6120e79c987",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_up_down_markers_reference.cjs",
+      "sha256": "16779689548d66ce99bf0803511320a0c7a59b9d6b64bbecaf65208bcc1440fd",
+      "exit": 0
+    },
+    {
+      "script": "scripts/check_yield_curve_reference.cjs",
+      "sha256": "2259259b6ff1bd238cbc22d4c517d08831c13c5f5b5ac55d82710c402bd8066e",
+      "exit": 0
+    }
+  ],
+  "previous_42_source_scripts_unchanged": true,
+  "captures": {
+    "screens": 864,
+    "retained_exports": 864,
+    "metadata_only_pixel_comparisons": 384,
+    "modes": [
+      "calendar",
+      "strike",
+      "maturity",
+      "sessions"
+    ],
+    "scenes": [
+      "initial",
+      "latest",
+      "history",
+      "cleared",
+      "retained",
+      "restored",
+      "moved",
+      "removed",
+      "recovered"
+    ],
+    "sizes": [
+      [
+        800,
+        500
+      ],
+      [
+        300,
+        300
+      ],
+      [
+        300,
+        90
+      ]
+    ],
+    "ratios": [
+      1,
+      1.25,
+      1.5,
+      2
+    ],
+    "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e"
+  },
+  "compatibility": [
+    {
+      "script": "capture_public_events.py",
+      "exit": 0,
+      "accepted_images_unchanged": 912
+    },
+    {
+      "script": "capture_custom_horizontal.py",
+      "exit": 0,
+      "accepted_images_unchanged": 240
+    },
+    {
+      "script": "capture_screenshot_export.py",
+      "exit": 0,
+      "accepted_images_unchanged": 1158
+    },
+    {
+      "script": "capture_attribution.py",
+      "exit": 0,
+      "accepted_images_unchanged": 672
+    },
+    {
+      "script": "capture_formatting.py",
+      "exit": 0,
+      "accepted_images_unchanged": 576
+    },
+    {
+      "script": "capture_scale_assignment.py",
+      "exit": 0,
+      "accepted_images_unchanged": 768
+    },
+    {
+      "script": "capture_axis_interaction.py",
+      "exit": 0,
+      "accepted_images_unchanged": 864
+    },
+    {
+      "script": "capture_public_helpers.py",
+      "exit": 0,
+      "accepted_images_unchanged": 576
+    },
+    {
+      "script": "capture_pane_sizing.py",
+      "exit": 0,
+      "accepted_images_unchanged": 672
+    }
+  ],
+  "accepted_images_unchanged": 6438,
+  "pinned_files": {
+    "target/application-metadata/corrected/interrupted-compatibility.json": "1a7f3c8af1ffde6e77ab71808a51886656cf76930e8b5ca68cce556183cac103",
+    "target/application-metadata/corrected/validation.json": "3688a4c8ddd6e7ce0eaeddb14c7b97049ba83853b0a8af608dca4cf6341ff896",
+    "target/application-metadata/corrected/references/results.json": "85eabc860bf7e7d42539decaebd2eab076e5676432beeabdc7f3544bdec0e000",
+    "target/application-metadata/corrected/captures/protocol.json": "98c47fe23be90375156d720485c5cff30ed556547f4ae188749ea51003d4e62f",
+    "target/application-metadata/corrected/captures/results.json": "5a0f51f7844ba01be0c5e40032d2d89c52c72c1b99ec2818399955fccc258b69",
+    "target/application-metadata/corrected/compatibility-retry/results.json": "f135374aeffc0c36bb65627afbac9bb199af06c28d9068314fd3e075af4c4d5a",
+    "docs/porting/application-metadata-source.json": "44c597f116389a6709cee0e13d61c9bbf929d073c6eee16f6f9c986874f371b6",
+    "docs/porting/application-metadata-states.json": "f8b3b1e27f8db250070579e5a32c5f764685994185b7c49a350a23d5a7df5697"
+  },
+  "logs": {
+    "target/application-metadata/corrected/validation-build.log": "63b660053b1c206cb8c9dcd54442d1cc4143d8ba9b4869bc3d15191e132c82c7",
+    "target/application-metadata/corrected/validation-tests.log": "5cceb500857c49b00bab28f57e652dd89405b9b222f24689d10f0ff9845d5b77",
+    "target/application-metadata/corrected/validation-check.log": "96dda619d67c5d804d2b9c01a0af5e4adc51ecd687f21ebf3e1159d6bc856fa9",
+    "target/application-metadata/corrected/validation-clippy.log": "ba6ffbf54179b5b4bf5c9bfd375c3586e171ba3913a99bd68aded5444afb2ad2",
+    "target/application-metadata/corrected/validation-doc.log": "6cd64876fb047d8b0e813a3017b45529a75054a3dd20851844e2fcb5ff673e1f",
+    "target/application-metadata/corrected/validation-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "target/application-metadata/corrected/validation-inventory.log": "39b6ccad6dabf49371282f5b1e622ab497496a9b6e23b47d50e8803c5367f88c",
+    "target/application-metadata/red-feed-identity.log": "91940ef7178d166aff6d5a77b450645e2f300c6dbb601e5bd02203f21572ecdb",
+    "target/application-metadata/green-feed-identity.log": "12adc1761a77b93b662da3eba9237159a43cf27d313cea3b995962a3c94e5e13",
+    "target/application-metadata/design-final.log": "cfba4cfae32f402a2ccfe09a98057822e482e89aa37990d7e3d70e5ac6587e7d",
+    "target/application-metadata/red-public.log": "4830d7b19628d62269a25f2d1fec26cdff612f70e1c2aa3dcd589b75b581b437",
+    "target/application-metadata/adapter-check.log": "ca4b21fc0089433b01aee9fad646c528f9d033309d8590fe3c64ed245d1ddd85",
+    "target/application-metadata/review-clippy.log": "91f57ca793d4fa6bd064d24097fa2538cec6b6aa39c5c3dc0fdb380e022bcf3f",
+    "target/application-metadata/review-clippy-2.log": "8f39cd37f2f481fb43bff81157342dd6becd188b67bf1a2b7f1135be90f4d1fd",
+    "target/application-metadata/wrappers-contract-final.log": "fe72e643cec8e358b19998e54db54250e530aa518d8d7f31142659e707ba2e96"
+  },
+  "physical_acceptance": {
+    "tiny-skia": {
+      "status": "passed",
+      "report": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "scope": "Metadata controls and hover, live feed record identity, pane/scale transfers, mouse gestures and box edits/Escape, three window sizes, short-height recovery and export preview",
+      "manifest": "target/application-metadata/mouse/tiny-skia/sessions.json",
+      "manifest_sha256": "16bfd9961792d95781ab4435c3ce11f40705dcb310677655d36ec24cea2817fe",
+      "sessions": [
+        {
+          "domain": "calendar",
+          "backend": "tiny-skia",
+          "pid": 157477,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "strike",
+          "backend": "tiny-skia",
+          "pid": 157494,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "maturity",
+          "backend": "tiny-skia",
+          "pid": 157539,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "sessions",
+          "backend": "tiny-skia",
+          "pid": 157594,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        }
+      ]
+    },
+    "wgpu": {
+      "status": "passed",
+      "report": "All checks passed in all four modes; previews/exports passed; windows closed",
+      "scope": "Metadata controls and hover, live feed record identity, pane/scale transfers, mouse gestures and box edits/Escape, three window sizes, short-height recovery and export preview",
+      "manifest": "target/application-metadata/mouse/wgpu/sessions.json",
+      "manifest_sha256": "957576edc6a6afe7db6e972fbb37de42fe48a6cd6b542dc7ec1d2cea7e30d0ea",
+      "sessions": [
+        {
+          "domain": "calendar",
+          "backend": "wgpu",
+          "pid": 158086,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "strike",
+          "backend": "wgpu",
+          "pid": 158179,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--options"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "maturity",
+          "backend": "wgpu",
+          "pid": 158230,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--yield-curve"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        },
+        {
+          "domain": "sessions",
+          "backend": "wgpu",
+          "pid": 158366,
+          "command": [
+            "target/debug/examples/pane_management",
+            "--application-metadata",
+            "--series-data",
+            "--series-order",
+            "--scale-assignment",
+            "--screenshot-export",
+            "--live-feed",
+            "--custom-domain"
+          ],
+          "binary_sha256": "0591292a73c7bb30db8064e4f1d73fe084a7b9bb1ad523c7dd47cbbf5c12fc1e",
+          "status": "waiting for physical acceptance",
+          "exit": 0
+        }
+      ]
+    }
+  },
+  "native_adaptations": [
+    "M: Clone + static; no Debug/PartialEq/Send/Sync bounds on application records",
+    "Existing unit constructors remain inference-compatible; explicit metadata constructors opt in",
+    "M selects Clone/identity policy; Rc payloads retain shared identity",
+    "Typed custom data stays V::Data; whitespace V::Metadata matches chart M",
+    "Built-in snapshots own geometry; custom renderers retain only explicitly captured original data"
+  ],
+  "independent_exceptions": [
+    "formatting separate GPU physical record",
+    "earlier timing acceptance",
+    "dedicated series drawing-order physical acceptance",
+    "touchpad",
+    "touchscreen",
+    "physical high-DPI",
+    "Intl outside existing support contract",
+    "Display-P3 target"
+  ]
+}
