@@ -67,6 +67,11 @@ impl PrimitiveCoordinateTransform {
     }
 }
 impl<B: ChartBehavior, M: Clone + 'static> PrimitiveContext<'_, B, M> {
+    /// Resolve application-owned native ink before freezing its renderer.
+    pub fn color_parser(&self) -> crate::model::colors::ColorParser {
+        self.model.color_parser()
+    }
+
     pub fn coordinate_transform(&self) -> Option<PrimitiveCoordinateTransform> {
         let price = match self.owner {
             PrimitiveOwner::Series(id) => self
@@ -158,6 +163,14 @@ impl<B: ChartBehavior, M: Clone + 'static> PrimitiveContext<'_, B, M> {
 pub trait DrawingPrimitive<B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()>:
     std::fmt::Debug + 'static
 {
+    /// Validate declared color inputs before attachment/replacement. Opaque native
+    /// drawing stays application-owned; dynamic labels are checked at preparation.
+    fn validate_colors(
+        &self,
+        _colors: crate::model::colors::ColorParser,
+    ) -> Result<(), crate::model::colors::ColorParseError> {
+        Ok(())
+    }
     fn prepare(&self, context: &PrimitiveContext<'_, B, M>) -> PreparedPrimitive;
     fn autoscale_info(
         &self,
@@ -326,6 +339,15 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         owner: PrimitiveOwner,
         primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<PrimitiveId, ChartError> {
+        primitive
+            .validate_colors(self.color_parser())
+            .map_err(|_| {
+                ChartError::Model(
+                    crate::model::chart_model::ChartModelError::InvalidChartOptions(
+                        "primitive color",
+                    ),
+                )
+            })?;
         let id = NEXT_ID
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
             .map(PrimitiveId)
@@ -369,6 +391,15 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<(), ChartError> {
         self.primitive_owner(id)?;
+        primitive
+            .validate_colors(self.color_parser())
+            .map_err(|_| {
+                ChartError::Model(
+                    crate::model::chart_model::ChartModelError::InvalidChartOptions(
+                        "primitive color",
+                    ),
+                )
+            })?;
         self.up_down.remove(&id);
         self.cancel_primitive_edit_for(id, super::PrimitiveEditCancelReason::ExternalChange);
         let attachment = self

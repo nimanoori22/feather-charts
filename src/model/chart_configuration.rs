@@ -11,6 +11,7 @@ use crate::model::{
 #[derive(Clone, Debug, PartialEq)]
 pub struct LayoutAppearance {
     pub attribution_logo: bool,
+    pub color_space: crate::model::layout_options::ColorSpace,
     pub background: Background,
     pub text_color: String,
     pub font_size: f64,
@@ -26,6 +27,7 @@ pub struct PaneLayoutOptionsPatch {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LayoutOptionsPatch {
     pub attribution_logo: Option<bool>,
+    pub color_space: Option<crate::model::layout_options::ColorSpace>,
     pub background: Option<Background>,
     pub text_color: Option<String>,
     pub font_size: Option<f64>,
@@ -69,6 +71,7 @@ impl LayoutOptionsPatch {
             target,
             self,
             attribution_logo,
+            color_space,
             background,
             text_color,
             font_size,
@@ -133,19 +136,20 @@ impl HorzScaleOptionsPatch {
     }
 }
 
-pub(crate) fn valid_color(color: &str) -> bool {
-    crate::model::colors::ColorParser::default()
-        .parse_color(color)
-        .is_ok()
-}
-pub(crate) fn valid_scale(options: &crate::model::price_scale::PriceScaleOptions) -> bool {
+pub(crate) fn valid_scale(
+    options: &crate::model::price_scale::PriceScaleOptions,
+    parser: &mut crate::model::colors::ColorParser,
+) -> bool {
     options.minimum_width.is_finite()
         && options.minimum_width >= 0.
         && options.minimum_width <= f64::from(f32::MAX)
         && options.tick_mark_density.is_finite()
         && options.tick_mark_density > 0.
-        && valid_color(&options.border_color)
-        && options.text_color.as_deref().is_none_or(valid_color)
+        && parser.parse_color(&options.border_color).is_ok()
+        && options
+            .text_color
+            .as_deref()
+            .is_none_or(|c| parser.parse_color(c).is_ok())
 }
 pub(crate) fn scale_geometry_changed(
     a: &crate::model::price_scale::PriceScaleOptions,

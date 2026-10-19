@@ -10,7 +10,7 @@ use crate::{
         },
     },
     ui::{
-        line_chart::{FrameError, color},
+        line_chart::FrameError,
         price_axis::{
             AxisFontResolver, AxisPrimitive, IcedAxisTextMeasurer, PriceAxisUiError,
             draw_axis_primitives,
@@ -51,6 +51,13 @@ impl IcedTimeAxis {
         commands: &PreparedTimeAxis,
         fonts: &AxisFontResolver,
     ) -> Result<Self, TimeAxisUiError> {
+        Self::from_commands_with_colors(commands, fonts, &Default::default())
+    }
+    pub(crate) fn from_commands_with_colors(
+        commands: &PreparedTimeAxis,
+        fonts: &AxisFontResolver,
+        colors: &crate::model::colors::ColorParser,
+    ) -> Result<Self, TimeAxisUiError> {
         let size = Size::new(commands.bounds.width as f32, commands.bounds.height as f32);
         let mut primitives = vec![];
         let mut screenshot_layers = vec![];
@@ -90,19 +97,24 @@ impl IcedTimeAxis {
                                 bottom_left: radii[3],
                             },
                         ),
-                        color: color(value).map_err(TimeAxisUiError::Color)?,
+                        color: crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(TimeAxisUiError::Color)?,
                     });
                 }
                 TimeAxisCommand::Background(value) => primitives.push(AxisPrimitive::Fill {
                     origin: Point::ORIGIN,
                     size,
-                    fill: color(value).map_err(TimeAxisUiError::Color)?.into(),
+                    fill: crate::ui::line_chart::color_with_parser(value, colors)
+                        .map_err(TimeAxisUiError::Color)?
+                        .into(),
                 }),
                 TimeAxisCommand::Rectangle { rect, color: value } => {
                     primitives.push(AxisPrimitive::Fill {
                         origin: Point::new(rect.origin.x as f32, rect.origin.y as f32),
                         size: Size::new(rect.size.width as f32, rect.size.height as f32),
-                        fill: color(value).map_err(TimeAxisUiError::Color)?.into(),
+                        fill: crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(TimeAxisUiError::Color)?
+                            .into(),
                     })
                 }
                 TimeAxisCommand::Text {
@@ -118,7 +130,8 @@ impl IcedTimeAxis {
                         axis_font(fonts, font_family, *emphasis)?,
                         *font_size,
                         Alignment::Center,
-                        color(value).map_err(TimeAxisUiError::Color)?,
+                        crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(TimeAxisUiError::Color)?,
                         Point::new(position.x as f32, position.y as f32),
                     );
                     primitives.extend(

@@ -352,6 +352,7 @@ where
     pub(crate) fn preview_runtime_scales(
         &self,
         patch: &crate::model::chart_configuration::ChartModelOptionsPatch,
+        colors: &mut crate::model::colors::ColorParser,
     ) -> Result<(bool, bool), crate::model::chart_model::ChartModelError> {
         use crate::model::{
             chart_configuration::{scale_geometry_changed, valid_scale},
@@ -373,7 +374,7 @@ where
             if let Some(p) = p {
                 let next = patched_live_scale_options(s.options(), p, self.layout_font_size)
                     .map_err(|_| ChartModelError::InvalidChartOptions("scale margins"))?;
-                if !valid_scale(&next) {
+                if !valid_scale(&next, colors) {
                     return Err(ChartModelError::InvalidChartOptions("price scale"));
                 }
                 changed |= s.options() != &next;

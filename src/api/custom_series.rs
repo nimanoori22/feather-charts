@@ -27,6 +27,7 @@ use std::{
 struct OwnedView<V: CustomSeriesPaneView<Frame>> {
     view: V,
     options: V::Options,
+    colors: crate::model::colors::ColorParser,
 }
 impl<V: CustomSeriesPaneView<Frame>> Drop for OwnedView<V> {
     fn drop(&mut self) {
@@ -359,8 +360,12 @@ where
             .unwrap_or_default();
         drop(model);
         let mut owned = self.view.borrow_mut();
-        let OwnedView { view, options } = &mut *owned;
-        view.update(data, options);
+        let OwnedView {
+            view,
+            options,
+            colors,
+        } = &mut *owned;
+        view.update_with_color_parser(data, options, colors.clone());
         context.price.map(|price| {
             PreparedCustomSeries::new(
                 view.renderer().clone(),
@@ -393,14 +398,24 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         V::Renderer: Clone + 'static,
         <V::Renderer as CustomSeriesPaneRenderer<Frame>>::HitTestData: Clone + 'static,
     {
-        validate_options(&options)?;
+        validate_options(&options, &mut self.color_parser())?;
         self.model.validate_scale_position(&position)?;
+        let view_options = view.default_options();
+        view.validate_options(&view_options, self.color_parser())
+            .map_err(|_| {
+                ChartError::Model(
+                    crate::model::chart_model::ChartModelError::InvalidChartOptions(
+                        "custom renderer color",
+                    ),
+                )
+            })?;
         let id = super::chart::NEXT_SERIES
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |n| n.checked_add(1))
             .map(SeriesId::new)
             .map_err(|_| ChartError::IdExhausted)?;
         let owned = Rc::new(RefCell::new(OwnedView {
-            options: view.default_options(),
+            options: view_options,
+            colors: self.color_parser(),
             view,
         }));
         let model = Rc::new(RefCell::new(CustomSeries::new(id, options)));
@@ -546,7 +561,18 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
                 Metadata = M,
             >,
     {
-        handle.attached_view(self)?.borrow_mut().options = options;
+        let view = handle.attached_view(self)?;
+        view.borrow()
+            .view
+            .validate_options(&options, self.color_parser())
+            .map_err(|_| {
+                ChartError::Model(
+                    crate::model::chart_model::ChartModelError::InvalidChartOptions(
+                        "custom renderer color",
+                    ),
+                )
+            })?;
+        view.borrow_mut().options = options;
         handle.model.borrow_mut().invalidate_pane_data();
         self.model.light_update();
         self.revision += 1;
@@ -566,7 +592,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
             >,
     {
         handle.attached_view(self)?;
-        validate_options(&options)?;
+        validate_options(&options, &mut self.color_parser())?;
         let target = options
             .common
             .price_scale_id
@@ -590,8 +616,10 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         Ok(())
     }
 }
-fn validate_options(options: &CustomSeriesOptions) -> Result<(), ChartError> {
-    let mut parser = crate::model::colors::ColorParser::default();
+fn validate_options(
+    options: &CustomSeriesOptions,
+    parser: &mut crate::model::colors::ColorParser,
+) -> Result<(), ChartError> {
     let common = &options.common;
     let valid_format = match &common.price_format {
         crate::model::series_options::PriceFormat::BuiltIn(f) => {

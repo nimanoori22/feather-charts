@@ -4,7 +4,7 @@ use crate::{
         plot_data::PlotRowLike, series_options::LastPriceAnimationMode,
     },
     renderers::series_last_price_animation_renderer::LastPriceAnimation,
-    ui::line_chart::{FrameError, color},
+    ui::line_chart::{FrameError, color_with_parser},
 };
 use std::{hash::Hash, time::Instant};
 
@@ -55,7 +55,10 @@ where
         .price_to_coordinate(row.values()[3], first.value)
         .value();
     // The settled time scale is read below after releasing the series borrow.
-    let color = color(series.bar_color(row).expect("line-family row color"))?;
+    let color = color_with_parser(
+        series.bar_color(row).expect("line-family row color"),
+        &model.color_parser(),
+    )?;
     let state = series
         .last_price_animation
         .expect("line-family animation state");

@@ -13,7 +13,7 @@ use crate::{
             PriceAxisRenderError, measure_price_axis, prepare_price_axis,
         },
     },
-    ui::line_chart::{FrameError, color},
+    ui::line_chart::FrameError,
 };
 use iced::{
     Color, Font, Point, Rectangle, Size,
@@ -305,6 +305,13 @@ impl IcedPriceAxis {
         commands: &PreparedPriceAxis,
         fonts: &AxisFontResolver,
     ) -> Result<Self, PriceAxisUiError> {
+        Self::from_commands_with_colors(commands, fonts, &Default::default())
+    }
+    pub(crate) fn from_commands_with_colors(
+        commands: &PreparedPriceAxis,
+        fonts: &AxisFontResolver,
+        colors: &crate::model::colors::ColorParser,
+    ) -> Result<Self, PriceAxisUiError> {
         let size = Size::new(commands.bounds.width as f32, commands.bounds.height as f32);
         let mut primitives = vec![];
         let mut screenshot_layers = vec![];
@@ -344,20 +351,31 @@ impl IcedPriceAxis {
                                 bottom_left: radii[3],
                             },
                         ),
-                        color: color(value).map_err(PriceAxisUiError::Color)?,
+                        color: crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(PriceAxisUiError::Color)?,
                     });
                 }
                 PriceAxisCommand::Background(background) => {
                     let fill = match background {
                         Background::Solid { color: value } => {
-                            color(value).map_err(PriceAxisUiError::Color)?.into()
+                            crate::ui::line_chart::color_with_parser(value, colors)
+                                .map_err(PriceAxisUiError::Color)?
+                                .into()
                         }
                         Background::VerticalGradient {
                             top_color,
                             bottom_color,
                         } => gradient::Linear::new(Point::ORIGIN, Point::new(0., size.height))
-                            .add_stop(0., color(top_color).map_err(PriceAxisUiError::Color)?)
-                            .add_stop(1., color(bottom_color).map_err(PriceAxisUiError::Color)?)
+                            .add_stop(
+                                0.,
+                                crate::ui::line_chart::color_with_parser(top_color, colors)
+                                    .map_err(PriceAxisUiError::Color)?,
+                            )
+                            .add_stop(
+                                1.,
+                                crate::ui::line_chart::color_with_parser(bottom_color, colors)
+                                    .map_err(PriceAxisUiError::Color)?,
+                            )
                             .into(),
                     };
                     primitives.push(AxisPrimitive::Fill {
@@ -370,7 +388,9 @@ impl IcedPriceAxis {
                     primitives.push(AxisPrimitive::Fill {
                         origin: Point::new(rect.origin.x as f32, rect.origin.y as f32),
                         size: Size::new(rect.size.width as f32, rect.size.height as f32),
-                        fill: color(value).map_err(PriceAxisUiError::Color)?.into(),
+                        fill: crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(PriceAxisUiError::Color)?
+                            .into(),
                     })
                 }
                 PriceAxisCommand::Text {
@@ -389,7 +409,8 @@ impl IcedPriceAxis {
                             AxisTextAlignment::Left => text::Alignment::Left,
                             AxisTextAlignment::Right => text::Alignment::Right,
                         },
-                        color(value).map_err(PriceAxisUiError::Color)?,
+                        crate::ui::line_chart::color_with_parser(value, colors)
+                            .map_err(PriceAxisUiError::Color)?,
                         Point::new(position.x as f32, position.y as f32),
                     );
                     // Cached Canvas text escapes clipping on the 0.14 TinySkia

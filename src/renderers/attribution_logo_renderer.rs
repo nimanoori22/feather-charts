@@ -30,6 +30,7 @@ impl AttributionLogo {
         owner: PrimitivePaneId,
         text_color: &str,
         previous: Option<&Self>,
+        colors: &ColorParser,
     ) -> Result<Option<Self>, ColorParseError> {
         let clip = Rectangle::new(
             Point::new(plot.origin.x as f32, plot.origin.y as f32),
@@ -48,7 +49,7 @@ impl AttributionLogo {
         let style = if let Some(old) = previous.filter(|p| p.style.text_color == text_color) {
             old.style.clone()
         } else {
-            let color = ColorParser::default().parse_color(text_color)?;
+            let color = colors.clone().parse_color(text_color)?;
             // Match JavaScript Number precision at the source's >160 boundary.
             let gray = 0.199 * f64::from(color.red)
                 + 0.687 * f64::from(color.green)

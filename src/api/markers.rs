@@ -9,9 +9,9 @@ static NEXT_COLLECTION: AtomicU64 = AtomicU64::new(1);
 fn validate<B: super::ChartBehavior>(
     behavior: &B,
     markers: &[SeriesMarker<B::Item>],
+    parser: &mut crate::model::colors::ColorParser,
 ) -> Result<(), ChartError> {
     let mut previous = None;
-    let mut parser = crate::model::colors::ColorParser::default();
     for (index, marker) in markers.iter().enumerate() {
         let time = behavior.key(
             &behavior
@@ -46,7 +46,11 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         if !self.kinds.contains_key(&series) {
             return Err(ChartError::UnknownSeries(series));
         }
-        validate(self.model.time_scale().behavior(), &markers)?;
+        validate(
+            self.model.time_scale().behavior(),
+            &markers,
+            &mut self.color_parser(),
+        )?;
         let id = NEXT_COLLECTION
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |v| v.checked_add(1))
             .map(MarkerCollectionId)
@@ -64,7 +68,11 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         markers: Vec<SeriesMarker<B::Item>>,
     ) -> Result<(), ChartError> {
         self.series_marker_options(id)?;
-        validate(self.model.time_scale().behavior(), &markers)?;
+        validate(
+            self.model.time_scale().behavior(),
+            &markers,
+            &mut self.color_parser(),
+        )?;
         self.model
             .edit_marker_collection(id, |collection| collection.markers = markers);
         Ok(())

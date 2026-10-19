@@ -139,9 +139,9 @@ combined remaining captures are Z0 and independent exceptions are unchanged.
 ### I — Configured color parsing
 
 - [x] I0: Freeze configured color parsing and gamut policy. (depends: H2).
-- [ ] I1: Route configured parsers through core validation and preparation. (depends: I0).
-- [ ] I2: Complete configured extension colors. (depends: I1).
-- [ ] I3: Make unsupported target color-space requests explicit. (depends: I2).
+- [x] I1: Route configured parsers through core validation and preparation. (depends: I0).
+- [x] I2: Complete configured extension colors. (depends: I1).
+- [x] I3: Make unsupported target color-space requests explicit. (depends: I2).
 - [ ] I4: Demonstrate color policy and accept milestone I. (depends: I3).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

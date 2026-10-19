@@ -1,7 +1,6 @@
 use super::*;
 use crate::model::{
     axis_snapshots::{FloatingAxisLabel, SeriesAxisLabel},
-    colors::ColorParser,
     price_line::{PriceLine, PriceLineId, PriceLineOptions},
     series_options::{PriceAxisLastValueMode, PriceLineSource},
 };
@@ -35,7 +34,7 @@ where
         series: SeriesId,
         options: PriceLineOptions,
     ) -> Result<PriceLineId, ChartModelError> {
-        if !options.valid() {
+        if !options.valid(&mut self.color_parser()) {
             return Err(ChartModelError::InvalidPriceLineOptions);
         }
         let handle = self
@@ -71,7 +70,7 @@ where
         id: PriceLineId,
         options: PriceLineOptions,
     ) -> Result<(), ChartModelError> {
-        if !options.valid() {
+        if !options.valid(&mut self.color_parser()) {
             return Err(ChartModelError::InvalidPriceLineOptions);
         }
         for entry in self.series.values() {
@@ -130,7 +129,7 @@ where
                 .price_scale_for_source(*id)
                 .is_some_and(|s| s.id() == "right")
         });
-        let mut parser = ColorParser::default();
+        let mut parser = self.color_parser.clone();
         let mut left_overlay = vec![];
         let mut right_overlay = vec![];
         for id in ids {

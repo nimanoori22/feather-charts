@@ -75,9 +75,13 @@ struct Primitive<T = Time, K = TimeKey>(Rc<RefCell<State<T, K>>>);
 fn key<B: super::ChartBehavior>(behavior: &B, time: &B::Item) -> Result<B::Key, ChartError> {
     Ok(behavior.key(&behavior.to_internal(time).map_err(B::conversion_error)?))
 }
-fn colors(options: &UpDownMarkersOptions) -> Result<[iced::Color; 2], ChartError> {
+fn colors(
+    options: &UpDownMarkersOptions,
+    parser: &crate::model::colors::ColorParser,
+) -> Result<[iced::Color; 2], ChartError> {
     let parse = |value: &str| {
-        crate::ui::line_chart::color(value).map_err(|_| ChartError::InvalidUpDownOptions)
+        crate::ui::line_chart::color_with_parser(value, parser)
+            .map_err(|_| ChartError::InvalidUpDownOptions)
     };
     Ok([
         parse(&options.positive_color)?,
@@ -109,7 +113,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
         }
         drop(owner);
         let state = Rc::new(RefCell::new(State {
-            colors: colors(&options)?,
+            colors: colors(&options, &self.color_parser())?,
             options,
             active: vec![],
             next: None,
@@ -296,7 +300,7 @@ impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
             .up_down
             .get(&id.0)
             .ok_or(ChartError::UnknownPrimitive(id.0))?;
-        let colors = colors(&options)?;
+        let colors = colors(&options, &self.color_parser())?;
         {
             let mut state = controller.state.borrow_mut();
             state.options = options;
@@ -329,7 +333,9 @@ impl<B: super::ChartBehavior, M: Clone + 'static> DrawingPrimitive<B, M>
             SeriesOptionsMap::Area(o) => &o.style.line_color,
             _ => return PreparedPrimitive::default(),
         };
-        let Ok(neutral) = crate::ui::line_chart::color(neutral) else {
+        let Ok(neutral) =
+            crate::ui::line_chart::color_with_parser(neutral, &context.model.color_parser())
+        else {
             return PreparedPrimitive::default();
         };
         let ratio = f64::from(context.pixel_ratio);

@@ -150,11 +150,21 @@ impl Default for Chart {
     }
 }
 impl Chart {
+    /// Validates chart presentation and its sRGB output target immediately.
+    pub fn try_new(options: ChartModelOptions) -> Result<Self, ChartError> {
+        Self::try_new_with_metadata(options)
+    }
     pub fn new(options: ChartModelOptions) -> Self {
         Self::new_with_metadata(options)
     }
 }
 impl<M: Clone + 'static> Chart<HorzScaleBehaviorTime, M> {
+    pub fn try_new_with_metadata(options: ChartModelOptions) -> Result<Self, ChartError> {
+        options.validate_color_space()?;
+        let chart = Self::new_with_metadata(options);
+        chart.model.preview_runtime_options(&Default::default())?;
+        Ok(chart)
+    }
     /// Calendar chart with typed metadata. Use Rc<T> to share payloads without deep copies.
     /// Existing unit-metadata callers can keep using Chart::new or Default.
     pub fn new_with_metadata(options: ChartModelOptions) -> Self {
@@ -184,7 +194,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         let separator = options.layout.panes.separator_color.clone();
         let resize_panes = options.layout.panes.enable_resize;
         let separator_hover = options.layout.panes.separator_hover_color.clone();
-        Self {
+        let mut chart = Self {
             event_interests: Default::default(),
             pending_events: Default::default(),
             range_observer: None,
@@ -236,7 +246,9 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
             ),
             layer: DataLayer::new(data_behavior),
             kinds: BTreeMap::new(),
-        }
+        };
+        chart.layer.set_color_parser(chart.model.color_parser());
+        chart
     }
 }
 impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
@@ -250,6 +262,8 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         pane: usize,
         position: PriceScalePosition,
     ) -> Result<SeriesId, ChartError> {
+        crate::model::series::validate_palette(&options, &mut self.color_parser())
+            .map_err(|e| ChartError::Model(ChartModelError::Construction(e)))?;
         let kind = match &options {
             SeriesOptionsMap::Line(_) => SeriesType::Line,
             SeriesOptionsMap::Area(_) => SeriesType::Area,
@@ -301,7 +315,13 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         data: Vec<BuiltInSeriesDataItem<B::Item, M>>,
     ) -> Result<(), ChartError> {
         let kind = self.kind(id)?;
-        validate_data(self.model.time_scale().behavior(), kind, &data, true)?;
+        validate_data(
+            self.model.time_scale().behavior(),
+            kind,
+            &data,
+            true,
+            &mut self.color_parser(),
+        )?;
         if data.is_empty() {
             self.cancel_interaction();
         }
@@ -325,6 +345,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
             self.kind(id)?,
             std::slice::from_ref(&item),
             false,
+            &mut self.color_parser(),
         )?;
         let threshold = self
             .model
@@ -388,6 +409,8 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         options: SeriesOptionsMap,
     ) -> Result<(), ChartError> {
         self.kind(id)?;
+        crate::model::series::validate_palette(&options, &mut self.color_parser())
+            .map_err(|e| ChartError::Model(ChartModelError::Construction(e)))?;
         let target = self.model.preview_series_options(id, &options)?;
         let changed = self.model.preview_scale_assignment(id, &target)?;
         if changed {
@@ -452,6 +475,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         ratio: f32,
         now: Instant,
     ) -> Result<MultiPaneChartFrameSnapshot, ChartError> {
+        self.model.options_color_space()?;
         self.expire_up_down_markers(now);
         self.prepared_revision = None;
         self.precompute_conflation_step();
@@ -535,11 +559,18 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         let result = self
             .prepare_snapshot(size, ratio, now)
             .and_then(|snapshot| {
-                self.hover_color = crate::ui::line_chart::color(&self.separator_hover)
-                    .map_err(|error| ChartError::Frame(ChartFrameError::Plot(error)))?;
-                let mut frame =
-                    IcedMultiPaneChartFrame::from_snapshot(snapshot, &self.fonts, &self.separator)
-                        .map_err(ChartError::Frame)?;
+                self.hover_color = crate::ui::line_chart::color_with_parser(
+                    &self.separator_hover,
+                    &self.color_parser(),
+                )
+                .map_err(|error| ChartError::Frame(ChartFrameError::Plot(error)))?;
+                let mut frame = IcedMultiPaneChartFrame::from_snapshot_with_colors(
+                    snapshot,
+                    &self.fonts,
+                    &self.separator,
+                    &self.color_parser(),
+                )
+                .map_err(ChartError::Frame)?;
                 let (enabled, text_color) = self.model.attribution_options();
                 if enabled
                     && let Some((pane, owner)) = frame.panes.last().zip(self.primitive_panes.last())
@@ -550,6 +581,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
                             *owner,
                             text_color,
                             self.frame.attribution.as_ref(),
+                            &self.color_parser(),
                         )
                         .map_err(|_| {
                             ChartError::Model(ChartModelError::InvalidChartOptions("color"))
@@ -738,6 +770,7 @@ fn validate_data<B: ChartBehavior, M: Clone>(
     kind: SeriesType,
     data: &[BuiltInSeriesDataItem<B::Item, M>],
     ordered: bool,
+    parser: &mut crate::model::colors::ColorParser,
 ) -> Result<(), ChartError> {
     if data.is_empty() {
         return Ok(());
@@ -765,48 +798,42 @@ fn validate_data<B: ChartBehavior, M: Clone>(
             item.time().clone(),
         )
         .map_err(|e| ChartError::Data(DataLayerError::PlotRow(e)))?;
-        if let crate::model::series_data::SeriesDataRow::Value(
-            crate::model::series_data::SeriesPlotRow::Area(area),
-        ) = &row
-        {
-            let mut parser = crate::model::colors::ColorParser::default();
-            if [&area.line_color, &area.top_color, &area.bottom_color]
+        if let crate::model::series_data::SeriesDataRow::Value(row) = &row {
+            use crate::model::series_data::SeriesPlotRow;
+            let colors = match row {
+                SeriesPlotRow::Line(r) => [r.color.as_ref(), None, None, None, None, None],
+                SeriesPlotRow::Histogram(r) => [r.color.as_ref(), None, None, None, None, None],
+                SeriesPlotRow::Bar(r) => [r.color.as_ref(), None, None, None, None, None],
+                SeriesPlotRow::Candlestick(r) => [
+                    r.color.as_ref(),
+                    r.border_color.as_ref(),
+                    r.wick_color.as_ref(),
+                    None,
+                    None,
+                    None,
+                ],
+                SeriesPlotRow::Area(r) => [
+                    r.line_color.as_ref(),
+                    r.top_color.as_ref(),
+                    r.bottom_color.as_ref(),
+                    None,
+                    None,
+                    None,
+                ],
+                SeriesPlotRow::Baseline(r) => [
+                    r.top_fill_color1.as_ref(),
+                    r.top_fill_color2.as_ref(),
+                    r.top_line_color.as_ref(),
+                    r.bottom_fill_color1.as_ref(),
+                    r.bottom_fill_color2.as_ref(),
+                    r.bottom_line_color.as_ref(),
+                ],
+                _ => [None; 6],
+            };
+            if colors
                 .into_iter()
                 .flatten()
                 .any(|c| parser.parse_color(c).is_err())
-            {
-                return Err(ChartError::InvalidData { index });
-            }
-        }
-        if let crate::model::series_data::SeriesDataRow::Value(
-            crate::model::series_data::SeriesPlotRow::Bar(bar),
-        ) = &row
-        {
-            let mut parser = crate::model::colors::ColorParser::default();
-            if bar
-                .color
-                .as_ref()
-                .is_some_and(|c| parser.parse_color(c).is_err())
-            {
-                return Err(ChartError::InvalidData { index });
-            }
-        }
-        if let crate::model::series_data::SeriesDataRow::Value(
-            crate::model::series_data::SeriesPlotRow::Baseline(r),
-        ) = &row
-        {
-            let mut parser = crate::model::colors::ColorParser::default();
-            if [
-                &r.top_fill_color1,
-                &r.top_fill_color2,
-                &r.bottom_fill_color1,
-                &r.bottom_fill_color2,
-                &r.top_line_color,
-                &r.bottom_line_color,
-            ]
-            .into_iter()
-            .flatten()
-            .any(|c| parser.parse_color(c).is_err())
             {
                 return Err(ChartError::InvalidData { index });
             }

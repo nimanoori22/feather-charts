@@ -273,6 +273,27 @@ pub fn create_custom_plot_row<I, O, D, M>(
 where
     D: CustomData<Item = O>,
 {
+    create_custom_plot_row_with_colors(
+        time,
+        index,
+        item,
+        original_time,
+        builder,
+        &mut Default::default(),
+    )
+}
+
+pub(crate) fn create_custom_plot_row_with_colors<I, O, D, M>(
+    time: I,
+    index: TimePointIndex,
+    item: CustomSeriesDataItem<D, O, M>,
+    original_time: O,
+    builder: &impl CustomPlotRowBuilder<D, O, M>,
+    colors: &mut crate::model::colors::ColorParser,
+) -> Result<SeriesDataRow<I, O, D, M>, PlotRowCreationError>
+where
+    D: CustomData<Item = O>,
+{
     if builder.is_whitespace(&item) {
         return Ok(match item {
             CustomSeriesDataItem::Whitespace(item) => {
@@ -312,11 +333,10 @@ where
                 return Err(PlotRowCreationError::InvalidCustomValues);
             }
             let color = data.color().map(str::to_owned);
-            if color.as_ref().is_some_and(|color| {
-                crate::model::colors::ColorParser::default()
-                    .parse_color(color)
-                    .is_err()
-            }) {
+            if color
+                .as_ref()
+                .is_some_and(|color| colors.parse_color(color).is_err())
+            {
                 return Err(PlotRowCreationError::InvalidCustomColor);
             }
             let high = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);

@@ -78,7 +78,15 @@ impl std::fmt::Debug for TextWatermark {
     }
 }
 impl TextWatermark {
-    pub fn new(mut options: TextWatermarkOptions) -> Result<Self, TextWatermarkError> {
+    pub fn new(options: TextWatermarkOptions) -> Result<Self, TextWatermarkError> {
+        Self::with_color_parser(options, Default::default())
+    }
+    /// Resolves colors once using the chart's configured policy. No parser is
+    /// retained by the watermark or its frozen renderer.
+    pub fn with_color_parser(
+        mut options: TextWatermarkOptions,
+        parser: crate::model::colors::ColorParser,
+    ) -> Result<Self, TextWatermarkError> {
         let mut colors = vec![];
         for (line, o) in options.lines.iter_mut().enumerate() {
             if !o.font_size.is_finite() || o.font_size <= 0. || !(o.font_size * 1.2).is_finite() {
@@ -88,7 +96,7 @@ impl TextWatermark {
                 return Err(TextWatermarkError::InvalidLineHeight { line });
             }
             colors.push(
-                crate::ui::line_chart::color(&o.color)
+                crate::ui::line_chart::color_with_parser(&o.color, &parser)
                     .map_err(|_| TextWatermarkError::InvalidColor { line })?,
             );
             o.text = o

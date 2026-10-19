@@ -46,18 +46,15 @@ impl<M: Clone + 'static> Chart<HorzScaleBehaviorPrice, M> {
         scale_options: HorzScaleOptions,
         localization: LocalizationOptions<HorizontalPrice>,
     ) -> Result<Self, ChartError> {
+        chart_options.validate_color_space()?;
         options.validate().map_err(ChartError::OptionsChart)?;
         let mut data = HorzScaleBehaviorPrice::default();
         data.set_options(options);
         let mut scale = HorzScaleBehaviorPrice::default();
         scale.set_options(options);
-        Ok(Self::with_behavior(
-            chart_options,
-            data,
-            scale,
-            scale_options,
-            localization,
-        ))
+        let chart = Self::with_behavior(chart_options, data, scale, scale_options, localization);
+        chart.model.preview_runtime_options(&Default::default())?;
+        Ok(chart)
     }
     pub fn options_chart_options(&self) -> OptionsChartOptions {
         *self.layer.behavior().options()

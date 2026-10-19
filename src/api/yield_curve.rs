@@ -146,6 +146,7 @@ impl<M: Clone + 'static> YieldCurveChart<M> {
         chart_options: ChartModelOptions,
         mut localization: LocalizationOptions<Maturity>,
     ) -> Result<Self, ChartError> {
+        chart_options.validate_color_space()?;
         options.scaffold(0.).map_err(ChartError::YieldCurve)?;
         let mut data = YieldCurveHorzScaleBehavior::default();
         data.set_options(options);
@@ -172,6 +173,7 @@ impl<M: Clone + 'static> YieldCurveChart<M> {
             },
             localization,
         );
+        core.model.preview_runtime_options(&Default::default())?;
         let mut support_options = LineSeriesOptions::default();
         yield_defaults(&mut support_options.common);
         let support = core.add_series(

@@ -27,9 +27,17 @@ fn logical_path(path: Vec<PathOperation>, ratio: PixelRatio) -> Vec<PathOperatio
         })
         .collect()
 }
-pub(super) fn canvas_gradient(
+#[cfg(test)]
+fn canvas_gradient(
     g: crate::renderers::area_renderer::VerticalGradient,
     ratio: PixelRatio,
+) -> Result<iced::widget::canvas::gradient::Linear, FrameError> {
+    canvas_gradient_with_colors(g, ratio, &Default::default())
+}
+pub(super) fn canvas_gradient_with_colors(
+    g: crate::renderers::area_renderer::VerticalGradient,
+    ratio: PixelRatio,
+    colors: &crate::model::colors::ColorParser,
 ) -> Result<iced::widget::canvas::gradient::Linear, FrameError> {
     let top = (g.top / f64::from(ratio.vertical)) as f32;
     let bottom = (g.bottom / f64::from(ratio.vertical)) as f32;
@@ -62,15 +70,23 @@ pub(super) fn canvas_gradient(
             }
             gradient.stops[i] = Some(iced::gradient::ColorStop {
                 offset: offset as f32,
-                color: color(&c)?,
+                color: color_with_parser(&c, colors)?,
             });
         }
     }
     Ok(gradient)
 }
-pub(super) fn canvas_fill(
+#[cfg(test)]
+fn canvas_fill(
     fill: crate::renderers::area_renderer::FilledPath,
     ratio: PixelRatio,
+) -> Result<CanvasFill, FrameError> {
+    canvas_fill_with_colors(fill, ratio, &Default::default())
+}
+pub(super) fn canvas_fill_with_colors(
+    fill: crate::renderers::area_renderer::FilledPath,
+    ratio: PixelRatio,
+    colors: &crate::model::colors::ColorParser,
 ) -> Result<CanvasFill, FrameError> {
     let path = logical_path(fill.path, ratio);
     if path.iter().any(|op| {
@@ -90,7 +106,7 @@ pub(super) fn canvas_fill(
     }
     Ok(CanvasFill {
         path,
-        gradient: canvas_gradient(fill.gradient, ratio)?,
+        gradient: canvas_gradient_with_colors(fill.gradient, ratio, colors)?,
     })
 }
 impl PlotSnapshot {

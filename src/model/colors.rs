@@ -157,6 +157,23 @@ impl ColorParser {
         ))
     }
 
+    /// Floating sRGB components for native rendering; ordinary CSS retains its
+    /// existing precision, while custom parsers use their explicit u8 contract.
+    pub fn rendering_rgba(&mut self, color: &str) -> Result<[f32; 4], ColorParseError> {
+        if !is_display_p3(color)
+            && let Ok(c) = csscolorparser::parse(color)
+        {
+            return Ok([c.r, c.g, c.b, c.a]);
+        }
+        let c = self.parse_color(color)?;
+        Ok([
+            c.red as f32 / 255.,
+            c.green as f32 / 255.,
+            c.blue as f32 / 255.,
+            c.alpha,
+        ])
+    }
+
     pub fn parse_color(&mut self, color: &str) -> Result<Rgba, ColorParseError> {
         if let Some(rgba) = self.rgba_cache.borrow().get(color) {
             return Ok(*rgba);

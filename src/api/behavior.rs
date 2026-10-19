@@ -75,6 +75,7 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         scale_options: crate::model::time_scale_options::HorzScaleOptions,
         localization: crate::model::localization_options::LocalizationOptions<B::Item>,
     ) -> Result<Self, ChartError> {
+        chart_options.validate_color_space()?;
         if !crate::model::chart_configuration::valid_horizontal_options(&scale_options) {
             return Err(
                 crate::model::chart_model::ChartModelError::InvalidChartOptions("horizontal scale")

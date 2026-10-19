@@ -3,7 +3,8 @@
 use crate::model::{
     data_consumer::{BuiltInSeriesDataItem, TimedData},
     get_series_plot_row_creator::{
-        CustomPlotRowBuilder, PlotRowCreationError, create_builtin_plot_row, create_custom_plot_row,
+        CustomPlotRowBuilder, PlotRowCreationError, create_builtin_plot_row,
+        create_custom_plot_row_with_colors,
     },
     icustom_series::{CustomData, CustomSeriesDataItem},
     ihorz_scale_behavior::{HorzScaleBehavior, HorzScaleItemConverter},
@@ -267,6 +268,7 @@ where
     B: HorzScaleBehavior,
 {
     behavior: B,
+    color_parser: crate::model::colors::ColorParser,
     points: Vec<TimePointData<B::InternalItem, B::Item, M>>,
     series_types: BTreeMap<SeriesId, SeriesType>,
     custom_series: BTreeSet<SeriesId>,
@@ -286,12 +288,16 @@ where
     pub fn new(behavior: B) -> Self {
         Self {
             behavior,
+            color_parser: Default::default(),
             points: vec![],
             series_types: BTreeMap::new(),
             custom_series: BTreeSet::new(),
             last_time_by_series: BTreeMap::new(),
             fulfilled_indices: BTreeSet::new(),
         }
+    }
+    pub(crate) fn set_color_parser(&mut self, parser: crate::model::colors::ColorParser) {
+        self.color_parser = parser;
     }
     pub fn behavior(&self) -> &B {
         &self.behavior
@@ -395,12 +401,13 @@ where
                         index: prepared.len(),
                     });
                 }
-                let row = create_custom_plot_row(
+                let row = create_custom_plot_row_with_colors(
                     internal_time,
                     TimePointIndex::default(),
                     item,
                     original_time,
                     builder,
+                    &mut self.color_parser.clone(),
                 )
                 .map_err(DataLayerError::PlotRow)?;
                 prepared.push(row);
@@ -483,12 +490,13 @@ where
         let affects_time_scale = point_index.is_none();
         let append_weight = self.tail_weight(&internal_time, affects_time_scale);
         let old_keys = (affects_time_scale && append_weight.is_none()).then(|| self.keys());
-        let row = create_custom_plot_row(
+        let row = create_custom_plot_row_with_colors(
             internal_time.clone(),
             TimePointIndex::default(),
             item,
             original_time,
             builder,
+            &mut self.color_parser.clone(),
         )
         .map_err(DataLayerError::PlotRow)?;
         let point_index = point_index.unwrap_or_else(|| {

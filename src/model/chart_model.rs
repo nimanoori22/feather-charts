@@ -52,8 +52,20 @@ pub struct ChartModelOptions {
     pub add_default_pane: bool,
 }
 
+impl ChartModelOptions {
+    pub(crate) fn validate_color_space(&self) -> Result<(), ChartModelError> {
+        if self.layout.color_space != crate::model::layout_options::ColorSpace::Srgb {
+            return Err(ChartModelError::UnsupportedColorSpace(
+                self.layout.color_space,
+            ));
+        }
+        Ok(())
+    }
+}
+
 #[derive(Debug, Eq, PartialEq)]
 pub enum ChartModelError {
+    UnsupportedColorSpace(crate::model::layout_options::ColorSpace),
     InvalidCrosshairOptions,
     InvalidPriceLineOptions,
     UnknownPriceLine(crate::model::price_line::PriceLineId),
@@ -146,6 +158,9 @@ where
         model
     }
 
+    pub(crate) fn options_color_space(&self) -> Result<(), ChartModelError> {
+        self.options.validate_color_space()
+    }
     /// Shares this chart's fixed callback policy and successful-parse cache.
     pub fn color_parser(&self) -> crate::model::colors::ColorParser {
         self.color_parser.clone()
@@ -1036,7 +1051,8 @@ where
         self.validate_scale_position(&position)?;
         options.common_mut().price_scale_id = Some(position.id().into());
         let handle = Rc::new(RefCell::new(
-            Series::new(id, kind, options).map_err(ChartModelError::Construction)?,
+            Series::with_color_parser(id, kind, options, self.color_parser())
+                .map_err(ChartModelError::Construction)?,
         ));
         let effects = self.panes[pane]
             .attach_series(handle.clone(), position)

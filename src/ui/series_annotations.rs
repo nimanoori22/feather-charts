@@ -1,7 +1,7 @@
 //! Converts annotations once; immutable drawing and hit testing share settled bounds.
 use super::{
     chart_frame::ChartFrameError,
-    line_chart::{PlotSnapshot, color},
+    line_chart::{PlotSnapshot, color_with_parser},
     price_axis::AxisFontResolver,
 };
 use crate::{
@@ -23,6 +23,7 @@ impl PlotSnapshot {
         &mut self,
         fonts: &AxisFontResolver,
         ratio: f64,
+        colors: &crate::model::colors::ColorParser,
     ) -> Result<(), ChartFrameError> {
         self.annotation_geometry.clear();
         for collection in &mut self.annotations {
@@ -31,7 +32,8 @@ impl PlotSnapshot {
                 .map_err(ChartFrameError::PriceUi)?;
             let mut paths = vec![];
             for item in &mut collection.items {
-                let color = color(&item.color).map_err(ChartFrameError::Plot)?;
+                let color =
+                    color_with_parser(&item.color, colors).map_err(ChartFrameError::Plot)?;
                 if let Some(t) = &mut item.text {
                     t.width = fonts
                         .text_width(&t.content, font, collection.font_size as f32)

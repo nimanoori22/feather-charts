@@ -538,6 +538,14 @@ impl IcedMultiPaneChartFrame {
         fonts: &AxisFontResolver,
         separator_color: &str,
     ) -> Result<Self, ChartFrameError> {
+        Self::from_snapshot_with_colors(snapshot, fonts, separator_color, &Default::default())
+    }
+    pub(crate) fn from_snapshot_with_colors(
+        snapshot: MultiPaneChartFrameSnapshot,
+        fonts: &AxisFontResolver,
+        separator_color: &str,
+        colors: &crate::model::colors::ColorParser,
+    ) -> Result<Self, ChartFrameError> {
         Ok(Self {
             attribution: None,
             layout: snapshot.layout,
@@ -545,9 +553,9 @@ impl IcedMultiPaneChartFrame {
             panes: snapshot
                 .panes
                 .into_iter()
-                .map(|p| IcedChartFrame::from_snapshot(p, fonts))
+                .map(|p| IcedChartFrame::from_snapshot_with_colors(p, fonts, colors))
                 .collect::<Result<_, _>>()?,
-            separator_color: super::line_chart::color(separator_color)
+            separator_color: super::line_chart::color_with_parser(separator_color, colors)
                 .map_err(ChartFrameError::Plot)?,
         })
     }

@@ -32,8 +32,7 @@ impl PriceLineOptions {
             external_id: None,
         }
     }
-    pub(crate) fn valid(&self) -> bool {
-        let mut parser = crate::model::colors::ColorParser::default();
+    pub(crate) fn valid(&self, parser: &mut crate::model::colors::ColorParser) -> bool {
         self.price.is_finite()
             && self.price.abs() <= 90_071_992_547_409.9
             && parser.parse_color(&self.color).is_ok()

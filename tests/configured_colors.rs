@@ -170,3 +170,380 @@ fn callback_can_reenter_a_shared_resolver_and_invalid_alpha_is_never_cached() {
     assert!(p.parse_color(DARK).is_err());
     assert_eq!(calls.get(), 2);
 }
+
+fn configured_chart() -> (Chart, Rc<Cell<usize>>) {
+    let calls = Rc::new(Cell::new(0));
+    let mut o = ChartModelOptions::default();
+    o.layout.text_color = DARK.into();
+    o.layout.background = feather_charts::model::layout_options::Background::Solid {
+        color: LIGHT.into(),
+    };
+    o.layout.panes.separator_color = DARK.into();
+    o.layout.panes.separator_hover_color = LIGHT.into();
+    o.grid.vert_lines.color = DARK.into();
+    o.grid.horz_lines.color = DARK.into();
+    o.layout.color_parsers.push(Box::new({
+        let calls = calls.clone();
+        move |v| {
+            calls.set(calls.get() + 1);
+            match v {
+                DARK => Some(Rgba::new(20, 40, 60, 0.5)),
+                LIGHT => Some(Rgba::new(220, 230, 240, 0.25)),
+                _ => None,
+            }
+        }
+    }));
+    (Chart::new(o), calls)
+}
+fn options(kind: usize, color: &str) -> feather_charts::model::series_options::SeriesOptionsMap {
+    use feather_charts::model::series_options::*;
+    let mut o = match kind {
+        0 => {
+            let mut o = LineSeriesOptions::default();
+            o.style.color = color.into();
+            o.style.last_price_animation = LastPriceAnimationMode::Continuous;
+            SeriesOptionsMap::Line(o)
+        }
+        1 => {
+            let mut o = AreaSeriesOptions::default();
+            o.style.line_color = color.into();
+            o.style.top_color = color.into();
+            o.style.bottom_color = LIGHT.into();
+            SeriesOptionsMap::Area(o)
+        }
+        2 => {
+            let mut o = BaselineSeriesOptions::default();
+            o.style.top_line_color = color.into();
+            o.style.bottom_line_color = color.into();
+            o.style.top_fill_color1 = color.into();
+            o.style.top_fill_color2 = LIGHT.into();
+            o.style.bottom_fill_color1 = color.into();
+            o.style.bottom_fill_color2 = LIGHT.into();
+            SeriesOptionsMap::Baseline(o)
+        }
+        3 => {
+            let mut o = HistogramSeriesOptions::default();
+            o.style.color = color.into();
+            SeriesOptionsMap::Histogram(o)
+        }
+        4 => {
+            let mut o = BarSeriesOptions::default();
+            o.style.up_color = color.into();
+            o.style.down_color = color.into();
+            SeriesOptionsMap::Bar(o)
+        }
+        _ => {
+            let mut o = CandlestickSeriesOptions::default();
+            o.style.up_color = color.into();
+            o.style.down_color = color.into();
+            o.style.border_color = color.into();
+            o.style.border_up_color = color.into();
+            o.style.border_down_color = color.into();
+            o.style.wick_color = color.into();
+            o.style.wick_up_color = color.into();
+            o.style.wick_down_color = color.into();
+            SeriesOptionsMap::Candlestick(o)
+        }
+    };
+    let common = match &mut o {
+        SeriesOptionsMap::Line(o) => &mut o.common,
+        SeriesOptionsMap::Area(o) => &mut o.common,
+        SeriesOptionsMap::Baseline(o) => &mut o.common,
+        SeriesOptionsMap::Histogram(o) => &mut o.common,
+        SeriesOptionsMap::Bar(o) => &mut o.common,
+        SeriesOptionsMap::Candlestick(o) => &mut o.common,
+        SeriesOptionsMap::Custom(o) => &mut o.common,
+    };
+    common.base_line_color = DARK.into();
+    common.price_line_color = DARK.into();
+    o
+}
+fn row(
+    kind: usize,
+    i: usize,
+    color: &str,
+) -> feather_charts::model::data_consumer::BuiltInSeriesDataItem<
+    feather_charts::model::horz_scale_behavior_time::types::Time,
+> {
+    use feather_charts::model::{data_consumer::*, horz_scale_behavior_time::types::UtcTimestamp};
+    let time = UtcTimestamp::new(1700000000. + i as f64 * 60.).into();
+    let color = Some(color.into());
+    match kind {
+        0 => BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
+            time,
+            value: i as f64 + 2.,
+            color,
+            custom_values: None,
+        })),
+        1 => BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
+            time,
+            value: i as f64 + 2.,
+            line_color: color.clone(),
+            top_color: color,
+            bottom_color: Some(LIGHT.into()),
+            custom_values: None,
+        })),
+        2 => BuiltInSeriesDataItem::Baseline(BaselineDataItem::Data(BaselineData {
+            time,
+            value: i as f64 + 2.,
+            top_fill_color1: color.clone(),
+            top_fill_color2: color.clone(),
+            top_line_color: color.clone(),
+            bottom_fill_color1: color.clone(),
+            bottom_fill_color2: color.clone(),
+            bottom_line_color: color,
+            custom_values: None,
+        })),
+        3 => BuiltInSeriesDataItem::Histogram(HistogramDataItem::Data(HistogramData {
+            time,
+            value: i as f64 + 2.,
+            color,
+            custom_values: None,
+        })),
+        4 => BuiltInSeriesDataItem::Bar(BarDataItem::Data(BarData {
+            time,
+            open: 2.,
+            high: 5.,
+            low: 1.,
+            close: i as f64 + 2.,
+            color,
+            custom_values: None,
+        })),
+        _ => BuiltInSeriesDataItem::Candlestick(CandlestickDataItem::Data(CandlestickData {
+            time,
+            open: 2.,
+            high: 5.,
+            low: 1.,
+            close: i as f64 + 2.,
+            color: color.clone(),
+            border_color: color.clone(),
+            wick_color: color,
+            custom_values: None,
+        })),
+    }
+}
+#[test]
+fn all_six_series_and_row_colors_resolve_once_preserve_inputs_and_reject_invalid_changes() {
+    use feather_charts::model::pane::PriceScalePosition;
+    use std::time::Instant;
+    for kind in 0..6 {
+        let (mut chart, calls) = configured_chart();
+        let id = chart
+            .add_series(options(kind, DARK), 0, PriceScalePosition::Right)
+            .unwrap();
+        let rows = (0..3).map(|i| row(kind, i, DARK)).collect::<Vec<_>>();
+        chart.set_data(id, rows.clone()).unwrap();
+        chart.fit_content();
+        chart
+            .prepare(iced::Size::new(500., 300.), 1.25, Instant::now())
+            .unwrap();
+        assert_eq!(chart.series_data(id).unwrap(), rows);
+        let count = calls.get();
+        assert_eq!(
+            count, 2,
+            "only two configured tokens should invoke callback"
+        );
+        chart
+            .prepare(iced::Size::new(300., 90.), 1.5, Instant::now())
+            .unwrap();
+        chart
+            .prepare(iced::Size::new(500., 300.), 1.25, Instant::now())
+            .unwrap();
+        assert_eq!(
+            calls.get(),
+            count,
+            "preparing another frame must reuse chart cache"
+        );
+        let shot = chart.screenshot_of_prepared(Default::default()).unwrap();
+        assert!(
+            chart
+                .set_data(id, vec![row(kind, 0, "invalid-color")])
+                .is_err()
+        );
+        assert_eq!(chart.series_data(id).unwrap(), rows);
+        assert!(
+            chart
+                .update_data(id, row(kind, 2, "invalid-color"), false)
+                .is_err()
+        );
+        assert_eq!(chart.series_data(id).unwrap(), rows);
+        assert!(
+            chart
+                .replace_series_options(id, options(kind, "invalid-color"))
+                .is_err()
+        );
+        assert!(chart.screenshot_of_prepared(Default::default()).is_ok());
+        drop(chart);
+        drop(shot);
+    }
+}
+
+#[test]
+fn configured_lines_watermarks_and_markers_validate_before_mutation() {
+    use feather_charts::api::*;
+    use feather_charts::model::{
+        horz_scale_behavior_time::types::UtcTimestamp,
+        pane::PriceScalePosition,
+        series_markers::{MarkerPosition, MarkerShape, SeriesMarker},
+    };
+    use std::time::Instant;
+    let (mut c, _) = configured_chart();
+    let id = c
+        .add_series(options(0, DARK), 0, PriceScalePosition::Right)
+        .unwrap();
+    c.set_data(id, (0..3).map(|i| row(0, i, DARK)).collect())
+        .unwrap();
+    c.fit_content();
+    let mut line = PriceLineOptions::new(3.);
+    line.color = DARK.into();
+    line.axis_label_color = LIGHT.into();
+    line.axis_label_text_color = DARK.into();
+    let lid = c.add_price_line(id, line.clone()).unwrap();
+    let mut bad = line.clone();
+    bad.axis_label_text_color = "invalid-color".into();
+    assert!(c.replace_price_line_options(lid, bad).is_err());
+    assert_eq!(c.price_line_options(lid).unwrap(), line);
+    let watermark = TextWatermarkOptions {
+        lines: vec![TextWatermarkLine {
+            text: "Color policy".into(),
+            color: DARK.into(),
+            ..Default::default()
+        }],
+        ..Default::default()
+    };
+    assert!(TextWatermark::new(watermark.clone()).is_err());
+    let wm = TextWatermark::with_color_parser(watermark, c.color_parser()).unwrap();
+    c.add_pane_primitive(0, wm).unwrap();
+    let up = UpDownMarkersOptions {
+        positive_color: LIGHT.into(),
+        negative_color: DARK.into(),
+        ..Default::default()
+    };
+    c.add_up_down_markers(id, up).unwrap();
+    c.add_series_markers(
+        id,
+        vec![SeriesMarker {
+            time: UtcTimestamp::new(1700000060.).into(),
+            position: MarkerPosition::AboveBar,
+            shape: MarkerShape::Circle,
+            color: DARK.into(),
+            id: None,
+            text: Some("custom".into()),
+            size: 1.,
+        }],
+        Default::default(),
+    )
+    .unwrap();
+    c.prepare(iced::Size::new(500., 300.), 1.5, Instant::now())
+        .unwrap();
+    assert_eq!(c.price_line_options(lid).unwrap().color, DARK);
+}
+
+#[test]
+fn p3_targets_are_explicit_errors_at_checked_legacy_and_atomic_runtime_boundaries() {
+    use feather_charts::{
+        api::*,
+        model::{chart_model::ChartModelError, layout_options::ColorSpace},
+    };
+    use std::time::Instant;
+    let p3 = || {
+        let mut o = ChartModelOptions::default();
+        o.layout.color_space = ColorSpace::DisplayP3;
+        o
+    };
+    let unsupported = |error: ChartError| {
+        assert!(matches!(
+            error,
+            ChartError::Model(ChartModelError::UnsupportedColorSpace(
+                ColorSpace::DisplayP3
+            ))
+        ))
+    };
+    unsupported(Chart::try_new(p3()).err().unwrap());
+    let called = Cell::new(0);
+    unsupported(
+        Chart::<HorzScaleBehaviorTime>::with_custom_behavior(
+            || {
+                called.set(called.get() + 1);
+                HorzScaleBehaviorTime::default()
+            },
+            p3(),
+            Default::default(),
+            LocalizationOptions::new("en-US", "dd MMM yyyy"),
+        )
+        .err()
+        .unwrap(),
+    );
+    assert_eq!(called.get(), 0);
+    unsupported(
+        OptionsChart::with_options_chart_options(
+            Default::default(),
+            p3(),
+            Default::default(),
+            LocalizationOptions::new("en-US", ""),
+        )
+        .err()
+        .unwrap(),
+    );
+    unsupported(
+        YieldCurveChart::with_chart_options(
+            Default::default(),
+            p3(),
+            LocalizationOptions::new("en-US", ""),
+        )
+        .err()
+        .unwrap(),
+    );
+    let mut legacy = Chart::new(p3());
+    unsupported(
+        legacy
+            .prepare_snapshot(iced::Size::new(300., 200.), 1., Instant::now())
+            .err()
+            .unwrap(),
+    );
+    unsupported(
+        legacy
+            .prepare(iced::Size::new(300., 200.), 1., Instant::now())
+            .err()
+            .unwrap(),
+    );
+    assert!(legacy.screenshot_of_prepared(Default::default()).is_err());
+    legacy
+        .apply_chart_options(ChartOptionsPatch {
+            model: ChartModelOptionsPatch {
+                layout: Some(LayoutOptionsPatch {
+                    color_space: Some(ColorSpace::Srgb),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .unwrap();
+    legacy
+        .prepare(iced::Size::new(300., 200.), 1., Instant::now())
+        .unwrap();
+    let (mut c, calls) = configured_chart();
+    let before = c.runtime_options();
+    let count = calls.get();
+    unsupported(
+        c.apply_chart_options(ChartOptionsPatch {
+            model: ChartModelOptionsPatch {
+                layout: Some(LayoutOptionsPatch {
+                    color_space: Some(ColorSpace::DisplayP3),
+                    text_color: Some(DARK.into()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .err()
+        .unwrap(),
+    );
+    assert_eq!(c.runtime_options(), before);
+    assert_eq!(calls.get(), count);
+}
+
+#[path = "configured_colors/custom.rs"]
+mod custom;

@@ -125,9 +125,71 @@ fn formatter_for(format: &PriceFormat) -> SeriesValueFormatter {
     }
 }
 
-fn validate_visual_options(options: &SeriesOptionsMap) -> Result<(), SeriesConstructionError> {
+pub(crate) fn validate_palette(
+    options: &SeriesOptionsMap,
+    parser: &mut crate::model::colors::ColorParser,
+) -> Result<(), SeriesConstructionError> {
+    let required: Vec<&str> = match options {
+        SeriesOptionsMap::Line(o) => vec![&o.style.color],
+        SeriesOptionsMap::Histogram(o) => vec![&o.style.color],
+        SeriesOptionsMap::Custom(o) => vec![&o.style.color],
+        SeriesOptionsMap::Bar(o) => vec![&o.style.up_color, &o.style.down_color],
+        SeriesOptionsMap::Candlestick(o) => {
+            let v = &o.style;
+            vec![
+                &v.up_color,
+                &v.down_color,
+                &v.border_up_color,
+                &v.border_down_color,
+                &v.wick_up_color,
+                &v.wick_down_color,
+            ]
+        }
+        SeriesOptionsMap::Area(o) => vec![
+            &o.style.line_color,
+            &o.style.top_color,
+            &o.style.bottom_color,
+        ],
+        SeriesOptionsMap::Baseline(o) => {
+            let v = &o.style;
+            vec![
+                &v.top_line_color,
+                &v.bottom_line_color,
+                &v.top_fill_color1,
+                &v.top_fill_color2,
+                &v.bottom_fill_color1,
+                &v.bottom_fill_color2,
+            ]
+        }
+    };
+    let c = common(options);
+    if required
+        .into_iter()
+        .chain(std::iter::once(c.base_line_color.as_str()))
+        .any(|color| parser.parse_color(color).is_err())
+        || (!c.price_line_color.is_empty() && parser.parse_color(&c.price_line_color).is_err())
+    {
+        return Err(SeriesConstructionError::InvalidVisualOptions);
+    }
+    if let SeriesOptionsMap::Line(o) = options
+        && [
+            &o.style.crosshair_marker_background_color,
+            &o.style.crosshair_marker_border_color,
+        ]
+        .into_iter()
+        .any(|c| !c.is_empty() && parser.parse_color(c).is_err())
+    {
+        return Err(SeriesConstructionError::InvalidVisualOptions);
+    }
+
+    Ok(())
+}
+
+fn validate_visual_options(
+    options: &SeriesOptionsMap,
+    parser: &mut crate::model::colors::ColorParser,
+) -> Result<(), SeriesConstructionError> {
     if let SeriesOptionsMap::Baseline(o) = options {
-        let mut parser = crate::model::colors::ColorParser::default();
         let v = &o.style;
         let crate::model::series_options::BaseValueType::Price(base) = &v.base_value;
         if !base.price.is_finite()
@@ -161,19 +223,16 @@ fn validate_visual_options(options: &SeriesOptionsMap) -> Result<(), SeriesConst
             return Err(SeriesConstructionError::InvalidVisualOptions);
         }
     }
-    if let SeriesOptionsMap::Bar(o) = options {
-        let mut parser = crate::model::colors::ColorParser::default();
-        if [&o.style.up_color, &o.style.down_color]
+    if let SeriesOptionsMap::Bar(o) = options
+        && ([&o.style.up_color, &o.style.down_color]
             .into_iter()
             .any(|c| parser.parse_color(c).is_err())
             || (!o.common.price_line_color.is_empty()
-                && parser.parse_color(&o.common.price_line_color).is_err())
-        {
-            return Err(SeriesConstructionError::InvalidVisualOptions);
-        }
+                && parser.parse_color(&o.common.price_line_color).is_err()))
+    {
+        return Err(SeriesConstructionError::InvalidVisualOptions);
     }
     if let SeriesOptionsMap::Area(o) = options {
-        let mut parser = crate::model::colors::ColorParser::default();
         let c = &o.common;
         let v = &o.style;
         let valid = [&v.top_color, &v.bottom_color, &v.line_color]
@@ -311,6 +370,7 @@ pub struct Series<I, O, M = ()> {
     id: SeriesId,
     series_type: SeriesType,
     options: SeriesOptionsMap,
+    color_parser: crate::model::colors::ColorParser,
     data: PlotList<SeriesPlotRow<I, O, (), M>>,
     data_cache: SeriesDataCache,
     conflation: RefCell<super::data_conflater::ConflationCache>,
@@ -356,15 +416,24 @@ where
         series_type: SeriesType,
         options: SeriesOptionsMap,
     ) -> Result<Self, SeriesConstructionError> {
+        Self::with_color_parser(id, series_type, options, Default::default())
+    }
+    pub(crate) fn with_color_parser(
+        id: SeriesId,
+        series_type: SeriesType,
+        options: SeriesOptionsMap,
+        mut color_parser: crate::model::colors::ColorParser,
+    ) -> Result<Self, SeriesConstructionError> {
         if !matches_type(series_type, &options) {
             return Err(SeriesConstructionError::OptionsDoNotMatchSeriesType { series_type });
         }
-        validate_visual_options(&options)?;
+        validate_visual_options(&options, &mut color_parser)?;
         let formatter = formatter_for(&common(&options).price_format);
         Ok(Self {
             id,
             series_type,
             options,
+            color_parser,
             data: PlotList::new(),
             data_cache: SeriesDataCache::default(),
             conflation: RefCell::default(),
@@ -415,7 +484,7 @@ where
                 series_type: self.series_type,
             });
         }
-        validate_visual_options(options)
+        validate_visual_options(options, &mut self.color_parser.clone())
     }
     pub fn common_options(&self) -> &SeriesOptionsCommon {
         common(&self.options)

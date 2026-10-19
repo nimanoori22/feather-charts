@@ -36,7 +36,7 @@ use iced::{
 };
 pub use series_drawing::{SeriesDrawPass, SeriesPassKind};
 pub use series_paint::{CanvasGradientMarkers, CanvasGradientStroke};
-use series_paint::{canvas_fill, canvas_gradient};
+use series_paint::{canvas_fill_with_colors, canvas_gradient_with_colors};
 use std::{hash::Hash, time::Instant};
 
 #[derive(Debug)]
@@ -225,15 +225,27 @@ impl Default for PlotSnapshot {
         }
     }
 }
-pub(crate) fn color(value: &str) -> Result<Color, FrameError> {
-    let parsed = value
-        .parse::<csscolorparser::Color>()
+pub(crate) fn color_with_parser(
+    value: &str,
+    colors: &crate::model::colors::ColorParser,
+) -> Result<Color, FrameError> {
+    let [r, g, b, a] = colors
+        .clone()
+        .rendering_rgba(value)
         .map_err(|_| FrameError::InvalidColor(value.into()))?;
-    Ok(Color::from_rgba(parsed.r, parsed.g, parsed.b, parsed.a))
+    Ok(Color::from_rgba(r, g, b, a))
 }
+#[cfg(test)]
 fn canvas_rectangle(
     rect: CandleRectangle,
     ratio: PixelRatio,
+) -> Result<CanvasRectangle, FrameError> {
+    canvas_rectangle_with_colors(rect, ratio, &Default::default())
+}
+fn canvas_rectangle_with_colors(
+    rect: CandleRectangle,
+    ratio: PixelRatio,
+    colors: &crate::model::colors::ColorParser,
 ) -> Result<CanvasRectangle, FrameError> {
     let x = rect.x / f64::from(ratio.horizontal);
     let y = rect.y / f64::from(ratio.vertical);
@@ -243,7 +255,7 @@ fn canvas_rectangle(
     let rectangle = CanvasRectangle {
         origin: iced::Point::new(x.min(x + width) as f32, y.min(y + height) as f32),
         size: Size::new(width.abs() as f32, height.abs() as f32),
-        color: color(&rect.color)?,
+        color: color_with_parser(&rect.color, colors)?,
     };
     let coordinates = [
         rectangle.origin.x,
@@ -264,7 +276,11 @@ fn logical(p: Point, ratio: PixelRatio) -> Point {
         y: p.y / f64::from(ratio.vertical),
     }
 }
-fn canvas_stroke(stroke: StyledStroke, ratio: PixelRatio) -> Result<CanvasStroke, FrameError> {
+fn canvas_stroke_with_colors(
+    stroke: StyledStroke,
+    ratio: PixelRatio,
+    colors: &crate::model::colors::ColorParser,
+) -> Result<CanvasStroke, FrameError> {
     let path =
         super::dashed_path::dash_path(&stroke.path, &stroke.dash_pattern, stroke.dash_offset)
             .into_iter()
@@ -284,7 +300,7 @@ fn canvas_stroke(stroke: StyledStroke, ratio: PixelRatio) -> Result<CanvasStroke
             .collect();
     Ok(CanvasStroke {
         path,
-        color: color(&stroke.color)?,
+        color: color_with_parser(&stroke.color, colors)?,
         width: (stroke.width / f64::from(ratio.vertical)) as f32,
     })
 }
@@ -312,6 +328,14 @@ impl PlotSnapshot {
         layout: &FrameLayout,
         grid: Vec<GridDrawCommand>,
         line: LineDrawCommands,
+    ) -> Result<Self, FrameError> {
+        Self::from_commands_with_colors(layout, grid, line, &Default::default())
+    }
+    pub(crate) fn from_commands_with_colors(
+        layout: &FrameLayout,
+        grid: Vec<GridDrawCommand>,
+        line: LineDrawCommands,
+        colors: &crate::model::colors::ColorParser,
     ) -> Result<Self, FrameError> {
         let ratio = layout.pixel_ratio;
         if ratio.horizontal != ratio.vertical
@@ -382,7 +406,7 @@ impl PlotSnapshot {
             };
             // Existing grid strokes start each parallel line at the same phase.
             for (a, b) in paths {
-                grid_strokes.push(canvas_stroke(
+                grid_strokes.push(canvas_stroke_with_colors(
                     StyledStroke {
                         path: vec![PathOperation::MoveTo(a), PathOperation::LineTo(b)],
                         color: color.clone(),
@@ -394,13 +418,14 @@ impl PlotSnapshot {
                         dash_offset: 0.,
                     },
                     ratio,
+                    colors,
                 )?);
             }
         }
         let lines = line
             .strokes
             .into_iter()
-            .map(|s| canvas_stroke(s, ratio))
+            .map(|s| canvas_stroke_with_colors(s, ratio, colors))
             .collect::<Result<_, _>>()?;
         let markers = line
             .markers
@@ -410,7 +435,7 @@ impl PlotSnapshot {
                 Ok(CanvasMarker {
                     center: iced::Point::new(p.x as f32, p.y as f32),
                     radius: (m.radius / f64::from(ratio.vertical)) as f32,
-                    color: color(&m.color)?,
+                    color: color_with_parser(&m.color, colors)?,
                     color_key: m.color,
                 })
             })
@@ -434,7 +459,7 @@ impl PlotSnapshot {
             annotation_geometry: vec![],
             axes: None,
             size: layout.size,
-            background: color(&layout.background)?,
+            background: color_with_parser(&layout.background, colors)?,
             background_gradient: None,
             grid: grid_strokes,
             lines,
@@ -701,6 +726,8 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
+    let parser = model.color_parser();
+    let colors = &parser;
     view.clear();
     let pane = model
         .panes()
@@ -784,7 +811,7 @@ where
         | PaneView::Candlesticks(_)
         | PaneView::Histogram(_) => LineDrawCommands::default(),
     };
-    let mut snapshot = PlotSnapshot::from_commands(layout, grid, line)?;
+    let mut snapshot = PlotSnapshot::from_commands_with_colors(layout, grid, line, colors)?;
     snapshot.series_id = id;
     if let Some(id) = id {
         snapshot.last_price_animations.extend(
@@ -811,7 +838,7 @@ where
         snapshot.fills = data
             .fill_commands(ratio)
             .into_iter()
-            .map(|f| canvas_fill(f, ratio))
+            .map(|f| canvas_fill_with_colors(f, ratio, colors))
             .collect::<Result<_, _>>()?;
     }
     if let PaneView::Baseline(view) = view
@@ -823,15 +850,15 @@ where
         snapshot.fills = commands
             .fills
             .into_iter()
-            .map(|f| canvas_fill(f, ratio))
+            .map(|f| canvas_fill_with_colors(f, ratio, colors))
             .collect::<Result<_, _>>()?;
         snapshot.gradient_lines = commands
             .strokes
             .into_iter()
             .map(|c| {
                 Ok(CanvasGradientStroke {
-                    stroke: canvas_stroke(c.stroke, ratio)?,
-                    gradient: canvas_gradient(c.gradient, ratio)?,
+                    stroke: canvas_stroke_with_colors(c.stroke, ratio, colors)?,
+                    gradient: canvas_gradient_with_colors(c.gradient, ratio, colors)?,
                 })
             })
             .collect::<Result<_, FrameError>>()?;
@@ -847,14 +874,14 @@ where
                         Ok(CanvasMarker {
                             center: iced::Point::new(p.x as f32, p.y as f32),
                             radius: (m.radius / f64::from(ratio.vertical)) as f32,
-                            color: color(&m.color)?,
+                            color: color_with_parser(&m.color, colors)?,
                             color_key: m.color,
                         })
                     })
                     .collect::<Result<_, FrameError>>()?;
                 Ok(CanvasGradientMarkers {
                     markers,
-                    gradient: canvas_gradient(c.gradient, ratio)?,
+                    gradient: canvas_gradient_with_colors(c.gradient, ratio, colors)?,
                 })
             })
             .collect::<Result<_, FrameError>>()?;
@@ -866,7 +893,7 @@ where
             .draw_commands(ratio)
             .map_err(FrameError::BarGeometry)?
             .into_iter()
-            .map(|rectangle| canvas_rectangle(rectangle, ratio))
+            .map(|rectangle| canvas_rectangle_with_colors(rectangle, ratio, colors))
             .collect::<Result<_, FrameError>>()?;
     }
     if let PaneView::Candlesticks(view) = view
@@ -876,7 +903,7 @@ where
             .draw_commands(ratio)
             .map_err(FrameError::CandleGeometry)?
             .into_iter()
-            .map(|rectangle| canvas_rectangle(rectangle, ratio))
+            .map(|rectangle| canvas_rectangle_with_colors(rectangle, ratio, colors))
             .collect::<Result<_, FrameError>>()?;
     }
     if let PaneView::Histogram(view) = view
@@ -886,7 +913,7 @@ where
             .draw_commands(ratio)
             .map_err(FrameError::HistogramGeometry)?
             .into_iter()
-            .map(|r| canvas_rectangle(r, ratio))
+            .map(|r| canvas_rectangle_with_colors(r, ratio, colors))
             .collect::<Result<_, _>>()?;
     }
     // Additional sources contribute series geometry; their pane-wide copies are discarded.
@@ -916,7 +943,9 @@ where
             },
             ratio,
         ) {
-            snapshot.price_lines.push(canvas_stroke(stroke, ratio)?);
+            snapshot
+                .price_lines
+                .push(canvas_stroke_with_colors(stroke, ratio, colors)?);
             snapshot.price_line_series.push(series);
             snapshot.price_line_kinds.push(decoration.kind);
         }
@@ -935,7 +964,7 @@ where
             ratio,
         )
         .into_iter()
-        .map(|stroke| canvas_stroke(stroke, ratio))
+        .map(|stroke| canvas_stroke_with_colors(stroke, ratio, colors))
         .collect::<Result<_, _>>()?;
     }
     if let crate::model::layout_options::Background::VerticalGradient {
@@ -943,7 +972,10 @@ where
         bottom_color,
     } = &axes.right.background
     {
-        snapshot.background_gradient = Some((color(top_color)?, color(bottom_color)?));
+        snapshot.background_gradient = Some((
+            color_with_parser(top_color, colors)?,
+            color_with_parser(bottom_color, colors)?,
+        ));
     }
     snapshot.axes = Some(axes);
     let correction = (ratio.horizontal.floor().max(1.) as u32 % 2) as f64 / 2.;
@@ -959,14 +991,14 @@ where
                 radius: (marker.radius
                     + marker.border_width
                     + correction / f64::from(ratio.vertical)) as f32,
-                color: color(&marker.border_color)?,
+                color: color_with_parser(&marker.border_color, colors)?,
                 color_key: marker.border_color,
             });
         }
         snapshot.crosshair_markers.push(CanvasMarker {
             center,
             radius: (marker.radius + correction / f64::from(ratio.vertical)) as f32,
-            color: color(&marker.color)?,
+            color: color_with_parser(&marker.color, colors)?,
             color_key: marker.color,
         });
     }

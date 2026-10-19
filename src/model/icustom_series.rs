@@ -168,6 +168,23 @@ pub trait CustomSeriesPaneView<Target> {
 
     fn renderer(&self) -> &Self::Renderer;
     fn update(&mut self, data: PaneRendererCustomData<Self::Data>, series_options: &Self::Options);
+    /// Optional checked boundary for application-owned renderer options.
+    fn validate_options(
+        &self,
+        _options: &Self::Options,
+        _colors: crate::model::colors::ColorParser,
+    ) -> Result<(), crate::model::colors::ColorParseError> {
+        Ok(())
+    }
+    /// Resolve application-owned renderer colors here, before freezing geometry.
+    fn update_with_color_parser(
+        &mut self,
+        data: PaneRendererCustomData<Self::Data>,
+        options: &Self::Options,
+        _colors: crate::model::colors::ColorParser,
+    ) {
+        self.update(data, options);
+    }
     fn price_value_builder(&self, data: &Self::Data) -> CustomSeriesPricePlotValues;
     fn is_whitespace(
         &self,

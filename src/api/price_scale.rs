@@ -80,7 +80,10 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         validation.apply_options(patch.clone()).map_err(|e| {
             ChartError::PriceAxis(crate::model::axis_snapshots::PriceAxisOptionsError::Options(e))
         })?;
-        if !crate::model::chart_configuration::valid_scale(validation.options()) {
+        if !crate::model::chart_configuration::valid_scale(
+            validation.options(),
+            &mut self.color_parser(),
+        ) {
             return Err(
                 crate::model::chart_model::ChartModelError::InvalidChartOptions("price scale")
                     .into(),

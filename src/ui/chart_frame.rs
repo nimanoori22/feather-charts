@@ -480,16 +480,23 @@ pub struct IcedChartFrame {
 }
 impl IcedChartFrame {
     pub fn from_snapshot(
+        snapshot: ChartFrameSnapshot,
+        fonts: &AxisFontResolver,
+    ) -> Result<Self, ChartFrameError> {
+        Self::from_snapshot_with_colors(snapshot, fonts, &Default::default())
+    }
+    pub(crate) fn from_snapshot_with_colors(
         mut snapshot: ChartFrameSnapshot,
         fonts: &AxisFontResolver,
+        colors: &crate::model::colors::ColorParser,
     ) -> Result<Self, ChartFrameError> {
         snapshot
             .plot
-            .prepare_annotations(fonts, snapshot.plot.annotation_ratio)?;
+            .prepare_annotations(fonts, snapshot.plot.annotation_ratio, colors)?;
         let pane_labels = IcedPriceAxes {
-            left: IcedPriceAxis::from_commands(&snapshot.pane_left, fonts)
+            left: IcedPriceAxis::from_commands_with_colors(&snapshot.pane_left, fonts, colors)
                 .map_err(ChartFrameError::PriceUi)?,
-            right: IcedPriceAxis::from_commands(&snapshot.pane_right, fonts)
+            right: IcedPriceAxis::from_commands_with_colors(&snapshot.pane_right, fonts, colors)
                 .map_err(ChartFrameError::PriceUi)?,
         };
         Ok(Self {
@@ -499,17 +506,25 @@ impl IcedChartFrame {
             passes: snapshot.passes,
             plot: snapshot.plot,
             prices: IcedPriceAxes {
-                left: IcedPriceAxis::from_commands(&snapshot.left, fonts)
+                left: IcedPriceAxis::from_commands_with_colors(&snapshot.left, fonts, colors)
                     .map_err(ChartFrameError::PriceUi)?,
-                right: IcedPriceAxis::from_commands(&snapshot.right, fonts)
+                right: IcedPriceAxis::from_commands_with_colors(&snapshot.right, fonts, colors)
                     .map_err(ChartFrameError::PriceUi)?,
             },
-            time: IcedTimeAxis::from_commands(&snapshot.time, fonts)
+            time: IcedTimeAxis::from_commands_with_colors(&snapshot.time, fonts, colors)
                 .map_err(ChartFrameError::TimeUi)?,
-            left_corner: IcedTimeAxis::from_commands(&snapshot.left_corner, fonts)
-                .map_err(ChartFrameError::TimeUi)?,
-            right_corner: IcedTimeAxis::from_commands(&snapshot.right_corner, fonts)
-                .map_err(ChartFrameError::TimeUi)?,
+            left_corner: IcedTimeAxis::from_commands_with_colors(
+                &snapshot.left_corner,
+                fonts,
+                colors,
+            )
+            .map_err(ChartFrameError::TimeUi)?,
+            right_corner: IcedTimeAxis::from_commands_with_colors(
+                &snapshot.right_corner,
+                fonts,
+                colors,
+            )
+            .map_err(ChartFrameError::TimeUi)?,
         })
     }
     pub(crate) fn draw_price_axes(&self, frame: &mut iced::widget::canvas::Frame) {

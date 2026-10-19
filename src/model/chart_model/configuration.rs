@@ -25,6 +25,7 @@ where
         RuntimeModelOptions {
             layout: LayoutAppearance {
                 attribution_logo: l.attribution_logo,
+                color_space: l.color_space,
                 background: l.background.clone(),
                 text_color: l.text_color.clone(),
                 font_size: l.font_size,
@@ -45,6 +46,11 @@ where
         let mut next = before.clone();
         if let Some(p) = patch.layout.clone() {
             p.apply(&mut next.layout);
+        }
+        if next.layout.color_space != crate::model::layout_options::ColorSpace::Srgb {
+            return Err(ChartModelError::UnsupportedColorSpace(
+                next.layout.color_space,
+            ));
         }
         if let Some(p) = patch.grid.clone() {
             p.apply(&mut next.grid);
@@ -67,7 +73,7 @@ where
                 *o = patched_scale_options(o, p, next.layout.font_size)
                     .map_err(|_| ChartModelError::InvalidChartOptions("scale margins"))?;
             }
-            if !valid_scale(o) {
+            if !valid_scale(o, &mut self.color_parser()) {
                 return Err(ChartModelError::InvalidChartOptions("price scale"));
             }
         }
@@ -115,7 +121,7 @@ where
             || before.layout.panes.enable_resize != l.panes.enable_resize
             || geometry_time != next.time_scale;
         for pane in &self.panes {
-            let (c, g) = pane.preview_runtime_scales(patch)?;
+            let (c, g) = pane.preview_runtime_scales(patch, &mut self.color_parser())?;
             changed |= c;
             geometry |= g;
         }
@@ -139,6 +145,7 @@ where
             && patch.right_price_scale.is_none()
             && patch.overlay_price_scales.is_none();
         self.options.layout.attribution_logo = next.layout.attribution_logo;
+        self.options.layout.color_space = next.layout.color_space;
         if decoration_only {
             // Full invalidation may shrink settled axis allocations. A screen
             // decoration must not change the viewport or recalculate autoscale.

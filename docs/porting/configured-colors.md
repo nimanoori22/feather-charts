@@ -43,7 +43,8 @@ validation/preparation, not by rewriting source data.
 
 Public additions: cloneable ColorParser; Chart::color_parser() -> ColorParser;
 TextWatermark::with_color_parser(options, ColorParser) -> Result<Self, ...>;
-preparation contexts/helpers for native custom renderers. Standalone constructors
+PrimitiveContext::color_parser(), DrawingPrimitive::validate_colors(), and
+CustomSeriesPaneView::{validate_options,update_with_color_parser} for native custom renderers. Standalone constructors
 continue to use ordinary CSS parsing. Generic primitive native ink remains
 application-owned; primitive labels and chart-owned extensions use chart policy.
 No runtime parser replacement is offered: callbacks/cache are fixed at creation.
@@ -78,3 +79,25 @@ public demo and capture helpers. Freeze four-domain, three-size (800x500,
 implementing demo scenes. Run all common gates, all 46 source comparisons, affected
 unchanged compatibility protocols, and normal software/GPU mouse acceptance.
 No gamut hardware acceptance or earlier independent exception is inferred.
+
+
+## Native extension boundary
+
+Chart-owned raw strings (including primitive price/time labels) are resolved during
+validation/preparation. Opaque custom series and primitive renderers draw native
+Iced ink and cannot be intercepted. Custom views can validate their application
+options before attachment/replacement and resolve ink in update_with_color_parser.
+Primitives can validate declared color parameters before attached() or replacement
+and use PrimitiveContext::color_parser while preparing owned geometry. Existing
+implementations retain default hooks, so native-color consumers need no changes.
+Context-dependent label output is validated at frame preparation; failures clear
+displayed geometry rather than partially displaying invalid paint. This cannot
+promise static validation of arbitrary context-dependent application code.
+
+Low-level engine Series constructors preserve their existing validation contract;
+public Chart series add/replace methods additionally validate the active palette.
+Candlestick border_color/wick_color are aliases: final up/down colors are rendered
+and validated. Inactive alias strings are not parsed as independent paint.
+Row validation uses fixed stack arrays, adding no per-row palette allocation.
+The native rendering adapter preserves CSS float precision; no parser runs in
+immutable Canvas drawing or owned screenshot replay.
