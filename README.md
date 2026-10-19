@@ -982,3 +982,23 @@ either chart to synchronize crosshairs; deliveries should stop while idle. Data,
 pane/scale transfers and export controls remain available. Reset the application
 between destructive sequences. Crosshair buttons target the main chart; linked
 updates follow actual pointer events.
+
+### Persistent pane sizing
+
+`chart.set_pane_height(pane, height)?` requests logical pixels from the last
+settled layout. Prepare once before sizing and again to apply it. The request
+changes stretch factors, so window resizing scales the resulting proportions;
+it does not pin an absolute height. Other panes share the difference in source
+pane order, with 30px clamps. Non-finite inputs and invalid panes are errors.
+Single panes and collapsed layouts preserve their allocation.
+
+```sh
+cargo run --example pane_management -- --pane-sizing --screenshot-export --live-feed
+# Add --options, --yield-curve or --custom-domain.
+```
+
+Use Next pane and 80/150/300px, Minimum/Maximum, Save/Restore layout and Invalid
+height. Readouts show actual settled heights. Saved layouts retain stretch factors
+by pane slot, so restore needs the same pane count; after removal, Reset and save
+again. Pane moves keep their allocation; restoring assigns the saved proportions
+to the current slots. Divider resizing and export remain available.

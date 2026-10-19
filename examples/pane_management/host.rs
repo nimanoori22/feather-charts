@@ -8,6 +8,8 @@ use feather_charts::model::{
     yield_curve_horz_scale_behavior::YieldCurveHorzScaleBehavior,
 };
 pub trait Host: region::RegionHost + Sized + 'static {
+    fn pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError>;
+    fn pane_stretch(&mut self, pane: usize, factor: f64) -> Result<(), ChartError>;
     fn helper_action(
         &mut self,
         action: helpers::Action,
@@ -132,6 +134,12 @@ pub trait Host: region::RegionHost + Sized + 'static {
 }
 macro_rules! common {
     () => {
+        fn pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError> {
+            self.set_pane_height(pane, height)
+        }
+        fn pane_stretch(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
+            self.set_pane_stretch_factor(pane, factor)
+        }
         fn synthetic(
             &mut self,
             id: SeriesId,

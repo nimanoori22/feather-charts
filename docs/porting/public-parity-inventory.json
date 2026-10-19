@@ -7,8 +7,8 @@
     "methods": 99,
     "statuses": {
       "native": 79,
-      "gap": 3,
-      "mapped": 77,
+      "gap": 2,
+      "mapped": 78,
       "partial": 7,
       "platform": 4,
       "represented": 204
@@ -588,7 +588,7 @@
     {"id":"IChartApiBase.paneSize","file":"src/api/ichart-api.ts","line":390,"kind":"method","signature":"paneSize(paneIndex?: number): PaneSize;","status":"mapped","note":"Chart.frame/multi_frame layouts"},
     {"id":"IChartApiBase.horzBehaviour","file":"src/api/ichart-api.ts","line":395,"kind":"method","signature":"horzBehaviour(): IHorzScaleBehavior<HorzScaleItem>;","status":"mapped","note":"Chart.model().time_scale().behavior()"},
     {"id":"IPaneApi.getHeight","file":"src/api/ipane-api.ts","line":19,"kind":"method","signature":"getHeight(): number;","status":"mapped","note":"Chart.model().panes()[pane].height()"},
-    {"id":"IPaneApi.setHeight","file":"src/api/ipane-api.ts","line":26,"kind":"method","signature":"setHeight(height: number): void;","status":"gap","note":"F07: no reusable Chart pixel-height setter"},
+    {"id":"IPaneApi.setHeight","file":"src/api/ipane-api.ts","line":26,"kind":"method","signature":"setHeight(height: number): void;","status":"mapped","note":"Chart.set_pane_height; persistent source stretch allocation, collapsed layouts remain inert"},
     {"id":"IPaneApi.moveTo","file":"src/api/ipane-api.ts","line":33,"kind":"method","signature":"moveTo(paneIndex: number): void;","status":"mapped","note":"Chart.move_pane"},
     {"id":"IPaneApi.paneIndex","file":"src/api/ipane-api.ts","line":40,"kind":"method","signature":"paneIndex(): number;","status":"native","note":"Current index selectors; stable PrimitivePaneId for attachments"},
     {"id":"IPaneApi.getSeries","file":"src/api/ipane-api.ts","line":47,"kind":"method","signature":"getSeries(): ISeriesApi<SeriesType, HorzScaleItem>[];","status":"mapped","note":"Pane.attached_source_ids, sorted with Chart.series_order / Chart.model().pane_for_series"},

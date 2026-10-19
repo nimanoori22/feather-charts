@@ -349,3 +349,15 @@ synthetic crosshair placement. Scoped options deliberately preserve Rust callbac
 ownership rather than reproducing JavaScript cloning. See
 [public-helpers.md](public-helpers.md) for individual dispositions and validation;
 this does not resolve other findings or older acceptance exceptions.
+
+### Milestone E follow-up — F07
+
+`Chart::set_pane_height` and the yield-curve forward now convert requested logical
+pixels into persistent stretch allocation, matching source sequential neighbor
+redistribution, clamp and resize behavior. Current pixel readbacks remain available
+through pane/frame snapshots. Source/native assertions cover settled allocation,
+resize, move and removal. Unprepared/collapsed layouts preserve valid factors
+instead of accepting source zero-division/negative-factor states. This is an
+explicit native safety adaptation. See [pane-sizing.md](pane-sizing.md) for the
+contract, consumer, regression and acceptance evidence; physical acceptance is
+tracked there rather than inferred from API presence.

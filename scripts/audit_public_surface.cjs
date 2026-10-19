@@ -20,7 +20,7 @@ const api={
   horzBehaviour:'mapped|Chart.model().time_scale().behavior()'
  },
  IPaneApi:{
-  getHeight:'mapped|Chart.model().panes()[pane].height()',setHeight:'gap|F07: no reusable Chart pixel-height setter',
+  getHeight:'mapped|Chart.model().panes()[pane].height()',setHeight:'mapped|Chart.set_pane_height; persistent source stretch allocation, collapsed layouts remain inert',
   moveTo:'mapped|Chart.move_pane',paneIndex:'native|Current index selectors; stable PrimitivePaneId for attachments',
   getSeries:'mapped|Pane.attached_source_ids, sorted with Chart.series_order / Chart.model().pane_for_series',getHTMLElement:'platform|No DOM; use prepared pane layout',
   attachPrimitive:'mapped|Chart.add_pane_primitive',detachPrimitive:'mapped|Chart.remove_primitive',priceScale:'native|Pane selector + Chart price-scale methods',

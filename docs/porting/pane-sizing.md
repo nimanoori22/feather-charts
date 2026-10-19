@@ -1,6 +1,6 @@
 # Persistent pane sizing (milestone E)
 
-Baseline: `917c28b`. Implementation in progress; physical acceptance pending.
+Baseline: `917c28b`. API and consumer implemented; common gates, source comparisons and new renderer captures pass; compatibility and physical acceptance pending.
 
 ## Source and consumers
 
@@ -72,3 +72,50 @@ fixtures `pane-sizing-{source,states}.json`. Demo and renderer evidence follow.
 Previous timing, formatting-GPU, dedicated drawing-order and untested physical
 device exceptions remain independent. E does not implement metadata, locales,
 configured parsers or Display-P3 rendering.
+
+## Public consumer and renderer protocol
+
+`pane_management --pane-sizing --screenshot-export --live-feed` exposes pane
+selection, 80/150/300px requests, minimum/maximum clamps, invalid inputs and
+Save/Restore layout. Existing pane moves/removal and divider controls remain.
+Saved layouts are application-owned stretch snapshots by current pane slot;
+restoring requires the same count and reapplies those proportions at the current
+window size. It does not retain removed pane owners. The readout reports actual
+settled logical pixel heights, including device rounding. Reset clears the save.
+
+The four-domain consumer test uses only public mutations, checks restoration,
+short-height recovery, count mismatch after removal and Reset. New captures cover
+seven scenes (set, minimum, maximum, restore, moved, removed, recovered), all four
+domains, 800×500 / 300×300 / 300×90 and DPR 1 / 1.25 / 1.5 / 2, on both asserted
+renderers: 672 replayed screens and 672 retained exports. Snapshots are checked
+again after restoring allocation, resizing and dropping their chart. No existing
+capture protocol is weakened; previous protocols run unchanged for compatibility.
+
+Additional files: `examples/pane_management{.rs,/host.rs,/sizing.rs,/sizing_captures.rs}`,
+`scripts/capture_pane_sizing.py`, README, API inventory generator/readout and checklist.
+
+Review reproduced an active-divider regression: a held resize used its old stretch
+pair after a programmatic height change and overwrote the requested layout.
+The existing real-canvas structural-cancellation test was extended with height
+changes and failed on the stale factors (`red-divider.log`). The setter now uses
+the full interaction-cancellation boundary, which advances the widget revision
+and releases divider captures as well as plot/axis/box gestures. No-op and rejected
+requests still return before cancellation. Divider behavior without an owner
+mutation is unchanged.
+
+## Corrected-build validation
+
+The corrected code passes 849 tests in 85 suites, 2 doctests, example builds,
+all-target check, strict all-target Clippy, formatting and inventory checks.
+All 42 source comparisons pass. The new protocol passes all 672 screen replays
+and 672 retained-export checks on actual tiny-skia and wgpu renderers. Current
+calendar sizing, maturity restore and session recovery images were visually
+inspected. The earlier all-target attempt could not execute a test binary
+(`No such file or directory`) while a focused rebuild was running; that log is
+retained separately. The corrected full run completes successfully.
+
+Core checkpoints: `b3c478f` (source-compatible allocation) and `5522703`
+(active divider cancellation). Earlier failed API compilation and the reproduced
+divider regression are retained as red evidence. No prior comparison script,
+capture assertion or timing threshold was weakened. Compatibility results and
+physical acceptance will be recorded against the current normal example binary.

@@ -31,6 +31,10 @@ mod scale_assignment;
 mod screenshot_captures;
 #[path = "custom_horizontal/behavior.rs"]
 mod session_behavior;
+#[path = "pane_management/sizing.rs"]
+mod sizing;
+#[path = "pane_management/sizing_captures.rs"]
+mod sizing_captures;
 use feather_charts::{
     api::*,
     model::{
@@ -51,6 +55,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    sizing: Option<sizing::Panel>,
     helpers: Option<helpers::Panel<C>>,
     axis_mode: bool,
     assignment: Option<scale_assignment::Panel>,
@@ -79,6 +84,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Sizing(sizing::Action),
     Helper(helpers::Action),
     Peer(ChartMessage),
     Axis(axis_interaction::Action),
@@ -166,6 +172,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            sizing: None,
             helpers: None,
             axis_mode: false,
             assignment: None,
@@ -236,6 +243,7 @@ impl<C: Host> App<C> {
     fn action(&mut self, m: Message) -> Result<(), ChartError> {
         let n = self.chart.core().model().panes().len();
         match m {
+            Message::Sizing(action) => self.sizing_action(action)?,
             Message::Helper(action) => self.helper_action(action)?,
             Message::Axis(action) => self.axis_action(action)?,
             Message::Assign(action) => self.assignment_action(action)?,
@@ -286,6 +294,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let sizing_mode = self.sizing.is_some();
                 let helper_mode = self.helpers.is_some();
                 let axis_mode = self.axis_mode;
                 let assignment = self.assignment.is_some();
@@ -301,6 +310,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if sizing_mode {
+                    self.sizing = Some(Default::default());
+                }
                 if helper_mode {
                     self.enable_helpers()?;
                 }
@@ -508,6 +520,9 @@ impl<C: Host> App<C> {
             },
             self.event_controls(),
         ];
+        if self.sizing.is_some() {
+            content = content.push(self.sizing_controls());
+        }
         if self.helpers.is_some() {
             content = content.push(self.helper_controls());
         }
@@ -580,6 +595,7 @@ struct RunOptions {
     formatting: bool,
     assignment: bool,
     axis_mode: bool,
+    sizing: bool,
     helpers: bool,
 }
 fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
@@ -592,6 +608,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.sizing {
+                app.sizing = Some(Default::default());
+            }
             if options.helpers {
                 app.enable_helpers().unwrap();
             }
@@ -660,6 +679,13 @@ fn main() -> iced::Result {
         );
         return Ok(());
     }
+    if let Some(i) = args.iter().position(|a| a == "--pane-sizing-captures") {
+        sizing_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--public-helper-captures") {
         helper_captures::run(
             std::path::Path::new(&args[i + 1]),
@@ -684,6 +710,7 @@ fn main() -> iced::Result {
         attribution: args.iter().any(|a| a == "--attribution"),
         formatting: args.iter().any(|a| a == "--formatting"),
         assignment: args.iter().any(|a| a == "--scale-assignment"),
+        sizing: args.iter().any(|a| a == "--pane-sizing"),
         helpers: args.iter().any(|a| a == "--public-helpers"),
         axis_mode: args.iter().any(|a| a == "--axis-interaction"),
     };
