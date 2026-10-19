@@ -89,6 +89,9 @@ pub trait Host: region::RegionHost + Sized + 'static {
     type Behavior: ChartBehavior<Item = Self::Item, InternalItem = Self::Internal>;
     fn new() -> Self;
     fn key(i: usize) -> Self::Item;
+    fn locale_key(i: usize) -> Self::Item {
+        Self::key(i)
+    }
     fn side() -> PriceScalePosition;
     fn core(&self) -> &Chart<Self::Behavior, Self::Metadata>;
     fn line(&mut self, pane: usize, pulse: bool) -> SeriesId;
@@ -466,6 +469,9 @@ impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorTime, M> {
     }
     fn new() -> Self {
         Self::new_with_metadata(Default::default())
+    }
+    fn locale_key(i: usize) -> Time {
+        UtcTimestamp::new(1_704_067_200. + i as f64 * 4. * 86_400.).into()
     }
     fn key(i: usize) -> Time {
         UtcTimestamp::new(1_700_000_000. + i as f64 * 60.).into()

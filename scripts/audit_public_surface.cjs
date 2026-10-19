@@ -88,7 +88,7 @@ const special={
  'LayoutOptions.colorParsers':'gap|F05: constructor parsers are not routed into chart rendering/validation',
  'SeriesOptionsCommon.priceScaleId':'native|Checked reassignment; creation selector wins, replacement Some relocates and None retains; stored/actual IDs agree',
  'PriceFormatCustom.tickmarksFormatter':'mapped|Series formatter/source bridge and actual final axis batches; formatting-parity.md',
- 'LocalizationOptionsBase.locale':'partial|F09: constructor/runtime locale updates supported; Intl labels still differ',
+ 'LocalizationOptionsBase.locale':'partial|F09: H verified Gregorian profiles and latn/arab/arabext ticks; time_locale_support reports best-effort/English fallback; full Intl remains partial',
  'LocalizationOptionsBase.priceFormatter':'mapped|Chart price-scale localization, including YieldCurve defaults; scalar/batch precedence tested',
  'LocalizationOptionsBase.tickmarksPriceFormatter':'mapped|Chart-owned scale batch formatting; precedence and actual axis text tested',
  'LocalizationOptionsBase.percentageFormatter':'mapped|Chart-owned percentage formatting for scale, crosshair and last-value text',

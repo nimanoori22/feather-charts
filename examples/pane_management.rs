@@ -23,6 +23,10 @@ mod helpers;
 mod host;
 #[path = "numeric_custom_series/view.rs"]
 mod interval;
+#[path = "pane_management/locale.rs"]
+mod locale;
+#[path = "pane_management/locale_captures.rs"]
+mod locale_captures;
 #[path = "pane_management/metadata.rs"]
 mod metadata;
 #[path = "pane_management/metadata_captures.rs"]
@@ -66,6 +70,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    locale: Option<locale::Panel>,
     pointer: Option<pointer::Panel<C::Item, C::Metadata>>,
     metadata: Option<metadata::Panel<C::Item, C::Metadata>>,
     sizing: Option<sizing::Panel>,
@@ -97,6 +102,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Locale(locale::Action),
     PointerClear,
     PointerProgrammatic,
     Metadata(metadata::Action),
@@ -188,6 +194,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            locale: None,
             pointer: None,
             metadata: None,
             sizing: None,
@@ -278,6 +285,7 @@ impl<C: Host> App<C> {
             Message::Helper(action) => self.helper_action(action)?,
             Message::Axis(action) => self.axis_action(action)?,
             Message::Assign(action) => self.assignment_action(action)?,
+            Message::Locale(action) => self.locale_action(action),
             Message::Formatting(action) => self.formatting_action(action)?,
             Message::Attribution(action) => self.attribution_action(action)?,
             Message::Export(action) => self.export_action(action)?,
@@ -325,6 +333,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let locale_mode = self.locale.is_some();
                 let pointer_mode = self.pointer.is_some();
                 let metadata_mode = self.metadata.is_some();
                 let sizing_mode = self.sizing.is_some();
@@ -343,6 +352,9 @@ impl<C: Host> App<C> {
                     self.events.is_some(),
                 );
                 self.export = export;
+                if locale_mode {
+                    self.enable_locale()?;
+                }
                 if pointer_mode {
                     self.enable_pointer();
                 }
@@ -376,7 +388,7 @@ impl<C: Host> App<C> {
             {
                 self.step += 1;
                 let mut item = line_row::<C>(23, [-0.1, 0., 0.1][self.step % 3]);
-                if self.data_mode {
+                if self.data_mode || self.locale.is_some() {
                     let rows = self.chart.core().series_data(self.line)?;
                     let Some(last) = rows.last() else {
                         return Ok(());
@@ -583,6 +595,9 @@ impl<C: Host> App<C> {
         if self.assignment.is_some() {
             content = content.push(self.assignment_controls());
         }
+        if self.locale.is_some() {
+            content = content.push(self.locale_controls());
+        }
         if self.formatting.is_some() {
             content = content.push(self.formatting_controls());
         }
@@ -636,6 +651,7 @@ impl<C: Host> App<C> {
     }
 }
 struct RunOptions {
+    locale: bool,
     pointer: bool,
     live: bool,
     ordered: bool,
@@ -661,6 +677,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.locale {
+                app.enable_locale().unwrap();
+            }
             if options.metadata {
                 app.metadata = Some(Default::default());
             }
@@ -699,6 +718,13 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
 }
 fn main() -> iced::Result {
     let args: Vec<_> = std::env::args().collect();
+    if let Some(i) = args.iter().position(|a| a == "--locale-captures") {
+        locale_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--pointer-input-captures") {
         pointer_captures::run(
             std::path::Path::new(&args[i + 1]),
@@ -777,6 +803,7 @@ fn main() -> iced::Result {
         return Ok(());
     }
     let options = RunOptions {
+        locale: args.iter().any(|a| a == "--locale"),
         pointer: args.iter().any(|a| a == "--pointer-input"),
         live: args.iter().any(|a| a == "--live-feed"),
         ordered: args.iter().any(|a| a == "--series-order"),

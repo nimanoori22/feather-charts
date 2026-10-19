@@ -727,8 +727,14 @@ cargo run --example pane_management -- --formatting --screenshot-export --live-f
 Add `--options`, `--yield-curve` or `--custom-domain` for the other domains. The
 formatting controls exercise callback precedence, explicit clearing and all scale
 modes. Existing export previews retain their original labels when configuration
-changes; capture again to refresh them. Locale updates retain current behavior's
-fallbacks; full Intl parity is still pending.
+changes; capture again to refresh them. For calendar locale controls, use `--locale`
+instead of `--formatting`. Verified Gregorian profiles are en-US, fr-FR, de-DE
+and ar-EG (plus language aliases), with latn/arab/arabext tick digits through the
+supported Unicode extensions. Numeric date tokens and crosshair times stay ASCII.
+`formatters::time_locale::time_locale_support` reports verified, best-effort or
+English fallback coverage. Non-calendar axes keep their domain formatting.
+See the [locale support contract](docs/porting/time-locale.md) for limits;
+non-Gregorian calendars and full Intl equivalence remain outside this milestone.
 
 See the [formatting contract, API example and acceptance record](docs/porting/formatting-parity.md).
 

@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H next.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -121,8 +121,8 @@ remain unchanged.
 
 ### H — Locale behavior
 
-- [ ] H0: Freeze the supported default locale contract. (depends: G2).
-- [ ] H1: Implement supported localized default ticks and fallback. (depends: H0).
+- [x] H0: Freeze the supported default locale contract. (depends: G2).
+- [x] H1: Implement supported localized default ticks and fallback. (depends: H0).
 - [ ] H2: Demonstrate localization and accept milestone H. (depends: H1).
 - [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
 

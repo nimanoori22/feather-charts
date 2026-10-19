@@ -242,10 +242,13 @@ Locale resolution in [format_date.rs](../../src/formatters/format_date.rs) also
 falls back to English for unrecognized Chrono locale names; browser Intl fallback
 and Unicode locale extensions have a different contract.
 
-**Next change:** establish supported locale behavior against real source fixtures,
-including numbering systems and fallback. Use the existing user formatter escape
-hatch where appropriate, but do not describe ASCII default output as exact Intl
-parity. These examples do not prove every locale/calendar combination is wrong.
+**H implementation:** the source/native matrix now matches 560 ticks and 192
+month/date labels across 16 requested-locale cases, including Arabic numbering,
+French April, aliases and selected Unicode extensions. Runtime invalidation,
+ASCII date-token/crosshair behavior and callback priority are covered. The
+[H contract](time-locale.md) distinguishes verified Gregorian profiles, best-effort
+Chrono locales and English fallback. Non-Gregorian calendars and full Intl
+compatibility remain open. Renderer and physical acceptance are recorded separately.
 
 ### F10 — Pointer notifications omit source-input metadata (P3, static finding)
 
