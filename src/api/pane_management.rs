@@ -1,6 +1,67 @@
 use super::*;
 
 impl<B: ChartBehavior> Chart<B> {
+    /// Request a pane height in logical pixels using the current settled layout.
+    /// The request becomes stretch allocation, so later window resizing scales it.
+    /// Other panes share the difference in pane order, with source minimums of 30px.
+    /// A single pane or a layout too short for positive allocations is unchanged.
+    /// Finite negative heights clamp to the minimum; non-finite values are errors.
+    pub fn set_pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError> {
+        use crate::model::{chart_model::ChartModelError, pane::MIN_PANE_HEIGHT};
+        self.model.validate_pane(pane)?;
+        if !height.is_finite() {
+            return Err(ChartModelError::InvalidDimensions.into());
+        }
+        let panes = self.model.panes();
+        if panes.len() < 2 {
+            return Ok(());
+        }
+        let total_height: f64 = panes.iter().map(|p| p.height()).sum();
+        let total_stretch: f64 = panes.iter().map(|p| p.stretch_factor()).sum();
+        let maximum = total_height - MIN_PANE_HEIGHT * (panes.len() - 1) as f64;
+        if maximum <= 0. || total_height == 0. {
+            return Ok(());
+        }
+        let height = height.max(MIN_PANE_HEIGHT).min(maximum);
+        let pixel_stretch = total_stretch / total_height;
+        let mut difference = height - panes[pane].height();
+        let mut remaining = panes.len() - 1;
+        let factors: Vec<_> = panes
+            .iter()
+            .enumerate()
+            .map(|(index, state)| {
+                let height = if index == pane {
+                    height
+                } else {
+                    let next = (state.height() - difference / remaining as f64)
+                        .max(MIN_PANE_HEIGHT)
+                        .min(maximum);
+                    difference -= state.height() - next;
+                    remaining -= 1;
+                    next
+                };
+                height * pixel_stretch
+            })
+            .collect();
+        if factors.iter().any(|f| !f.is_finite() || *f <= 0.)
+            || !factors.iter().sum::<f64>().is_finite()
+        {
+            return Err(ChartModelError::InvalidDimensions.into());
+        }
+        if panes
+            .iter()
+            .zip(&factors)
+            .all(|(p, f)| p.stretch_factor() == *f)
+        {
+            return Ok(());
+        }
+        self.cancel_viewport_interaction();
+        for (index, factor) in factors.into_iter().enumerate() {
+            self.model.set_pane_stretch_factor(index, factor)?;
+        }
+        Ok(())
+    }
+
     /// Current zero-based position within the pane, including private support sources.
     /// Removal and pane transfers can change this position.
     pub fn series_order(

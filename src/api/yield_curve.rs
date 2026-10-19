@@ -431,6 +431,9 @@ impl YieldCurveChart {
     ) -> Result<(), ChartError> {
         self.core.set_preserve_empty_pane(pane, preserve)
     }
+    pub fn set_pane_height(&mut self, pane: usize, height: f64) -> Result<(), ChartError> {
+        self.core.set_pane_height(pane, height)
+    }
     pub fn set_pane_stretch_factor(&mut self, pane: usize, factor: f64) -> Result<(), ChartError> {
         self.core.set_pane_stretch_factor(pane, factor)
     }
