@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E implementation in progress.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F next.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -76,8 +76,13 @@ idle counters, previews/exports and all eight normal window exits pass. See [pub
 
 - [x] E0: Freeze persistent pane-height allocation semantics. (depends: D3).
 - [x] E1: Implement persistent programmatic pane height. (depends: E0).
-- [ ] E2: Demonstrate saved pane layouts and accept milestone E. (depends: E1).
-- [ ] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+- [x] E2: Demonstrate saved pane layouts and accept milestone E. (depends: E1).
+- [x] Milestone evidence: source regressions, actual software/GPU captures, public consumer/demo, available mouse checks and reviewed local commit.
+
+E2 automated gates pass: 849 tests, 42 source comparisons, 672 screen replays and
+672 retained exports. All 5766 accepted compatibility images are unchanged.
+Four-mode software/GPU mouse acceptance, previews/exports and all eight normal window exits pass. See [pane-sizing.md](../docs/porting/pane-sizing.md)
+and its pinned evidence record.
 
 ### F — Application metadata
 

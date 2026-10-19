@@ -1,6 +1,6 @@
 # Persistent pane sizing (milestone E)
 
-Baseline: `917c28b`. API and consumer implemented; common gates, source comparisons and new renderer captures pass; compatibility and physical acceptance pending.
+Baseline: `917c28b`. E0–E2 complete; automated gates and four-mode software/GPU mouse acceptance pass.
 
 ## Source and consumers
 
@@ -118,4 +118,28 @@ Core checkpoints: `b3c478f` (source-compatible allocation) and `5522703`
 (active divider cancellation). Earlier failed API compilation and the reproduced
 divider regression are retained as red evidence. No prior comparison script,
 capture assertion or timing threshold was weakened. Compatibility results and
-physical acceptance will be recorded against the current normal example binary.
+physical acceptance below refer to the same current normal example binary.
+
+All eight unchanged compatibility protocols pass with **5766 accepted images
+unchanged**: events 912, custom horizontal 240, screenshot/export 1158, attribution
+672, formatting 576, scale assignment 768, axis interaction 864 and public helpers
+576. The previous 41 source comparison scripts and all eight capture scripts are
+byte-for-byte unchanged from `917c28b`. Current production/demo files and normal
+binary hashes match the capture protocol. The [pinned evidence record](pane-sizing-evidence.json)
+records gate results, source states, protocol and log hashes, retained failures and
+independent exceptions. Four-mode software and GPU mouse acceptance, previews/exports and all eight normal window exits pass.
+
+## Physical acceptance
+
+The user accepted the final normal tiny-skia and wgpu demos in calendar, strike,
+maturity and sessions. Checks covered pane selection and 80/150/300px requests,
+minimum/maximum and invalid inputs, Save/change/Restore and Restore after window
+resize with unchanged pane count, divider dragging, pane move/swap/removal→Reset,
+live-feed zoom/pan, time/price-axis drag/reset, box move/resize/Escape and release
+outside at regular, narrow and the earlier problem size, short-height recovery
+and preview/export. All eight sessions exited 0 and match the binary hash used
+by the accepted captures. These checks do not close separate formatting-GPU,
+timing, dedicated drawing-order or physical touchpad/touchscreen/high-DPI records.
+
+No further source component blocks E. Application metadata is milestone F; native
+pointer metadata, locale behavior and configured color parsing remain G–I.
