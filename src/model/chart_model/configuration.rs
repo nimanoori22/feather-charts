@@ -97,7 +97,11 @@ where
         for line in [&next.crosshair.vertical, &next.crosshair.horizontal] {
             colors.extend([line.color.as_str(), line.label_background_color.as_str()]);
         }
-        if !colors.into_iter().all(valid_color) {
+        let mut parser = self.color_parser();
+        if !colors
+            .into_iter()
+            .all(|color| parser.parse_color(color).is_ok())
+        {
             return Err(ChartModelError::InvalidChartOptions("color"));
         }
         if !valid_horizontal_options(&next.time_scale) {

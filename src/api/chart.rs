@@ -424,6 +424,12 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn remove_price_line(&mut self, line: super::PriceLineId) -> Result<(), ChartError> {
         Ok(self.model.remove_price_line(line)?)
     }
+    /// Resolver for chart-owned colors and application extension preparation.
+    /// Its clones share callbacks/cache and may outlive this chart.
+    pub fn color_parser(&self) -> crate::model::colors::ColorParser {
+        self.model.color_parser()
+    }
+
     pub fn add_pane(&mut self) -> usize {
         self.cancel_interaction();
         self.views.push(vec![]);

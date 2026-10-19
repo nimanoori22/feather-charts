@@ -1,6 +1,6 @@
 # Public API and desktop parity checklist
 
-Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I next.
+Date: 2026-10-19. Status: implementation in progress; formatting core P0/A0–A3 complete; B0–B2 implemented; milestone B accepted; milestone C accepted; milestone D accepted; milestone E accepted; milestone F accepted; milestone G accepted; milestone H accepted; milestone I in progress.
 Baseline: `55ba7d7`. Plan: [public-parity-plan.md](public-parity-plan.md).
 Audit: [public-parity-audit.md](../docs/porting/public-parity-audit.md).
 Preserve previous roadmap acceptance and independent exceptions.
@@ -138,7 +138,7 @@ combined remaining captures are Z0 and independent exceptions are unchanged.
 
 ### I — Configured color parsing
 
-- [ ] I0: Freeze configured color parsing and gamut policy. (depends: H2).
+- [x] I0: Freeze configured color parsing and gamut policy. (depends: H2).
 - [ ] I1: Route configured parsers through core validation and preparation. (depends: I0).
 - [ ] I2: Complete configured extension colors. (depends: I1).
 - [ ] I3: Make unsupported target color-space requests explicit. (depends: I2).

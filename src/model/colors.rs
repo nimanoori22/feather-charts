@@ -1,6 +1,6 @@
 //! Color parsing and transformations used by chart labels and gradients.
 
-use std::{collections::HashMap, error::Error, fmt};
+use std::{cell::RefCell, collections::HashMap, error::Error, fmt, rc::Rc};
 
 /// An sRGB color with 8-bit channels and a floating-point alpha component.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -53,14 +53,16 @@ impl fmt::Display for ColorParseError {
 
 impl Error for ColorParseError {}
 
-/// Parses, caches, and transforms chart colors.
+/// Parses, caches, and transforms chart colors. Clones share successful results
+/// and callbacks; cache borrows end before application callbacks run.
 ///
 /// Browser-based Lightweight Charts delegates sRGB CSS parsing to the browser.
 /// Here, `csscolorparser` supplies that behavior natively; caller-provided
 /// parsers retain support for non-sRGB formats such as `display-p3`.
+#[derive(Clone)]
 pub struct ColorParser {
-    rgba_cache: HashMap<String, Rgba>,
-    custom_parsers: Vec<CustomColorParser>,
+    rgba_cache: Rc<RefCell<HashMap<String, Rgba>>>,
+    custom_parsers: Rc<Vec<CustomColorParser>>,
 }
 
 impl Default for ColorParser {
@@ -75,9 +77,20 @@ impl ColorParser {
         initial_cache: Option<HashMap<String, Rgba>>,
     ) -> Self {
         Self {
-            rgba_cache: initial_cache.unwrap_or_default(),
-            custom_parsers,
+            rgba_cache: Rc::new(RefCell::new(initial_cache.unwrap_or_default())),
+            custom_parsers: Rc::new(custom_parsers),
         }
+    }
+
+    pub(crate) fn configured(callbacks: &mut Vec<CustomColorParser>) -> Self {
+        let parser = Self::new(std::mem::take(callbacks), None);
+        *callbacks = (0..parser.custom_parsers.len())
+            .map(|index| {
+                let shared = parser.custom_parsers.clone();
+                Box::new(move |color: &str| shared[index](color)) as CustomColorParser
+            })
+            .collect();
+        parser
     }
 
     /// Applies alpha over the color's existing alpha, preserving `transparent`.
@@ -145,7 +158,7 @@ impl ColorParser {
     }
 
     pub fn parse_color(&mut self, color: &str) -> Result<Rgba, ColorParseError> {
-        if let Some(rgba) = self.rgba_cache.get(color) {
+        if let Some(rgba) = self.rgba_cache.borrow().get(color) {
             return Ok(*rgba);
         }
 
@@ -170,7 +183,10 @@ impl ColorParser {
             return Err(ColorParseError::new(color));
         };
 
-        self.rgba_cache.insert(color.to_owned(), rgba);
+        if !rgba.alpha.is_finite() || !(0.0..=1.0).contains(&rgba.alpha) {
+            return Err(ColorParseError::new(color));
+        }
+        self.rgba_cache.borrow_mut().insert(color.to_owned(), rgba);
         Ok(rgba)
     }
 }

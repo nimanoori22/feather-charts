@@ -101,6 +101,7 @@ where
 {
     time_scale: TimeScale<B>,
     options: ChartModelOptions,
+    color_parser: crate::model::colors::ColorParser,
     panes: Vec<Pane<B::InternalItem, B::Item, M>>,
     series: BTreeMap<SeriesId, RegisteredSeries<B::InternalItem, B::Item, M>>,
     coordinator: ChartDataCoordinator<B::InternalItem, B::Item, M>,
@@ -120,10 +121,13 @@ where
     B::CacheKey: Eq + Hash,
     M: Clone + 'static,
 {
-    pub fn new(time_scale: TimeScale<B>, options: ChartModelOptions) -> Self {
+    pub fn new(time_scale: TimeScale<B>, mut options: ChartModelOptions) -> Self {
+        let color_parser =
+            crate::model::colors::ColorParser::configured(&mut options.layout.color_parsers);
         let mut model = Self {
             time_scale,
             options,
+            color_parser,
             panes: Vec::new(),
             series: BTreeMap::new(),
             coordinator: ChartDataCoordinator::new(),
@@ -140,6 +144,11 @@ where
             model.flush_effects();
         }
         model
+    }
+
+    /// Shares this chart's fixed callback policy and successful-parse cache.
+    pub fn color_parser(&self) -> crate::model::colors::ColorParser {
+        self.color_parser.clone()
     }
 
     pub fn time_scale(&self) -> &TimeScale<B> {
@@ -173,7 +182,7 @@ where
         };
         let ids = state.ordered_source_ids().to_vec();
         let mut markers = vec![];
-        let mut parser = crate::model::colors::ColorParser::default();
+        let mut parser = self.color_parser.clone();
         for id in ids {
             let Some(handle) = self.series.get(&id).and_then(|entry| entry.built_in()) else {
                 continue;
@@ -261,7 +270,7 @@ where
         &mut self,
         options: crate::model::crosshair::CrosshairOptions,
     ) -> Result<(), ChartModelError> {
-        let mut parser = crate::model::colors::ColorParser::default();
+        let mut parser = self.color_parser.clone();
         for line in [&options.vertical, &options.horizontal] {
             if parser
                 .generate_contrast_colors(&line.label_background_color)
@@ -529,7 +538,7 @@ where
         let options = &self.crosshair.options;
         if options.mode != CrosshairMode::Hidden {
             let position = self.crosshair.position.filter(|p| p.pane == pane);
-            let mut parser = crate::model::colors::ColorParser::default();
+            let mut parser = self.color_parser.clone();
             if options.horizontal.label_visible {
                 let colors = parser
                     .generate_contrast_colors(&options.horizontal.label_background_color)

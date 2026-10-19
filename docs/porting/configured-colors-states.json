@@ -1,0 +1,31 @@
+{
+  "gray": 38.300000000000004,
+  "contrast": {
+    "background": "rgb(20, 40, 60)",
+    "foreground": "white"
+  },
+  "alpha": "rgba(20, 40, 60, 0.2)",
+  "transparent": "transparent",
+  "gradient": "rgba(120, 135, 150, 0.375)",
+  "light": {
+    "background": "rgb(220, 230, 240)",
+    "foreground": "black"
+  },
+  "css": {
+    "background": "rgb(255, 255, 255)",
+    "foreground": "black"
+  },
+  "failures": 2,
+  "calls": [
+    "first:color(display-p3 0.2 0.3 0.4 / 0.5)",
+    "second:color(display-p3 0.2 0.3 0.4 / 0.5)",
+    "first:color(display-p3 0.8 0.9 1 / 0.25)",
+    "second:color(display-p3 0.8 0.9 1 / 0.25)",
+    "first:color(display-p3 0 1 0)",
+    "second:color(display-p3 0 1 0)",
+    "third:color(display-p3 0 1 0)",
+    "first:color(display-p3 0 1 0)",
+    "second:color(display-p3 0 1 0)",
+    "third:color(display-p3 0 1 0)"
+  ]
+}
