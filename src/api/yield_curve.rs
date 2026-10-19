@@ -48,6 +48,13 @@ impl<M: Clone + 'static> YieldCurveChart<M> {
     pub fn scroll_to_real_time(&mut self) {
         self.core.scroll_to_real_time();
     }
+    pub fn replace_price_line_options(
+        &mut self,
+        id: PriceLineId,
+        options: PriceLineOptions,
+    ) -> Result<(), ChartError> {
+        self.core.replace_price_line_options(id, options)
+    }
     pub fn remove_price_line(&mut self, id: PriceLineId) -> Result<(), ChartError> {
         self.core.remove_price_line(id)
     }

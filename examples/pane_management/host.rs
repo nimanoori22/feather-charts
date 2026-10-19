@@ -88,6 +88,27 @@ pub trait Host: region::RegionHost + Sized + 'static {
     type Internal: Clone + std::fmt::Debug + 'static;
     type Behavior: ChartBehavior<Item = Self::Item, InternalItem = Self::Internal>;
     fn new() -> Self;
+    fn with_colors(
+        options: feather_charts::model::chart_model::ChartModelOptions,
+    ) -> Result<Self, ChartError>;
+    fn color_price_line(
+        &mut self,
+        id: Option<PriceLineId>,
+        series: SeriesId,
+        options: PriceLineOptions,
+    ) -> Result<PriceLineId, ChartError>;
+    fn color_watermark(
+        &mut self,
+        id: Option<PrimitiveId>,
+        watermark: TextWatermark,
+    ) -> Result<PrimitiveId, ChartError>;
+    fn color_series(
+        &mut self,
+        id: SeriesId,
+        custom: &CustomSeriesHandle<interval::View<Self::Item, Self::Internal, Self::Metadata>>,
+        token: &str,
+        pulse: bool,
+    ) -> Result<(), ChartError>;
     fn key(i: usize) -> Self::Item;
     fn locale_key(i: usize) -> Self::Item {
         Self::key(i)
@@ -277,6 +298,16 @@ macro_rules! common {
                 self.replace_series_options(id, SeriesOptionsMap::Line(opts))
             }
         }
+        fn color_price_line(&mut self,id:Option<PriceLineId>,series:SeriesId,options:PriceLineOptions)->Result<PriceLineId,ChartError>{if let Some(id)=id{self.replace_price_line_options(id,options)?;Ok(id)}else{self.add_price_line(series,options)}}
+        fn color_watermark(&mut self,id:Option<PrimitiveId>,watermark:TextWatermark)->Result<PrimitiveId,ChartError>{if let Some(id)=id{self.replace_primitive(id,watermark)?;Ok(id)}else{self.add_pane_primitive(0,watermark)}}
+        fn color_series(&mut self,id:SeriesId,custom:&CustomSeriesHandle<interval::View<Self::Item,Self::Internal,Self::Metadata>>,token:&str,pulse:bool)->Result<(),ChartError>{
+            let mut line=options(pulse);line.style.color=token.into();line.common.price_line_color=token.into();
+            self.replace_series_options(id,SeriesOptionsMap::Line(line))?;
+            let mut custom_options=feather_charts::model::series_options::CustomSeriesOptions::default();custom_options.style.color=token.into();
+            self.replace_custom_series_options(custom,custom_options)?;
+            let [r,g,b,a]=self.color_parser().rendering_rgba(token).map_err(|_|ChartError::InvalidData{index:0})?;
+            self.replace_custom_view_options(custom,interval::Options{color:iced::Color::from_rgba(r,g,b,a)})
+        }
         fn localize(&mut self, patch: LocalizationOptionsPatch<Self::Item>) {
             self.apply_localization_options(patch);
         }
@@ -460,6 +491,11 @@ fn options(pulse: bool) -> LineSeriesOptions {
     o
 }
 impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorTime, M> {
+    fn with_colors(
+        options: feather_charts::model::chart_model::ChartModelOptions,
+    ) -> Result<Self, ChartError> {
+        Self::try_new_with_metadata(options)
+    }
     type Metadata = M;
     type Item = Time;
     type Internal = TimePoint;
@@ -494,6 +530,16 @@ impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorTime, M> {
     common!();
 }
 impl<M: metadata::DemoMetadata> Host for Chart<session_behavior::Sessions, M> {
+    fn with_colors(
+        options: feather_charts::model::chart_model::ChartModelOptions,
+    ) -> Result<Self, ChartError> {
+        Self::with_custom_behavior_and_metadata(
+            || session_behavior::Sessions::new(Default::default()),
+            options,
+            Default::default(),
+            feather_charts::model::localization_options::LocalizationOptions::new("en-US", ""),
+        )
+    }
     type Metadata = M;
     type Item = session_behavior::SessionPoint;
     type Internal = session_behavior::SessionKey;
@@ -531,6 +577,16 @@ impl<M: metadata::DemoMetadata> Host for Chart<session_behavior::Sessions, M> {
     common!();
 }
 impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorPrice, M> {
+    fn with_colors(
+        options: feather_charts::model::chart_model::ChartModelOptions,
+    ) -> Result<Self, ChartError> {
+        Self::with_options_chart_options_and_metadata(
+            Default::default(),
+            options,
+            Default::default(),
+            feather_charts::model::localization_options::LocalizationOptions::new("en-US", ""),
+        )
+    }
     type Metadata = M;
     type Item = HorizontalPrice;
     type Internal = HorizontalPrice;
@@ -562,6 +618,20 @@ impl<M: metadata::DemoMetadata> Host for Chart<HorzScaleBehaviorPrice, M> {
     common!();
 }
 impl<M: metadata::DemoMetadata> Host for YieldCurveChart<M> {
+    fn with_colors(
+        options: feather_charts::model::chart_model::ChartModelOptions,
+    ) -> Result<Self, ChartError> {
+        {
+            let mut options = options;
+            options.pane.left_price_scale.visible = true;
+            options.pane.right_price_scale.visible = false;
+            Self::with_chart_options_and_metadata(
+                Default::default(),
+                options,
+                feather_charts::model::localization_options::LocalizationOptions::new("en-US", ""),
+            )
+        }
+    }
     type Metadata = M;
     type Item = Maturity;
     type Internal = Maturity;

@@ -170,10 +170,16 @@ configuration or conversion. **No hardware gamut test was run.** Treat the rende
 contract as incomplete, not as proven Display-P3 support merely because the enum
 exists. Screenshot output deliberately documents sRGB.
 
-**Next change:** route one configured parser policy consistently. Decide and document
-whether wide gamut is supported end-to-end or explicitly rejected at the public
-boundary; retaining a successful inert option is insufficient. Keep export color
-space explicit and test custom parser fallback/error/caching behavior.
+**I implementation:** constructor callbacks now reach shared validation and
+preparation for chart-owned colors, including built-in/custom series and rows,
+lines/labels, markers, text watermarks and attribution. Native custom renderers
+receive preparation/validation hooks; opaque application drawing remains owned by
+the application. Source fixtures verify fallback across modern functional colors,
+ordering, cache, alpha and contrast. Checked constructors, legacy preparation and
+runtime updates explicitly reject DisplayP3 output; sRGB rendering/export remains
+supported. [The I contract](configured-colors.md) records exact boundaries and
+migration details. Actual Display-P3 rendering and hardware gamut acceptance remain
+open; acceptance evidence is recorded separately.
 
 ### F06 — Reusable scale/query APIs are incomplete (P2, static contract finding)
 

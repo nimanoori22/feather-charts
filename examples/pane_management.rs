@@ -5,6 +5,10 @@ mod attribution;
 mod axis_interaction;
 #[path = "pane_management/captures.rs"]
 mod captures;
+#[path = "pane_management/color_captures.rs"]
+mod color_captures;
+#[path = "pane_management/color_policy.rs"]
+mod color_policy;
 #[path = "pane_management/configuration.rs"]
 mod configuration;
 #[path = "pane_management/data.rs"]
@@ -70,6 +74,7 @@ use std::{
     time::{Duration, Instant},
 };
 struct App<C: Host> {
+    colors: Option<color_policy::Panel>,
     locale: Option<locale::Panel>,
     pointer: Option<pointer::Panel<C::Item, C::Metadata>>,
     metadata: Option<metadata::Panel<C::Item, C::Metadata>>,
@@ -102,6 +107,7 @@ struct App<C: Host> {
 }
 #[derive(Clone, Debug)]
 enum Message {
+    Color(color_policy::Action),
     Locale(locale::Action),
     PointerClear,
     PointerProgrammatic,
@@ -149,7 +155,9 @@ fn line_row<C: Host>(i: usize, shift: f64) -> BuiltInSeriesDataItem<C::Item, C::
 }
 impl<C: Host> App<C> {
     fn new(live: bool) -> Self {
-        let mut chart = C::new();
+        Self::with_chart(C::new(), live)
+    }
+    fn with_chart(mut chart: C, live: bool) -> Self {
         chart.add_pane();
         chart.add_pane();
         let line = chart.line(0, live);
@@ -194,6 +202,7 @@ impl<C: Host> App<C> {
         let region = region::Scene::new(&mut chart, line, end * 0.15..end * 0.4);
         chart.fit();
         Self {
+            colors: None,
             locale: None,
             pointer: None,
             metadata: None,
@@ -285,6 +294,7 @@ impl<C: Host> App<C> {
             Message::Helper(action) => self.helper_action(action)?,
             Message::Axis(action) => self.axis_action(action)?,
             Message::Assign(action) => self.assignment_action(action)?,
+            Message::Color(action) => self.color_action(action)?,
             Message::Locale(action) => self.locale_action(action),
             Message::Formatting(action) => self.formatting_action(action)?,
             Message::Attribution(action) => self.attribution_action(action)?,
@@ -333,6 +343,7 @@ impl<C: Host> App<C> {
             }
             Message::Remove => self.chart.remove_pane(n - 1)?,
             Message::Reset => {
+                let color_mode = self.colors.is_some();
                 let locale_mode = self.locale.is_some();
                 let pointer_mode = self.pointer.is_some();
                 let metadata_mode = self.metadata.is_some();
@@ -344,13 +355,17 @@ impl<C: Host> App<C> {
                 let attribution = self.attribution.is_some();
                 let export = self.export.take();
                 let (size, ratio, live) = (self.size, self.ratio, self.live);
-                *self = Self::with_public_events(
-                    live,
-                    self.order_mode,
-                    self.data_mode,
-                    self.config_mode,
-                    self.events.is_some(),
-                );
+                *self = if color_mode {
+                    Self::new_colors(live)?
+                } else {
+                    Self::with_public_events(
+                        live,
+                        self.order_mode,
+                        self.data_mode,
+                        self.config_mode,
+                        self.events.is_some(),
+                    )
+                };
                 self.export = export;
                 if locale_mode {
                     self.enable_locale()?;
@@ -398,6 +413,9 @@ impl<C: Host> App<C> {
                 if let BuiltInSeriesDataItem::Line(LineDataItem::Data(value)) = &mut item {
                     let id = metadata::record_index::<C>(&value.time, self.data_next, 23);
                     value.custom_values = C::Metadata::for_bar(id, self.step);
+                    if let Some(panel) = &self.colors {
+                        value.color = panel.row_color();
+                    }
                 }
                 self.chart.update_data(self.markers, item, at)?;
             }
@@ -595,6 +613,9 @@ impl<C: Host> App<C> {
         if self.assignment.is_some() {
             content = content.push(self.assignment_controls());
         }
+        if self.colors.is_some() {
+            content = content.push(self.color_controls());
+        }
         if self.locale.is_some() {
             content = content.push(self.locale_controls());
         }
@@ -651,6 +672,7 @@ impl<C: Host> App<C> {
     }
 }
 struct RunOptions {
+    colors: bool,
     locale: bool,
     pointer: bool,
     live: bool,
@@ -677,6 +699,9 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
                 options.config,
                 options.events,
             );
+            if options.colors {
+                app = App::<C>::new_colors(options.live).unwrap();
+            }
             if options.locale {
                 app.enable_locale().unwrap();
             }
@@ -718,6 +743,13 @@ fn run<C: Host>(options: RunOptions, title: &'static str) -> iced::Result {
 }
 fn main() -> iced::Result {
     let args: Vec<_> = std::env::args().collect();
+    if let Some(i) = args.iter().position(|a| a == "--color-captures") {
+        color_captures::run(
+            std::path::Path::new(&args[i + 1]),
+            args.iter().any(|a| a == "--wgpu"),
+        );
+        return Ok(());
+    }
     if let Some(i) = args.iter().position(|a| a == "--locale-captures") {
         locale_captures::run(
             std::path::Path::new(&args[i + 1]),
@@ -803,6 +835,7 @@ fn main() -> iced::Result {
         return Ok(());
     }
     let options = RunOptions {
+        colors: args.iter().any(|a| a == "--colors"),
         locale: args.iter().any(|a| a == "--locale"),
         pointer: args.iter().any(|a| a == "--pointer-input"),
         live: args.iter().any(|a| a == "--live-feed"),

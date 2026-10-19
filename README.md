@@ -738,6 +738,36 @@ non-Gregorian calendars and full Intl equivalence remain outside this milestone.
 
 See the [formatting contract, API example and acceptance record](docs/porting/formatting-parity.md).
 
+## Configured colors and output target
+
+```sh
+cargo run --example pane_management -- --colors --screenshot-export --live-feed
+```
+
+Add `--options`, `--yield-curve` or `--custom-domain`. Palette, background, row and
+extension controls use constructor `layout.color_parsers`; successful parses share
+one chart cache. Invalid colors and P3 target requests are rejected atomically.
+Native rendering/export remains sRGB. A callback receiving `color(...)`,
+`lab()/lch()` or `oklab()/oklch()` must return the application's chosen sRGB `Rgba`.
+These source-preserved functional forms go through callbacks rather than an
+implicit native-library conversion.
+
+Use `Chart::try_new` for immediate calendar option validation. Existing infallible
+`Chart::new` remains available and reports unsupported targets from preparation.
+Runtime `LayoutOptionsPatch.color_space` can request sRGB; DisplayP3 returns
+`ChartModelError::UnsupportedColorSpace` and leaves the chart unchanged.
+Parser replacement is not offered; create another chart to change its policy.
+
+`Chart::color_parser()` returns a clone sharing the fixed callbacks/cache.
+Use `TextWatermark::with_color_parser(options, chart.color_parser())` for configured
+watermarks. Custom views can validate options with `validate_options` and resolve
+native ink in `update_with_color_parser`; primitives use `validate_colors` and
+`PrimitiveContext::color_parser`. Resolve colors before freezing geometry; raw
+application Canvas drawing remains application-owned. Prepared screenshots retain
+their original colors after options change or the chart is dropped.
+
+See the [color contract and migration notes](docs/porting/configured-colors.md).
+
 ## Axis interaction controls
 
 Drag the horizontal-axis labels left/right to change spacing about the right edge.

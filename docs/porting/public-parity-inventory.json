@@ -7,11 +7,10 @@
     "methods": 99,
     "statuses": {
       "native": 81,
-      "mapped": 79,
+      "mapped": 80,
       "partial": 5,
       "platform": 4,
-      "represented": 204,
-      "gap": 1
+      "represented": 204
     }
   },
   "reexports": [
@@ -534,12 +533,12 @@
     "native:src/model/grid.rs": "cc28456883f71a26405a5ef8707674f1809b886d20d7f122214795ba9eae2181",
     "native:src/model/localization_options.rs": "ee7a32cf8327cf7336cb1dae8318fe5bcb50861bd39a605ff033b5a1e61198d0",
     "native:src/model/series_options.rs": "747d107890d9f7b27a9629e5968694b9668b2e6a9fb419c0dfcdb19f9a301058",
-    "native:src/model/price_line.rs": "caa8bc3ffe16b30d8eb1b2b9626cde52076ccbdd18ed07d5ae0e2bceff225d8d",
+    "native:src/model/price_line.rs": "ca23a8ae931aa1505fa5efc9558233a0d8d9ab854e5422b10236dc67e8e136ab",
     "native:src/model/data_consumer.rs": "5489ba4a546f19a6a466b0a2dc714bf9df6259d8d4294bf2b6298cca86904ac3",
     "native:src/api/image_watermark.rs": "f64a26c7d6631b8df51498ff12ef53b1b8e9a8180e89424ce865bbf3263b515e",
-    "native:src/api/text_watermark.rs": "c62572a934cde52edfcc07fac80d7265b541d512c45413163cdff9553db6ccf7",
+    "native:src/api/text_watermark.rs": "89c2f17506a22562df9e76935195bda64003ce5ebf0d4b119cd1825815d65577",
     "native:src/model/series_markers.rs": "8fcf471b5e658c08a1a2ed0bd90a4888019fd5e65667e801005d2c4bda6c30c9",
-    "native:src/api/up_down_markers.rs": "a445fcfa17252d1626c4fb2541eb8833ec7abd9163f0e831fdc9231be9c9c9a4",
+    "native:src/api/up_down_markers.rs": "0d0d131ce4d051d623413a43e3f2fa91caa6364d322eef3ee5f402a02f17bcc8",
     "native:src/model/yield_curve_horz_scale_behavior.rs": "eeedc10bbd70e29421e519062dd9e71ab0e8b0b0a998c34308d3029cffe979d9",
     "native:src/model/horz_scale_behavior_price.rs": "fd1cd77e022e35aff399c5de3cbebda0f06c872aa979b34dac1d6637db91b414",
     "native:src/api/touch.rs": "ad8f20914bfdc2ada49d13c66793443e579db6f196eddc1ff64d17b6cda089be",
@@ -744,8 +743,8 @@
     {"id":"LayoutOptions.fontFamily","file":"src/model/layout-options.ts","line":110,"kind":"property","signature":"fontFamily: string;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.font_family"},
     {"id":"LayoutOptions.panes","file":"src/model/layout-options.ts","line":117,"kind":"property","signature":"panes: LayoutPanesOptions;","status":"represented","note":"src/model/layout_options.rs LayoutOptions.panes"},
     {"id":"LayoutOptions.attributionLogo","file":"src/model/layout-options.ts","line":131,"kind":"property","signature":"attributionLogo: boolean;","status":"native","note":"Source default on; native default off intentionally retained; runtime toggle is native extension"},
-    {"id":"LayoutOptions.colorSpace","file":"src/model/layout-options.ts","line":144,"kind":"property","signature":"colorSpace: ColorSpace;","status":"partial","note":"F05: stored/snapshotted; no wide-gamut native rendering contract"},
-    {"id":"LayoutOptions.colorParsers","file":"src/model/layout-options.ts","line":174,"kind":"property","signature":"colorParsers: CustomColorParser[];","status":"gap","note":"F05: constructor parsers are not routed into chart rendering/validation"},
+    {"id":"LayoutOptions.colorSpace","file":"src/model/layout-options.ts","line":144,"kind":"property","signature":"colorSpace: ColorSpace;","status":"partial","note":"sRGB output; checked constructors, legacy preparation and runtime options reject DisplayP3 explicitly; actual wide-gamut rendering deferred"},
+    {"id":"LayoutOptions.colorParsers","file":"src/model/layout-options.ts","line":174,"kind":"property","signature":"colorParsers: CustomColorParser[];","status":"mapped","note":"Fixed chart-owned policy; shared callback/cache clones validate and prepare built-in/extension colors; native custom ink resolves through preparation hooks"},
     {"id":"LocalizationOptionsBase.locale","file":"src/model/localization-options.ts","line":26,"kind":"property","signature":"locale: string;","status":"partial","note":"F09: H verified Gregorian profiles and latn/arab/arabext ticks; time_locale_support reports best-effort/English fallback; full Intl remains partial"},
     {"id":"LocalizationOptionsBase.priceFormatter","file":"src/model/localization-options.ts","line":34,"kind":"property","signature":"priceFormatter?: PriceFormatterFn;","status":"mapped","note":"Chart price-scale localization, including YieldCurve defaults; scalar/batch precedence tested"},
     {"id":"LocalizationOptionsBase.tickmarksPriceFormatter","file":"src/model/localization-options.ts","line":41,"kind":"property","signature":"tickmarksPriceFormatter?: TickmarksPriceFormatterFn;","status":"mapped","note":"Chart-owned scale batch formatting; precedence and actual axis text tested"},
