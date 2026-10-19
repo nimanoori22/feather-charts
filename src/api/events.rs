@@ -29,7 +29,7 @@ impl EventInterests {
     };
 }
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Changes future observation only; already queued events remain deliverable.
     pub fn set_event_interests(&mut self, interests: EventInterests) {
         if self.event_interests == interests {
@@ -61,11 +61,11 @@ impl<B: ChartBehavior> Chart<B> {
     }
     /// Consumes the same stream returned by `update`. Drain after each batch when
     /// interests are enabled; the queue is lossless and has no implicit size cap.
-    pub fn take_events(&mut self) -> Vec<ChartEvent<B::Item>> {
+    pub fn take_events(&mut self) -> Vec<ChartEvent<B::Item, M>> {
         self.pending_edit_cancellation = false;
         std::mem::take(&mut *self.pending_events.borrow_mut())
     }
-    pub(super) fn push_event(&mut self, event: ChartEvent<B::Item>) {
+    pub(super) fn push_event(&mut self, event: ChartEvent<B::Item, M>) {
         self.pending_events.borrow_mut().push(event);
     }
     pub(super) fn data_changed(&mut self, series: SeriesId, scope: DataChangeScope) {

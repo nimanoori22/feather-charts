@@ -4,6 +4,7 @@ type Row<V> = crate::model::series_data::CustomPlotRow<
     <V as CustomSeriesPaneView<Frame>>::InternalTime,
     <V as CustomSeriesPaneView<Frame>>::Item,
     <V as CustomSeriesPaneView<Frame>>::Data,
+    <V as CustomSeriesPaneView<Frame>>::Metadata,
 >;
 struct Job<V: CustomSeriesPaneView<Frame>> {
     level: usize,
@@ -26,7 +27,10 @@ impl<V: CustomSeriesPaneView<Frame>> Default for Cache<V> {
         }
     }
 }
-impl<V: CustomSeriesPaneView<Frame, Metadata = ()>> Cache<V> {
+impl<V: CustomSeriesPaneView<Frame>> Cache<V>
+where
+    V::Metadata: Clone,
+{
     pub fn contains(&self, generation: u64, level: usize) -> bool {
         self.generation == Some(generation)
             && (self.unavailable || self.levels.contains_key(&level))
@@ -114,7 +118,8 @@ impl<V: CustomSeriesPaneView<Frame, Metadata = ()>> Cache<V> {
 }
 fn merge<V>(a: &Row<V>, b: &Row<V>, view: &V) -> Option<Row<V>>
 where
-    V: CustomSeriesPaneView<Frame, Metadata = ()>,
+    V: CustomSeriesPaneView<Frame>,
+    V::Metadata: Clone,
 {
     let context = |r: &Row<V>| CustomConflationContext {
         data: r.data.clone(),

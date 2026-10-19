@@ -36,7 +36,7 @@ fn validate<B: super::ChartBehavior>(
     }
     Ok(())
 }
-impl<B: super::ChartBehavior> Chart<B> {
+impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn add_series_markers(
         &mut self,
         series: SeriesId,

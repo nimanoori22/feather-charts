@@ -45,7 +45,7 @@ impl ChartScreenshot {
         }
     }
 }
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Captures the last successful displayed frame, even if model updates are pending.
     /// Does not settle data, sample animations, change options or consume host events.
     pub fn screenshot_of_prepared(

@@ -1,6 +1,6 @@
 use super::*;
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Request a pane height in logical pixels using the current settled layout.
     /// The request becomes stretch allocation, so later window resizing scales it.
     /// Other panes share the difference in pane order, with source minimums of 30px.

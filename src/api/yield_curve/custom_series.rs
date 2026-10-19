@@ -4,7 +4,7 @@ use crate::model::{
     series_options::CustomSeriesOptions,
 };
 use iced::widget::canvas::Frame;
-impl YieldCurveChart {
+impl<M: Clone + 'static> YieldCurveChart<M> {
     pub fn add_custom_series<V>(
         &mut self,
         view: V,
@@ -13,7 +13,7 @@ impl YieldCurveChart {
         position: PriceScalePosition,
     ) -> Result<CustomSeriesHandle<V>, ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>
             + 'static,
         V::Data: 'static,
         V::Options: 'static,
@@ -28,7 +28,7 @@ impl YieldCurveChart {
         count: usize,
     ) -> Result<Vec<V::Data>, ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>
             + 'static,
         V::Data: 'static,
     {
@@ -39,10 +39,10 @@ impl YieldCurveChart {
     pub fn set_custom_data<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        data: Vec<CustomSeriesDataItem<V::Data, Maturity>>,
+        data: Vec<CustomSeriesDataItem<V::Data, Maturity, M>>,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>
             + 'static,
         V::Data: 'static,
     {
@@ -53,11 +53,11 @@ impl YieldCurveChart {
     pub fn update_custom_data<V>(
         &mut self,
         handle: &CustomSeriesHandle<V>,
-        data: CustomSeriesDataItem<V::Data, Maturity>,
+        data: CustomSeriesDataItem<V::Data, Maturity, M>,
         historical: bool,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>
             + 'static,
         V::Data: 'static,
     {
@@ -71,7 +71,7 @@ impl YieldCurveChart {
         options: V::Options,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>,
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>,
     {
         self.core.replace_custom_view_options(handle, options)
     }
@@ -81,7 +81,7 @@ impl YieldCurveChart {
         options: CustomSeriesOptions,
     ) -> Result<(), ChartError>
     where
-        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = ()>,
+        V: CustomSeriesPaneView<Frame, Item = Maturity, InternalTime = Maturity, Metadata = M>,
     {
         self.core.replace_custom_series_options(handle, options)
     }

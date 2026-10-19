@@ -2,7 +2,7 @@
 use super::{Chart, ChartBehavior, ChartError, HorizontalRange};
 use crate::model::time_data::LogicalRange;
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Resolves current lazy range state without consuming commands or queued events.
     /// Queued navigation settles during the next frame preparation.
     pub fn visible_logical_range(&mut self) -> Option<LogicalRange> {

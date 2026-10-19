@@ -8,7 +8,7 @@ use crate::{
         series_options::{SeriesOptionsMap, SeriesType},
     },
 };
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn series_type(&self, id: SeriesId) -> Result<SeriesType, ChartError> {
         self.kind(id)
     }

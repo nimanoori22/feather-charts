@@ -18,15 +18,15 @@ pub struct BarsInfo<T> {
     pub data_range: Option<(T, T)>,
 }
 
-pub(super) fn public_data<I, O: Clone>(
-    row: &SeriesPlotRow<I, O>,
-) -> Option<BuiltInSeriesDataItem<O>> {
+pub(super) fn public_data<I, O: Clone, M: Clone>(
+    row: &SeriesPlotRow<I, O, (), M>,
+) -> Option<BuiltInSeriesDataItem<O, M>> {
     Some(match row {
         SeriesPlotRow::Line(row) => BuiltInSeriesDataItem::Line(LineDataItem::Data(LineData {
             time: row.original_time().clone(),
             value: PlotRowLike::values(row)[3],
             color: row.color.clone(),
-            custom_values: row.base.custom_values,
+            custom_values: row.base.custom_values.clone(),
         })),
         SeriesPlotRow::Area(row) => BuiltInSeriesDataItem::Area(AreaDataItem::Data(AreaData {
             time: row.original_time().clone(),
@@ -34,7 +34,7 @@ pub(super) fn public_data<I, O: Clone>(
             line_color: row.line_color.clone(),
             top_color: row.top_color.clone(),
             bottom_color: row.bottom_color.clone(),
-            custom_values: row.base.custom_values,
+            custom_values: row.base.custom_values.clone(),
         })),
         SeriesPlotRow::Bar(row) => {
             let v = PlotRowLike::values(row);
@@ -45,7 +45,7 @@ pub(super) fn public_data<I, O: Clone>(
                 low: v[2],
                 close: v[3],
                 color: row.color.clone(),
-                custom_values: row.base.custom_values,
+                custom_values: row.base.custom_values.clone(),
             }))
         }
         SeriesPlotRow::Baseline(row) => {
@@ -58,7 +58,7 @@ pub(super) fn public_data<I, O: Clone>(
                 top_fill_color2: row.top_fill_color2.clone(),
                 bottom_fill_color1: row.bottom_fill_color1.clone(),
                 bottom_fill_color2: row.bottom_fill_color2.clone(),
-                custom_values: row.base.custom_values,
+                custom_values: row.base.custom_values.clone(),
             }))
         }
         SeriesPlotRow::Histogram(row) => {
@@ -66,7 +66,7 @@ pub(super) fn public_data<I, O: Clone>(
                 time: row.original_time().clone(),
                 value: PlotRowLike::values(row)[3],
                 color: row.color.clone(),
-                custom_values: row.base.custom_values,
+                custom_values: row.base.custom_values.clone(),
             }))
         }
         SeriesPlotRow::Candlestick(row) => {
@@ -80,7 +80,7 @@ pub(super) fn public_data<I, O: Clone>(
                 color: row.color.clone(),
                 border_color: row.border_color.clone(),
                 wick_color: row.wick_color.clone(),
-                custom_values: row.base.custom_values,
+                custom_values: row.base.custom_values.clone(),
             }))
         }
         _ => return None,
@@ -154,12 +154,12 @@ where
         },
     }))
 }
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Canonical fulfilled bars, oldest first. Whitespace and conflation samples are excluded.
     pub fn series_data(
         &self,
         id: SeriesId,
-    ) -> Result<Vec<BuiltInSeriesDataItem<B::Item>>, ChartError> {
+    ) -> Result<Vec<BuiltInSeriesDataItem<B::Item, M>>, ChartError> {
         self.kind(id)?;
         let series = self.model.series(id).ok_or(ChartError::UnsupportedSeries)?;
         Ok(series
@@ -175,7 +175,7 @@ impl<B: ChartBehavior> Chart<B> {
         id: SeriesId,
         index: TimePointIndex,
         direction: MismatchDirection,
-    ) -> Result<Option<BuiltInSeriesDataItem<B::Item>>, ChartError> {
+    ) -> Result<Option<BuiltInSeriesDataItem<B::Item, M>>, ChartError> {
         self.kind(id)?;
         validate_index(index)?;
         let series = self.model.series(id).ok_or(ChartError::UnsupportedSeries)?;
@@ -196,7 +196,7 @@ impl<B: ChartBehavior> Chart<B> {
         &mut self,
         id: SeriesId,
         count: usize,
-    ) -> Result<Vec<BuiltInSeriesDataItem<B::Item>>, ChartError> {
+    ) -> Result<Vec<BuiltInSeriesDataItem<B::Item, M>>, ChartError> {
         self.kind(id)?;
         let empty = self
             .model

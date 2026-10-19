@@ -93,9 +93,9 @@ pub(super) static NEXT_SERIES: AtomicU64 = AtomicU64::new(1);
 
 /// Owns data normalization and model mutation together. IDs are not reused.
 /// Data operations are synchronous; prepare a frame after a batch of operations.
-pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
+pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()> {
     pub(super) event_interests: super::EventInterests,
-    pub(super) pending_events: std::rc::Rc<std::cell::RefCell<Vec<super::ChartEvent<B::Item>>>>,
+    pub(super) pending_events: std::rc::Rc<std::cell::RefCell<Vec<super::ChartEvent<B::Item, M>>>>,
     pub(super) range_observer: Option<
         crate::helpers::delegate::Subscription<
             crate::model::time_scale::VisibleRangeChange<B::Item>,
@@ -110,12 +110,12 @@ pub struct Chart<B: ChartBehavior = HorzScaleBehaviorTime> {
     pub(crate) marker_orders: BTreeMap<super::MarkerCollectionId, u64>,
     pub(super) last_primitive: Option<super::PrimitiveHit>,
     empty_frame: IcedChartFrame,
-    pub(crate) primitives: Vec<super::primitives::Attachment<B>>,
+    pub(crate) primitives: Vec<super::primitives::Attachment<B, M>>,
     pub(crate) primitive_panes: Vec<super::PrimitivePaneId>,
     hovered_series_on_top: bool,
     pub(super) last_hit: Option<super::ChartHit>,
-    pub(crate) model: ChartModel<B>,
-    pub(super) layer: DataLayer<B>,
+    pub(crate) model: ChartModel<B, M>,
+    pub(super) layer: DataLayer<B, M>,
     pub(crate) size: iced::Size,
     pub(crate) ratio: f32,
     pub(crate) plot_pan: Option<super::interaction::PlotPan>,
@@ -151,6 +151,11 @@ impl Default for Chart {
 }
 impl Chart {
     pub fn new(options: ChartModelOptions) -> Self {
+        Self::new_with_metadata(options)
+    }
+}
+impl<M: Clone + 'static> Chart<HorzScaleBehaviorTime, M> {
+    pub fn new_with_metadata(options: ChartModelOptions) -> Self {
         Self::with_behavior(
             options,
             HorzScaleBehaviorTime::default(),
@@ -160,7 +165,7 @@ impl Chart {
         )
     }
 }
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub(crate) fn with_behavior(
         options: ChartModelOptions,
         data_behavior: B,
@@ -232,9 +237,9 @@ impl<B: ChartBehavior> Chart<B> {
         }
     }
 }
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Read-only engine inspection; data mutations must pass through this owner.
-    pub fn model(&self) -> &ChartModel<B> {
+    pub fn model(&self) -> &ChartModel<B, M> {
         &self.model
     }
     pub fn add_series(
@@ -291,7 +296,7 @@ impl<B: ChartBehavior> Chart<B> {
     pub fn set_data(
         &mut self,
         id: SeriesId,
-        data: Vec<BuiltInSeriesDataItem<B::Item>>,
+        data: Vec<BuiltInSeriesDataItem<B::Item, M>>,
     ) -> Result<(), ChartError> {
         let kind = self.kind(id)?;
         validate_data(self.model.time_scale().behavior(), kind, &data, true)?;
@@ -310,7 +315,7 @@ impl<B: ChartBehavior> Chart<B> {
     pub fn update_data(
         &mut self,
         id: SeriesId,
-        item: BuiltInSeriesDataItem<B::Item>,
+        item: BuiltInSeriesDataItem<B::Item, M>,
         historical: bool,
     ) -> Result<(), ChartError> {
         validate_data(
@@ -450,7 +455,7 @@ impl<B: ChartBehavior> Chart<B> {
             .collect();
         let mut primitive_output = vec![];
         let mut decorator =
-            |model: &mut ChartModel<B>,
+            |model: &mut ChartModel<B, M>,
              axes: &mut [crate::model::axis_snapshots::AxisSnapshots]| {
                 primitive_output = super::primitives::prepare_axes(
                     model,
@@ -720,10 +725,10 @@ impl<B: ChartBehavior> Chart<B> {
 }
 
 // Validate the entire replacement before DataLayer removes previous memberships.
-fn validate_data<B: ChartBehavior>(
+fn validate_data<B: ChartBehavior, M: Clone>(
     behavior: &B,
     kind: SeriesType,
-    data: &[BuiltInSeriesDataItem<B::Item>],
+    data: &[BuiltInSeriesDataItem<B::Item, M>],
     ordered: bool,
 ) -> Result<(), ChartError> {
     if data.is_empty() {

@@ -61,7 +61,7 @@ impl ChartBehavior for crate::model::yield_curve_horz_scale_behavior::YieldCurve
     }
 }
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Creates a chart with an application-defined horizontal domain.
     ///
     /// On valid construction, calls the factory twice, then drops it. Each behavior must independently
@@ -69,7 +69,7 @@ impl<B: ChartBehavior> Chart<B> {
     /// B nor its options needs Clone. Keys must be stable and totally ordered;
     /// cache keys must identify the same internal point. Domains use logical
     /// indices, not continuous numeric distance. Existing constructors are unchanged.
-    pub fn with_custom_behavior(
+    pub fn with_custom_behavior_and_metadata(
         mut make_behavior: impl FnMut() -> B,
         chart_options: crate::model::chart_model::ChartModelOptions,
         scale_options: crate::model::time_scale_options::HorzScaleOptions,
@@ -105,5 +105,21 @@ impl<B: ChartBehavior> Chart<B> {
         self.model
             .configure_horizontal_behavior(&mut self.layer, make_options);
         self.revision = self.revision.wrapping_add(1);
+    }
+}
+
+impl<B: ChartBehavior> Chart<B> {
+    pub fn with_custom_behavior(
+        make_behavior: impl FnMut() -> B,
+        chart_options: crate::model::chart_model::ChartModelOptions,
+        scale_options: crate::model::time_scale_options::HorzScaleOptions,
+        localization: crate::model::localization_options::LocalizationOptions<B::Item>,
+    ) -> Result<Self, ChartError> {
+        Self::with_custom_behavior_and_metadata(
+            make_behavior,
+            chart_options,
+            scale_options,
+            localization,
+        )
     }
 }

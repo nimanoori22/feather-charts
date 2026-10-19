@@ -42,7 +42,7 @@ pub struct RuntimeChartOptions {
     pub touch_navigation: TouchNavigationOptions,
     pub kinetic_scroll: KineticScrollOptions,
 }
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn runtime_options(&self) -> RuntimeChartOptions {
         RuntimeChartOptions {
             model: self.model.runtime_options(),
@@ -133,7 +133,7 @@ impl<B: ChartBehavior> Chart<B> {
     }
 }
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Detached configuration readback. Clones strings and Rc callback handles only.
     pub fn localization_options(
         &self,

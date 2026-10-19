@@ -84,14 +84,14 @@ fn colors(options: &UpDownMarkersOptions) -> Result<[iced::Color; 2], ChartError
         parse(&options.negative_color)?,
     ])
 }
-fn value<T>(item: &BuiltInSeriesDataItem<T>) -> Option<f64> {
+fn value<T, M>(item: &BuiltInSeriesDataItem<T, M>) -> Option<f64> {
     match item {
         BuiltInSeriesDataItem::Line(LineDataItem::Data(d)) => Some(d.value),
         BuiltInSeriesDataItem::Area(AreaDataItem::Data(d)) => Some(d.value),
         _ => None,
     }
 }
-impl<B: super::ChartBehavior> Chart<B> {
+impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn add_up_down_markers(
         &mut self,
         series: SeriesId,
@@ -129,7 +129,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub fn set_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        data: Vec<BuiltInSeriesDataItem<B::Item>>,
+        data: Vec<BuiltInSeriesDataItem<B::Item, M>>,
     ) -> Result<(), ChartError> {
         let series = self
             .up_down
@@ -152,7 +152,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub fn update_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        item: BuiltInSeriesDataItem<B::Item>,
+        item: BuiltInSeriesDataItem<B::Item, M>,
         historical: bool,
         now: Instant,
     ) -> Result<(), ChartError> {
@@ -311,8 +311,10 @@ impl<B: super::ChartBehavior> Chart<B> {
         self.remove_primitive(id.0)
     }
 }
-impl<B: super::ChartBehavior> DrawingPrimitive<B> for Primitive<B::Item, B::Key> {
-    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive {
+impl<B: super::ChartBehavior, M: Clone + 'static> DrawingPrimitive<B, M>
+    for Primitive<B::Item, B::Key>
+{
+    fn prepare(&self, context: &PrimitiveContext<'_, B, M>) -> PreparedPrimitive {
         let PrimitiveOwner::Series(series) = context.owner else {
             return PreparedPrimitive::default();
         };

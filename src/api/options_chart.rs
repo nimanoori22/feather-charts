@@ -28,10 +28,10 @@ impl ChartBehavior for HorzScaleBehaviorPrice {
         Ok(PriceConverter)
     }
 }
-impl Chart<HorzScaleBehaviorPrice> {
+impl<M: Clone + 'static> Chart<HorzScaleBehaviorPrice, M> {
     /// Uses ordinary chart/axis defaults; omitted horizontal precision is zero.
-    pub fn new_options(options: OptionsChartOptions) -> Result<Self, ChartError> {
-        Self::with_options_chart_options(
+    pub fn new_options_with_metadata(options: OptionsChartOptions) -> Result<Self, ChartError> {
+        Self::with_options_chart_options_and_metadata(
             options,
             ChartModelOptions::default(),
             HorzScaleOptions::default(),
@@ -39,7 +39,7 @@ impl Chart<HorzScaleBehaviorPrice> {
         )
     }
     /// Creates a price-based chart with explicit chart, scale and localization options.
-    pub fn with_options_chart_options(
+    pub fn with_options_chart_options_and_metadata(
         options: OptionsChartOptions,
         chart_options: ChartModelOptions,
         scale_options: HorzScaleOptions,
@@ -78,5 +78,24 @@ impl Chart<HorzScaleBehaviorPrice> {
         formatter: Option<TimeFormatterFn<HorizontalPrice>>,
     ) {
         self.model.set_time_formatter(&mut self.layer, formatter);
+    }
+}
+
+impl Chart<HorzScaleBehaviorPrice> {
+    pub fn new_options(options: OptionsChartOptions) -> Result<Self, ChartError> {
+        Self::new_options_with_metadata(options)
+    }
+    pub fn with_options_chart_options(
+        options: OptionsChartOptions,
+        chart_options: ChartModelOptions,
+        scale_options: HorzScaleOptions,
+        localization: LocalizationOptions<HorizontalPrice>,
+    ) -> Result<Self, ChartError> {
+        Self::with_options_chart_options_and_metadata(
+            options,
+            chart_options,
+            scale_options,
+            localization,
+        )
     }
 }

@@ -33,12 +33,12 @@ pub(crate) fn pane_id() -> PrimitivePaneId {
 }
 
 /// Borrowed only during preparation. A pane attachment has no price converter.
-pub struct PrimitiveContext<'a, B: ChartBehavior = HorzScaleBehaviorTime> {
+pub struct PrimitiveContext<'a, B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()> {
     pub owner: PrimitiveOwner,
     pub pane: usize,
     pub size: Size,
     pub pixel_ratio: f32,
-    pub model: &'a ChartModel<B>,
+    pub model: &'a ChartModel<B, M>,
     pub visible_range: Option<crate::model::range_impl::RangeImpl<TimePointIndex>>,
 }
 /// Copyable, start-of-gesture conversions; contains no live Chart references.
@@ -66,7 +66,7 @@ impl PrimitiveCoordinateTransform {
         (y.is_finite() && price.is_finite()).then_some(price)
     }
 }
-impl<B: ChartBehavior> PrimitiveContext<'_, B> {
+impl<B: ChartBehavior, M: Clone + 'static> PrimitiveContext<'_, B, M> {
     pub fn coordinate_transform(&self) -> Option<PrimitiveCoordinateTransform> {
         let price = match self.owner {
             PrimitiveOwner::Series(id) => self
@@ -155,10 +155,10 @@ impl<B: ChartBehavior> PrimitiveContext<'_, B> {
 }
 
 /// Return renderers owning copied geometry. Do not capture mutable live state in them.
-pub trait DrawingPrimitive<B: ChartBehavior = HorzScaleBehaviorTime>:
+pub trait DrawingPrimitive<B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()>:
     std::fmt::Debug + 'static
 {
-    fn prepare(&self, context: &PrimitiveContext<'_, B>) -> PreparedPrimitive;
+    fn prepare(&self, context: &PrimitiveContext<'_, B, M>) -> PreparedPrimitive;
     fn autoscale_info(
         &self,
         _start: TimePointIndex,
@@ -243,22 +243,22 @@ pub struct PreparedAttachment {
     pub output: PreparedPrimitive,
     pub price_side: Option<crate::model::axis_snapshots::PriceAxisSide>,
 }
-pub(crate) struct Attachment<B: ChartBehavior = HorzScaleBehaviorTime> {
+pub(crate) struct Attachment<B: ChartBehavior = HorzScaleBehaviorTime, M: Clone + 'static = ()> {
     pub order: u64,
     pub id: PrimitiveId,
     pub owner: PrimitiveOwner,
-    pub primitive: Rc<dyn DrawingPrimitive<B>>,
+    pub primitive: Rc<dyn DrawingPrimitive<B, M>>,
 }
-impl<B: ChartBehavior> Drop for Attachment<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Drop for Attachment<B, M> {
     fn drop(&mut self) {
         self.primitive.detached();
     }
 }
-impl<B: super::ChartBehavior> Chart<B> {
+impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn primitive_context(
         &mut self,
         id: PrimitiveId,
-    ) -> Result<PrimitiveContext<'_, B>, ChartError> {
+    ) -> Result<PrimitiveContext<'_, B, M>, ChartError> {
         let owner = self.primitive_owner(id)?;
         let pane = match owner {
             PrimitiveOwner::Series(series) => self.model.pane_for_series(series),
@@ -324,7 +324,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     fn attach_primitive(
         &mut self,
         owner: PrimitiveOwner,
-        primitive: impl DrawingPrimitive<B>,
+        primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<PrimitiveId, ChartError> {
         let id = NEXT_ID
             .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| id.checked_add(1))
@@ -345,7 +345,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub fn add_series_primitive(
         &mut self,
         series: SeriesId,
-        primitive: impl DrawingPrimitive<B>,
+        primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<PrimitiveId, ChartError> {
         if self.model.projection(series).is_none() {
             return Err(ChartError::UnknownSeries(series));
@@ -355,7 +355,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub fn add_pane_primitive(
         &mut self,
         pane: usize,
-        primitive: impl DrawingPrimitive<B>,
+        primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<PrimitiveId, ChartError> {
         let owner = *self.primitive_panes.get(pane).ok_or(
             crate::model::chart_model::ChartModelError::InvalidPane(pane),
@@ -366,7 +366,7 @@ impl<B: super::ChartBehavior> Chart<B> {
     pub fn replace_primitive(
         &mut self,
         id: PrimitiveId,
-        primitive: impl DrawingPrimitive<B>,
+        primitive: impl DrawingPrimitive<B, M>,
     ) -> Result<(), ChartError> {
         self.primitive_owner(id)?;
         self.up_down.remove(&id);
@@ -478,10 +478,10 @@ impl crate::ui::line_chart::PlotSnapshot {
     }
 }
 
-pub(crate) fn prepare_axes<B: ChartBehavior>(
-    model: &mut ChartModel<B>,
+pub(crate) fn prepare_axes<B: ChartBehavior, M: Clone + 'static>(
+    model: &mut ChartModel<B, M>,
     axes: &mut [crate::model::axis_snapshots::AxisSnapshots],
-    attachments: &[Attachment<B>],
+    attachments: &[Attachment<B, M>],
     pane_keys: &[PrimitivePaneId],
     ratio: f32,
 ) -> Result<Vec<Vec<PreparedAttachment>>, crate::ui::chart_frame::ChartFrameError> {

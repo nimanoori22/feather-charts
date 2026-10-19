@@ -87,7 +87,7 @@ pub(super) struct EditSession {
     viewport: EditViewport,
     auto_scale: Option<bool>,
 }
-impl<B: super::ChartBehavior> Chart<B> {
+impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
     fn edit_viewport(&mut self, id: PrimitiveId) -> Option<EditViewport> {
         let revision = self.revision;
         let size = self.size;

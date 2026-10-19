@@ -5,7 +5,7 @@ use crate::model::{
     price_scale::{PriceScaleOptions, PriceScaleOptionsPatch},
 };
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     pub fn visible_price_range(
         &self,
         pane: usize,
@@ -116,7 +116,7 @@ impl<B: ChartBehavior> Chart<B> {
     }
 }
 
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Fresh assignment in the series' current pane. Named overlays have no axis width.
     pub fn series_price_scale(
         &self,

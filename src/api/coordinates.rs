@@ -1,7 +1,7 @@
 //! Public conversions use current engine geometry; prepare after layout/data changes.
 use super::{Chart, ChartBehavior, ChartError};
 use crate::model::{coordinate::Coordinate, data_layer::SeriesId, time_data::TimePointIndex};
-impl<B: ChartBehavior> Chart<B> {
+impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
     /// Pane-local coordinate using this series' scale and visible first value.
     pub fn price_to_coordinate(
         &mut self,

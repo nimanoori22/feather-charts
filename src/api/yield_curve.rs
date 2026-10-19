@@ -16,20 +16,20 @@ use crate::model::{
 };
 use std::{ops::Deref, rc::Rc, time::Instant};
 
-pub struct YieldCurveChart {
-    core: Chart<YieldCurveHorzScaleBehavior>,
+pub struct YieldCurveChart<M: Clone + 'static = ()> {
+    core: Chart<YieldCurveHorzScaleBehavior, M>,
     support: SeriesId,
     scaffold: Option<ScaffoldState>,
     dirty: bool,
     rebuilds: u64,
 }
-impl Deref for YieldCurveChart {
-    type Target = Chart<YieldCurveHorzScaleBehavior>;
+impl<M: Clone + 'static> Deref for YieldCurveChart<M> {
+    type Target = Chart<YieldCurveHorzScaleBehavior, M>;
     fn deref(&self) -> &Self::Target {
         &self.core
     }
 }
-impl YieldCurveChart {
+impl<M: Clone + 'static> YieldCurveChart<M> {
     pub fn visible_logical_range(&mut self) -> Option<crate::model::time_data::LogicalRange> {
         self.core.visible_logical_range()
     }
@@ -82,7 +82,7 @@ impl YieldCurveChart {
     pub fn set_event_interests(&mut self, interests: super::EventInterests) {
         self.core.set_event_interests(interests);
     }
-    pub fn take_events(&mut self) -> Vec<ChartEvent<Maturity>> {
+    pub fn take_events(&mut self) -> Vec<ChartEvent<Maturity, M>> {
         self.core.take_events()
     }
     pub fn apply_chart_options(&mut self, patch: ChartOptionsPatch) -> Result<(), ChartError> {
@@ -128,19 +128,19 @@ impl YieldCurveChart {
     ) -> Result<(), ChartError> {
         self.core.apply_price_scale_options(pane, scale, patch)
     }
-    pub fn new(options: YieldCurveOptions) -> Result<Self, ChartError> {
+    pub fn new_with_metadata(options: YieldCurveOptions) -> Result<Self, ChartError> {
         let mut chart_options = ChartModelOptions::default();
         chart_options.pane.left_price_scale.visible = true;
         chart_options.pane.right_price_scale.visible = false;
         chart_options.pane.default_visible_price_scale =
             crate::model::pane::DefaultVisiblePriceScale::Left;
-        Self::with_chart_options(
+        Self::with_chart_options_and_metadata(
             options,
             chart_options,
             LocalizationOptions::new("en-US", ""),
         )
     }
-    pub fn with_chart_options(
+    pub fn with_chart_options_and_metadata(
         options: YieldCurveOptions,
         chart_options: ChartModelOptions,
         mut localization: LocalizationOptions<Maturity>,
@@ -217,7 +217,7 @@ impl YieldCurveChart {
     pub fn set_data(
         &mut self,
         id: SeriesId,
-        rows: Vec<BuiltInSeriesDataItem<Maturity>>,
+        rows: Vec<BuiltInSeriesDataItem<Maturity, M>>,
     ) -> Result<(), ChartError> {
         self.core.set_data(id, rows)?;
         self.dirty = true;
@@ -226,7 +226,7 @@ impl YieldCurveChart {
     pub fn update_data(
         &mut self,
         id: SeriesId,
-        row: BuiltInSeriesDataItem<Maturity>,
+        row: BuiltInSeriesDataItem<Maturity, M>,
         historical: bool,
     ) -> Result<(), ChartError> {
         self.core.update_data(id, row, historical)?;
@@ -236,7 +236,7 @@ impl YieldCurveChart {
     pub fn set_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        rows: Vec<BuiltInSeriesDataItem<Maturity>>,
+        rows: Vec<BuiltInSeriesDataItem<Maturity, M>>,
     ) -> Result<(), ChartError> {
         self.core.set_up_down_data(id, rows)?;
         self.dirty = true;
@@ -245,7 +245,7 @@ impl YieldCurveChart {
     pub fn update_up_down_data(
         &mut self,
         id: UpDownMarkersId,
-        row: BuiltInSeriesDataItem<Maturity>,
+        row: BuiltInSeriesDataItem<Maturity, M>,
         historical: bool,
         now: Instant,
     ) -> Result<(), ChartError> {
@@ -257,7 +257,7 @@ impl YieldCurveChart {
         &mut self,
         id: SeriesId,
         count: usize,
-    ) -> Result<Vec<BuiltInSeriesDataItem<Maturity>>, ChartError> {
+    ) -> Result<Vec<BuiltInSeriesDataItem<Maturity, M>>, ChartError> {
         let removed = self.core.pop_data(id, count)?;
         self.dirty |= !removed.is_empty();
         Ok(removed)
@@ -295,7 +295,7 @@ impl YieldCurveChart {
     pub fn primitive_context(
         &mut self,
         id: PrimitiveId,
-    ) -> Result<PrimitiveContext<'_, YieldCurveHorzScaleBehavior>, ChartError> {
+    ) -> Result<PrimitiveContext<'_, YieldCurveHorzScaleBehavior, M>, ChartError> {
         self.core.primitive_context(id)
     }
     pub fn preview_primitive_update(&mut self, id: PrimitiveEditId) -> Result<(), ChartError> {
@@ -374,7 +374,7 @@ impl YieldCurveChart {
     pub fn update(
         &mut self,
         message: ChartMessage,
-    ) -> Result<Vec<ChartEvent<Maturity>>, ChartError> {
+    ) -> Result<Vec<ChartEvent<Maturity, M>>, ChartError> {
         self.settle()?;
         self.core.update(message)
     }
@@ -488,21 +488,21 @@ impl YieldCurveChart {
     pub fn add_pane_primitive(
         &mut self,
         pane: usize,
-        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior, M>,
     ) -> Result<PrimitiveId, ChartError> {
         self.core.add_pane_primitive(pane, primitive)
     }
     pub fn add_series_primitive(
         &mut self,
         id: SeriesId,
-        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior, M>,
     ) -> Result<PrimitiveId, ChartError> {
         self.core.add_series_primitive(id, primitive)
     }
     pub fn replace_primitive(
         &mut self,
         id: PrimitiveId,
-        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior>,
+        primitive: impl DrawingPrimitive<YieldCurveHorzScaleBehavior, M>,
     ) -> Result<(), ChartError> {
         self.core.replace_primitive(id, primitive)
     }
@@ -526,3 +526,16 @@ fn yield_defaults(options: &mut crate::model::series_options::SeriesOptionsCommo
 mod tests;
 
 mod custom_series;
+
+impl YieldCurveChart {
+    pub fn new(options: YieldCurveOptions) -> Result<Self, ChartError> {
+        Self::new_with_metadata(options)
+    }
+    pub fn with_chart_options(
+        options: YieldCurveOptions,
+        chart_options: ChartModelOptions,
+        localization: LocalizationOptions<Maturity>,
+    ) -> Result<Self, ChartError> {
+        Self::with_chart_options_and_metadata(options, chart_options, localization)
+    }
+}
