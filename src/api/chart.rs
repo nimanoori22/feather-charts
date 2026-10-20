@@ -165,7 +165,7 @@ impl<M: Clone + 'static> Chart<HorzScaleBehaviorTime, M> {
         chart.model.preview_runtime_options(&Default::default())?;
         Ok(chart)
     }
-    /// Calendar chart with typed metadata. Use Rc<T> to share payloads without deep copies.
+    /// Calendar chart with typed metadata. Use `Rc<T>` to share payloads without deep copies.
     /// Existing unit-metadata callers can keep using Chart::new or Default.
     pub fn new_with_metadata(options: ChartModelOptions) -> Self {
         Self::with_behavior(
