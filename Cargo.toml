@@ -2,6 +2,13 @@
 name = "feather-charts"
 version = "0.1.0"
 edition = "2024"
+description = "Native financial charts for Iced, ported from TradingView Lightweight Charts"
+license = "Apache-2.0"
+repository = "https://github.com/nimanoori22/feather-charts"
+documentation = "https://docs.rs/feather-charts"
+readme = "README.md"
+keywords = ["charts", "financial", "iced", "candlestick", "trading"]
+categories = ["gui", "visualization"]
 
 [dependencies]
 csscolorparser = "0.8.3"
