@@ -35,8 +35,8 @@ See the [usage guide](docs/usage.md) for feature-specific APIs and constraints.
 
 ### Install from crates.io
 
-Feather Charts is available on [crates.io](https://crates.io/crates/feather-charts).
-Add it to an Iced application with:
+The first crates.io release is being prepared. After publication, add it to an
+Iced application with:
 
 ```sh
 cargo add feather-charts@0.1.0
