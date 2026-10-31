@@ -595,7 +595,7 @@ impl Demo {
             .on_press(Message::CrosshairMode)
         ]
         .spacing(5);
-        let chart = self.chart.element().map(Message::from);
+        let chart = self.chart.element_with_readout().map(Message::from);
         container(
             column![
                 controls,

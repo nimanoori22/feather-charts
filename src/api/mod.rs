@@ -9,6 +9,7 @@ mod price_scale;
 mod time_scale;
 pub use configuration::*;
 mod coordinates;
+mod readout;
 mod series_data;
 mod series_queries;
 pub use crate::model::price_range_impl::PriceRange;
