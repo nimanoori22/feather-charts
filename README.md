@@ -7,7 +7,11 @@ It brings candlesticks, lines, volume, synchronized panes and extensible drawing
 to an embeddable Iced widget. The port follows the original library's behavior
 while using Rust ownership, typed handles and a synchronous chart engine.
 
-[Quick start](#quick-start) · [Examples](#examples) · [Usage guide](docs/usage.md) · [Project status](#project-status) · [Contributing](#contributing)
+[Quick start](#quick-start) · [AI agent charting](docs/ai-agent-charting.md) · [Examples](#examples) · [Usage guide](docs/usage.md) · [Project status](#project-status) · [Contributing](#contributing)
+
+**Create charts with an AI agent:** the [AI agent charting guide](docs/ai-agent-charting.md)
+includes one-time viewer installation and a reusable prompt for turning data into
+`.fchart` files that an agent can open in the native viewer.
 
 ## Features
 
@@ -39,7 +43,7 @@ Feather Charts is available on [crates.io](https://crates.io/crates/feather-char
 Add it to an Iced application with:
 
 ```sh
-cargo add feather-charts@0.1.0
+cargo add feather-charts@0.2.0
 ```
 
 The Cargo package name is `feather-charts`; Rust imports use `feather_charts`.
@@ -248,3 +252,10 @@ for upstream attribution.
 Preserved upstream [LICENSE](docs/porting/attribution-source/LICENSE) and
 [NOTICE](docs/porting/attribution-source/NOTICE) files accompany the attribution
 assets. Iced vendor sources retain their own licenses.
+
+## .fchart numeric documents
+
+The native `feather-charts` viewer opens self-contained versioned JSON documents.
+Both axes use proportional linear numeric distances; line and explicit-width
+histogram series are supported. See [format and viewer guide](docs/fchart-viewer.md)
+for headless Rust/Python producers, benchmark export and opt-in Linux integration.
