@@ -32,6 +32,10 @@ pub enum HitGeometry {
         data: LineRendererData,
         kind: LineType,
     },
+    Columns {
+        items: Vec<crate::renderers::range_hit_test::RangePoint>,
+        width: f64,
+    },
     Range {
         items: Vec<crate::renderers::range_hit_test::RangePoint>,
         spacing: f64,
@@ -104,6 +108,10 @@ impl PreparedSeriesHit {
                 data.bar_width,
                 self.tolerance,
             )?,
+            HitGeometry::Columns { items, width } => (
+                crate::renderers::range_hit_test::column_hit(items, x, y, *width, self.tolerance)?,
+                HitTestPriority::Range,
+            ),
             HitGeometry::Range { items, spacing } => (
                 crate::renderers::range_hit_test::range_hit(items, x, y, *spacing, self.tolerance)?,
                 HitTestPriority::Range,
@@ -205,6 +213,26 @@ where
         }
         PaneView::Histogram(v) => {
             let d = v.data()?;
+            if let Some(width) = d.numeric_width {
+                return Some(PreparedSeriesHit {
+                    series: id,
+                    filled: false,
+                    tolerance,
+                    geometry: HitGeometry::Columns {
+                        width,
+                        items: d
+                            .items
+                            .iter()
+                            .map(|p| RangePoint {
+                                index: p.index,
+                                x: p.x,
+                                top: p.y,
+                                bottom: d.baseline,
+                            })
+                            .collect(),
+                    },
+                });
+            }
             let r = d.visible_range;
             (
                 d.items[r.from..r.to]

@@ -114,10 +114,18 @@ where
         from: 0,
         to: items.len(),
     };
+    let numeric_width = time.numeric_histogram_width(series.id()).map(|w| {
+        let (from, to) = time.numeric_range().unwrap();
+        w / (to - from) * time.width()
+    });
+    if time.is_numeric() && numeric_width.is_none() {
+        return Err(HistogramPreparationError::NonFiniteCoordinates);
+    }
     Ok(Some(HistogramRendererData {
         items,
         visible_range,
-        bar_spacing: time.bar_spacing(),
+        bar_spacing: numeric_width.unwrap_or_else(|| time.bar_spacing()),
+        numeric_width,
         baseline,
     }))
 }

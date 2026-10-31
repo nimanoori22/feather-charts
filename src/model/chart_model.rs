@@ -166,6 +166,21 @@ where
         self.color_parser.clone()
     }
 
+    pub(crate) fn enable_numeric(&mut self) {
+        self.time_scale.enable_numeric();
+    }
+    pub(crate) fn set_numeric_range(&mut self, from: f64, to: f64) -> bool {
+        if !self.time_scale.set_numeric_range(from, to) {
+            return false;
+        }
+        self.consume_time_effects(crate::model::time_scale_host::viewport_changed_effects());
+        self.flush_effects();
+        true
+    }
+    pub(crate) fn set_numeric_histogram_width(&mut self, id: SeriesId, width: f64) {
+        self.time_scale.set_numeric_histogram_width(id, width);
+        self.light_update();
+    }
     pub fn time_scale(&self) -> &TimeScale<B> {
         &self.time_scale
     }
@@ -450,7 +465,11 @@ where
         self.crosshair.position = Some(CrosshairPosition {
             pane: origin.pane,
             index,
-            x: self.time_scale.index_to_coordinate(index).value(),
+            x: if self.time_scale.is_numeric() {
+                origin.point.x
+            } else {
+                self.time_scale.index_to_coordinate(index).value()
+            },
             y,
         });
     }
@@ -598,7 +617,10 @@ where
             }
             if options.vertical.label_visible
                 && let Some(position) = self.crosshair.position
-                && let Some(text) = self.time_scale.format_index(position.index)
+                && let Some(text) = self
+                    .time_scale
+                    .format_coordinate(position.x)
+                    .or_else(|| self.time_scale.format_index(position.index))
             {
                 let colors = parser
                     .generate_contrast_colors(&options.vertical.label_background_color)
@@ -1135,6 +1157,7 @@ where
             .map_err(ChartModelError::Pane)?;
         self.coordinator.remove_target(id);
         self.series.remove(&id);
+        self.time_scale.remove_numeric_histogram_width(id);
         self.consume_pane_effects(effects);
         if self.panes.len() > 1
             && self.panes[pane].attached_source_ids().is_empty()

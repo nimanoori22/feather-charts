@@ -43,6 +43,8 @@ where
     B::CacheKey: Clone + Eq + Hash,
 {
     behavior: B,
+    numeric: Option<NumericViewport>,
+    numeric_widths: BTreeMap<crate::model::data_layer::SeriesId, f64>,
     options: HorzScaleOptions,
     width: f64,
     base_index: Option<TimePointIndex>,
@@ -73,6 +75,13 @@ where
 }
 
 #[derive(Clone, Copy)]
+struct NumericViewport {
+    from: f64,
+    to: f64,
+    start: Option<(f64, f64)>,
+}
+
+#[derive(Clone, Copy)]
 struct TransitionState {
     bar_spacing: f64,
     right_offset: f64,
@@ -100,6 +109,8 @@ where
         behavior.update_formatter(&localization);
         Self {
             behavior,
+            numeric: None,
+            numeric_widths: BTreeMap::new(),
             options,
             width: 0.0,
             base_index: None,
@@ -127,6 +138,98 @@ where
             conflation_factor: 1,
             device_pixel_ratio: 1.0,
         }
+    }
+    pub(crate) fn enable_numeric(&mut self) {
+        self.numeric = Some(NumericViewport {
+            from: -1.,
+            to: 1.,
+            start: None,
+        });
+    }
+    pub fn is_numeric(&self) -> bool {
+        self.numeric.is_some()
+    }
+    pub fn numeric_range(&self) -> Option<(f64, f64)> {
+        self.numeric.map(|n| (n.from, n.to))
+    }
+    pub fn numeric_to_coordinate(&self, value: f64) -> Option<f64> {
+        if self.is_empty() {
+            return None;
+        }
+        let n = self.numeric?;
+        let x = (value - n.from) / (n.to - n.from) * self.width;
+        (value.is_finite() && x.is_finite()).then_some(x)
+    }
+    pub fn coordinate_to_numeric(&self, x: f64) -> Option<f64> {
+        let n = self.numeric?;
+        let value = n.from + x / self.width * (n.to - n.from);
+        value.is_finite().then_some(value)
+    }
+    pub fn set_numeric_range(&mut self, from: f64, to: f64) -> bool {
+        let span = to - from;
+        if self.numeric.is_none()
+            || !from.is_finite()
+            || !to.is_finite()
+            || !span.is_finite()
+            || span <= 0.
+            || !(1. / span).is_finite()
+            || (!self.points.is_empty()
+                && self.width > 0.
+                && [self.numeric_at(0), self.numeric_at(self.points.len() - 1)]
+                    .iter()
+                    .any(|x| !((x - from) / span * self.width).is_finite()))
+        {
+            return false;
+        }
+        let n = self.numeric.as_mut().unwrap();
+        n.from = from;
+        n.to = to;
+        self.visible_range_invalidated = true;
+        self.time_marks_cache = None;
+        true
+    }
+    pub(crate) fn set_numeric_histogram_width(
+        &mut self,
+        id: crate::model::data_layer::SeriesId,
+        width: f64,
+    ) {
+        self.numeric_widths.insert(id, width);
+    }
+    pub(crate) fn remove_numeric_histogram_width(
+        &mut self,
+        id: crate::model::data_layer::SeriesId,
+    ) {
+        self.numeric_widths.remove(&id);
+    }
+    pub(crate) fn numeric_histogram_width(
+        &self,
+        id: crate::model::data_layer::SeriesId,
+    ) -> Option<f64> {
+        self.numeric
+            .and_then(|_| self.numeric_widths.get(&id).copied())
+    }
+    fn numeric_at(&self, index: usize) -> f64 {
+        self.behavior
+            .numeric_value(&self.points[index].time)
+            .expect("numeric behavior")
+    }
+    fn nearest_numeric_index(&self, x: f64) -> usize {
+        let right = self
+            .points
+            .partition_point(|p| self.behavior.numeric_value(&p.time).unwrap() < x);
+        if right == 0 {
+            0
+        } else if right == self.points.len()
+            || x - self.numeric_at(right - 1) <= self.numeric_at(right) - x
+        {
+            right - 1
+        } else {
+            right
+        }
+    }
+    pub fn format_coordinate(&self, x: f64) -> Option<String> {
+        self.coordinate_to_numeric(x)
+            .map(|v| self.behavior.format_numeric(v))
     }
     pub fn behavior(&self) -> &B {
         &self.behavior
@@ -339,6 +442,9 @@ where
         effects
     }
     pub fn restore_default(&mut self) -> Vec<TimeScaleEffect> {
+        if self.is_numeric() {
+            return self.fit_content();
+        }
         self.set_bar_spacing(self.options.bar_spacing);
         self.set_right_offset(
             self.options
@@ -429,6 +535,21 @@ where
         if self.width <= 0.0 || !range.count().is_finite() || range.count() <= 0.0 {
             return vec![];
         }
+        if self.is_numeric() && !self.points.is_empty() {
+            let value = |i: f64| {
+                let i = i.clamp(0., (self.points.len() - 1) as f64);
+                let left = i.floor() as usize;
+                let right = i.ceil() as usize;
+                self.numeric_at(left)
+                    + (self.numeric_at(right) - self.numeric_at(left)) * (i - left as f64)
+            };
+            let from = value(range.left().value());
+            let to = value(range.right().value());
+            if from < to {
+                self.set_numeric_range(from, to);
+            }
+            return viewport_changed_effects();
+        }
         let pixel_offset = if apply_default_offset {
             self.options.right_offset_pixels.unwrap_or(0.0)
         } else {
@@ -449,6 +570,21 @@ where
         viewport_changed_effects()
     }
     pub fn fit_content(&mut self) -> Vec<TimeScaleEffect> {
+        if self.is_numeric() {
+            if !self.points.is_empty() {
+                let half = self.numeric_widths.values().copied().fold(0_f64, f64::max) / 2.;
+                let a = self.numeric_at(0) - half;
+                let b = self.numeric_at(self.points.len() - 1) + half;
+                let span = b - a;
+                let pad = if span > 0. {
+                    span * 0.05
+                } else {
+                    (a.abs() * 0.05).max(1.)
+                };
+                self.set_numeric_range(a - pad, b + pad);
+            }
+            return viewport_changed_effects();
+        }
         let Some(last) = self.points.len().checked_sub(1) else {
             return vec![];
         };
@@ -491,6 +627,11 @@ where
         find_nearest: bool,
     ) -> Option<TimePointIndex> {
         let last = self.points.last()?;
+        if self.is_numeric() && find_nearest {
+            return Some(TimePointIndex::new(
+                self.nearest_numeric_index(self.behavior.numeric_value(time)?) as f64,
+            ));
+        }
         let key = self.behavior.key(time);
         if key > self.behavior.key(&last.time) {
             return find_nearest.then(|| TimePointIndex::new((self.points.len() - 1) as f64));
@@ -523,6 +664,14 @@ where
         if self.is_empty() || !index.is_integer() {
             return Coordinate::new(0.0);
         }
+        if self.is_numeric() {
+            return self
+                .point(index)
+                .and_then(|p| self.behavior.numeric_value(&p.time))
+                .and_then(|v| self.numeric_to_coordinate(v))
+                .unwrap_or(f64::NAN)
+                .into();
+        }
         Coordinate::new(
             self.width
                 - (self.base().value() + self.right_offset - index.value() + 0.5)
@@ -549,6 +698,13 @@ where
         coordinate: Coordinate,
         consider_ignore_whitespace: bool,
     ) -> TimePointIndex {
+        if self.is_numeric() && !self.points.is_empty() {
+            return TimePointIndex::new(
+                self.nearest_numeric_index(
+                    self.coordinate_to_numeric(coordinate.value()).unwrap_or(0.),
+                ) as f64,
+            );
+        }
         let index = TimePointIndex::new(self.float_index(coordinate).ceil());
         if !consider_ignore_whitespace || !self.options.ignore_whitespace_indices {
             return index;
@@ -586,6 +742,36 @@ where
         &mut self,
         layout: crate::model::time_scale_host::TimeScaleLayoutContext,
     ) -> Option<&[TimeMark]> {
+        if let Some(n) = self.numeric {
+            if self.is_empty() {
+                return None;
+            }
+            let raw = (n.to - n.from) / (self.width / (layout.font_size * 7.).max(1.)).max(1.);
+            let power = 10_f64.powf(raw.log10().floor());
+            let step = [1., 2., 5., 10.]
+                .into_iter()
+                .map(|m| m * power)
+                .find(|v| *v >= raw)
+                .unwrap_or(raw);
+            let mut marks = Vec::new();
+            if step.is_finite() && step > 0. {
+                let first = (n.from / step).ceil() * step;
+                for i in 0..1000 {
+                    let v = first + i as f64 * step;
+                    if v > n.to || !v.is_finite() {
+                        break;
+                    }
+                    marks.push(TimeMark {
+                        need_align_coordinate: false,
+                        coordinate: self.numeric_to_coordinate(v).unwrap(),
+                        label: self.behavior.format_numeric(v),
+                        weight: Default::default(),
+                    });
+                }
+            }
+            self.time_marks_cache = Some(marks);
+            return self.time_marks_cache.as_deref();
+        }
         // Tick selection depends on the layout font size, not just the viewport.
         if self.time_marks_font_size != Some(layout.font_size) {
             self.time_marks_font_size = Some(layout.font_size);
@@ -688,7 +874,7 @@ where
         }
     }
     pub(crate) fn effective_conflation_factor(&self, series_threshold: Option<f64>) -> usize {
-        if !self.options.enable_conflation {
+        if self.is_numeric() || !self.options.enable_conflation {
             return 1;
         }
         super::data_conflater::factor(
@@ -703,6 +889,9 @@ where
         self.conflation_factor
     }
     pub fn possible_conflation_factors(&self) -> Vec<usize> {
+        if self.is_numeric() {
+            return vec![1];
+        }
         let threshold = 1.0 / self.device_pixel_ratio;
         if self.options.min_bar_spacing >= threshold {
             return vec![1];
@@ -736,6 +925,15 @@ where
             .format(key, || behavior.format_tickmark(mark, localization))
     }
     pub fn zoom(&mut self, point: Coordinate, scale: f64) -> Vec<TimeScaleEffect> {
+        if let Some(n) = self.numeric {
+            let anchor = self.coordinate_to_numeric(point.value()).unwrap_or(n.from);
+            let factor = (1. + scale / 10.).max(0.1);
+            self.set_numeric_range(
+                anchor + (n.from - anchor) / factor,
+                anchor + (n.to - anchor) / factor,
+            );
+            return viewport_changed_effects();
+        }
         let before = self.float_index(point);
         let mut effects = self.set_bar_spacing(self.bar_spacing + scale * self.bar_spacing / 10.0);
         if !self.options.right_bar_stays_on_scroll {
@@ -752,6 +950,9 @@ where
         if self.is_empty() || self.transition_start.is_some() {
             return;
         }
+        if let Some(n) = self.numeric.as_mut() {
+            n.start = Some((n.from, n.to));
+        }
         self.scale_start = Some(point);
         self.transition_start = Some(TransitionState {
             bar_spacing: self.bar_spacing,
@@ -767,6 +968,12 @@ where
         if a == 0.0 || b == 0.0 {
             return vec![];
         }
+        if let Some(n) = self.numeric
+            && let Some((from, to)) = n.start
+        {
+            self.set_numeric_range(to - (to - from) * b / a, to);
+            return viewport_changed_effects();
+        }
         self.set_bar_spacing(state.bar_spacing * a / b)
     }
     pub fn end_scale(&mut self) {
@@ -780,6 +987,9 @@ where
         if self.is_empty() || self.transition_start.is_some() {
             return;
         }
+        if let Some(n) = self.numeric.as_mut() {
+            n.start = Some((n.from, n.to));
+        }
         self.scroll_start = Some(point);
         self.transition_start = Some(TransitionState {
             bar_spacing: self.bar_spacing,
@@ -790,6 +1000,13 @@ where
         let (Some(start), Some(state)) = (self.scroll_start, self.transition_start) else {
             return vec![];
         };
+        if let Some(n) = self.numeric
+            && let Some((from, to)) = n.start
+        {
+            let delta = (start.value() - point.value()) / self.width * (to - from);
+            self.set_numeric_range(from + delta, to + delta);
+            return viewport_changed_effects();
+        }
         self.set_right_offset(
             state.right_offset + (start.value() - point.value()) / self.bar_spacing,
         )
@@ -834,12 +1051,26 @@ where
         if self.is_empty() {
             self.visible_range = TimeScaleVisibleRange::invalid();
         } else {
-            let right = self.right_offset + self.base().value();
-            let left = right - self.width / self.bar_spacing + 1.0;
-            self.visible_range = TimeScaleVisibleRange::new(Some(RangeImpl::new(
-                Logical::new(left),
-                Logical::new(right),
-            )));
+            if let Some(n) = self.numeric {
+                let half = self.numeric_widths.values().copied().fold(0_f64, f64::max) / 2.;
+                let first = self.points.partition_point(|p| {
+                    self.behavior.numeric_value(&p.time).unwrap() < n.from - half
+                });
+                let end = self.points.partition_point(|p| {
+                    self.behavior.numeric_value(&p.time).unwrap() <= n.to + half
+                });
+                self.visible_range = TimeScaleVisibleRange::new(Some(RangeImpl::new(
+                    Logical::new(first.saturating_sub(1) as f64),
+                    Logical::new(end.min(self.points.len() - 1) as f64),
+                )));
+            } else {
+                let right = self.right_offset + self.base().value();
+                let left = right - self.width / self.bar_spacing + 1.0;
+                self.visible_range = TimeScaleVisibleRange::new(Some(RangeImpl::new(
+                    Logical::new(left),
+                    Logical::new(right),
+                )));
+            }
         }
         if !are_ranges_equal(old.strict_range(), self.visible_range.strict_range()) {
             if self.range_changed.has_listeners() {
@@ -865,6 +1096,9 @@ where
         self.time_marks_cache = None;
     }
     fn correct_bar_spacing(&mut self) {
+        if self.is_numeric() {
+            return;
+        }
         // A zero-sized Rust layout is explicitly supported (the source widget
         // ignores nonpositive widths). Preserve spacing until layout is usable.
         if self.width == 0. {
@@ -907,6 +1141,9 @@ where
         self.correct_bar_spacing();
     }
     fn correct_offset(&mut self) {
+        if self.is_numeric() {
+            return;
+        }
         if self.width == 0. || self.points.is_empty() || self.base_index.is_none() {
             return;
         }
@@ -1164,3 +1401,7 @@ mod tests {
         assert_eq!(options_events.get(), 1);
     }
 }
+
+#[cfg(test)]
+#[path = "time_scale_numeric_tests.rs"]
+mod numeric_tests;

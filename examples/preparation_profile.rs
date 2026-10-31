@@ -302,6 +302,9 @@ fn main() {
                                 items, ..
                             } => items.len(),
                             // This built-in profile cannot count an opaque custom renderer.
+                            feather_charts::ui::hit_testing::HitGeometry::Columns {
+                                items, ..
+                            } => items.len(),
                             feather_charts::ui::hit_testing::HitGeometry::Custom(_) => 0,
                         })
                         .sum();

@@ -155,6 +155,108 @@ where
     }))
 }
 impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
+    pub(super) fn validate_numeric_data(
+        &self,
+        id: SeriesId,
+        data: &[crate::model::data_consumer::BuiltInSeriesDataItem<B::Item, M>],
+        replace: bool,
+        width_override: Option<f64>,
+    ) -> Result<(), ChartError> {
+        use crate::model::{
+            data_consumer::TimedData,
+            plot_data::{MutablePlotRow, PlotRowLike},
+        };
+        let scale = self.model.time_scale();
+        if !scale.is_numeric() {
+            return Ok(());
+        }
+        let behavior = scale.behavior();
+        let mut min = f64::INFINITY;
+        let mut max = f64::NEG_INFINITY;
+        let mut ymin = 0_f64;
+        let mut ymax = 0_f64;
+        let mut include = |x: f64, width: f64| -> Result<(), ChartError> {
+            let a = x - width / 2.;
+            let b = x + width / 2.;
+            if !a.is_finite() || !b.is_finite() || (width > 0. && (a == x || b == x)) {
+                return Err(ChartError::InvalidDataQuery);
+            }
+            min = min.min(a);
+            max = max.max(b);
+            Ok(())
+        };
+        for &other in self.kinds.keys() {
+            if replace && other == id {
+                continue;
+            }
+            let Some(series) = self.model.series(other) else {
+                continue;
+            };
+            let width = if other == id {
+                width_override.or_else(|| scale.numeric_histogram_width(other))
+            } else {
+                scale.numeric_histogram_width(other)
+            }
+            .unwrap_or(0.);
+            for row in series.bars().rows() {
+                include(
+                    behavior
+                        .numeric_value(MutablePlotRow::time(row))
+                        .ok_or(ChartError::InvalidDataQuery)?,
+                    width,
+                )?;
+                for &y in PlotRowLike::values(row) {
+                    ymin = ymin.min(y);
+                    ymax = ymax.max(y);
+                }
+            }
+        }
+        let width = width_override
+            .or_else(|| scale.numeric_histogram_width(id))
+            .unwrap_or(0.);
+        for item in data {
+            let time = behavior
+                .to_internal(item.time())
+                .map_err(B::conversion_error)?;
+            include(
+                behavior
+                    .numeric_value(&time)
+                    .ok_or(ChartError::InvalidDataQuery)?,
+                width,
+            )?;
+            // The ordinary validator already checked the row's finite Y values.
+            let row = crate::model::get_series_plot_row_creator::create_builtin_plot_row(
+                self.kind(id)?,
+                time,
+                TimePointIndex::default(),
+                item.clone(),
+                item.time().clone(),
+            )
+            .map_err(|_| ChartError::InvalidDataQuery)?;
+            if let Some(values) = row.values() {
+                for &y in values {
+                    ymin = ymin.min(y);
+                    ymax = ymax.max(y);
+                }
+            }
+        }
+        let valid = |a: f64, b: f64| {
+            let span = b - a;
+            let padding = if span == 0. {
+                (a.abs() * 0.05).max(1.)
+            } else {
+                span * 0.1
+            };
+            span.is_finite()
+                && (span == 0. || (1. / span).is_finite())
+                && (a - padding).is_finite()
+                && (b + padding).is_finite()
+        };
+        if min <= max && (!valid(min, max) || !valid(ymin, ymax)) {
+            return Err(ChartError::InvalidDataQuery);
+        }
+        Ok(())
+    }
     /// Canonical fulfilled bars, oldest first. Whitespace and conflation samples are excluded.
     pub fn series_data(
         &self,

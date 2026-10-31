@@ -45,6 +45,16 @@ pub trait HorzScaleBehavior {
     type Converter: HorzScaleItemConverter<Self::Item, Self::InternalItem>;
     type Error;
 
+    /// Numeric capability; projection remains opt-in on the scale owner.
+    fn numeric_value(&self, _item: &Self::InternalItem) -> Option<f64> {
+        None
+    }
+    fn numeric_item(&self, _value: f64) -> Option<Self::Item> {
+        None
+    }
+    fn format_numeric(&self, value: f64) -> String {
+        value.to_string()
+    }
     fn options(&self) -> &Self::Options;
     fn set_options(&mut self, options: Self::Options);
     /// Keeps behavior-specific formatting in sync with the owning time scale.

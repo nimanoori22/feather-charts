@@ -34,6 +34,15 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         if behavior.key(&from) > behavior.key(&to) {
             return Err(ChartError::InvalidDataQuery);
         }
+        if scale.is_numeric() {
+            let from = behavior
+                .numeric_value(&from)
+                .ok_or(ChartError::InvalidDataQuery)?;
+            let to = behavior
+                .numeric_value(&to)
+                .ok_or(ChartError::InvalidDataQuery)?;
+            return self.set_numeric_range(from, to);
+        }
         if let Some(range) = scale.logical_range_for_time_range(HorizontalRange { from, to }) {
             self.set_logical_range(range);
         }

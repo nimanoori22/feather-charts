@@ -84,6 +84,15 @@ impl HorzScaleBehavior for HorzScaleBehaviorPrice {
     type Options = OptionsChartOptions;
     type Converter = PriceConverter;
     type Error = OptionsChartError;
+    fn numeric_value(&self, item: &HorizontalPrice) -> Option<f64> {
+        Some(item.value())
+    }
+    fn numeric_item(&self, value: f64) -> Option<HorizontalPrice> {
+        HorizontalPrice::new(value).ok()
+    }
+    fn format_numeric(&self, value: f64) -> String {
+        fixed(value, self.options.precision)
+    }
     fn options(&self) -> &Self::Options {
         &self.options
     }

@@ -80,7 +80,7 @@ fn main() {
     let warm: Vec<_> = (0..100).map(|_| prepare(&mut chart)).collect();
     let projected = match &chart.frame().plot.hit_series[0].geometry {
         HitGeometry::Line { data, .. } => data.items.len(),
-        HitGeometry::Range { items, .. } => items.len(),
+        HitGeometry::Range { items, .. } | HitGeometry::Columns { items, .. } => items.len(),
         _ => unreachable!(),
     };
     assert!(projected > 0);

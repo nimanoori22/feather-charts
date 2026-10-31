@@ -29,6 +29,12 @@ impl ChartBehavior for HorzScaleBehaviorPrice {
     }
 }
 impl<M: Clone + 'static> Chart<HorzScaleBehaviorPrice, M> {
+    /// Continuous linear numeric distances, preserving original sample keys.
+    pub fn new_numeric(precision: u8) -> Result<Self, ChartError> {
+        let mut chart = Self::new_options_with_metadata(OptionsChartOptions { precision })?;
+        chart.model.enable_numeric();
+        Ok(chart)
+    }
     /// Uses ordinary chart/axis defaults; omitted horizontal precision is zero.
     /// Price-domain chart retaining M in built-in rows and pointer events.
     pub fn new_options_with_metadata(options: OptionsChartOptions) -> Result<Self, ChartError> {

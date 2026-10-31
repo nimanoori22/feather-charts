@@ -41,10 +41,13 @@ impl PriceTickMarkBuilder {
             return vec![];
         }
         let span = self.tick_span(high, low, height);
+        if !span.is_finite() || span <= 0. {
+            return vec![];
+        }
         let mut logical = high - high.rem_euclid(span);
         let mut previous = None;
         let mut marks = vec![];
-        while logical > low {
+        while logical > low && marks.len() < 10000 {
             let coord = coordinate(logical, first);
             if previous
                 .is_none_or(|old: f64| (coord.value() - old).abs() >= self.font_size * self.density)
@@ -56,7 +59,11 @@ impl PriceTickMarkBuilder {
                 });
                 previous = Some(coord.value())
             }
-            logical -= span;
+            let next = logical - span;
+            if next >= logical {
+                break;
+            }
+            logical = next;
         }
         marks
     }

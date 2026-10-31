@@ -321,7 +321,9 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
             &data,
             true,
             &mut self.color_parser(),
+            self.model.time_scale().is_numeric(),
         )?;
+        self.validate_numeric_data(id, &data, true, None)?;
         if data.is_empty() {
             self.cancel_interaction();
         }
@@ -346,7 +348,9 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
             std::slice::from_ref(&item),
             false,
             &mut self.color_parser(),
+            self.model.time_scale().is_numeric(),
         )?;
+        self.validate_numeric_data(id, std::slice::from_ref(&item), false, None)?;
         let threshold = self
             .model
             .series(id)
@@ -771,6 +775,7 @@ fn validate_data<B: ChartBehavior, M: Clone>(
     data: &[BuiltInSeriesDataItem<B::Item, M>],
     ordered: bool,
     parser: &mut crate::model::colors::ColorParser,
+    numeric: bool,
 ) -> Result<(), ChartError> {
     if data.is_empty() {
         return Ok(());
@@ -841,7 +846,7 @@ fn validate_data<B: ChartBehavior, M: Clone>(
         if row.values().is_some_and(|values| {
             values
                 .iter()
-                .any(|v| !v.is_finite() || v.abs() > 90_071_992_547_409.9)
+                .any(|v| !v.is_finite() || (!numeric && v.abs() > 90_071_992_547_409.9))
         }) {
             return Err(ChartError::InvalidData { index });
         }

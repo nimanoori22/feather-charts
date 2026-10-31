@@ -283,7 +283,9 @@ fn selection_profile(primitive_count: usize) {
             .iter()
             .map(|h| match &h.geometry {
                 HitGeometry::Line { data, .. } => data.items.len(),
-                HitGeometry::Range { items, .. } => items.len(),
+                HitGeometry::Range { items, .. } | HitGeometry::Columns { items, .. } => {
+                    items.len()
+                }
                 HitGeometry::Custom(_) => 0,
             })
             .sum();

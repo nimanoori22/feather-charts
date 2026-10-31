@@ -42,6 +42,24 @@ pub fn range_hit(
     }
     closest.is_finite().then_some(closest)
 }
+/// Numeric columns have authored widths; adjacent row indices do not fill gaps.
+pub fn column_hit(items: &[RangePoint], x: f64, y: f64, width: f64, tolerance: f64) -> Option<f64> {
+    let radius = width / 2. + tolerance;
+    let from = items.partition_point(|p| p.x < x - radius);
+    let to = items.partition_point(|p| p.x <= x + radius);
+    items[from..to]
+        .iter()
+        .filter_map(|p| {
+            let top = p.top.min(p.bottom);
+            let bottom = p.top.max(p.bottom);
+            if y < top - tolerance || y > bottom + tolerance {
+                None
+            } else {
+                Some((top - y).max(y - bottom).max(0.))
+            }
+        })
+        .min_by(f64::total_cmp)
+}
 #[cfg(test)]
 mod tests {
     use super::*;

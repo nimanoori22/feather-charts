@@ -17,6 +17,8 @@ pub struct HistogramRendererData {
     pub visible_range: SeriesItemsIndexesRange,
     pub bar_spacing: f64,
     pub baseline: f64,
+    /// Exact projected numeric width; bypasses index adjacency and gap heuristics.
+    pub numeric_width: Option<f64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -54,6 +56,21 @@ impl HistogramRendererData {
             .any(|b| [b.index, b.x * h, b.y * v].iter().any(|n| !n.is_finite()))
         {
             return Err(HistogramRenderError::InvalidData);
+        }
+        if let Some(width) = self.numeric_width {
+            if !width.is_finite() || width <= 0. || !(width * h).is_finite() {
+                return Err(HistogramRenderError::InvalidData);
+            }
+            return Ok(bars
+                .iter()
+                .map(|b| CandleRectangle {
+                    x: (b.x - width / 2.) * h,
+                    y: b.y.min(self.baseline) * v,
+                    width: width * h,
+                    height: ((b.y - self.baseline).abs() * v).max(1.),
+                    color: b.color.clone(),
+                })
+                .collect());
         }
         let spacing = if (self.bar_spacing * h).ceil() <= 1. {
             0.
@@ -150,6 +167,7 @@ mod tests {
             visible_range: SeriesItemsIndexesRange { from: 0, to: 3 },
             bar_spacing: 8.,
             baseline: 10.,
+            numeric_width: None,
         };
         let result = data
             .draw_commands(PixelRatio {
@@ -170,6 +188,7 @@ mod tests {
             visible_range: SeriesItemsIndexesRange { from: 0, to: 0 },
             bar_spacing: 0.5,
             baseline: 0.,
+            numeric_width: None,
         };
         let ratio = PixelRatio {
             horizontal: 1.25,

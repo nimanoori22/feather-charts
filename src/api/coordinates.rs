@@ -2,6 +2,39 @@
 use super::{Chart, ChartBehavior, ChartError};
 use crate::model::{coordinate::Coordinate, data_layer::SeriesId, time_data::TimePointIndex};
 impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
+    pub fn numeric_to_coordinate(&self, value: f64) -> Option<f64> {
+        self.model.time_scale().numeric_to_coordinate(value)
+    }
+    pub fn coordinate_to_numeric(&self, x: f64) -> Option<f64> {
+        self.model.time_scale().coordinate_to_numeric(x)
+    }
+    pub fn set_numeric_range(&mut self, from: f64, to: f64) -> Result<(), ChartError> {
+        if self.model.set_numeric_range(from, to) {
+            Ok(())
+        } else {
+            Err(ChartError::InvalidDataQuery)
+        }
+    }
+    pub fn set_numeric_histogram_width(
+        &mut self,
+        id: SeriesId,
+        width: f64,
+    ) -> Result<(), ChartError> {
+        self.series_pane(id)?;
+        if self.kind(id)? != crate::model::series_options::SeriesType::Histogram {
+            return Err(ChartError::InvalidDataQuery);
+        }
+        if !self.model.time_scale().is_numeric()
+            || !width.is_finite()
+            || width <= 0.
+            || width / 2. == 0.
+        {
+            return Err(ChartError::InvalidDataQuery);
+        }
+        self.validate_numeric_data(id, &[], false, Some(width))?;
+        self.model.set_numeric_histogram_width(id, width);
+        Ok(())
+    }
     /// Pane-local coordinate using this series' scale and visible first value.
     pub fn price_to_coordinate(
         &mut self,
@@ -77,11 +110,28 @@ impl<B: ChartBehavior, M: Clone + 'static> Chart<B, M> {
         Ok(scale.time_to_index(&item, nearest))
     }
     pub fn horizontal_to_coordinate(&self, item: &B::Item) -> Result<Option<f64>, ChartError> {
+        let scale = self.model.time_scale();
+        if scale.is_numeric() {
+            let internal = scale
+                .behavior()
+                .to_internal(item)
+                .map_err(B::conversion_error)?;
+            return Ok(scale
+                .behavior()
+                .numeric_value(&internal)
+                .and_then(|v| scale.numeric_to_coordinate(v)));
+        }
         Ok(self
             .horizontal_to_index(item, false)?
             .and_then(|index| self.logical_to_coordinate(index.value())))
     }
     pub fn coordinate_to_horizontal(&self, x: f64) -> Option<B::Item> {
+        let scale = self.model.time_scale();
+        if scale.is_numeric() {
+            return scale
+                .behavior()
+                .numeric_item(scale.coordinate_to_numeric(x)?);
+        }
         let index = self.coordinate_to_logical(x)?;
         self.model
             .time_scale()

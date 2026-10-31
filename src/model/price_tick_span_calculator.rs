@@ -37,6 +37,9 @@ impl PriceTickSpanCalculator {
             1.0 / self.base
         };
         let mut result = 10_f64.powf((high - low).log10().ceil().max(0.0));
+        if !result.is_finite() {
+            return high - low;
+        }
         let mut i = 0;
         let mut c = self.integral[0];
         while greater_or_equal(result, min, 1e-14)

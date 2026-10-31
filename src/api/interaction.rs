@@ -86,6 +86,10 @@ pub(crate) struct PlotPan {
 impl<B: super::ChartBehavior, M: Clone + 'static> Chart<B, M> {
     fn begin_kinetic(&mut self, now: Instant, touch: bool) {
         self.kinetic = None;
+        if self.model.time_scale().is_numeric() {
+            // shortcut: index velocities cannot drive numeric inertia; add numeric velocity state before enabling it.
+            return;
+        }
         if if touch {
             self.kinetic_options.touch
         } else {

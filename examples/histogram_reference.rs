@@ -25,6 +25,7 @@ fn main() {
                             .collect::<Vec<_>>();
                         for (from, to) in [(0, 5), (1, 4), (2, 2)] {
                             let data = HistogramRendererData {
+                                numeric_width: None,
                                 items: items.clone(),
                                 visible_range: SeriesItemsIndexesRange { from, to },
                                 bar_spacing: spacing,
