@@ -1,0 +1,37 @@
+{
+  "format": "feather-chart",
+  "version": 1,
+  "title": "Irregular numeric samples",
+  "x_axis": {
+    "label": "Sample",
+    "spacing": "linear",
+    "precision": 0
+  },
+  "y_axis": {
+    "label": "Duration",
+    "unit": "ms",
+    "precision": 3
+  },
+  "series": [
+    {
+      "name": "Prepare",
+      "kind": "line",
+      "color": "#38BDF8",
+      "points": [
+        [
+          1,
+          0.421
+        ],
+        [
+          2,
+          0.438
+        ],
+        [
+          100,
+          0.409
+        ]
+      ]
+    }
+  ],
+  "metadata": {}
+}

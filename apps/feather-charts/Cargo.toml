@@ -1,0 +1,15 @@
+[package]
+name = "feather-charts-app"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+repository = "https://github.com/nimanoori22/feather-charts"
+readme = "README.md"
+description = "Native viewer for self-contained .fchart documents"
+[[bin]]
+name = "feather-charts"
+path = "src/main.rs"
+[dependencies]
+feather-charts = { version = "0.2.0", path = "../.." }
+feather-chart-file = { version = "0.1.0", path = "../../crates/feather-chart-file" }
+iced = "0.14.0"

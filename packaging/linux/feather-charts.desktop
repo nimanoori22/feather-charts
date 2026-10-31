@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Feather Charts
+Comment=Explore numeric chart documents
+Exec=feather-charts %f
+TryExec=feather-charts
+Icon=office-chart-line
+Terminal=false
+Categories=Science;DataVisualization;
+MimeType=application/x-feather-chart;
+StartupNotify=true

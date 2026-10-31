@@ -1,6 +1,8 @@
 [package]
+# The library placeholder must not overwrite the viewer executable in workspace builds.
+autobins = false
 name = "feather-charts"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 description = "Native financial charts for Iced, ported from TradingView Lightweight Charts"
 license = "Apache-2.0"
@@ -42,3 +44,8 @@ opt-level = 3
 [patch.crates-io]
 iced_tiny_skia = { path = "vendor/iced_tiny_skia-0.14.1" }
 iced_wgpu = { path = "vendor/iced_wgpu-0.14.0" }
+
+[workspace]
+members = [".", "crates/feather-chart-file", "apps/feather-charts"]
+default-members = ["."]
+resolver = "3"
