@@ -92,3 +92,22 @@ rustfmt --edition 2024 --config max_width=80 --check vendor/iced_tiny_skia-0.14.
 The vendor keeps upstream Iced's 80-column formatting. Tests use the repository's
 existing renderer dependencies; no package was added. Sorena's Git dependency and
 its two renderer patches must be pinned together when adopting the commit.
+
+## Upstream follow-up
+
+The downstream fix was merged in [Feather PR #1](https://github.com/nimanoori22/feather-charts/pull/1).
+[Iced issue #3545](https://github.com/iced-rs/iced/issues/3545) reports the defect.
+A focused patch adapted to current master is published on
+[nimanoori22/iced:fix/tiny-skia-nested-canvas-clips](https://github.com/nimanoori22/iced/tree/fix/tiny-skia-nested-canvas-clips).
+All seven final upstream regressions fail before the fix and pass afterward;
+geometry-only tests and affected-package Clippy pass too.
+
+PR submission waits for core-team feedback as required by Iced's contributing
+guide. The [prepared PR text](evidence/software-pane-clipping/upstream-pr.md)
+records the exact commands and limits so the contribution can resume later.
+
+Native reproduction, before and after (the compositor negotiated different window
+widths; both use identical logical clip boundaries):
+
+[Before: content escapes the green rules](evidence/software-pane-clipping/before.png)
+· [After: content stays between the rules](evidence/software-pane-clipping/after.png).
