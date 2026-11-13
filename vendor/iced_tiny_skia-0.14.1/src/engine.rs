@@ -415,19 +415,14 @@ impl Engine {
                 shaping,
                 clip_bounds: local_clip_bounds,
             } => {
-                let physical_bounds = *local_clip_bounds * transformation;
-
-                if !clip_bounds.intersects(&physical_bounds) {
+                let Some(clip_bounds) = clip_bounds
+                    .intersection(&(*local_clip_bounds * transformation))
+                else {
                     return;
-                }
-
-                let clip_mask = match physical_bounds.is_within(&clip_bounds) {
-                    true => None,
-                    false => {
-                        adjust_clip_mask(clip_mask, clip_bounds);
-                        Some(clip_mask as &_)
-                    }
                 };
+                // Cached text bounds are layout limits, not measured glyph bounds.
+                adjust_clip_mask(clip_mask, clip_bounds);
+                let clip_mask = Some(clip_mask as &_);
 
                 self.text_pipeline.draw_cached(
                     content,
@@ -508,7 +503,17 @@ impl Engine {
                     adjust_clip_mask(clip_mask, clip_bounds);
                 }
             }
-            Primitive::Fill { path, paint, rule } => {
+            Primitive::Fill {
+                path,
+                paint,
+                rule,
+                clip_bounds: local_clip,
+            } => {
+                let Some(clip_bounds) =
+                    clip_bounds.intersection(&(*local_clip * transformation))
+                else {
+                    return;
+                };
                 let physical_bounds = {
                     let bounds = path.bounds();
 
@@ -524,8 +529,12 @@ impl Engine {
                     return;
                 }
 
-                let clip_mask = (!physical_bounds.is_within(&clip_bounds))
-                    .then_some(clip_mask as &_);
+                let clip_mask = if physical_bounds.is_within(&clip_bounds) {
+                    None
+                } else {
+                    adjust_clip_mask(clip_mask, clip_bounds);
+                    Some(clip_mask as &_)
+                };
 
                 pixels.fill_path(
                     path,
@@ -539,7 +548,13 @@ impl Engine {
                 path,
                 paint,
                 stroke,
+                clip_bounds: local_clip,
             } => {
+                let Some(clip_bounds) =
+                    clip_bounds.intersection(&(*local_clip * transformation))
+                else {
+                    return;
+                };
                 let physical_bounds = {
                     let bounds = path.bounds();
 
@@ -555,8 +570,12 @@ impl Engine {
                     return;
                 }
 
-                let clip_mask = (!physical_bounds.is_within(&clip_bounds))
-                    .then_some(clip_mask as &_);
+                let clip_mask = if physical_bounds.is_within(&clip_bounds) {
+                    None
+                } else {
+                    adjust_clip_mask(clip_mask, clip_bounds);
+                    Some(clip_mask as &_)
+                };
 
                 pixels.stroke_path(
                     path,
