@@ -111,6 +111,7 @@ impl geometry::frame::Backend for Frame {
             path,
             paint,
             rule: into_fill_rule(fill.rule),
+            clip_bounds: self.clip_bounds,
         });
     }
 
@@ -138,6 +139,7 @@ impl geometry::frame::Backend for Frame {
             path,
             paint,
             rule: into_fill_rule(fill.rule),
+            clip_bounds: self.clip_bounds,
         });
     }
 
@@ -158,6 +160,7 @@ impl geometry::frame::Backend for Frame {
             path,
             paint,
             stroke: skia_stroke,
+            clip_bounds: self.clip_bounds,
         });
     }
 
@@ -231,7 +234,7 @@ impl geometry::frame::Backend for Frame {
                 align_x: text.align_x,
                 align_y: text.align_y,
                 shaping: text.shaping,
-                clip_bounds: Rectangle::with_size(Size::INFINITE),
+                clip_bounds: self.clip_bounds,
             });
         } else {
             text.draw_with(|path, color| self.fill(&path, color));
@@ -261,7 +264,19 @@ impl geometry::frame::Backend for Frame {
         Self::new(clip_bounds)
     }
 
-    fn paste(&mut self, frame: Self) {
+    fn paste(&mut self, mut frame: Self) {
+        // Flatten commands without losing either enclosing canvas clip.
+        for primitive in &mut frame.primitives {
+            primitive.clip_to(self.clip_bounds);
+        }
+        for text in &mut frame.text {
+            // Canvas fill_text produces Cached; transformed glyphs are paths.
+            if let Text::Cached { clip_bounds, .. } = text {
+                *clip_bounds = clip_bounds
+                    .intersection(&self.clip_bounds)
+                    .unwrap_or_default();
+            }
+        }
         self.primitives.extend(frame.primitives);
         self.text.extend(frame.text);
         self.images.extend(frame.images);

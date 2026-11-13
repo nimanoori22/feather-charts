@@ -1,4 +1,4 @@
-# Iced canvas image ordering patches
+# Iced canvas renderer patches
 
 Exact registry versions: iced_tiny_skia 0.14.1 and iced_wgpu 0.14.0, MIT licensed.
 Sources copied without Cargo cache markers; LICENSE included from Iced.
@@ -24,3 +24,21 @@ when an upstream release provides equivalent ordered raster/vector canvas drawin
 
 image-ordering.patch uses zero context to avoid whitespace-only context lines;
 apply with git apply --unidiff-zero when reconstructing the patch.
+
+## Software pane clipping (2026-11-13)
+
+The vendored tiny-skia frame also preserves logical clip rectangles on fill,
+stroke, cached-text and image commands when merging child frames. Child and
+parent clips intersect; raster masks use their transformed intersection with the
+render/damage clip. Empty intersections draw nothing. Drawing order and the flat
+primitive/cache ownership remain unchanged. Stroke damage bounds include width.
+Cached text uses a glyph mask because layout bounds are not measured ink bounds.
+
+This fixes lines/fills escaping adjacent chart panes. Upstream master was checked
+at `b2fbd3cb6289603f8cbbb2387a5242231f509d13` (2026-11-13) and still flattened
+child frames without preserving their clips. Keep this patch until an upstream
+version provides equivalent nested canvas clipping; no Iced version upgrade is
+implied. The chart API, metric values and WGPU implementation are unchanged.
+
+Regression: `cargo test -p feather-charts --test canvas_clipping --locked`.
+See [verification and source comparison](../docs/porting/software-pane-clipping.md).
